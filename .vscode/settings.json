@@ -1,0 +1,10 @@
+{
+    "tailwindCSS.experimental.configFile": null,
+    "tailwindCSS.classAttributes": [
+        "class",
+        "className",
+        "ngClass",
+        "class:list",
+        ".*Style*"
+      ]
+}
