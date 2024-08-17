@@ -1,9 +1,9 @@
-import React from 'react';
+import React from 'react'
 import { Text, View, StyleSheet, Image, ScrollView } from 'react-native';
-import CustomButton from '../../CustomButton';
-import icons from '../../../constants/icons';
+import CustomButton from '../CustomButton/CustomButton';
+import icons from '../../constants/icons';
 
-const HomePageCommonCard = ({ cardValue, cardColor }) => {
+const HomePageCard = ({ cardValue, cardColor }) => {
     // Handle date formatting
     const formattedDate = new Date(cardValue.deadline).toLocaleDateString();
     return (
@@ -93,10 +93,10 @@ const HomePageCommonCard = ({ cardValue, cardColor }) => {
 
             </View>
         </ScrollView>
-
     );
-};
-export default HomePageCommonCard;
+}
+
+export default HomePageCard
 const styles = StyleSheet.create({
     cardContainer: {
         borderRadius: 20,
@@ -172,4 +172,3 @@ const styles = StyleSheet.create({
         left: 85
     }
 });
-

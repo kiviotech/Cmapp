@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, Image, ScrollView } from 'react-native';
-const myProjectCard = ({ cardValue, cardColor }) => {
+const MyProjectCard = ({ cardValue, cardColor }) => {
     const maxImagesToShow = 2;
     const userImagesToShow = cardValue.userImg?.slice(0, maxImagesToShow);
     const remainingCount = cardValue.userImg?.length - maxImagesToShow;
@@ -109,4 +109,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default myProjectCard;
+export default MyProjectCard;

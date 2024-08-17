@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MyProjectCard from '../../components/CommonCard/MyProjectCard';
+
 import { icons } from '../../constants';
+import MyProjectCard from '../../components/MyProjectCard';
 const YourProject = () => {
     const cardDataArray = [
         {

@@ -29,7 +29,7 @@ const Login = () => {
         router.replace('/SignUp');
       } else {
         // Handle login action
-        router.replace('/HomePage');
+        router.replace('/YourProject');
       }
     } catch (error) {
       console.error('Error', error.message);

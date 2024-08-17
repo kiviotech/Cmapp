@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, Text, Image, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import icons from '../../constants/icons';
-import HomePageCommonCard from '../../components/CommonCard/HomePageCard/HomePageCommonCard';
+import HomePageCard from '../../components/CustomHomePageCard/HomePageCard';
 
 const HomePage = () => {
     const [isSearchVisible, setSearchVisible] = useState(false);
@@ -103,7 +103,7 @@ const HomePage = () => {
                 </View>
 
                 {cardDataArray.map((cardData, index) => (
-                    <HomePageCommonCard key={index} cardValue={cardData} cardColor={cardData.cardColor} />
+                    <HomePageCard key={index} cardValue={cardData} cardColor={cardData.cardColor} />
                 ))}
             </ScrollView>
         </SafeAreaView>
