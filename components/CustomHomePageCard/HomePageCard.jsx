@@ -2,7 +2,7 @@ import React from 'react'
 import { Text, View, StyleSheet, Image, ScrollView } from 'react-native';
 import CustomButton from '../CustomButton/CustomButton';
 import icons from '../../constants/icons';
-
+import { FontAwesome } from '@expo/vector-icons';
 const HomePageCard = ({ cardValue, cardColor }) => {
     // Handle date formatting
     const formattedDate = new Date(cardValue.deadline).toLocaleDateString();
@@ -31,19 +31,25 @@ const HomePageCard = ({ cardValue, cardColor }) => {
                 <Text style={styles.projectDescription}>{cardValue.projectDescription}</Text>
                 <View style={[styles.deadlineContainer, { borderTopColor: cardValue.taskStatusColor }]}>
                     <View>
-                        <Text style={styles.deadlineText}>
-                            <svg style={styles.dateICon} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <path d="M15 2.50003V6.50003M9 2.50003V6.50003M20.4826 11.5H3.51733M20.4826 11.5C20.2743 5.7928 18.154 4.00003 12 4.00003C5.84596 4.00003 3.7256 5.7928 3.51733 11.5M20.4826 11.5C20.4943 11.8209 20.5 12.1541 20.5 12.5C20.5 19 18.5 21 12 21C5.5 21 3.5 19 3.5 12.5C3.5 12.1541 3.50563 11.8209 3.51733 11.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            {formattedDate}
-                        </Text>
+                        <View style={styles.deadlineText}>
+                            <Image source={icons.calendar}></Image>
+                            <Text> {formattedDate}</Text>
+                        </View>
+
                         {cardValue.taskStatus && (
-                            <Text style={[styles.taskStatus, { color: cardValue.taskStatusColor }]}>
-                                <svg style={styles.checkIcon} xmlns="http://www.w3.org/2000/svg" viewBox="-1 0 10 6" fill="none">
-                                    <path d="M7 1L2.87503 5L1 3.18183" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg> {cardValue.taskStatus}
-                            </Text>
+                            <View style={styles.deadlineText}>
+                                <FontAwesome
+                                    name={cardValue.taskStatus === 'Rejected' ? 'times-circle' : 'check-circle'}
+                                    size={20}
+                                    style={{ color: cardValue.taskStatusColor, marginLeft: 4 }}
+                                />
+                                <Text style={[styles.taskStatus, { color: cardValue.taskStatusColor }]}>
+                                    {cardValue.taskStatus}
+                                </Text>
+                            </View>
                         )}
+
+
                     </View>
                 </View>
                 <View style={{ flexDirection: 'column', justifyContent: 'flex-end', width: '100%', paddingTop: 10 }}>
@@ -131,22 +137,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between'
     },
 
-    dateICon: {
-        width: 28,
-        height: 28,
-        position: 'relative',
-        top: 9,
-        marginRight: 10
-    },
+
     deadlineText: {
         color: '#7B7B7B',
         fontFamily: 'WorkSans_400Regular',
         fontSize: 14,
         fontStyle: 'normal',
         fontWeight: '400',
-        lineHeight: 12, // Adjust as needed
         letterSpacing: 0.06,
-
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingBottom: 10
     },
     taskStatus: {
         color: '#7B7B7B',
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
         fontStyle: 'normal',
         fontWeight: '400',
         lineHeight: 15, // Adjust as needed
-        marginTop: 10
+        marginLeft: 10
     },
     checkIcon: {
         backgroundColor: '#A3D65C',

@@ -12,7 +12,7 @@ const BottomNavigation = ({ navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
                 <Image source={icons.user}></Image>
-                <Text style={[styles.navText,styles.profile]}>Profile</Text>
+                <Text style={[styles.navText, styles.profile]}>Profile</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Settings')}>
                 <Image source={icons.settings}></Image>
@@ -51,10 +51,10 @@ const styles = StyleSheet.create({
         color: '#A8A8A8',
         fontFamily: 'WorkSans_500Medium',
         marginTop: 6,
-        fontSize:12
+        fontSize: 12
     },
-    profile:{
-        position:'relative',top:3
+    profile: {
+        position: 'relative', top: 3
 
     }
 });

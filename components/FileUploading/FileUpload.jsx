@@ -27,10 +27,8 @@ const FileUpload = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.instructions}>1. Upload your proof of work</Text>
-
       <View style={styles.uploadContainer}>
-        <Image source={icons.fileUpload}></Image>
+        <Image source={icons.fileUpload} style={styles.folderIcon} />
 
         {/* Upload Instructions */}
         <Text style={styles.uploadText}>Upload your proof of work in .png or .jpeg format</Text>
@@ -52,20 +50,29 @@ const FileUpload = () => {
         {uploadedFiles.map((file, index) => (
           <View key={index} style={styles.fileRow}>
             <FontAwesome name="file" size={24} color="#6B7280" />
-            <Text style={styles.fileName}>{file.name}</Text>
+
             <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: `${file.progress}%`, backgroundColor: file.status === 'success' ? 'green' : '#FFA500' }]} />
+              <View style={styles.docNameContainer}>
+                <Text style={styles.fileName}>{file.name}</Text>
+                {file.status === 'success' ? (
+                  <FontAwesome name="check-circle" size={15} color="#A3D65C" />
+                ) : (
+                  <Text style={{ color: '#838383', fontSize: 10 }}>{`${file.progress}%`}</Text>
+                )}
+              </View>
+              <View style={styles.progressBackground}>
+                <View style={[styles.progressBar, { width: `${file.progress}%`, backgroundColor: file.status === 'success' ? '#A3D65C' : '#FFD439' }]} />
+              </View>
             </View>
+
             {file.status === 'success' ? (
-              <FontAwesome name="check-circle" size={24} color="green" />
+              <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color='#FC5275' />
             ) : (
-              <FontAwesome name="times-circle" size={24} color="red" />
+              <FontAwesome style={{ marginTop: 15 }} name="times" size={15} color='#FC5275' />
             )}
           </View>
         ))}
       </View>
-
-      <Text style={styles.instructions}>2. Wait for your supervisor’s Approval</Text>
     </View>
   );
 };
@@ -73,13 +80,8 @@ const FileUpload = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#F1F1F1'
-  },
-  instructions: {
-    fontSize: 18,
-    fontFamily:'WorkSans_600SemiBold',
-    marginBottom: 30,
+    paddingTop: 16,
+    backgroundColor: '#F1F1F1',
   },
   uploadContainer: {
     borderStyle: 'dashed',
@@ -89,8 +91,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 16,
-    height:440,
-    alignItems:'center'
+    height: 440,
   },
   folderIcon: {
     marginBottom: 16,
@@ -98,15 +99,16 @@ const styles = StyleSheet.create({
   uploadText: {
     textAlign: 'center',
     marginBottom: 16,
-    marginTop:20,
+    marginTop: 20,
     color: '#4B5563',
   },
   uploadButton: {
     backgroundColor: '#3B82F6',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    borderRadius: 20,
     marginBottom: 16,
+    height: 39
   },
   buttonText: {
     color: '#FFF',
@@ -119,24 +121,32 @@ const styles = StyleSheet.create({
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     marginBottom: 10,
     width: '100%',
+    marginTop: 20,
+  },
+  docNameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
   fileName: {
-    flex: 1,
-    marginLeft: 10,
     color: '#4B5563',
   },
   progressBarContainer: {
     flex: 1,
-    height: 8,
-    backgroundColor: '#E5E7EB',
     borderRadius: 4,
     overflow: 'hidden',
-    marginRight: 10,
+  },
+  progressBackground: {
+    height: 8,
+    backgroundColor: '#DADADA',
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   progressBar: {
-    height: '100%',
+    height: 8,
     borderRadius: 4,
   },
 });

@@ -6,12 +6,13 @@ import LoginField from '../../components/LoginField';
 import { useRouter } from 'expo-router';
 import { NativeWindStyleSheet } from "nativewind";
 import { icons } from '../../constants';
+import FileUpload from '../../components/FileUploading/FileUpload';
 
 NativeWindStyleSheet.setOutput({
     default: "native",
 });
 
-const SignUp = () => {
+const signup = () => {
     const [form, setForm] = useState({
         mobile: '',
         password: '',
@@ -27,7 +28,6 @@ const SignUp = () => {
             Alert.alert('Error', error.message);
         }
     };
-
 
     return (
         <ScrollView >
@@ -83,12 +83,14 @@ const SignUp = () => {
 
                         </View>
                     </View>
-
+                    <View>
+                        <FileUpload />
+                    </View>
                     <View style={styles.buttonContainer}>
                         <CustomButton
                             buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
                             textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
-                            text='SignUp'
+                            text='SIGNUP'
 
                         />
                     </View>
@@ -123,7 +125,7 @@ const SignUp = () => {
     );
 };
 
-export default SignUp;
+export default signup;
 
 const styles = StyleSheet.create({
     container: {

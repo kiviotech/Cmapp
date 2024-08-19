@@ -26,10 +26,10 @@ const Login = () => {
     try {
       if (action === 'SignUp') {
         // Navigate to the Sign Up page
-        router.replace('/SignUp');
+        router.replace('/signup');
       } else {
         // Handle login action
-        router.replace('/HomePage');
+        router.replace('/dashboard');
       }
     } catch (error) {
       console.error('Error', error.message);

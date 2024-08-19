@@ -1,10 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import icons from '../../constants/icons'
+import { View, Text, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
 import CustomButton from '../../components/CustomButton';
 import BottomNavigation from './BottomNavigation ';
-const Details = () => {
+const taskDetails = () => {
     return (
         <View style={{ flex: 1 }}>
 
@@ -152,4 +150,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Details;
+export default taskDetails;

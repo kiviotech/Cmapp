@@ -15,6 +15,8 @@ import user from '../assets/icons/png/user.png';
 import settings from '../assets/icons/png/settings.png';
 import logout from '../assets/icons/png/logout.png';
 import fileUpload from '../assets/icons/png/fileUpload.png';
+import calendar from '../assets/icons/png/calendar.png';
+
 export default {
     date,
     facebook,
@@ -26,11 +28,12 @@ export default {
     reUpload,
     upload,
     bell,
-    search, 
-    filters, 
-    home, 
-    user, 
-    settings, 
+    search,
+    filters,
+    home,
+    user,
+    settings,
     logout,
-    fileUpload
+    fileUpload,
+    calendar
 }

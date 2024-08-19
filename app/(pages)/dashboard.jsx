@@ -5,7 +5,7 @@ import icons from '../../constants/icons';
 import HomePageCard from '../../components/CustomHomePageCard/HomePageCard';
 import BottomNavigation from './BottomNavigation ';
 
-const HomePage = () => {
+const dashboard = () => {
     const [isSearchVisible, setSearchVisible] = useState(false);
     const cardDataArray = [
         {
@@ -112,14 +112,14 @@ const HomePage = () => {
     );
 };
 
-export default HomePage;
+export default dashboard;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
         backgroundColor: '#f0f0f0',
-        paddingBottom:90
+        paddingBottom: 45
     },
     header: {
         flexDirection: 'row',

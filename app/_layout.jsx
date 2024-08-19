@@ -56,12 +56,11 @@ const Layout = () => {
   return (
     <Stack>
       <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)/SignUp" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/HomePage" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/YourProject" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/Details" options={{ headerShown: false }} /> 
-      <Stack.Screen name="(pages)/FileUpload" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)/signup" options={{ headerShown: false }} />
+      <Stack.Screen name="(pages)/dashboard" options={{ headerShown: false }} />
+      <Stack.Screen name="(pages)/taskDetails" options={{ headerShown: false }} />
+      <Stack.Screen name="(pages)/uploadProof" options={{ headerShown: false }} />
+      <Stack.Screen name="(pages)/notification" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );

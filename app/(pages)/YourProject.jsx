@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import MyProjectCard from '../../components/MyProjectCard/MyProjectCard';
 import { icons } from '../../constants';
-import MyProjectCard from '../../components/MyProjectCard';
+
 const YourProject = () => {
     const cardDataArray = [
         {
@@ -39,10 +39,11 @@ const YourProject = () => {
         <ScrollView>
             <SafeAreaView style={styles.container}>
                 <Text style={styles.title}>Select Your Project</Text>
-                {cardDataArray.map((cardData, index) => (
-                    <MyProjectCard key={index} cardValue={cardData} cardColor={cardData.cardColor} />
+                {cardDataArray.map((cardData, index) => {
+                    console.log(cardData);
+                    return <MyProjectCard key={index} cardValue={cardData} cardColor={cardData.cardColor} />;
+                })}
 
-                ))}
 
             </SafeAreaView>
         </ScrollView>
