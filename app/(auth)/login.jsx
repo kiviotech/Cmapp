@@ -17,13 +17,63 @@ const Login = () => {
     mobile: '',
     password: '',
     otp: '',
-    usePassword: usePassword
+  });
+  const [errors, setErrors] = useState({
+    mobile: '',
+    password: '',
+    otp: '',
   });
 
   const router = useRouter();
 
+  const validateField = (name, value) => {
+    let error = '';
+    if (name === 'mobile') {
+      const mobileRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!value) {
+        error = 'Email is required';
+      } else if (!mobileRegex.test(value)) {
+        error = 'Invalid email';
+      }
+    }
+    if (usePassword && name === 'password') {
+      if (!value) {
+        error = 'Password is required';
+      } else if (value.length < 6) {
+        error = 'Password must be at least 6 characters';
+      }
+    }
+    if (!usePassword && name === 'otp') {
+      if (!value) {
+        error = 'OTP is required';
+      } else if (value.length !== 6) {
+        error = 'OTP must be 6 digits';
+      }
+    }
+    return error;
+  };
+
+  const handleChangeText = (name, value) => {
+    const error = validateField(name, value);
+    setErrors({ ...errors, [name]: error });
+    setForm({ ...form, [name]: value });
+  };
+
   const submit = async (action) => {
     try {
+      const mobileError = validateField('mobile', form.mobile);
+      const passwordError = usePassword ? validateField('password', form.password) : '';
+      const otpError = !usePassword ? validateField('otp', form.otp) : '';
+
+      if (mobileError || passwordError || otpError) {
+        setErrors({
+          mobile: mobileError,
+          password: passwordError,
+          otp: otpError,
+        });
+        return;
+      }
+
       if (action === 'SignUp') {
         // Navigate to the Sign Up page
         router.replace('/signup');
@@ -35,7 +85,6 @@ const Login = () => {
       console.error('Error', error.message);
     }
   };
-
 
   const toggleUsePassword = () => {
     setUsePassword(!usePassword);
@@ -55,10 +104,11 @@ const Login = () => {
             <LoginField
               placeholder="Your email or phone"
               value={form.mobile}
-              handleChangeText={(e) => setForm({ ...form, mobile: e })}
+              handleChangeText={(value) => handleChangeText('mobile', value)}
               keyboardType='email-address'
               className="mb-4"
             />
+            {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
 
             {usePassword ? (
               <View style={styles.passwordContainer}>
@@ -67,9 +117,10 @@ const Login = () => {
                   style={styles.loginField}
                   placeholder="Password"
                   value={form.password}
-                  handleChangeText={(e) => setForm({ ...form, password: e })}
+                  handleChangeText={(value) => handleChangeText('password', value)}
                   secureTextEntry={true}
                 />
+                {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
               </View>
             ) : (
               <View style={styles.otpContainer}>
@@ -77,10 +128,11 @@ const Login = () => {
                 <LoginField
                   placeholder="OTP"
                   value={form.otp}
-                  handleChangeText={(e) => setForm({ ...form, otp: e })}
+                  handleChangeText={(value) => handleChangeText('otp', value)}
                   keyboardType='number-pad'
                   className="mb-4"
                 />
+                {errors.otp ? <Text style={styles.errorText}>{errors.otp}</Text> : null}
               </View>
             )}
 
@@ -163,6 +215,11 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     marginTop: 5,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
   },
   buttonContainer: {
     marginTop: 32,
