@@ -1,25 +1,39 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native'; // Import the hook
 import { icons } from '../../constants';
 
+const BottomNavigation = () => {
+    const navigation = useNavigation(); // Use the hook to get navigation object
 
-const BottomNavigation = ({ navigation }) => {
     return (
         <View style={styles.navContainer}>
-            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
-                <Image source={icons.home}></Image>
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => navigation.navigate('(pages)/dashboard')} // Navigate to Dashboard on Home press
+            >
+                <Image source={icons.home} />
                 <Text style={styles.navTextActive}>Home</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
-                <Image source={icons.user}></Image>
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => navigation.navigate('(pages)/profile')} // Navigate to Profile on Profile press
+            >
+                <Image source={icons.user} />
                 <Text style={[styles.navText, styles.profile]}>Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Settings')}>
-                <Image source={icons.settings}></Image>
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => navigation.navigate('(pages)/settings')} // Navigate to Settings on Settings press
+            >
+                <Image source={icons.settings} />
                 <Text style={styles.navText}>Settings</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Logout')}>
-                <Image source={icons.logout}></Image>
+            <TouchableOpacity
+                style={styles.navItem}
+                onPress={() => navigation.navigate('(auth)/login')} // Navigate to Login on Logout press
+            >
+                <Image source={icons.logout} />
                 <Text style={styles.navText}>Logout</Text>
             </TouchableOpacity>
         </View>
@@ -54,8 +68,8 @@ const styles = StyleSheet.create({
         fontSize: 12
     },
     profile: {
-        position: 'relative', top: 3
-
+        position: 'relative',
+        top: 3
     }
 });
 
