@@ -1,7 +1,7 @@
 import { View, Text, Image, Alert, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import React, { useState } from 'react';
 import { Tabs, router } from 'expo-router';
-import { icons } from '../../../constants';
+import { icons } from './../../constants';
 
 
 const TabIcon = ({ icon, color, name, focused }) => {

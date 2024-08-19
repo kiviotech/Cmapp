@@ -59,6 +59,8 @@ const Layout = () => {
       <Stack.Screen name="(auth)/SignUp" options={{ headerShown: false }} />
       <Stack.Screen name="(pages)/HomePage" options={{ headerShown: false }} />
       <Stack.Screen name="(pages)/YourProject" options={{ headerShown: false }} />
+      <Stack.Screen name="(pages)/Details" options={{ headerShown: false }} /> 
+      <Stack.Screen name="(pages)/FileUpload" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>

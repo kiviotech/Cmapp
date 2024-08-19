@@ -3,6 +3,7 @@ import { StyleSheet, View, ScrollView, Text, Image, TouchableOpacity, TextInput 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import icons from '../../constants/icons';
 import HomePageCard from '../../components/CustomHomePageCard/HomePageCard';
+import BottomNavigation from './BottomNavigation ';
 
 const HomePage = () => {
     const [isSearchVisible, setSearchVisible] = useState(false);
@@ -106,6 +107,7 @@ const HomePage = () => {
                     <HomePageCard key={index} cardValue={cardData} cardColor={cardData.cardColor} />
                 ))}
             </ScrollView>
+            <BottomNavigation />
         </SafeAreaView>
     );
 };
@@ -117,6 +119,7 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 10,
         backgroundColor: '#f0f0f0',
+        paddingBottom:90
     },
     header: {
         flexDirection: 'row',
