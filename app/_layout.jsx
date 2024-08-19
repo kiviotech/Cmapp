@@ -60,6 +60,8 @@ const Layout = () => {
       <Stack.Screen name="(pages)/dashboard" options={{ headerShown: false }} />
       <Stack.Screen name="(pages)/taskDetails" options={{ headerShown: false }} />
       <Stack.Screen name="(pages)/uploadProof" options={{ headerShown: false }} />
+      <Stack.Screen name="(pages)/profile" options={{ headerShown: false }} />
+      <Stack.Screen name="(pages)/settings" options={{ headerShown: false }} />
       <Stack.Screen name="(pages)/notification" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
