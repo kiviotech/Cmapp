@@ -17,6 +17,14 @@ import logout from '../assets/icons/png/logout.png';
 import fileUpload from '../assets/icons/png/fileUpload.png';
 import calendar from '../assets/icons/png/calendar.png';
 
+import homeFilled from '../assets/icons/png/homeFilled.png';
+import userFilled from '../assets/icons/png/userFilled.png';
+import settingsFilled from '../assets/icons/png/settingsFilled.png';
+import logoutFilled from '../assets/icons/png/logoutFilled.png';
+
+import clockFilled from '../assets/icons/png/clockFilled.png';
+import bellFilled from '../assets/icons/png/bellFilled.png';
+import clock from '../assets/icons/png/clock.png';
 export default {
     date,
     facebook,
@@ -35,5 +43,13 @@ export default {
     settings,
     logout,
     fileUpload,
-    calendar
+    calendar,
+    userFilled,
+    settingsFilled,
+    logoutFilled,
+    homeFilled,
+    clockFilled,
+    bellFilled,
+    clock
+
 }

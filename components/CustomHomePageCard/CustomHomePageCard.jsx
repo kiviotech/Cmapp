@@ -1,38 +1,39 @@
-import React from 'react'
-import { Text, View, StyleSheet, Image, ScrollView } from 'react-native';
+import React from 'react';
+import { Text, View, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import CustomButton from '../CustomButton/CustomButton';
 import icons from '../../constants/icons';
 import { FontAwesome } from '@expo/vector-icons';
-const HomePageCard = ({ cardValue, cardColor }) => {
-    // Handle date formatting
+import { useNavigation } from '@react-navigation/native';
+
+const CustomHomePageCard = ({ cardValue, cardColor }) => {
+    const navigation = useNavigation();
     const formattedDate = new Date(cardValue.deadline).toLocaleDateString();
+
     return (
         <ScrollView>
-            <View style={[styles.cardContainer, { backgroundColor: cardColor }]}>
-
-                <View style={{
-                    background: '#D9D9D9', width: '100%',
-                    height: 131,
-                }}></View>
+            <TouchableOpacity
+                style={[styles.cardContainer, { backgroundColor: cardColor }]}
+                onPress={() => navigation.navigate('(pages)/taskDetails')}
+            >
+                <View style={{ backgroundColor: '#D9D9D9', width: '100%', height: 131 }} />
 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20 }}>
                     <Text style={styles.projectName}>{cardValue.projectName}</Text>
                     {cardValue.projectName && (
                         <CustomButton
-                            buttonStyle={{ backgroundColor: '#D5DDF9', width: 76, height: 25, letterSpacing: 0 }}
-                            textStyle={{ fontFamily: 'WorkSans_500Medium', color: '#577CFF', fontSize: 9 }}
+                            buttonStyle={{ backgroundColor: '#D5DDF9', width: 76, height: 25 }}
+                            textStyle={{ fontFamily: 'WorkSans_500Medium', color: '#577CFF', fontSize: 9, letterSpacing: 0 }}
                             text='Substructure'
-                            handlePress={() => submit('login')}
                         />
                     )}
-
                 </View>
 
                 <Text style={styles.projectDescription}>{cardValue.projectDescription}</Text>
+
                 <View style={[styles.deadlineContainer, { borderTopColor: cardValue.taskStatusColor }]}>
                     <View>
                         <View style={styles.deadlineText}>
-                            <Image source={icons.calendar}></Image>
+                            <Image source={icons.calendar} />
                             <Text> {formattedDate}</Text>
                         </View>
 
@@ -48,128 +49,102 @@ const HomePageCard = ({ cardValue, cardColor }) => {
                                 </Text>
                             </View>
                         )}
-
-
                     </View>
                 </View>
+
                 <View style={{ flexDirection: 'column', justifyContent: 'flex-end', width: '100%', paddingTop: 10 }}>
-                    {cardValue.status === 'rejected' && (
+                    {['rejected', 'uploading'].includes(cardValue.status) && (
                         <View style={{ alignItems: 'flex-end' }}>
                             <CustomButton
                                 buttonStyle={{
                                     backgroundColor: cardValue.taskStatusColor,
                                     width: '80%',
                                     height: 34,
-                                    letterSpacing: 0,
-                                    alignSelf: 'flex-end', // This aligns the button to the right
+                                    alignSelf: 'flex-end',
                                 }}
                                 textStyle={{
                                     fontFamily: 'WorkSans_500Medium',
                                     color: '#FFF',
                                     fontSize: 12,
-                                }}
-                                text={cardValue.status === 'rejected' ? 'Reupload your Proof of work' : 'Upload your Proof of work'}
-                                handlePress={() => submit('login')}
-                            />
-                            <Image style={styles.uploadeIcon} source={icons.reUpload} />
-                        </View>
-                    )}
-                    {cardValue.status === 'uploading' && (
-                        <View style={{ alignItems: 'flex-end' }}>
-                            <CustomButton
-                                buttonStyle={{
-                                    backgroundColor: cardValue.taskStatusColor,
-                                    width: '80%',
-                                    height: 34,
                                     letterSpacing: 0,
-                                    alignSelf: 'flex-end', // This aligns the button to the right
-                                }}
-                                textStyle={{
-                                    fontFamily: 'WorkSans_500Medium',
-                                    color: '#FFF',
-                                    fontSize: 12,
                                 }}
                                 text={cardValue.status === 'rejected' ? 'Reupload your Proof of work' : 'Upload your Proof of work'}
-                                handlePress={() => submit('login')}
+                                handlePress={() => navigation.navigate('(pages)/notification')}
                             />
-                            <Image style={styles.uploadeIcon} source={icons.upload} />
+                            <Image
+                                style={styles.uploadeIcon}
+                                source={cardValue.status === 'rejected' ? icons.reUpload : icons.upload}
+                            />
                         </View>
                     )}
                 </View>
-
-            </View>
+            </TouchableOpacity>
         </ScrollView>
     );
-}
+};
 
-export default HomePageCard
+export default CustomHomePageCard;
+
 const styles = StyleSheet.create({
     cardContainer: {
         borderRadius: 20,
         padding: 20,
         height: 'auto',
-        marginVertical: 10
+        marginVertical: 10,
     },
     projectName: {
         color: '#000B23',
         fontFamily: 'WorkSans_500Medium',
         fontSize: 18,
-        fontWeight: 600,
+        fontWeight: '600', // Corrected to string
         lineHeight: 30,
         letterSpacing: 0.09,
-
     },
     projectDescription: {
         color: '#7B7B7B',
         fontFamily: 'WorkSans_500Medium',
         fontSize: 12,
-        fontStyle: 'normal',
         fontWeight: '300',
-        lineHeight: 15, // Adjust as needed
+        lineHeight: 15,
         letterSpacing: -0.06,
-        marginTop: 10
+        marginTop: 10,
     },
     deadlineContainer: {
         marginTop: 30,
         paddingTop: 10,
         paddingBottom: 15,
         flexDirection: 'row',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
     },
-
-
     deadlineText: {
         color: '#7B7B7B',
         fontFamily: 'WorkSans_400Regular',
         fontSize: 14,
-        fontStyle: 'normal',
         fontWeight: '400',
         letterSpacing: 0.06,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingBottom: 10
+        paddingBottom: 10,
     },
     taskStatus: {
-        color: '#7B7B7B',
         fontFamily: 'WorkSans_500Medium',
         fontSize: 14,
-        fontStyle: 'normal',
         fontWeight: '400',
-        lineHeight: 15, // Adjust as needed
-        marginLeft: 10
+        lineHeight: 15,
+        marginLeft: 10,
     },
     checkIcon: {
         backgroundColor: '#A3D65C',
         width: 24,
         height: 24,
-        borderRadius: '100%',
+        borderRadius: 12, // Corrected borderRadius
         position: 'relative',
         top: 6,
-        marginRight: 8
+        marginRight: 8,
     },
     uploadeIcon: {
         position: 'absolute',
         top: 10,
-        left: 85
-    }
+        left: 85, // Consider changing this to percentage or flexbox for better responsiveness
+    },
 });

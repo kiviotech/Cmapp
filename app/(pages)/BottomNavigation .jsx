@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Import the hook
+import { useNavigation, useRoute } from '@react-navigation/native'; // Import the hook
 import { icons } from '../../constants';
 
 const BottomNavigation = () => {
     const navigation = useNavigation(); // Use the hook to get navigation object
+    const route = useRoute(); // Get the current route
 
     return (
         <View style={styles.navContainer}>
@@ -12,29 +13,29 @@ const BottomNavigation = () => {
                 style={styles.navItem}
                 onPress={() => navigation.navigate('(pages)/dashboard')} // Navigate to Dashboard on Home press
             >
-                <Image source={icons.home} />
-                <Text style={styles.navTextActive}>Home</Text>
+                <Image source={route.name === '(pages)/dashboard' ? icons.homeFilled : icons.home} />
+                <Text style={route.name === '(pages)/dashboard' ? styles.navTextActive : styles.navText}>Home</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.navItem}
                 onPress={() => navigation.navigate('(pages)/profile')} // Navigate to Profile on Profile press
             >
-                <Image source={icons.user} />
-                <Text style={[styles.navText, styles.profile]}>Profile</Text>
+                <Image source={route.name === '(pages)/profile' ? icons.userFilled : icons.user} />
+                <Text style={route.name === '(pages)/profile' ? styles.navTextActive : styles.navText}>Profile</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.navItem}
                 onPress={() => navigation.navigate('(pages)/settings')} // Navigate to Settings on Settings press
             >
-                <Image source={icons.settings} />
-                <Text style={styles.navText}>Settings</Text>
+                <Image source={route.name === '(pages)/settings' ? icons.settingsFilled : icons.settings} />
+                <Text style={route.name === '(pages)/settings' ? styles.navTextActive : styles.navText}>Settings</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.navItem}
                 onPress={() => navigation.navigate('(auth)/login')} // Navigate to Login on Logout press
             >
-                <Image source={icons.logout} />
-                <Text style={styles.navText}>Logout</Text>
+                <Image source={route.name === '(auth)/login' ? icons.logoutFilled : icons.logout} />
+                <Text style={route.name === '(auth)/login' ? styles.navTextActive : styles.navText}>Logout</Text>
             </TouchableOpacity>
         </View>
     );

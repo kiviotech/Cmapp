@@ -1,20 +1,19 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image } from 'react-native';
 import CustomButton from '../../components/CustomButton';
 import BottomNavigation from './BottomNavigation ';
+import { icons } from '../../constants';
+
 const taskDetails = () => {
     return (
-        <View style={{ flex: 1 }}>
-
-            <SafeAreaView>
-                <ScrollView style={styles.container}>
+        <View style={styles.rootContainer}>
+            <SafeAreaView style={styles.container}>
+                <ScrollView>
                     {/* Header Section */}
                     <View style={styles.header}>
                         <Text style={styles.detailsText}>Details</Text>
                         <View style={styles.deadlineContainer}>
-                            <svg style={styles.dateIcon} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <path d="M15 2.50003V6.50003M9 2.50003V6.50003M20.4826 11.5H3.51733M20.4826 11.5C20.2743 5.7928 18.154 4.00003 12 4.00003C5.84596 4.00003 3.7256 5.7928 3.51733 11.5M20.4826 11.5C20.4943 11.8209 20.5 12.1541 20.5 12.5C20.5 19 18.5 21 12 21C5.5 21 3.5 19 3.5 12.5C3.5 12.1541 3.50563 11.8209 3.51733 11.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                            <Image source={icons.calendar} />
                             <Text style={styles.deadlineText}>Deadline: Mon, 10 July 2022</Text>
                         </View>
                     </View>
@@ -24,15 +23,14 @@ const taskDetails = () => {
 
                     {/* Project Info Section */}
                     <View style={styles.projectInfo}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                        <View style={styles.projectTitleContainer}>
                             <Text style={styles.projectTitle}>Verification & Inspection</Text>
                             <CustomButton
-                                buttonStyle={{ backgroundColor: '#D5DDF9', fontSize: 8, width: 100, height: 25 }}
+                                buttonStyle={{ backgroundColor: '#D5DDF9', fontSize: 8, width: 120, height: 35 }}
                                 textStyle={{ fontFamily: 'WorkSans_500Medium', color: '#577CFF' }}
                                 text='Substructure'
                             />
                         </View>
-
                         <Text style={styles.projectDescription}>
                             Regular site walkthroughs to ensure compliance with safety regulations and quality standards.
                         </Text>
@@ -63,28 +61,29 @@ const taskDetails = () => {
                     </View>
                 </ScrollView>
             </SafeAreaView>
-
-
             <BottomNavigation />
         </View>
     );
 };
 
 const styles = StyleSheet.create({
+    rootContainer: {
+        flex: 1,
+        padding: 16, // Space from all sides
+        backgroundColor: '#fff',
+    },
     container: {
         flex: 1,
-        padding: 16,
-        backgroundColor: '#fff',
     },
     header: {
         marginBottom: 16,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     detailsText: {
         fontSize: 24,
-        fontFamily: 'WorkSans_600SemiBold'
+        fontFamily: 'WorkSans_600SemiBold',
     },
     deadlineContainer: {
         flexDirection: 'row',
@@ -94,7 +93,7 @@ const styles = StyleSheet.create({
     deadlineText: {
         color: '#FC5275',
         marginLeft: 8,
-        fontFamily: 'WorkSans_500Medium'
+        fontFamily: 'WorkSans_500Medium',
     },
     imagePlaceholder: {
         height: 150,
@@ -105,27 +104,30 @@ const styles = StyleSheet.create({
     projectInfo: {
         marginBottom: 16,
     },
+    projectTitleContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 10,
+    },
     projectTitle: {
         fontSize: 18,
         fontFamily: 'WorkSans_600SemiBold',
     },
-
     projectDescription: {
         color: '#000000',
         fontFamily: 'WorkSans_400Regular',
         fontSize: 12,
-        paddingTop: 25
+        paddingTop: 25,
     },
     tableContainer: {
         borderWidth: 1,
         borderColor: '#DADADA',
         borderRadius: 10,
-
     },
     tableRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingLeft: 10,
         padding: 15,
         borderBottomWidth: 1,
         borderBottomColor: '#DADADA',
@@ -137,8 +139,8 @@ const styles = StyleSheet.create({
         fontFamily: 'WorkSans_500Medium',
         fontSize: 10,
         borderRightWidth: 1,
-        borderBottomColor: '#DADADA',
-
+        borderRightColor: '#DADADA',
+        paddingRight: 10,
     },
     tableContent: {
         flex: 1,
@@ -146,7 +148,7 @@ const styles = StyleSheet.create({
         color: '#000000',
         fontFamily: 'WorkSans_400Regular',
         fontSize: 10,
-        paddingLeft: 10
+        paddingLeft: 10,
     },
 });
 
