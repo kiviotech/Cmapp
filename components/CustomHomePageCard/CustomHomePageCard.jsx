@@ -69,8 +69,12 @@ const CustomHomePageCard = ({ cardValue, cardColor }) => {
                                     letterSpacing: 0,
                                 }}
                                 text={cardValue.status === 'rejected' ? 'Reupload your Proof of work' : 'Upload your Proof of work'}
-                                handlePress={() => navigation.navigate('(pages)/notification')}
+                                handlePress={() => {
+                                    console.log('Button Pressed');
+                                    navigation.navigate('(pages)/uploadProof');
+                                }}
                             />
+
                             <Image
                                 style={styles.uploadeIcon}
                                 source={cardValue.status === 'rejected' ? icons.reUpload : icons.upload}
