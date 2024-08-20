@@ -6,7 +6,7 @@ import LoginField from '../../components/LoginField';
 import { useRouter } from 'expo-router';
 import { NativeWindStyleSheet } from "nativewind";
 import { icons } from '../../constants';
-
+import { useNavigation } from '@react-navigation/native';
 NativeWindStyleSheet.setOutput({
   default: "native",
 });
@@ -25,6 +25,7 @@ const Login = () => {
   });
 
   const router = useRouter();
+  const navigation = useNavigation();
 
   const validateField = (name, value) => {
     let error = '';
@@ -73,14 +74,8 @@ const Login = () => {
         });
         return;
       }
+      router.replace('/dashboard');
 
-      if (action === 'SignUp') {
-        // Navigate to the Sign Up page
-        router.replace('/signup');
-      } else {
-        // Handle login action
-        router.replace('/dashboard');
-      }
     } catch (error) {
       console.error('Error', error.message);
     }
@@ -154,7 +149,7 @@ const Login = () => {
         <View style={styles.signUpContainer}>
           <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
             Don’t have an account?
-            <TouchableOpacity onPress={() => submit('SignUp')}>
+            <TouchableOpacity onPress={() => navigation.navigate('(auth)/signup')}>
               <Text className="text-[#577CFF]"> Sign Up</Text>
             </TouchableOpacity>
           </Text>

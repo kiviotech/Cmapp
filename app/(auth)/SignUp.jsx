@@ -14,14 +14,44 @@ NativeWindStyleSheet.setOutput({
 
 const signup = () => {
     const [form, setForm] = useState({
-        mobile: '',
+        name: '',
+        email: '',
         password: '',
-        otp: '',
         socialSecurity: ''
     });
 
+    const [errors, setErrors] = useState({});
     const router = useRouter();
+
+    const validate = () => {
+        const newErrors = {};
+        
+        if (!form.name) newErrors.name = 'Full name is required';
+        if (!form.email) newErrors.email = 'Email is required';
+        else if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Enter a valid email address';
+        if (!form.password) newErrors.password = 'Password is required';
+        else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
+        if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
+        else if (!/^\d{9}$/.test(form.socialSecurity)) newErrors.socialSecurity = 'Enter a valid 9-digit Social Security Number';
+        
+        return newErrors;
+    };
+
+    const handleChange = (field, value) => {
+        setForm({ ...form, [field]: value });
+
+        if (errors[field]) {
+            setErrors({ ...errors, [field]: null });
+        }
+    };
+
     const submit = async () => {
+        const newErrors = validate();
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
         try {
             router.replace('/login');
         } catch (error) {
@@ -32,7 +62,6 @@ const signup = () => {
     return (
         <ScrollView >
             <SafeAreaView style={styles.container}>
-
                 <View style={styles.content}>
                     <View>
                         <View style={styles.header}>
@@ -44,19 +73,20 @@ const signup = () => {
                             <LoginField
                                 placeholder="Your full name"
                                 value={form.name}
-                                handleChangeText={(e) => setForm({ ...form, name: e })}
-                                keyboardType='email-address'
+                                handleChangeText={(e) => handleChange('name', e)}
                                 className="mb-4"
                             />
+                            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+                            
                             <Text className="font-inter400 mt-8" style={styles.labelText}>E-mail</Text>
                             <LoginField
                                 placeholder="Your email or phone"
                                 value={form.email}
-                                handleChangeText={(e) => setForm({ ...form, email: e })}
+                                handleChangeText={(e) => handleChange('email', e)}
                                 keyboardType='email-address'
                                 className="mb-4"
                             />
-
+                            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
                             <View style={styles.passwordContainer}>
                                 <Text className="font-inter400" style={styles.labelText}>Password</Text>
@@ -64,40 +94,41 @@ const signup = () => {
                                     style={styles.loginField}
                                     placeholder="Password"
                                     value={form.password}
-                                    handleChangeText={(e) => setForm({ ...form, password: e })}
+                                    handleChangeText={(e) => handleChange('password', e)}
                                     secureTextEntry={true}
                                 />
+                                {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
                             </View>
-
 
                             <View style={styles.passwordContainer}>
                                 <Text className="font-inter400" style={styles.labelText}>Social Security Number</Text>
                                 <LoginField
                                     placeholder="Social Security"
-                                    value={form.socialSecurity || ''}
-                                    handleChangeText={(e) => setForm({ ...form, socialSecurity: e })}
-                                    secureTextEntry={true}  // This should be true to hide the text
+                                    value={form.socialSecurity}
+                                    handleChangeText={(e) => handleChange('socialSecurity', e)}
+                                    secureTextEntry={true}
                                 />
-
+                                {errors.socialSecurity && <Text style={styles.errorText}>{errors.socialSecurity}</Text>}
                             </View>
-
                         </View>
                     </View>
+
                     <View>
                         <FileUpload />
                     </View>
+
                     <View style={styles.buttonContainer}>
                         <CustomButton
                             buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
                             textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
                             text='SIGNUP'
-
+                            onPress={submit}
                         />
                     </View>
 
                     <View style={styles.SignUpContainer}>
                         <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
-                            Already have an account? <Text className="text-[#577CFF]" onPress={() => submit('SignUp')}>Login</Text>
+                            Already have an account? <Text className="text-[#577CFF]" onPress={() => router.replace('/login')}>Login</Text>
                         </Text>
 
                         <View style={styles.separatorContainer}>
@@ -118,8 +149,6 @@ const signup = () => {
                         </View>
                     </View>
                 </View>
-
-
             </SafeAreaView>
         </ScrollView>
     );
@@ -150,16 +179,10 @@ const styles = StyleSheet.create({
     passwordContainer: {
         marginTop: 32,
     },
-    otpContainer: {
-        marginTop: 32,
-    },
     labelText: {
         color: '#9796A1',
         fontSize: 13,
         paddingBottom: 2,
-    },
-    forgotPasswordText: {
-        marginTop: -15,
     },
     buttonContainer: {
         marginTop: 32,
@@ -195,5 +218,10 @@ const styles = StyleSheet.create({
     },
     socialButtonText: {
         fontSize: 13,
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 12,
+        marginTop: 5,
     },
 });

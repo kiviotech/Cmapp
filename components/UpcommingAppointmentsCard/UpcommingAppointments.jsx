@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontStyle: 'normal',
         fontWeight: '400',
-        lineHeight: 12, // Adjust as needed
+        lineHeight: 18, // Adjust as needed
         letterSpacing: 0.06,
     },
 });

@@ -1,22 +1,28 @@
 import React from 'react';
-import { Text, View, StyleSheet, Image, ScrollView } from 'react-native';
+import { Text, View, StyleSheet, Image, ScrollView,TouchableOpacity } from 'react-native';
 import { icons } from '../../constants';
-
+import { useNavigation } from '@react-navigation/native';
 const MyProjectCard = ({ cardValue, cardColor }) => {
+    const navigation = useNavigation();
     return (
         <ScrollView>
-            <View style={[styles.cardContainer, { backgroundColor: '#FFFFFF' }]}>
-                <Text style={styles.projectName}>{cardValue.task}</Text>
-                <Text style={styles.projectDescription}>{cardValue.proName}</Text>
-                <View style={[styles.deadlineContainer, { borderTopColor: "#DFDFDF", borderTopWidth: 1 }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                        <Image source={icons.clockFilled}></Image>
-                        <Text style={styles.deadlineText}>
-                            {cardValue.deadline}
-                        </Text>
+            <TouchableOpacity
+                onPress={() => navigation.navigate('(pages)/taskDetails')}
+            >
+                <View style={[styles.cardContainer, { backgroundColor: '#FFFFFF' }]}>
+                    <Text style={styles.projectName}>{cardValue.task}</Text>
+                    <Text style={styles.projectDescription}>{cardValue.proName}</Text>
+                    <View style={[styles.deadlineContainer, { borderTopColor: "#DFDFDF", borderTopWidth: 1 }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Image source={icons.clockFilled}></Image>
+                            <Text style={styles.deadlineText}>
+                                {cardValue.deadline}
+                            </Text>
+                        </View>
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
+
         </ScrollView>
 
     );
