@@ -149,7 +149,7 @@ const Login = () => {
         <View style={styles.signUpContainer}>
           <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
             Don’t have an account?
-            <TouchableOpacity onPress={() => navigation.navigate('(auth)/signup')}>
+            <TouchableOpacity onPress={() => navigation.navigate('(auth)/SignUp')}>
               <Text className="text-[#577CFF]"> Sign Up</Text>
             </TouchableOpacity>
           </Text>

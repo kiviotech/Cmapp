@@ -12,7 +12,7 @@ NativeWindStyleSheet.setOutput({
     default: "native",
 });
 
-const signup = () => {
+const SignUp = () => {
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -25,24 +25,28 @@ const signup = () => {
 
     const validate = () => {
         const newErrors = {};
-        
+
         if (!form.name) newErrors.name = 'Full name is required';
         if (!form.email) newErrors.email = 'Email is required';
-        else if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Enter a valid email address';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email address';
         if (!form.password) newErrors.password = 'Password is required';
         else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
         if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
         else if (!/^\d{9}$/.test(form.socialSecurity)) newErrors.socialSecurity = 'Enter a valid 9-digit Social Security Number';
-        
+
         return newErrors;
     };
 
-    const handleChange = (field, value) => {
+    const handleChangeText = (field, value) => {
         setForm({ ...form, [field]: value });
 
-        if (errors[field]) {
-            setErrors({ ...errors, [field]: null });
+        // Clear the error for the field that the user is editing, and validate immediately
+        const newErrors = { ...errors, [field]: null };
+        const updatedErrors = validate();
+        if (updatedErrors[field]) {
+            newErrors[field] = updatedErrors[field];
         }
+        setErrors(newErrors);
     };
 
     const submit = async () => {
@@ -60,56 +64,54 @@ const signup = () => {
     };
 
     return (
-        <ScrollView >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
             <SafeAreaView style={styles.container}>
                 <View style={styles.content}>
-                    <View>
-                        <View style={styles.header}>
-                            <Text className="font-pbold text-3xl font-inter600">Sign Up</Text>
+                    <View style={styles.header}>
+                        <Text className="font-pbold text-3xl font-inter600">Sign Up</Text>
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text className="font-inter400" style={styles.labelText}>Full name</Text>
+                        <LoginField
+                            placeholder="Your full name"
+                            value={form.name}
+                            handleChangeText={(e) => handleChangeText('name', e)}
+                            className="mb-4"
+                        />
+                        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+
+                        <Text className="font-inter400 mt-8" style={styles.labelText}>E-mail</Text>
+                        <LoginField
+                            placeholder="Your email or phone"
+                            value={form.email}
+                            handleChangeText={(e) => handleChangeText('email', e)}
+                            keyboardType='email-address'
+                            className="mb-4"
+                        />
+                        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+                        <View style={styles.passwordContainer}>
+                            <Text className="font-inter400" style={styles.labelText}>Password</Text>
+                            <LoginField
+                                style={styles.loginField}
+                                placeholder="Password"
+                                value={form.password}
+                                handleChangeText={(e) => handleChangeText('password', e)}
+                                secureTextEntry={true}
+                            />
+                            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
                         </View>
 
-                        <View style={styles.inputContainer}>
-                            <Text className="font-inter400" style={styles.labelText}>Full name</Text>
+                        <View style={styles.passwordContainer}>
+                            <Text className="font-inter400" style={styles.labelText}>Social Security Number</Text>
                             <LoginField
-                                placeholder="Your full name"
-                                value={form.name}
-                                handleChangeText={(e) => handleChange('name', e)}
-                                className="mb-4"
+                                placeholder="Social Security"
+                                value={form.socialSecurity}
+                                handleChangeText={(e) => handleChangeText('socialSecurity', e)}
+                                secureTextEntry={true}
                             />
-                            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
-                            
-                            <Text className="font-inter400 mt-8" style={styles.labelText}>E-mail</Text>
-                            <LoginField
-                                placeholder="Your email or phone"
-                                value={form.email}
-                                handleChangeText={(e) => handleChange('email', e)}
-                                keyboardType='email-address'
-                                className="mb-4"
-                            />
-                            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-
-                            <View style={styles.passwordContainer}>
-                                <Text className="font-inter400" style={styles.labelText}>Password</Text>
-                                <LoginField
-                                    style={styles.loginField}
-                                    placeholder="Password"
-                                    value={form.password}
-                                    handleChangeText={(e) => handleChange('password', e)}
-                                    secureTextEntry={true}
-                                />
-                                {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-                            </View>
-
-                            <View style={styles.passwordContainer}>
-                                <Text className="font-inter400" style={styles.labelText}>Social Security Number</Text>
-                                <LoginField
-                                    placeholder="Social Security"
-                                    value={form.socialSecurity}
-                                    handleChangeText={(e) => handleChange('socialSecurity', e)}
-                                    secureTextEntry={true}
-                                />
-                                {errors.socialSecurity && <Text style={styles.errorText}>{errors.socialSecurity}</Text>}
-                            </View>
+                            {errors.socialSecurity && <Text style={styles.errorText}>{errors.socialSecurity}</Text>}
                         </View>
                     </View>
 
@@ -122,7 +124,7 @@ const signup = () => {
                             buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
                             textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
                             text='SIGNUP'
-                            onPress={submit}
+                            handlePress={submit}
                         />
                     </View>
 
@@ -154,9 +156,12 @@ const signup = () => {
     );
 };
 
-export default signup;
+export default SignUp;
 
 const styles = StyleSheet.create({
+    scrollContent: {
+        flexGrow: 1,
+    },
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
