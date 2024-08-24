@@ -7,6 +7,8 @@ import { useRouter } from 'expo-router';
 import { NativeWindStyleSheet } from "nativewind";
 import { icons } from '../../constants';
 import FileUpload from '../../components/FileUploading/FileUpload';
+import fonts from '../../constants/fonts';
+import colors from '../../constants/colors';
 
 NativeWindStyleSheet.setOutput({
     default: "native",
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: colors.background,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 10,
@@ -185,9 +187,10 @@ const styles = StyleSheet.create({
         marginTop: 32,
     },
     labelText: {
-        color: '#9796A1',
+        color: colors.loginSignUpLabelColor,
         fontSize: 13,
         paddingBottom: 2,
+        fontFamily: fonts.WorkSans400
     },
     buttonContainer: {
         marginTop: 32,
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
         marginVertical: 16,
     },
     separator: {
-        borderColor: '#D1D1D1',
+        borderColor: colors.borderColor,
         borderWidth: 1,
         width: 100,
     },

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FileUpload from '../../components/FileUploading/FileUpload'
+import fonts from '../../constants/fonts';
 
 const uploadProof = () => {
     return (
@@ -30,6 +31,6 @@ const styles = StyleSheet.create({
 
     instructions: {
         fontSize: 18,
-        fontFamily: 'WorkSans_600SemiBold',
+        fontFamily: fonts.WorkSans600,
     },
 })

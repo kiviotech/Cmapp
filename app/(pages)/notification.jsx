@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/CustomButton';
 import { FontAwesome } from '@expo/vector-icons';
+import fonts from '../../constants/fonts';
+import colors from '../../constants/colors';
 const uploadProof = () => {
     return (
         <SafeAreaView>
@@ -19,17 +21,17 @@ const uploadProof = () => {
                     flexDirection: 'row', justifyContent: 'flex-end', gap: 10, borderColor: '#DFDFDF', paddingRight: 20, borderBottomWidth: 1,
                     paddingBottom: 30,
                 }}>
-                    <FontAwesome style={{ position: 'absolute', left: 40, zIndex: 1000, top: 12 }} name="check-circle" size={15} color="#FFFFFF" />
+                    <FontAwesome style={{ position: 'absolute', left: 35, zIndex: 1000, top: 12 }} name="check-circle" size={15} color="#FFFFFF" />
                     <CustomButton
-                        buttonStyle={{ backgroundColor: '#A3D65C', fontSize: 10, width: 170, letterSpacing: 1 }}
-                        textStyle={{ fontFamily: 'Inter_600Regular', color: '#FFFFFF', marginLeft: 8 }}
+                        buttonStyle={{ backgroundColor: colors.greenessColor, fontSize: 10, width: 170, letterSpacing: 1 }}
+                        textStyle={{ fontFamily: fonts.WorkSans600, color: colors.whiteColor, marginLeft: 20 }}
                         text='Approve Request'
 
                     />
                     <FontAwesome style={{ position: 'absolute', right: 155, zIndex: 1000, top: 12, }} name="check-circle" size={15} color="#FFFFFF" />
                     <CustomButton
-                        buttonStyle={{ backgroundColor: '#FC5275', fontSize: 10, width: 160, letterSpacing: 1 }}
-                        textStyle={{ fontFamily: 'Inter_400Regular', color: '#FFFFFF', marginLeft: 10 }}
+                        buttonStyle={{ backgroundColor: colors.radiusColor, fontSize: 10, width: 160, letterSpacing: 1 }}
+                        textStyle={{ fontFamily: fonts.WorkSans400, color: colors.whiteColor, marginLeft: 10 }}
                         text='Reject Request'
 
                     />
@@ -51,18 +53,18 @@ const styles = StyleSheet.create({
 
     instructions: {
         fontSize: 24,
-        fontFamily: 'WorkSans_600SemiBold',
+        fontFamily: fonts.WorkSans600,
         padding: 15,
     },
     pagraph: {
-        color: '#000',
+        color: colors.blackColor,
         fontSize: 14,
         paddingTop: 20,
         padding: 15,
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.WorkSans400,
     },
     border: {
-        borderColor: '#DFDFDF',
+        borderColor: colors.borderColor,
         borderBottomWidth: 1,
         paddingBottom: 30,
         paddingTop: 30

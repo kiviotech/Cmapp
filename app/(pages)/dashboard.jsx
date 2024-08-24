@@ -8,6 +8,8 @@ import SelectYourProjectCard from '../../components/SelectYourProjectCard';
 import UpcommingAppointments from '../../components/UpcommingAppointmentsCard/UpcommingAppointments';
 import { useNavigation } from '@react-navigation/native'; // Import the hook
 import CustomHomePageCard from '../../components/CustomHomePageCard/CustomHomePageCard';
+import colors from '../../constants/colors';
+import fonts from '../../constants/fonts';
 const dashboard = () => {
     const [isSearchVisible, setSearchVisible] = useState(false);
     const navigation = useNavigation(); // Use the hook to get navigation object
@@ -215,7 +217,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: colors.background,
         paddingBottom: 45,
     },
     header: {
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
         padding: 10,
         marginTop: -10,
         marginBottom: 10,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.whiteColor,
         borderRadius: 10,
         shadowColor: '#171717',
         shadowOffset: { width: -2, height: 4 },
@@ -239,21 +241,21 @@ const styles = StyleSheet.create({
     searchBar: {
         height: 40,
         width: '100%',
-        borderColor: '#ddd',
+        borderColor: colors.borderColor,
         borderWidth: 1,
         borderRadius: 5,
         paddingHorizontal: 10,
-        backgroundColor: '#fff',
+        backgroundColor: colors.whiteColor,
     },
     projectitle: {
         color: '#000',
-        fontFamily: 'WorkSans_600SemiBold',
+        fontFamily: fonts.WorkSans600,
         fontSize: 26,
         marginTop: 20,
     },
     title: {
         color: '#000',
-        fontFamily: 'WorkSans_600SemiBold',
+        fontFamily: fonts.WorkSans600,
         fontSize: 26,
         marginTop: 40,
     },
@@ -266,12 +268,12 @@ const styles = StyleSheet.create({
     greeting: {
         fontSize: 12,
         color: '#577CFF',
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.WorkSans400,
     },
     userName: {
         color: '#000B23',
         fontSize: 20,
-        fontFamily: 'WorkSans_600SemiBold',
+        fontFamily: fonts.WorkSans600,
     },
     iconsContainer: {
         flexDirection: 'row',
@@ -279,7 +281,7 @@ const styles = StyleSheet.create({
     },
     icon: {
         marginLeft: 15,
-        borderColor: '#E4E4E4',
+        borderColor: colors.borderColor,
         borderRadius: '100%',
         borderWidth: 1,
         padding: 10,
@@ -287,7 +289,7 @@ const styles = StyleSheet.create({
 
     carousel: {
         marginTop: 20,
-        borderColor: '#ddd',
+        borderColor: colors.borderColor,
         borderBottomWidth: 1,
         borderRadius: 5,
         paddingBottom: 20

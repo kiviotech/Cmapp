@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native'; // Import the hook
 import { icons } from '../../constants';
+import { logout } from '../../src/utils/auth';
+
 
 const BottomNavigation = () => {
     const navigation = useNavigation(); // Use the hook to get navigation object
@@ -32,7 +34,10 @@ const BottomNavigation = () => {
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.navItem}
-                onPress={() => navigation.navigate('(auth)/login')} // Navigate to Login on Logout press
+                onPress={() => {
+                    logout(); // Call the logout function
+                    navigation.navigate('(auth)/login'); // Navigate to Login screen
+                }} // Navigate to Login on Logout press
             >
                 <Image source={route.name === '(auth)/login' ? icons.logoutFilled : icons.logout} />
                 <Text style={route.name === '(auth)/login' ? styles.navTextActive : styles.navText}>Logout</Text>
