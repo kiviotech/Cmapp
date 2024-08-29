@@ -3,6 +3,8 @@ import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image } from 'react-n
 import CustomButton from '../../components/CustomButton';
 import BottomNavigation from './BottomNavigation ';
 import { icons } from '../../constants';
+import colors from '../../constants/colors';
+import fonts from '../../constants/fonts';
 
 const taskDetails = () => {
     return (
@@ -70,7 +72,7 @@ const styles = StyleSheet.create({
     rootContainer: {
         flex: 1,
         padding: 16, // Space from all sides
-        backgroundColor: '#fff',
+        backgroundColor: colors.whiteColor,
     },
     container: {
         flex: 1,
@@ -83,7 +85,7 @@ const styles = StyleSheet.create({
     },
     detailsText: {
         fontSize: 24,
-        fontFamily: 'WorkSans_600SemiBold',
+        fontFamily: fonts.WorkSans600,
     },
     deadlineContainer: {
         flexDirection: 'row',
@@ -91,13 +93,13 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     deadlineText: {
-        color: '#FC5275',
+        color: colors.radiusColor,
         marginLeft: 8,
-        fontFamily: 'WorkSans_500Medium',
+        fontFamily: fonts.WorkSans500,
     },
     imagePlaceholder: {
         height: 150,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: colors.background,
         borderRadius: 10,
         marginBottom: 16,
     },
@@ -112,17 +114,17 @@ const styles = StyleSheet.create({
     },
     projectTitle: {
         fontSize: 18,
-        fontFamily: 'WorkSans_600SemiBold',
+        fontFamily: fonts.WorkSans600,
     },
     projectDescription: {
-        color: '#000000',
-        fontFamily: 'WorkSans_400Regular',
+        color: colors.blackColor,
+        fontFamily: fonts.WorkSans400,
         fontSize: 12,
         paddingTop: 25,
     },
     tableContainer: {
         borderWidth: 1,
-        borderColor: '#DADADA',
+        borderColor: colors.borderColor,
         borderRadius: 10,
     },
     tableRow: {
@@ -130,23 +132,23 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#DADADA',
+        borderBottomColor: colors.borderColor,
     },
     tableHeader: {
         flex: 2,
         fontWeight: '600',
-        color: '#577CFF',
-        fontFamily: 'WorkSans_500Medium',
-        fontSize: 10,
+        color: colors.primary,
+        fontFamily: fonts.WorkSans500,
+        fontSize: 12,
         borderRightWidth: 1,
-        borderRightColor: '#DADADA',
+        borderRightColor: colors.borderColor,
         paddingRight: 10,
     },
     tableContent: {
         flex: 1,
         textAlign: 'right',
-        color: '#000000',
-        fontFamily: 'WorkSans_400Regular',
+        color: colors.blackColor,
+        fontFamily: fonts.WorkSans400,
         fontSize: 10,
         paddingLeft: 10,
     },

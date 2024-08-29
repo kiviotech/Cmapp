@@ -7,6 +7,10 @@ import { useRouter } from 'expo-router';
 import { NativeWindStyleSheet } from "nativewind";
 import { icons } from '../../constants';
 import { useNavigation } from '@react-navigation/native';
+import colors from '../../constants/colors';
+import fonts from '../../constants/fonts';
+import { login } from '../../src/utils/auth';
+
 NativeWindStyleSheet.setOutput({
   default: "native",
 });
@@ -60,7 +64,7 @@ const Login = () => {
     setForm({ ...form, [name]: value });
   };
 
-  const submit = async (action) => {
+  const handleLogin = async () => {
     try {
       const mobileError = validateField('mobile', form.mobile);
       const passwordError = usePassword ? validateField('password', form.password) : '';
@@ -74,16 +78,20 @@ const Login = () => {
         });
         return;
       }
+
+      // Attempt to log in with the provided mobile and password/otp
+      const response = await login(form.mobile, usePassword ? form.password : form.otp);
+
+      // Store the JWT token in localStorage
+      localStorage.setItem('authToken', response.jwt);
+
+      // Navigate to the dashboard after successful login
       router.replace('/dashboard');
 
     } catch (error) {
       console.error('Error', error.message);
+      // Handle error, such as showing an error message to the user
     }
-  };
-
-  const toggleUsePassword = () => {
-    setUsePassword(!usePassword);
-    setForm({ ...form, usePassword: !usePassword });
   };
 
   return (
@@ -95,7 +103,7 @@ const Login = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text className="font-inter400" style={styles.labelText}>E-mail</Text>
+            <Text style={styles.labelText}>E-mail</Text>
             <LoginField
               placeholder="Your email or phone"
               value={form.mobile}
@@ -107,7 +115,7 @@ const Login = () => {
 
             {usePassword ? (
               <View style={styles.passwordContainer}>
-                <Text className="font-inter400" style={styles.labelText}>Password</Text>
+                <Text style={styles.labelText}>Password</Text>
                 <LoginField
                   style={styles.loginField}
                   placeholder="Password"
@@ -142,7 +150,7 @@ const Login = () => {
             buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
             textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
             text='LOGIN'
-            handlePress={() => submit('login')}
+            handlePress={() => handleLogin('login')}
           />
         </View>
 
@@ -181,7 +189,7 @@ export default Login;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
@@ -204,8 +212,9 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   labelText: {
-    color: '#9796A1',
+    color: colors.loginSignUpLabelColor,
     fontSize: 13,
+    fontFamily: fonts.WorkSans400,
     paddingBottom: 2,
   },
   forgotPasswordText: {
@@ -230,7 +239,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   separator: {
-    borderColor: '#D1D1D1',
+    borderColor: colors.borderColor,
     borderWidth: 1,
     width: 100,
   },
