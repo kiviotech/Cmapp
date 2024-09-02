@@ -2,16 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { FontAwesome } from '@expo/vector-icons';
-import { icons } from '../../constants';
 
 const FileUpload = () => {
-  const [uploadedFiles, setUploadedFiles] = useState([
-    { name: 'Document_name.png', progress: 100, status: 'success' },
-    { name: 'Document_name.jpeg', progress: 55, status: 'uploading' },
-  ]);
-
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [cameraActive, setIsCameraActive] = useState(false);
-  const videoRef = useRef(null); // Ref for the video element
+  const [uploading, setUploading] = useState(false);
+  const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
 
   const handleFileUpload = async () => {
@@ -23,7 +19,30 @@ const FileUpload = () => {
     });
 
     if (!result.canceled) {
-      setUploadedFiles([...uploadedFiles, { name: result.uri.split('/').pop(), progress: 0, status: 'uploading' }]);
+      const newFile = { name: result?.assets[0]?.fileName, progress: 0, status: 'uploading' };
+      setUploadedFiles([...uploadedFiles, newFile]);
+      setUploading(true);
+
+      // Simulate the file upload progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setUploadedFiles((prevFiles) =>
+          prevFiles.map((file) =>
+            file.name === newFile.name ? { ...file, progress } : file
+          )
+        );
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          setUploadedFiles((prevFiles) =>
+            prevFiles.map((file) =>
+              file.name === newFile.name ? { ...file, status: 'success', progress: 100 } : file
+            )
+          );
+          setUploading(false);
+        }
+      }, 500);
     }
   };
 
@@ -45,34 +64,57 @@ const FileUpload = () => {
       });
 
       if (!result.canceled) {
-        setUploadedFiles([...uploadedFiles, { name: result.uri.split('/').pop(), progress: 0, status: 'uploading' }]);
+        const newFile = { name: result?.uri?.split('/').pop(), progress: 0, status: 'uploading' };
+        setUploadedFiles([...uploadedFiles, newFile]);
+        setUploading(true);
+
+        // Simulate the file upload progress
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 10;
+          setUploadedFiles((prevFiles) =>
+            prevFiles.map((file) =>
+              file.name === newFile.name ? { ...file, progress } : file
+            )
+          );
+
+          if (progress >= 100) {
+            clearInterval(interval);
+            setUploadedFiles((prevFiles) =>
+              prevFiles.map((file) =>
+                file.name === newFile?.name ? { ...file, status: 'success', progress: 100 } : file
+              )
+            );
+            setUploading(false);
+          }
+        }, 500);
       }
     }
   };
 
   const closeCamera = () => {
     setIsCameraActive(false);
-  }
+  };
 
   const openWebCamera = () => {
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(mediaStream => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((mediaStream) => {
         setStream(mediaStream);
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
           videoRef.current.play();
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error accessing the camera: ', error);
       });
   };
 
   useEffect(() => {
-    // Clean up the stream when the component unmounts
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [stream]);
@@ -91,7 +133,7 @@ const FileUpload = () => {
         <Text style={styles.orText}>OR</Text>
 
         {/* Use Camera Button */}
-        {cameraActive === true ? (
+        {cameraActive ? (
           <TouchableOpacity style={styles.uploadButton} onPress={closeCamera}>
             <Text style={styles.buttonText}>Close Camera</Text>
           </TouchableOpacity>
@@ -114,13 +156,14 @@ const FileUpload = () => {
             <FontAwesome name="file" size={24} color="#6B7280" />
             <View style={styles.progressBarContainer}>
               <View style={styles.docNameContainer}>
-                <Text style={styles.fileName}>{file.name}</Text>
+                <Text style={styles.fileName}>{file?.name}</Text>
                 {file.status === 'success' ? (
                   <FontAwesome name="check-circle" size={15} color="#A3D65C" />
-                ) : (
+                ) : file.status === 'uploading' ? (
                   <Text style={{ color: '#838383', fontSize: 10 }}>{`${file.progress}%`}</Text>
-                )}
+                ) : null}
               </View>
+              {/* Always render progress bar */}
               <View style={styles.progressBackground}>
                 <View
                   style={[
@@ -160,7 +203,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     height: 'auto',
-    paddingBottom: 40
+    paddingBottom: 40,
   },
   uploadText: {
     textAlign: 'center',
@@ -174,7 +217,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     marginBottom: 16,
-    height: 39
+    height: 39,
   },
   buttonText: {
     color: '#FFF',
