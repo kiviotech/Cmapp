@@ -15,11 +15,13 @@ NativeWindStyleSheet.setOutput({
 });
 
 const SignUp = () => {
+    const [selectedProject, setSelectedProject] = useState('');
     const [form, setForm] = useState({
         name: '',
         email: '',
         password: '',
-        socialSecurity: ''
+        socialSecurity: '',
+        project: '',  // New state for project selection
     });
 
     const [errors, setErrors] = useState({});
@@ -35,6 +37,7 @@ const SignUp = () => {
         else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
         if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
         else if (!/^\d{9}$/.test(form.socialSecurity)) newErrors.socialSecurity = 'Enter a valid 9-digit Social Security Number';
+        if (!form.project) newErrors.project = 'Please select a project';  // New validation rule
 
         return newErrors;
     };
@@ -117,6 +120,21 @@ const SignUp = () => {
                         </View>
                     </View>
 
+                    {/* Project Selection Section */}
+                    {/* Project Selection */}
+                    <View style={styles.projectSelectionContainer}>
+                        <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
+                        <TouchableOpacity onPress={() => setSelectedProject('Project Name 1')} style={styles.radioContainer}>
+                            <View style={[styles.radioCircle, selectedProject === 'Project Name 1' && styles.radioCircleSelected]} />
+                            <Text style={selectedProject === 'Project Name 1' ? styles.radioTextSelected : styles.radioText}>Project Name 1</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setSelectedProject('Project Name 2')} style={styles.radioContainer}>
+                            <View style={[styles.radioCircle, selectedProject === 'Project Name 2' && styles.radioCircleSelected]} />
+                            <Text style={selectedProject === 'Project Name 2' ? styles.radioTextSelected : styles.radioText}>Project Name 2</Text>
+                        </TouchableOpacity>
+                        {errors.selectedProject && <Text style={styles.errorText}>{errors.selectedProject}</Text>}
+                    </View>
+
                     <View>
                         <FileUpload />
                     </View>
@@ -186,6 +204,15 @@ const styles = StyleSheet.create({
     passwordContainer: {
         marginTop: 32,
     },
+    projectSelectionContainer: {  // Styles for project selection container
+        marginVertical: 16,
+    },
+    picker: {  // Styles for the Picker
+        height: 50,
+        width: '100%',
+        backgroundColor: '#f0f0f0',
+        marginBottom: 10,
+    },
     labelText: {
         color: colors.loginSignUpLabelColor,
         fontSize: 13,
@@ -206,30 +233,78 @@ const styles = StyleSheet.create({
         marginVertical: 16,
     },
     separator: {
-        borderColor: colors.borderColor,
-        borderWidth: 1,
-        width: 100,
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E0E0E0',
     },
     socialButtonsContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 24,
-        spaceX: 16,
+        gap: 20
     },
     socialButton: {
-        width: 147,
-        height: 50,
-        justifyContent: 'center',
+        flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 10
+        justifyContent: 'center',
+        width: 140,
+        height: 42,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.41,
+        elevation: 2,
     },
     socialButtonText: {
-        fontSize: 13,
+        fontSize: 14,
+        fontFamily: fonts.WorkSans500,
+        color: '#333',
+        marginLeft: 8,
     },
     errorText: {
         color: 'red',
         fontSize: 12,
-        marginTop: 5,
+        marginTop: 2,
+        fontFamily: fonts.Inter500
+    },
+
+    projectSelectionContainer: {
+        marginBottom: 20,
+        marginTop: 20,
+    },
+    radioContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 8,
+    },
+    radioCircle: {
+        height: 18,
+        width: 18,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: '#577CFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
+    },
+    radioCircleSelected: {
+        backgroundColor: '#577CFF',
+    },
+    radioText: {
+        fontSize: 14,
+        fontFamily: fonts.WorkSans400,
+        color: '#333',
+    },
+    radioTextSelected: {
+        fontSize: 14,
+        fontFamily: fonts.WorkSans700,
+        color: '#000',
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 12,
+        marginTop: 2,
+        fontFamily: fonts.Inter500
     },
 });

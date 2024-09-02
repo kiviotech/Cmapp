@@ -17,16 +17,3 @@ export const login = async (email, password) => {
 export const logout = () => {
   localStorage.removeItem('authToken');
 };
-
-export const SignUp = async (email, password) => {
-  try {
-    const response = await apiClient.post("/auth/local", {
-      identifier: email,
-      password: password,
-    });
-    
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
