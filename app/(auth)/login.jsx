@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import { login } from '../../src/utils/auth';
+import { saveToken,  deleteToken } from '../../src/utils/storage';
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -81,12 +82,12 @@ const Login = () => {
 
       // Attempt to log in with the provided mobile and password/otp
       const response = await login(form.mobile, usePassword ? form.password : form.otp);
-
-      // Store the JWT token in localStorage
-      localStorage.setItem('authToken', response.jwt);
-
-      // Navigate to the dashboard after successful login
-      router.replace('/dashboard');
+      
+      if (response) {
+        // Navigate to the dashboard after successful login
+        router.replace("/dashboard");
+      }
+      
 
     } catch (error) {
       console.error('Error', error.message);
