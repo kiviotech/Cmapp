@@ -1,6 +1,7 @@
 import { View, Image, TextInput, Pressable, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
 import { icons } from '../../constants';
+import colors from '../../constants/colors';
 
 const LoginField = ({ value = '', placeholder, handleChangeText, secureTextEntry = false, keyboardType = "default" }) => {
     const [showPassword, setShowPassword] = useState(false);
@@ -47,8 +48,8 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     input: {
-        backgroundColor: '#FFF',
-        borderColor: '#B3B3B3',
+        backgroundColor: colors.whiteColor,
+        borderColor: colors.borderColor,
         borderWidth: 1,
         borderRadius: 10,
         paddingHorizontal: 10,

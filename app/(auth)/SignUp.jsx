@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, Alert, Image, StyleSheet, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import { Picker } from '@react-native-picker/picker'; // Import Picker component
+import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/CustomButton';
 import LoginField from '../../components/LoginField';
@@ -9,13 +10,14 @@ import { icons } from '../../constants';
 import FileUpload from '../../components/FileUploading/FileUpload';
 import fonts from '../../constants/fonts';
 import colors from '../../constants/colors';
-
+import { getProjects } from "../../src/api/repositories/projectRepository";
 NativeWindStyleSheet.setOutput({
     default: "native",
 });
 
 const SignUp = () => {
-    const [selectedProject, setSelectedProject] = useState('');
+    const [selectedProject, setSelectedProject] = useState(''); // State for dropdown selection
+    const [projectsDetail, setProjectsDetail] = useState([]);
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -68,6 +70,15 @@ const SignUp = () => {
         }
     };
 
+    useEffect(() => {
+        const fetchProjects = async () => {
+            const data = await getProjects();
+            setProjectsDetail(data.data.data);
+            console.log(data.data.data);
+        };
+
+        fetchProjects();
+    }, []);
     return (
         <ScrollView contentContainerStyle={styles.scrollContent}>
             <SafeAreaView style={styles.container}>
@@ -120,21 +131,29 @@ const SignUp = () => {
                         </View>
                     </View>
 
-                    {/* Project Selection Section */}
-                    {/* Project Selection */}
+
+                    {/* Project Selection Dropdown */}
                     <View style={styles.projectSelectionContainer}>
                         <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
-                        <TouchableOpacity onPress={() => setSelectedProject('Project Name 1')} style={styles.radioContainer}>
-                            <View style={[styles.radioCircle, selectedProject === 'Project Name 1' && styles.radioCircleSelected]} />
-                            <Text style={selectedProject === 'Project Name 1' ? styles.radioTextSelected : styles.radioText}>Project Name 1</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setSelectedProject('Project Name 2')} style={styles.radioContainer}>
-                            <View style={[styles.radioCircle, selectedProject === 'Project Name 2' && styles.radioCircleSelected]} />
-                            <Text style={selectedProject === 'Project Name 2' ? styles.radioTextSelected : styles.radioText}>Project Name 2</Text>
-                        </TouchableOpacity>
-                        {errors.selectedProject && <Text style={styles.errorText}>{errors.selectedProject}</Text>}
-                    </View>
+                        <View style={styles.pickerContainer}>
+                            <Picker
+                                selectedValue={selectedProject}
+                                onValueChange={(itemValue) => setSelectedProject(itemValue)}
+                                style={styles.picker}
+                            >
+                                <Picker.Item label="Select a project" value="" />
+                                {projectsDetail.map((project, index) => (
+                                    <Picker.Item
+                                        key={index}
+                                        label={project.attributes.name}
+                                        value={project.attributes.name}
+                                    />
+                                ))}
+                            </Picker>
+                        </View>
 
+                        {errors.project && <Text style={styles.errorText}>{errors.project}</Text>}
+                    </View>
                     <View>
                         <FileUpload />
                     </View>
@@ -207,13 +226,7 @@ const styles = StyleSheet.create({
     projectSelectionContainer: {  // Styles for project selection container
         marginVertical: 16,
     },
-    picker: {  // Styles for the Picker
-        height: 50,
-        width: '100%',
-        backgroundColor: '#f0f0f0',
-        marginBottom: 10,
-    },
-    labelText: {
+    belText: {
         color: colors.loginSignUpLabelColor,
         fontSize: 13,
         paddingBottom: 2,
@@ -269,37 +282,18 @@ const styles = StyleSheet.create({
         fontFamily: fonts.Inter500
     },
 
-    projectSelectionContainer: {
-        marginBottom: 20,
-        marginTop: 20,
+    pickerContainer: {
+        borderWidth: 0,
+        borderColor: colors.borderColor,
+
+        marginTop: 8,
     },
-    radioContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 8,
-    },
-    radioCircle: {
-        height: 18,
-        width: 18,
-        borderRadius: 10,
-        borderWidth: 2,
-        borderColor: '#577CFF',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 8,
-    },
-    radioCircleSelected: {
-        backgroundColor: '#577CFF',
-    },
-    radioText: {
-        fontSize: 14,
-        fontFamily: fonts.WorkSans400,
-        color: '#333',
-    },
-    radioTextSelected: {
-        fontSize: 14,
-        fontFamily: fonts.WorkSans700,
+    picker: {
+        height: 50,
+        width: '100%',
         color: '#000',
+        borderRadius: 10,
+        fontFamily: fonts.WorkSans400,
     },
     errorText: {
         color: 'red',
