@@ -9,6 +9,7 @@ const FileUpload = () => {
   const [uploading, setUploading] = useState(false);
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
+  const uploadIntervals = useRef({});
 
   const handleFileUpload = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -43,6 +44,8 @@ const FileUpload = () => {
           setUploading(false);
         }
       }, 500);
+
+      uploadIntervals.current[newFile.name] = interval;
     }
   };
 
@@ -88,6 +91,8 @@ const FileUpload = () => {
             setUploading(false);
           }
         }, 500);
+
+        uploadIntervals.current[newFile.name] = interval;
       }
     }
   };
@@ -111,11 +116,24 @@ const FileUpload = () => {
       });
   };
 
+  const handleRemoveFile = (fileName) => {
+    // Clear the interval if the file is uploading
+    if (uploadIntervals.current[fileName]) {
+      clearInterval(uploadIntervals.current[fileName]);
+      delete uploadIntervals.current[fileName];
+    }
+
+    // Remove the file from the list
+    setUploadedFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+  };
+
   useEffect(() => {
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
+      // Clear all intervals on component unmount
+      Object.values(uploadIntervals.current).forEach(clearInterval);
     };
   }, [stream]);
 
@@ -176,11 +194,9 @@ const FileUpload = () => {
                 />
               </View>
             </View>
-            {file.status === 'success' ? (
+            <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
               <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color="#FC5275" />
-            ) : (
-              <FontAwesome style={{ marginTop: 15 }} name="times" size={15} color="#FC5275" />
-            )}
+            </TouchableOpacity>
           </View>
         ))}
       </View>
@@ -265,7 +281,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressBar: {
-    height: 8,
+    height: '100%',
     borderRadius: 4,
   },
 });
