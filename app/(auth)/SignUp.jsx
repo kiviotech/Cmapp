@@ -18,6 +18,33 @@ NativeWindStyleSheet.setOutput({
 const SignUp = () => {
     const [selectedProject, setSelectedProject] = useState(''); // State for dropdown selection
     const [projectsDetail, setProjectsDetail] = useState([]);
+
+    const cardDataArray = [
+        {
+            projectId: 1,
+            projectName: "Survey and Marking",
+            projectDescription:
+                "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
+            deadline: Date.now(),
+            taskStatus: "Task Completed",
+            taskStatusColor: "#A3D65C",
+            cardColor: "#EEF7E0",
+            status: "",
+        },
+        {
+            projectId: 2,
+            projectName: "Verification & Inspection",
+            projectDescription:
+                "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+            deadline: Date.now(),
+            taskStatus: "Rejected",
+            taskStatusColor: "#FC5275",
+            cardColor: "#FED5DD",
+            status: "rejected",
+        },
+
+
+    ];
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -71,13 +98,16 @@ const SignUp = () => {
     };
 
     useEffect(() => {
-        const fetchProjects = async () => {
-            const data = await getProjects();
-            setProjectsDetail(data.data.data);
-            console.log(data.data.data);
-        };
 
-        fetchProjects();
+
+        setProjectsDetail(cardDataArray);
+        // const fetchProjects = async () => {
+        //     const data = await getProjects();
+        //     setProjectsDetail(data.data.data);
+        //     console.log(data.data.data);
+        // };
+
+        // fetchProjects();
     }, []);
     return (
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -145,8 +175,8 @@ const SignUp = () => {
                                 {projectsDetail.map((project, index) => (
                                     <Picker.Item
                                         key={index}
-                                        label={project.attributes.name}
-                                        value={project.attributes.name}
+                                        label={project?.projectName}
+                                        value={project?.projectId}
                                     />
                                 ))}
                             </Picker>

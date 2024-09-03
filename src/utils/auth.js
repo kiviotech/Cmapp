@@ -20,6 +20,27 @@ export const login = async (email, password) => {
   }
 };
 
+export const signup = async (name, email, password, socialSecurity, projectSelection) => {
+  try {
+    const response = await apiClient.post("/auth/registration", {
+      fullName,
+      email,
+      password,
+      socialSecurity,
+      projectSelection,
+    });
+
+    // Extract JWT and user data from the response
+    const { jwt, user } = response.data;
+
+    // Save the JWT to secure storage
+    saveToken(jwt);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const logout = (jwt) => {
   deleteToken(jwt);
 };
