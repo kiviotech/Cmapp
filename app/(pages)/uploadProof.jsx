@@ -239,7 +239,7 @@ const UploadProof = () => {
                             </View>
                         )}
                     </View>
-                    <Text style={styles.instructions}>2. Wait for your supervisor’s Approval</Text>
+                    <Text style={styles.instructions}>2.supervisor’s Approval</Text>
                 </View>
 
             </ScrollView>
