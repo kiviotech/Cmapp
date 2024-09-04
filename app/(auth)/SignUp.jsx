@@ -10,7 +10,8 @@ import { icons } from '../../constants';
 import FileUpload from '../../components/FileUploading/FileUpload';
 import fonts from '../../constants/fonts';
 import colors from '../../constants/colors';
-import { getProjects } from "../../src/api/repositories/projectRepository";
+import { signup } from '../../src/utils/auth';  // Import the signup function
+
 NativeWindStyleSheet.setOutput({
     default: "native",
 });
@@ -42,9 +43,8 @@ const SignUp = () => {
             cardColor: "#FED5DD",
             status: "rejected",
         },
-
-
     ];
+
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -64,9 +64,9 @@ const SignUp = () => {
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email address';
         if (!form.password) newErrors.password = 'Password is required';
         else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
-        if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
-        else if (!/^\d{9}$/.test(form.socialSecurity)) newErrors.socialSecurity = 'Enter a valid 9-digit Social Security Number';
-        if (!form.project) newErrors.project = 'Please select a project';  // New validation rule
+        // if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
+        // else if (!/^\d{9}$/.test(form.socialSecurity)) newErrors.socialSecurity = 'Enter a valid 9-digit Social Security Number';
+        // if (!selectedProject) newErrors.project = 'Please select a project';  // Update validation rule to check selectedProject
 
         return newErrors;
     };
@@ -91,24 +91,30 @@ const SignUp = () => {
         }
 
         try {
+            const { name, email, password, socialSecurity } = form;
+            const project = selectedProject;
+
+            // Call the signup function with the form data
+            await signup(name, email, password, socialSecurity, project);
+
+            // Navigate to the login page after successful signup
             router.replace('/login');
         } catch (error) {
-            Alert.alert('Error', error.message);
+            Alert.alert('Error', error.response?.data?.message || error.message);
         }
     };
 
     useEffect(() => {
-
-
         setProjectsDetail(cardDataArray);
+        // Uncomment if fetching projects from an API
         // const fetchProjects = async () => {
         //     const data = await getProjects();
         //     setProjectsDetail(data.data.data);
         //     console.log(data.data.data);
         // };
-
         // fetchProjects();
     }, []);
+
     return (
         <ScrollView contentContainerStyle={styles.scrollContent}>
             <SafeAreaView style={styles.container}>
@@ -161,14 +167,16 @@ const SignUp = () => {
                         </View>
                     </View>
 
-
                     {/* Project Selection Dropdown */}
                     <View style={styles.projectSelectionContainer}>
                         <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
                         <View style={styles.pickerContainer}>
                             <Picker
                                 selectedValue={selectedProject}
-                                onValueChange={(itemValue) => setSelectedProject(itemValue)}
+                                onValueChange={(itemValue) => {
+                                    setSelectedProject(itemValue);
+                                    handleChangeText('project', itemValue);  // Update project selection and validate
+                                }}
                                 style={styles.picker}
                             >
                                 <Picker.Item label="Select a project" value="" />
@@ -181,9 +189,9 @@ const SignUp = () => {
                                 ))}
                             </Picker>
                         </View>
-
                         {errors.project && <Text style={styles.errorText}>{errors.project}</Text>}
                     </View>
+
                     <View>
                         <FileUpload />
                     </View>
@@ -208,16 +216,22 @@ const SignUp = () => {
                             <View style={styles.separator} />
                         </View>
 
-                        <View style={styles.socialButtonsContainer}>
-                            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex flex-row justify-center items-center space-x-2" style={styles.socialButton}>
-                                <Image source={icons.facebook} className="w-6 h-6" />
-                                <Text className="font-inter400" style={styles.socialButtonText}>FACEBOOK</Text>
+                        {/* <View style={styles.socialButtonsContainer}>
+                            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex justify-center items-center p-3">
+                                <Image
+                                    source={icons.google}
+                                    resizeMode="contain"
+                                    style={styles.socialIcon}
+                                />
                             </TouchableOpacity>
-                            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full p-4 shadow flex flex-row justify-center items-center space-x-2" style={styles.socialButton}>
-                                <Image source={icons.google} className="w-6 h-6" />
-                                <Text className="font-inter400" style={styles.socialButtonText}>GOOGLE</Text>
+                            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex justify-center items-center p-3">
+                                <Image
+                                    source={icons.facebook}
+                                    resizeMode="contain"
+                                    style={styles.socialIcon}
+                                />
                             </TouchableOpacity>
-                        </View>
+                        </View> */}
                     </View>
                 </View>
             </SafeAreaView>
@@ -228,107 +242,67 @@ const SignUp = () => {
 export default SignUp;
 
 const styles = StyleSheet.create({
-    scrollContent: {
-        flexGrow: 1,
-    },
     container: {
         flex: 1,
-        backgroundColor: colors.background,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 10,
-        paddingTop: 20
+        padding: 24,
     },
     content: {
-        width: '100%',
-        maxWidth: 400,
-        paddingHorizontal: 16,
-    },
-    header: {
-        marginBottom: 32,
+        flex: 1,
+        justifyContent: 'center',
     },
     inputContainer: {
-        marginBottom: 16,
+        marginVertical: 20,
     },
     passwordContainer: {
-        marginTop: 32,
+        marginTop: 20,
     },
-    projectSelectionContainer: {  // Styles for project selection container
-        marginVertical: 16,
-    },
-    belText: {
-        color: colors.loginSignUpLabelColor,
-        fontSize: 13,
-        paddingBottom: 2,
-        fontFamily: fonts.WorkSans400
-    },
+
     buttonContainer: {
-        marginTop: 32,
+        marginTop: 20,
         alignItems: 'center',
+    },
+    labelText: {
+        marginBottom: 10,
+        fontFamily: fonts.inter400,
+    },
+    loginField: {
+        marginBottom: 15,
+    },
+
+    picker: {
+        height: 50,
+        borderRadius: 10,
+        padding: 5
+    },
+    errorText: {
+        color: 'red',
+        marginTop: 5,
+        fontFamily: fonts.inter400,
     },
     SignUpContainer: {
+        marginTop: 50,
         alignItems: 'center',
-        marginTop: 32,
     },
     separatorContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginVertical: 16,
+        marginTop: 20,
     },
     separator: {
         flex: 1,
         height: 1,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: '#E1E1E1',
     },
-    socialButtonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 20
-    },
-    socialButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 140,
-        height: 42,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 1.41,
-        elevation: 2,
-    },
-    socialButtonText: {
-        fontSize: 14,
-        fontFamily: fonts.WorkSans500,
-        color: '#333',
-        marginLeft: 8,
-    },
-    errorText: {
-        color: 'red',
-        fontSize: 12,
-        marginTop: 2,
-        fontFamily: fonts.Inter500
-    },
-
-    pickerContainer: {
-        borderWidth: 0,
-        borderColor: colors.borderColor,
-
-        marginTop: 8,
-    },
-    picker: {
-        height: 50,
-        width: '100%',
-        color: '#000',
-        borderRadius: 10,
-        fontFamily: fonts.WorkSans400,
-    },
-    errorText: {
-        color: 'red',
-        fontSize: 12,
-        marginTop: 2,
-        fontFamily: fonts.Inter500
-    },
+    // socialButtonsContainer: {
+    //     flexDirection: 'row',
+    //     marginTop: 20,
+    //     justifyContent: 'center',
+    // },
+    // socialIcon: {
+    //     width: 24,
+    //     height: 24,
+    // },
+    scrollContent: {
+        flexGrow: 1,
+    }
 });
