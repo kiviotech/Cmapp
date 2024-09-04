@@ -1,6 +1,6 @@
 const taskEndpoints = {
-  getTasks: '/tasks',
-  getTaskById: id => `/tasks/${id}`,
+  getTasks: '/tasks?populate=*',
+  getTaskById: id => `/tasks/${id}?populate=*`,
   createTask: '/tasks',
   updateTask: id => `/tasks/${id}`,
   deleteTask: id => `/tasks/${id}`,
