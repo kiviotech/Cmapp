@@ -11,10 +11,13 @@ import { icons } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 const MyProjectCard = ({ cardValue, cardColor }) => {
   const navigation = useNavigation();
+
   return (
     <ScrollView>
       <TouchableOpacity
-        onPress={() => navigation.navigate("(pages)/taskDetails")}
+        onPress={() =>
+          navigation.navigate("(pages)/taskDetails", { id: cardValue.id })
+        }
       >
         <View style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}>
           <Text style={styles.projectName}>{cardValue.attributes.name}</Text>

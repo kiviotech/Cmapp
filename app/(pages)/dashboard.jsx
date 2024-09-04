@@ -19,22 +19,46 @@ import CustomHomePageCard from "../../components/CustomHomePageCard/CustomHomePa
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import { getProjects } from "../../src/api/repositories/projectRepository";
+import { getTasks } from "../../src/api/repositories/taskRepository";
 
 const dashboard = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const navigation = useNavigation(); // Use the hook to get navigation object
   const [projectsDetail, setProjectsDetail] = useState([]);
+  const [tasksDetail, setTasksDetail] = useState([]);
+
 
   useEffect(() => {
     const fetchProjects = async () => {
-      const data = await getProjects();
-      setProjectsDetail(data.data.data);
-      console.log(data.data.data);
+      try {
+        const projectData = await getProjects();
+        
+        setProjectsDetail(projectData.data.data);
+
+        const taskData = await getTasks();
+        setTasksDetail(taskData.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
 
     fetchProjects();
   }, []);
-  console.log(projectsDetail);
+
+  console.log("Projects Detail:", projectsDetail);
+  console.log("Tasks Detail:", tasksDetail);
+
+   const completedTasks = tasksDetail.filter(
+     (task) => task.attributes.status === "completed"
+  );
+  
+  const notCompletedTasks = tasksDetail?.filter(
+    (task) =>
+      task.attributes.status === "not_completed" ||
+      task.attributes.status === "rejected"
+  );
+
+
   const cardDataArray = [
     {
       projectName: "Survey and Marking",
@@ -177,15 +201,17 @@ const dashboard = () => {
                   desc: project.attributes.description,
                   update: project.attributes.update_status,
                   deadline: project.attributes.deadline,
-                  cardColor: project.attributes.card_color,
-                  active: project.attributes.active_status,
                 }}
               />
             </View>
           ))}
         </ScrollView>
 
-        <Text style={styles.projectitle}>Project 1</Text>
+        <Text style={styles.projectitle}>
+          {projectsDetail.length > 0
+            ? projectsDetail[0].attributes.name
+            : "Project"}
+        </Text>
         <View
           style={{
             flexDirection: "row",
@@ -198,7 +224,7 @@ const dashboard = () => {
           <View>
             <Text style={styles.userName}>Recent Milestones</Text>
             <Text style={[styles.greeting, { paddingTop: 5 }]}>
-              7 Tasks Done
+              {completedTasks.length} Tasks Done
             </Text>
           </View>
           <View style={styles.iconsContainer}>
@@ -216,7 +242,7 @@ const dashboard = () => {
               cardColor={cardData.cardColor}
             />
           ))} */}
-          {projectsDetail.map((cardData, index) => {
+          {completedTasks.map((cardData, index) => {
             return <SubtaskCard key={index} cardValue={cardData} />;
           })}
         </View>
@@ -233,7 +259,7 @@ const dashboard = () => {
           <View>
             <Text style={styles.userName}>Upcoming Milestones</Text>
             <Text style={[styles.greeting, { paddingTop: 5 }]}>
-              7 Tasks Pending
+              {notCompletedTasks.length} Tasks Pending
             </Text>
           </View>
           <View style={styles.iconsContainer}>
@@ -243,11 +269,10 @@ const dashboard = () => {
           </View>
         </View>
 
-        {cardDataArray.map((cardData, index) => (
+        {notCompletedTasks.map((cardData, index) => (
           <CustomHomePageCard
             key={index}
             cardValue={cardData}
-            cardColor={cardData.cardColor}
           />
         ))}
 

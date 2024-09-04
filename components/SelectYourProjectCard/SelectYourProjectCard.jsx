@@ -5,7 +5,7 @@ import { icons } from "../../constants";
 const SelectYourProjectCard = ({ cardValue, cardColor }) => {
   return (
     <ScrollView>
-      <View style={[styles.cardContainer, { backgroundColor: cardColor }]}>
+      <View style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}>
         <Text style={styles.projectName}>{cardValue.name}</Text>
         <Text style={styles.projectDescription}>{cardValue.desc}</Text>
         <View>
