@@ -10,7 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import { login } from '../../src/utils/auth';
-import { saveToken,  deleteToken } from '../../src/utils/storage';
+import { saveToken, deleteToken } from '../../src/utils/storage';
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -66,7 +66,7 @@ const Login = () => {
   };
 
   const handleLogin = async () => {
-    
+
     try {
       const mobileError = validateField('mobile', form.mobile);
       const passwordError = usePassword ? validateField('password', form.password) : '';
@@ -83,12 +83,12 @@ const Login = () => {
 
       // Attempt to log in with the provided mobile and password/otp
       const response = await login(form.mobile, usePassword ? form.password : form.otp);
-      
+
       if (response) {
         // Navigate to the dashboard after successful login
         router.replace("/dashboard");
       }
-      
+
 
     } catch (error) {
       console.error('Error', error.message);
@@ -164,13 +164,13 @@ const Login = () => {
             </TouchableOpacity>
           </Text>
 
-          <View style={styles.separatorContainer}>
+          {/* <View style={styles.separatorContainer}>
             <View style={styles.separator} />
             <Text className="mx-4 font-pmedium text-sm text-[#9C9C9C] font-inter400">Sign up with</Text>
             <View style={styles.separator} />
-          </View>
+          </View> */}
 
-          <View style={styles.socialButtonsContainer}>
+          {/* <View style={styles.socialButtonsContainer}>
             <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex flex-row justify-center items-center space-x-2" style={styles.socialButton}>
               <Image source={icons.facebook} className="w-6 h-6" />
               <Text className="font-inter400" style={styles.socialButtonText}>FACEBOOK</Text>
@@ -179,7 +179,7 @@ const Login = () => {
               <Image source={icons.google} className="w-6 h-6" />
               <Text className="font-inter400" style={styles.socialButtonText}>GOOGLE</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
       </View>
     </SafeAreaView>
@@ -240,26 +240,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 16,
   },
-  separator: {
-    borderColor: colors.borderColor,
-    borderWidth: 1,
-    width: 100,
-  },
-  socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-    spaceX: 16,
-  },
-  socialButton: {
-    width: 147,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10
-  },
-  socialButtonText: {
-    fontSize: 13,
-  },
+  // separator: {
+  //   borderColor: colors.borderColor,
+  //   borderWidth: 1,
+  //   width: 100,
+  // },
+  // socialButtonsContainer: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'center',
+  //   alignItems: 'center',
+  //   marginTop: 24,
+  //   spaceX: 16,
+  // },
+  // socialButton: {
+  //   width: 147,
+  //   height: 50,
+  //   justifyContent: 'center',
+  //   alignItems: 'center',
+  //   marginRight: 10
+  // },
+  // socialButtonText: {
+  //   fontSize: 13,
+  // },
 });
