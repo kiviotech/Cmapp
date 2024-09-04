@@ -19,7 +19,7 @@ NativeWindStyleSheet.setOutput({
 const SignUp = () => {
     const [selectedProject, setSelectedProject] = useState(''); // State for dropdown selection
     const [projectsDetail, setProjectsDetail] = useState([]);
-
+    const [uploadedFiles, setUploadedFiles] = useState([]);
     const cardDataArray = [
         {
             projectId: 1,
@@ -50,7 +50,8 @@ const SignUp = () => {
         email: '',
         password: '',
         socialSecurity: '',
-        project: '',  // New state for project selection
+        contractorLicense: null
+        // project: '',  // New state for project selection
     });
 
     const [errors, setErrors] = useState({});
@@ -64,8 +65,9 @@ const SignUp = () => {
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email address';
         if (!form.password) newErrors.password = 'Password is required';
         else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
-        // if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
-        // else if (!/^\d{9}$/.test(form.socialSecurity)) newErrors.socialSecurity = 'Enter a valid 9-digit Social Security Number';
+        if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
+        else if (form.socialSecurity.length < 6) newErrors.socialSecurity = 'Enter a valid 6-digit Social Security Number';
+        if (!uploadedFiles && !form.contractorLicense) newErrors.contractorLicense = 'File is required';  // Check if a file is uploaded or selected
         // if (!selectedProject) newErrors.project = 'Please select a project';  // Update validation rule to check selectedProject
 
         return newErrors;
@@ -84,6 +86,7 @@ const SignUp = () => {
     };
 
     const submit = async () => {
+      
         const newErrors = validate();
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -92,17 +95,18 @@ const SignUp = () => {
 
         try {
             const { name, email, password, socialSecurity } = form;
-            const project = selectedProject;
+            const contractorLicense = uploadedFiles || form.contractorLicense;  // Use uploaded file if available
+            const res = await signup(name, email, password, socialSecurity,contractorLicense);
+            console.log('Sign up successful');
+            if (res) {
+                router.replace('/login');
+            }
 
-            // Call the signup function with the form data
-            await signup(name, email, password, socialSecurity, project);
-
-            // Navigate to the login page after successful signup
-            router.replace('/login');
         } catch (error) {
             Alert.alert('Error', error.response?.data?.message || error.message);
         }
     };
+
 
     useEffect(() => {
         setProjectsDetail(cardDataArray);
@@ -168,7 +172,7 @@ const SignUp = () => {
                     </View>
 
                     {/* Project Selection Dropdown */}
-                    <View style={styles.projectSelectionContainer}>
+                    {/* <View style={styles.projectSelectionContainer}>
                         <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
                         <View style={styles.pickerContainer}>
                             <Picker
@@ -190,10 +194,11 @@ const SignUp = () => {
                             </Picker>
                         </View>
                         {errors.project && <Text style={styles.errorText}>{errors.project}</Text>}
-                    </View>
+                    </View> */}
 
                     <View>
-                        <FileUpload />
+                        <FileUpload uploadedFiles={uploadedFiles} setUploadedFiles={setUploadedFiles} />
+                        {errors.contractorLicense && <Text style={styles.errorText}>{errors.contractorLicense}</Text>}
                     </View>
 
                     <View style={styles.buttonContainer}>

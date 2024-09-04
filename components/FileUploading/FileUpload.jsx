@@ -3,8 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import * as ImagePicker from 'expo-image-picker';
 import { FontAwesome } from '@expo/vector-icons';
 
-const FileUpload = () => {
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const videoRef = useRef(null);
@@ -20,7 +19,7 @@ const FileUpload = () => {
     });
 
     if (!result.canceled) {
-      const newFile = { name: result?.assets[0]?.fileName, progress: 0, status: 'uploading' };
+      const newFile = { uri: result.assets[0].uri, name: result.assets[0].fileName, progress: 0, status: 'uploading' };
       setUploadedFiles([...uploadedFiles, newFile]);
       setUploading(true);
 
@@ -42,6 +41,9 @@ const FileUpload = () => {
             )
           );
           setUploading(false);
+
+          // Send the file to the API after upload is complete
+          uploadFileToAPI(newFile);
         }
       }, 500);
 
@@ -67,7 +69,7 @@ const FileUpload = () => {
       });
 
       if (!result.canceled) {
-        const newFile = { name: result?.uri?.split('/').pop(), progress: 0, status: 'uploading' };
+        const newFile = { uri: result.uri, name: result.uri.split('/').pop(), progress: 0, status: 'uploading' };
         setUploadedFiles([...uploadedFiles, newFile]);
         setUploading(true);
 
@@ -85,15 +87,45 @@ const FileUpload = () => {
             clearInterval(interval);
             setUploadedFiles((prevFiles) =>
               prevFiles.map((file) =>
-                file.name === newFile?.name ? { ...file, status: 'success', progress: 100 } : file
+                file.name === newFile.name ? { ...file, status: 'success', progress: 100 } : file
               )
             );
             setUploading(false);
+
+            // Send the file to the API after upload is complete
+            uploadFileToAPI(newFile);
           }
         }, 500);
 
         uploadIntervals.current[newFile.name] = interval;
       }
+    }
+  };
+
+  const uploadFileToAPI = async (file) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: file.uri,
+      name: file.name,
+      type: 'image/jpeg', // You can set this dynamically based on the file type
+    });
+
+    try {
+      const response = await fetch('your-api-endpoint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        console.log('File uploaded successfully');
+      } else {
+        console.log('Failed to upload file');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
     }
   };
 
