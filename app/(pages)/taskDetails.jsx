@@ -1,25 +1,19 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  Image,
-} from "react-native";
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image,TouchableOpacity } from "react-native";
 import CustomButton from "../../components/CustomButton";
-import BottomNavigation from "./BottomNavigation ";
 import { icons } from "../../constants";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import { useRoute } from "@react-navigation/native";
 import { getTaskById } from "../../src/api/repositories/taskRepository";
-const taskDetails = () => {
+import BottomNavigation from "./BottomNavigation ";
+import { useNavigation } from "@react-navigation/native";
+
+const TaskDetails = () => {
   const [tasksDetail, setTasksDetail] = useState([]);
   const route = useRoute();
   const { id } = route.params || {}; // Default to an empty object if params is undefined
-
-  console.log("sdfsdfsdf", id);
+  const navigation = useNavigation();
   useEffect(() => {
     const fetchTasksByID = async () => {
       try {
@@ -35,15 +29,17 @@ const taskDetails = () => {
 
   return (
     <View style={styles.rootContainer}>
-      <SafeAreaView style={styles.container}>
-        <ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <SafeAreaView style={styles.safeAreaView}>
+
+
           {/* Header Section */}
           <View style={styles.header}>
             <Text style={styles.detailsText}>Details</Text>
             <View style={styles.deadlineContainer}>
               <Image source={icons.calendar} />
               <Text style={styles.deadlineText}>
-                Deadline:{tasksDetail?.attributes?.deadline}
+                Deadline: {tasksDetail?.attributes?.deadline}
               </Text>
             </View>
           </View>
@@ -68,7 +64,7 @@ const taskDetails = () => {
                   fontFamily: "WorkSans_500Medium",
                   color: "#577CFF",
                 }}
-                              text={tasksDetail?.attributes?.stage?.data?.attributes?.name}
+                text={tasksDetail?.attributes?.stage?.data?.attributes?.name}
               />
             </View>
             <Text style={styles.projectDescription}>
@@ -105,8 +101,29 @@ const taskDetails = () => {
               </Text>
             </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+
+          <View style={styles.showAttechmentsContainer}>
+            <View style={styles.showAttechments}>
+              <Image source={icons.showAttechments} />
+              <Text style={{ color: colors.primary, fontFamily: fonts.WorkSans400, fontSize: 12 }}>
+                Show attachments
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.showAttechments, styles.uploadProof]}
+              onPress={() => navigation.navigate("(pages)/uploadProof", { id: id })}
+            >
+              <Image source={icons.upload} />
+              <Text style={{ color: colors.whiteColor, fontFamily: fonts.WorkSans400, fontSize: 12 }}>
+                Upload your Proof of work
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+        </SafeAreaView>
+      </ScrollView>
+
       <BottomNavigation />
     </View>
   );
@@ -115,14 +132,15 @@ const taskDetails = () => {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    padding: 16, // Space from all sides
     backgroundColor: colors.whiteColor,
-  },
-  container: {
-    flex: 1,
+    padding: 10,
+
   },
   safeAreaView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 16,
   },
   header: {
     marginBottom: 16,
@@ -199,6 +217,26 @@ const styles = StyleSheet.create({
     fontSize: 10,
     paddingLeft: 10,
   },
+  showAttechmentsContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 15
+  },
+  showAttechments: {
+    borderColor: colors.primary,
+    borderWidth: 1,
+    padding: 10,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    color: colors.primary
+  },
+  uploadProof: {
+    backgroundColor: colors.primary,
+    marginTop: 15
+  }
 });
 
-export default taskDetails;
+export default TaskDetails;

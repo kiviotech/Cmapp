@@ -32,7 +32,7 @@ const dashboard = () => {
     const fetchProjects = async () => {
       try {
         const projectData = await getProjects();
-        
+
         setProjectsDetail(projectData.data.data);
 
         const taskData = await getTasks();
@@ -48,10 +48,10 @@ const dashboard = () => {
   console.log("Projects Detail:", projectsDetail);
   console.log("Tasks Detail:", tasksDetail);
 
-   const completedTasks = tasksDetail.filter(
-     (task) => task.attributes.status === "completed"
+  const completedTasks = tasksDetail.filter(
+    (task) => task.attributes.status === "completed"
   );
-  
+
   const notCompletedTasks = tasksDetail?.filter(
     (task) =>
       task.attributes.status === "not_completed" ||
@@ -154,37 +154,38 @@ const dashboard = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Image source={icons.user1} style={styles.profileImage} />
-        <View>
-          <Text style={styles.userName}>Dan Smith</Text>
-          <Text style={styles.greeting}>Project Supervisor</Text>
+    <ScrollView>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Image source={icons.user1} style={styles.profileImage} />
+          <View>
+            <Text style={styles.userName}>Dan Smith</Text>
+            <Text style={styles.greeting}>Project Supervisor</Text>
+          </View>
+          <View style={styles.iconsContainer}>
+            <TouchableOpacity style={styles.icon} onPress={handleSearchPress}>
+              <Image source={icons.search} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("(pages)/notification")}
+              style={styles.icon}
+            >
+              <Image source={icons.bell} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.iconsContainer}>
-          <TouchableOpacity style={styles.icon} onPress={handleSearchPress}>
-            <Image source={icons.search} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("(pages)/notification")}
-            style={styles.icon}
-          >
-            <Image source={icons.bell} />
-          </TouchableOpacity>
-        </View>
-      </View>
 
-      {isSearchVisible && (
-        <View style={styles.searchBarContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search..."
-            placeholderTextColor="#999"
-          />
-        </View>
-      )}
+        {isSearchVisible && (
+          <View style={styles.searchBarContainer}>
+            <TextInput
+              style={styles.searchBar}
+              placeholder="Search..."
+              placeholderTextColor="#999"
+            />
+          </View>
+        )}
 
-      <ScrollView>
+
         <Text style={styles.title}>Select Your Project</Text>
 
         {/* Horizontal ScrollView for the Carousel */}
@@ -305,9 +306,10 @@ const dashboard = () => {
             ))}
           </ScrollView>
         </View>
-      </ScrollView>
-      <BottomNavigation />
-    </SafeAreaView>
+
+        <BottomNavigation />
+      </SafeAreaView>
+    </ScrollView>
   );
 };
 

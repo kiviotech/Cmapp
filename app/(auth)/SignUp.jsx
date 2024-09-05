@@ -1,16 +1,15 @@
-import { View, Text, TouchableOpacity, Alert, Image, StyleSheet, ScrollView } from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // Import Picker component
+import { View, Text, Alert, StyleSheet, ScrollView } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown'; // Import the Dropdown component
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/CustomButton';
 import LoginField from '../../components/LoginField';
 import { useRouter } from 'expo-router';
 import { NativeWindStyleSheet } from "nativewind";
-import { icons } from '../../constants';
 import FileUpload from '../../components/FileUploading/FileUpload';
 import fonts from '../../constants/fonts';
-import colors from '../../constants/colors';
 import { signup } from '../../src/utils/auth';  // Import the signup function
+import colors from '../../constants/colors';
 
 NativeWindStyleSheet.setOutput({
     default: "native",
@@ -20,12 +19,23 @@ const SignUp = () => {
     const [selectedProject, setSelectedProject] = useState(''); // State for dropdown selection
     const [projectsDetail, setProjectsDetail] = useState([]);
     const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [isDropdownFocused, setIsDropdownFocused] = useState(false); // Add state for dropdown focus
+    const [form, setForm] = useState({
+        name: '',
+        email: '',
+        password: '',
+        socialSecurity: '',
+        contractorLicense: null
+    });
+
+    const [errors, setErrors] = useState({});
+    const router = useRouter();
+
     const cardDataArray = [
         {
             projectId: 1,
             projectName: "Survey and Marking",
-            projectDescription:
-                "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
+            projectDescription: "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
             deadline: Date.now(),
             taskStatus: "Task Completed",
             taskStatusColor: "#A3D65C",
@@ -35,8 +45,37 @@ const SignUp = () => {
         {
             projectId: 2,
             projectName: "Verification & Inspection",
-            projectDescription:
-                "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+            deadline: Date.now(),
+            taskStatus: "Rejected",
+            taskStatusColor: "#FC5275",
+            cardColor: "#FED5DD",
+            status: "rejected",
+        },
+        {
+            projectId: 2,
+            projectName: "Verification & Inspection",
+            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+            deadline: Date.now(),
+            taskStatus: "Rejected",
+            taskStatusColor: "#FC5275",
+            cardColor: "#FED5DD",
+            status: "rejected",
+        },
+        {
+            projectId: 2,
+            projectName: "Verification & Inspection",
+            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+            deadline: Date.now(),
+            taskStatus: "Rejected",
+            taskStatusColor: "#FC5275",
+            cardColor: "#FED5DD",
+            status: "rejected",
+        },
+        {
+            projectId: 2,
+            projectName: "Verification & Inspection",
+            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
             deadline: Date.now(),
             taskStatus: "Rejected",
             taskStatusColor: "#FC5275",
@@ -45,17 +84,13 @@ const SignUp = () => {
         },
     ];
 
-    const [form, setForm] = useState({
-        name: '',
-        email: '',
-        password: '',
-        socialSecurity: '',
-        contractorLicense: null
-        // project: '',  // New state for project selection
-    });
+    useEffect(() => {
+        setProjectsDetail(cardDataArray);
+    }, []);
 
-    const [errors, setErrors] = useState({});
-    const router = useRouter();
+    const handleChangeText = (field, value) => {
+        setForm({ ...form, [field]: value });
+    };
 
     const validate = () => {
         const newErrors = {};
@@ -67,26 +102,12 @@ const SignUp = () => {
         else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
         if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
         else if (form.socialSecurity.length < 6) newErrors.socialSecurity = 'Enter a valid 6-digit Social Security Number';
-        if (!uploadedFiles && !form.contractorLicense) newErrors.contractorLicense = 'File is required';  // Check if a file is uploaded or selected
-        // if (!selectedProject) newErrors.project = 'Please select a project';  // Update validation rule to check selectedProject
+        if (!uploadedFiles && !form.contractorLicense) newErrors.contractorLicense = 'File is required';
 
         return newErrors;
     };
 
-    const handleChangeText = (field, value) => {
-        setForm({ ...form, [field]: value });
-
-        // Clear the error for the field that the user is editing, and validate immediately
-        const newErrors = { ...errors, [field]: null };
-        const updatedErrors = validate();
-        if (updatedErrors[field]) {
-            newErrors[field] = updatedErrors[field];
-        }
-        setErrors(newErrors);
-    };
-
     const submit = async () => {
-      
         const newErrors = validate();
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -95,29 +116,15 @@ const SignUp = () => {
 
         try {
             const { name, email, password, socialSecurity } = form;
-            const contractorLicense = uploadedFiles || form.contractorLicense;  // Use uploaded file if available
-            const res = await signup(name, email, password, socialSecurity,contractorLicense);
-            console.log('Sign up successful');
+            const contractorLicense = uploadedFiles || form.contractorLicense;
+            const res = await signup(name, email, password, socialSecurity, contractorLicense);
             if (res) {
                 router.replace('/login');
             }
-
         } catch (error) {
             Alert.alert('Error', error.response?.data?.message || error.message);
         }
     };
-
-
-    useEffect(() => {
-        setProjectsDetail(cardDataArray);
-        // Uncomment if fetching projects from an API
-        // const fetchProjects = async () => {
-        //     const data = await getProjects();
-        //     setProjectsDetail(data.data.data);
-        //     console.log(data.data.data);
-        // };
-        // fetchProjects();
-    }, []);
 
     return (
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -171,30 +178,35 @@ const SignUp = () => {
                         </View>
                     </View>
 
-                    {/* Project Selection Dropdown */}
-                    {/* <View style={styles.projectSelectionContainer}>
+                    {/* Project Selection Dropdown with search */}
+                    <View style={styles.projectSelectionContainer}>
                         <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
-                        <View style={styles.pickerContainer}>
-                            <Picker
-                                selectedValue={selectedProject}
-                                onValueChange={(itemValue) => {
-                                    setSelectedProject(itemValue);
-                                    handleChangeText('project', itemValue);  // Update project selection and validate
+                        <View style={styles.dropdownContainer}>
+                            <Dropdown
+                                data={projectsDetail.map(project => ({
+                                    label: project.projectName,
+                                    value: project.projectId,
+                                }))}
+                                labelField="label"
+                                valueField="value"
+                                placeholder={!isDropdownFocused ? 'Select project' : '...'}
+                                search
+                                searchPlaceholder="Search your project"
+                                value={selectedProject}
+
+                                onFocus={() => setIsDropdownFocused(true)}
+                                onBlur={() => setIsDropdownFocused(false)}
+                                onChange={item => {
+                                    setSelectedProject(item.value);
+                                    setIsDropdownFocused(false);
                                 }}
-                                style={styles.picker}
-                            >
-                                <Picker.Item label="Select a project" value="" />
-                                {projectsDetail.map((project, index) => (
-                                    <Picker.Item
-                                        key={index}
-                                        label={project?.projectName}
-                                        value={project?.projectId}
-                                    />
-                                ))}
-                            </Picker>
+                                style={styles.dropdown}
+                                containerStyle={styles.dropdownContainerStyle} // Apply style for dropdown list container
+                                searchStyle={styles.searchBox} // Apply style for search box
+                            />
                         </View>
                         {errors.project && <Text style={styles.errorText}>{errors.project}</Text>}
-                    </View> */}
+                    </View>
 
                     <View>
                         <FileUpload uploadedFiles={uploadedFiles} setUploadedFiles={setUploadedFiles} />
@@ -214,31 +226,11 @@ const SignUp = () => {
                         <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
                             Already have an account? <Text className="text-[#577CFF]" onPress={() => router.replace('/login')}>Login</Text>
                         </Text>
-
-                        <View style={styles.separatorContainer}>
-                            <View style={styles.separator} />
-                            <Text className="mx-4 font-pmedium text-sm text-[#9C9C9C] font-inter400">Sign up with</Text>
-                            <View style={styles.separator} />
-                        </View>
-
-                        {/* <View style={styles.socialButtonsContainer}>
-                            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex justify-center items-center p-3">
-                                <Image
-                                    source={icons.google}
-                                    resizeMode="contain"
-                                    style={styles.socialIcon}
-                                />
-                            </TouchableOpacity>
-                            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex justify-center items-center p-3">
-                                <Image
-                                    source={icons.facebook}
-                                    resizeMode="contain"
-                                    style={styles.socialIcon}
-                                />
-                            </TouchableOpacity>
-                        </View> */}
                     </View>
                 </View>
+
+
+
             </SafeAreaView>
         </ScrollView>
     );
@@ -261,53 +253,62 @@ const styles = StyleSheet.create({
     passwordContainer: {
         marginTop: 20,
     },
-
     buttonContainer: {
         marginTop: 20,
         alignItems: 'center',
     },
     labelText: {
-        marginBottom: 10,
+        marginBottom: 5,
         fontFamily: fonts.inter400,
+        color: colors.loginSignUpLabelColor,
+        fontSize: 14
     },
     loginField: {
-        marginBottom: 15,
+        marginBottom: 10,
     },
 
-    picker: {
+    dropdown: {
         height: 50,
+        borderColor: 'gray',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+
+    },
+    dropdownContainerStyle: {
+        maxHeight: 200, // Maximum height for the dropdown list
+        overflow: 'scroll',
+        marginTop: 10,
         borderRadius: 10,
-        padding: 5
+        borderWidth: 1, // Set the border width
+        borderColor: '#B3B3B3', // Set the border color
+        backgroundColor: '#FFF', // Set the background color
+        shadowColor: 'rgba(211, 209, 216, 0.25)', // Set the shadow color
+        shadowOffset: { width: 15, height: 15 }, // Offset for the shadow
+        shadowOpacity: 1, // Set the shadow opacity
+        shadowRadius: 30, // Set the shadow radius
+        elevation: 5, // Needed for Android to apply shadow
+    },
+    searchBox: {
+        borderRadius: 5, // Border radius for search box
+        borderColor: 'transparent', // Make the border disappear while typing
+        padding: 8,
+
+
     },
     errorText: {
         color: 'red',
         marginTop: 5,
         fontFamily: fonts.inter400,
     },
+    buttonContainer: {
+        marginTop: 20,
+        alignItems: 'center',
+    },
+
     SignUpContainer: {
         marginTop: 50,
         alignItems: 'center',
     },
-    separatorContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    separator: {
-        flex: 1,
-        height: 1,
-        backgroundColor: '#E1E1E1',
-    },
-    // socialButtonsContainer: {
-    //     flexDirection: 'row',
-    //     marginTop: 20,
-    //     justifyContent: 'center',
-    // },
-    // socialIcon: {
-    //     width: 24,
-    //     height: 24,
-    // },
-    scrollContent: {
-        flexGrow: 1,
-    }
+    
 });
