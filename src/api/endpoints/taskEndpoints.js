@@ -4,6 +4,11 @@ const taskEndpoints = {
   createTask: '/tasks',
   updateTask: id => `/tasks/${id}`,
   deleteTask: id => `/tasks/${id}`,
+
+  // New endpoint for fetching tasks by userId and projectId
+  getTasksByUserAndProject: (userId, projectId) => `/tasks?filters[assigned_to][$eq]=${userId}&filters[project][$eq]=${projectId}&populate=*`,
+
+  getTasksByUser: (userId, projectId) => `/tasks?filters[assigned_to][$eq]=${userId}&populate=*`,
 };
 
 export default taskEndpoints;

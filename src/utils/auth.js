@@ -1,5 +1,5 @@
 import apiClient from '../api/apiClient';
-import { deleteToken, saveToken } from './storage';
+import { deleteToken, saveToken , saveUserId} from './storage';
 
 export const login = async (email, password) => {
   try {
@@ -9,11 +9,12 @@ export const login = async (email, password) => {
     });
 
     // Extract JWT and user data from the response
-    const { jwt, user } = response.data;
+    const { jwt, user, id } = response.data;
 
-    console.log("auth.js", jwt);
+    console.log("auth.js", jwt, response.data);
     // Save the JWT to secure storage
     saveToken(jwt);
+    saveUserId(user.id);
     return response.data;
   } catch (error) {
     throw error;

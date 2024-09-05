@@ -20,9 +20,9 @@ const MyProjectCard = ({ cardValue, cardColor }) => {
         }
       >
         <View style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}>
-          <Text style={styles.projectName}>{cardValue.attributes.name}</Text>
+          <Text style={styles.projectName}>{cardValue.name}</Text>
           <Text style={styles.projectDescription}>
-            {cardValue.attributes.description}
+            {cardValue.description}
           </Text>
           <View
             style={[
@@ -35,7 +35,7 @@ const MyProjectCard = ({ cardValue, cardColor }) => {
             >
               <Image source={icons.clockFilled}></Image>
               <Text style={styles.deadlineText}>
-                {cardValue.attributes.deadline}
+                {cardValue.deadline}
               </Text>
             </View>
           </View>

@@ -13,13 +13,13 @@ import icons from "../../constants/icons";
 import BottomNavigation from "./BottomNavigation ";
 import SubtaskCard from "../../components/SubtaskCard";
 import SelectYourProjectCard from "../../components/SelectYourProjectCard";
-import UpcommingAppointments from "../../components/UpcommingAppointmentsCard/UpcommingAppointments";
 import { useNavigation } from "@react-navigation/native"; // Import the hook
 import CustomHomePageCard from "../../components/CustomHomePageCard/CustomHomePageCard";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import { getProjects } from "../../src/api/repositories/projectRepository";
-import { getTasks } from "../../src/api/repositories/taskRepository";
+import { getTasksByUserAndProject ,getTasksByUser} from "../../src/api/repositories/taskRepository";
+import { getUserId } from '../../src/utils/storage';
 
 const dashboard = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
@@ -27,23 +27,51 @@ const dashboard = () => {
   const [projectsDetail, setProjectsDetail] = useState([]);
   const [tasksDetail, setTasksDetail] = useState([]);
 
-
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const projectData = await getProjects();
-
         setProjectsDetail(projectData.data.data);
-
-        const taskData = await getTasks();
-        setTasksDetail(taskData.data.data);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching projects:", error);
       }
     };
-
+    const fetchTasksForUser= async (projectId) => {
+      try {
+        const userId = await getUserId(); // Fetch the user ID from local storage or wherever it's stored
+        const taskData = await getTasksByUser(userId);
+        setTasksDetail(taskData.data.data);
+      } catch (error) {
+        console.error("Error fetching tasks for project:", error);
+      }
+    };
+    fetchTasksForUser()
     fetchProjects();
   }, []);
+
+  // const fetchTasksForUser= async (projectId) => {
+  //   try {
+  //     const userId = await getUserId(); // Fetch the user ID from local storage or wherever it's stored
+  //     const taskData = await getTasksByUserAndProject(userId);
+  //     setTasksDetail(taskData.data.data);
+  //   } catch (error) {
+  //     console.error("Error fetching tasks for project:", error);
+  //   }
+  // };
+
+  const fetchTasksForProject = async (projectId) => {
+    try {
+      const userId = await getUserId(); // Fetch the user ID from local storage or wherever it's stored
+      const taskData = await getTasksByUserAndProject(userId, projectId);
+      setTasksDetail(taskData.data.data);
+    } catch (error) {
+      console.error("Error fetching tasks for project:", error);
+    }
+  };
+
+  const handleSearchPress = () => {
+    setSearchVisible(!isSearchVisible);
+  };
 
   console.log("Projects Detail:", projectsDetail);
   console.log("Tasks Detail:", tasksDetail);
@@ -52,106 +80,11 @@ const dashboard = () => {
     (task) => task.attributes.status === "completed"
   );
 
-  const notCompletedTasks = tasksDetail?.filter(
+  const notCompletedTasks = tasksDetail.filter(
     (task) =>
       task.attributes.status === "not_completed" ||
       task.attributes.status === "rejected"
   );
-
-
-  const cardDataArray = [
-    {
-      projectName: "Survey and Marking",
-      projectDescription:
-        "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
-      deadline: Date.now(),
-      taskStatus: "Task Completed",
-      taskStatusColor: "#A3D65C",
-      cardColor: "#EEF7E0",
-      status: "",
-    },
-    {
-      projectName: "Verification & Inspection",
-      projectDescription:
-        "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-      deadline: Date.now(),
-      taskStatus: "Rejected",
-      taskStatusColor: "#FC5275",
-      cardColor: "#FED5DD",
-      status: "rejected",
-    },
-    {
-      projectName: "Verification & Inspection",
-      projectDescription:
-        "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-      deadline: Date.now(),
-      taskStatus: "Upload your Proof of work",
-      taskStatusColor: "blue",
-      cardColor: "#FFFFFF",
-      status: "uploading",
-    },
-    {
-      projectName: "Verification & Inspection",
-      projectDescription:
-        "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-      deadline: Date.now(),
-      taskStatus: "Pending Approval",
-      taskStatusColor: "#7B7B7B",
-      cardColor: "#FFFFFF",
-      rejected: true,
-      status: "uploaded",
-    },
-  ];
-
-  const yourProject = [
-    {
-      name: "Project 1",
-      desc: "Description Over view",
-      update: "Ongoing: Phase - I",
-      deadline: "Ahead of Schedule",
-      cardColor: "#EEF7E0",
-      active: true,
-    },
-    {
-      name: "Project 1",
-      desc: "Description Over view",
-      update: "Ongoing: Phase - I",
-      deadline: "Ahead of Schedule",
-      cardColor: "#FFFFFF",
-      active: true,
-    },
-  ];
-
-  const subTask = [
-    {
-      task: "Tesk-1",
-      proName: "Project Name",
-      deadline: "Done by 22nd August, 2022",
-    },
-    {
-      task: "Tesk-1",
-      proName: "Project Name",
-      deadline: "Done by 22nd August, 2022",
-    },
-  ];
-  const upcomingAppointemntArr = [
-    {
-      name: "Inspection",
-      proName: "Project Name",
-      deadline: "Mon, 10 July 2022",
-      time: "9 AM - 10:30 AM",
-    },
-    {
-      name: "Inspection",
-      task: "Inspection",
-      proName: "Project Name",
-      deadline: "Mon, 10 July 2022",
-      time: "9 AM - 10:30 AM",
-    },
-  ];
-  const handleSearchPress = () => {
-    setSearchVisible(!isSearchVisible);
-  };
 
   return (
     <ScrollView contentContainerStyle={{ flex: 1 }}>
@@ -185,7 +118,6 @@ const dashboard = () => {
           </View>
         )}
 
-
         <Text style={styles.title}>Select Your Project</Text>
 
         {/* Horizontal ScrollView for the Carousel */}
@@ -196,14 +128,18 @@ const dashboard = () => {
         >
           {projectsDetail.map((project, index) => (
             <View key={index} style={styles.cardWrapper}>
-              <SelectYourProjectCard
-                cardValue={{
-                  name: project.attributes.name,
-                  desc: project.attributes.description,
-                  update: project.attributes.update_status,
-                  deadline: project.attributes.deadline,
-                }}
-              />
+              <TouchableOpacity
+                onPress={() => fetchTasksForProject(project.id)}
+              >
+                <SelectYourProjectCard
+                  cardValue={{
+                    name: project.attributes.name,
+                    desc: project.attributes.description,
+                    update: project.attributes.update_status,
+                    deadline: project.attributes.deadline,
+                  }}
+                />
+              </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
@@ -213,99 +149,52 @@ const dashboard = () => {
             ? projectsDetail[0].attributes.name
             : "Project"}
         </Text>
-        <View
-          style={{
-            flexDirection: "row",
-            paddingLeft: 0,
-            paddingBottom: 10,
-            marginTop: 10,
-            alignItems: "center",
-          }}
-        >
-          <View>
-            <Text style={styles.userName}>Recent Milestones</Text>
-            <Text style={[styles.greeting, { paddingTop: 5 }]}>
-              {completedTasks.length} Tasks Done
-            </Text>
-          </View>
-          <View style={styles.iconsContainer}>
-            <TouchableOpacity style={styles.icon}>
-              <Image source={icons.filters} />
-            </TouchableOpacity>
-          </View>
+
+        <View style={styles.yourProjectContainer}>
+          <Text style={styles.userName}>Recent Milestones</Text>
+          <Text style={[styles.greeting, { paddingTop: 5 }]}>
+            {completedTasks.length} Tasks Done
+          </Text>
         </View>
 
-        <View style={styles.yourProjectCOntainer}>
-          {/* {subTask.map((cardData, index) => (
+        <View style={styles.yourProjectContainer}>
+          {completedTasks.map((task, index) => (
             <SubtaskCard
               key={index}
-              cardValue={cardData}
-              cardColor={cardData.cardColor}
+              cardValue={{
+                name: task.attributes.name,
+                description: task.attributes.description,
+                status: task.attributes.status,
+                deadline: task.attributes.deadline,
+              }}
             />
-          ))} */}
-          {completedTasks.map((cardData, index) => {
-            return <SubtaskCard key={index} cardValue={cardData} />;
-          })}
+          ))}
         </View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            paddingLeft: 10,
-            paddingBottom: 40,
-            paddingTop: 30,
-            alignItems: "center",
-          }}
-        >
-          <View>
-            <Text style={styles.userName}>Upcoming Milestones</Text>
-            <Text style={[styles.greeting, { paddingTop: 5 }]}>
-              {notCompletedTasks.length} Tasks Pending
-            </Text>
-          </View>
-          <View style={styles.iconsContainer}>
-            <TouchableOpacity style={styles.icon}>
-              <Image source={icons.filters} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.upcomingMilestonesContainer}>
+          <Text style={styles.userName}>Upcoming Milestones</Text>
+          <Text style={[styles.greeting, { paddingTop: 5 }]}>
+            {notCompletedTasks.length} Tasks Pending
+          </Text>
         </View>
 
-        {notCompletedTasks.map((cardData, index) => (
-          <CustomHomePageCard
-            key={index}
-            cardValue={cardData}
-          />
-        ))}
-
-        {/* <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-                    {yourProject.map((cardData, index) => (
-                        <View key={index} style={styles.cardWrapper}>
-                            <SelectYourProjectCard
-                                cardValue={cardData}
-                                cardColor={cardData.cardColor}
-                            />
-                        </View>
-                    ))}
-                </ScrollView> */}
-        {/* <View>
-          <Text style={styles.projectitle}>Upcoming Appointments</Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={[styles.carousel, { marginTop: -5 }]}
-          >
-            {upcomingAppointemntArr.map((cardData, index) => (
-              <View key={index} style={styles.cardWrapper}>
-                <UpcommingAppointments
-                  key={index}
-                  cardValue={cardData}
-                  cardColor={cardData.cardColor}
-                />
-              </View>
-            ))}
-          </ScrollView>
-        </View> */}
+        <View style={styles.yourProjectContainer}>
+          {notCompletedTasks.length > 0 ? (
+            notCompletedTasks.map((task, index) => (
+              <SubtaskCard
+                key={index}
+                cardValue={{
+                  name: task.attributes.name,
+                  description: task.attributes.description,
+                  status: task.attributes.status,
+                  deadline: task.attributes.deadline,
+                }}
+              />
+            ))
+          ) : (
+            <Text>No tasks available for this project</Text>
+          )}
+        </View>
 
         <BottomNavigation />
       </SafeAreaView>
@@ -388,7 +277,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 10,
   },
-
   carousel: {
     marginTop: 20,
     borderColor: colors.borderColor,
@@ -397,9 +285,20 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   cardWrapper: {
-    marginRight: 15, // Adjust the space between the cards
-  },
-  cardStyle: {
     marginRight: 15,
+  },
+  yourProjectContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 10,
+    marginTop: 10,
+  },
+  upcomingMilestonesContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingLeft: 10,
+    paddingBottom: 40,
+    paddingTop: 30,
   },
 });
