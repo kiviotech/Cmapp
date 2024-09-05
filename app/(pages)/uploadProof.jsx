@@ -182,8 +182,8 @@ const UploadProof = () => {
     const uploadDisabled = uploading;
     const anyUploading = uploadedFiles.some(file => file.status === 'uploading'); // to check if any file is uploading
     return (
-        <SafeAreaView>
-            <ScrollView>
+        <SafeAreaView style={{ flex: 1 }}> 
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }}> 
                 <View style={styles.mainContainer}>
                     <Text style={styles.instructions}>1. Upload your proof of work</Text>
                     <View style={styles.uploadContainer}>

@@ -21,7 +21,6 @@ import homeFilled from '../assets/icons/png/homeFilled.png';
 import userFilled from '../assets/icons/png/userFilled.png';
 import settingsFilled from '../assets/icons/png/settingsFilled.png';
 import logoutFilled from '../assets/icons/png/logoutFilled.png';
-
 import clockFilled from '../assets/icons/png/clockFilled.png';
 import bellFilled from '../assets/icons/png/bellFilled.png';
 import clock from '../assets/icons/png/clock.png';
@@ -30,6 +29,7 @@ import uploadApproval from '../assets/icons/png/uploadApproval.png';
 import pending from '../assets/icons/png/pending.png';
 import approved from '../assets/icons/png/approved.png';
 import reject from '../assets/icons/png/reject.png';
+import userProfile from '../assets/icons/png/userProfile.jpeg';
 export default {
     date,
     facebook,
@@ -57,6 +57,7 @@ export default {
     bellFilled,
     clock,
     showAttechments,
-    uploadApproval,pending,approved,reject
+    uploadApproval, pending, approved, reject,
+    userProfile
 
 }

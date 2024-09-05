@@ -154,7 +154,7 @@ const dashboard = () => {
   };
 
   return (
-    <ScrollView>
+    <ScrollView contentContainerStyle={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Image source={icons.user1} style={styles.profileImage} />
@@ -287,7 +287,7 @@ const dashboard = () => {
                         </View>
                     ))}
                 </ScrollView> */}
-        <View>
+        {/* <View>
           <Text style={styles.projectitle}>Upcoming Appointments</Text>
 
           <ScrollView
@@ -305,7 +305,7 @@ const dashboard = () => {
               </View>
             ))}
           </ScrollView>
-        </View>
+        </View> */}
 
         <BottomNavigation />
       </SafeAreaView>

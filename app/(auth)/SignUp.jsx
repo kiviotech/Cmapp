@@ -1,4 +1,4 @@
-import { View, Text, Alert, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Alert, StyleSheet, ScrollView, Button } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown'; // Import the Dropdown component
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,8 @@ import FileUpload from '../../components/FileUploading/FileUpload';
 import fonts from '../../constants/fonts';
 import { signup } from '../../src/utils/auth';  // Import the signup function
 import colors from '../../constants/colors';
+import { useToast } from '../ToastContext';
+import Toast from '../Toast';
 
 NativeWindStyleSheet.setOutput({
     default: "native",
@@ -20,6 +22,7 @@ const SignUp = () => {
     const [projectsDetail, setProjectsDetail] = useState([]);
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [isDropdownFocused, setIsDropdownFocused] = useState(false); // Add state for dropdown focus
+    const { toast, showToast } = useToast();
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -108,6 +111,7 @@ const SignUp = () => {
     };
 
     const submit = async () => {
+        showToast('Request for new account sent', 'success')
         const newErrors = validate();
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -117,6 +121,7 @@ const SignUp = () => {
         try {
             const { name, email, password, socialSecurity } = form;
             const contractorLicense = uploadedFiles || form.contractorLicense;
+
             const res = await signup(name, email, password, socialSecurity, contractorLicense);
             if (res) {
                 router.replace('/login');
@@ -127,8 +132,12 @@ const SignUp = () => {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-            <SafeAreaView style={styles.container}>
+
+        <SafeAreaView style={styles.container}>
+            <Toast visible={toast.visible} message={toast.message} type={toast.type} />
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+
+
                 <View style={styles.content}>
                     <View style={styles.header}>
                         <Text className="font-pbold text-3xl font-inter600">Sign Up</Text>
@@ -231,8 +240,9 @@ const SignUp = () => {
 
 
 
-            </SafeAreaView>
-        </ScrollView>
+
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 
@@ -241,11 +251,11 @@ export default SignUp;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 24,
     },
     content: {
         flex: 1,
         justifyContent: 'center',
+        padding: 24,
     },
     inputContainer: {
         marginVertical: 20,
@@ -293,7 +303,10 @@ const styles = StyleSheet.create({
         borderRadius: 5, // Border radius for search box
         borderColor: 'transparent', // Make the border disappear while typing
         padding: 8,
-
+        padding: 10,
+        backgroundColor: '#F0F0F0', // Add a background color if needed
+        borderRadius: 8, // Optional: for rounded corners
+        fontSize: 16, // Optional: Adjust font size
 
     },
     errorText: {
@@ -310,5 +323,5 @@ const styles = StyleSheet.create({
         marginTop: 50,
         alignItems: 'center',
     },
-    
+
 });

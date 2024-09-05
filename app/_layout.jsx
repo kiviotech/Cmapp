@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { ToastProvider } from './ToastContext';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -54,17 +55,19 @@ const Layout = () => {
   if (!fontsLoaded && !error) return null;
 
   return (
-    <Stack>
-      <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)/SignUp" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/dashboard" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/taskDetails" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/uploadProof" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/profile" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/settings" options={{ headerShown: false }} />
-      <Stack.Screen name="(pages)/notification" options={{ headerShown: false }} />
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-    </Stack>
+    <ToastProvider>
+      <Stack>
+        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/SignUp" options={{ headerShown: false }} />
+        <Stack.Screen name="(pages)/dashboard" options={{ headerShown: false }} />
+        <Stack.Screen name="(pages)/taskDetails" options={{ headerShown: false }} />
+        <Stack.Screen name="(pages)/uploadProof" options={{ headerShown: false }} />
+        <Stack.Screen name="(pages)/profile" options={{ headerShown: false }} />
+        <Stack.Screen name="(pages)/settings" options={{ headerShown: false }} />
+        <Stack.Screen name="(pages)/notification" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+      </Stack>
+    </ToastProvider>
   );
 };
 export default Layout;
