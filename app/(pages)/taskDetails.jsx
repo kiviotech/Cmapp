@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image,TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image, TouchableOpacity } from "react-native";
 import CustomButton from "../../components/CustomButton";
 import { icons } from "../../constants";
 import colors from "../../constants/colors";
@@ -14,6 +14,7 @@ const TaskDetails = () => {
   const route = useRoute();
   const { id } = route.params || {}; // Default to an empty object if params is undefined
   const navigation = useNavigation();
+  
   useEffect(() => {
     const fetchTasksByID = async () => {
       try {
@@ -32,7 +33,6 @@ const TaskDetails = () => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <SafeAreaView style={styles.safeAreaView}>
 
-
           {/* Header Section */}
           <View style={styles.header}>
             <Text style={styles.detailsText}>Details</Text>
@@ -45,7 +45,14 @@ const TaskDetails = () => {
           </View>
 
           {/* Image Placeholder */}
-          <View style={styles.imagePlaceholder} />
+          <View style={styles.imagePlaceholder}>
+            {tasksDetail?.attributes?.image_url && (
+              <Image
+                source={{ uri: tasksDetail.attributes.image_url }}
+                style={styles.taskImage}
+              />
+            )}
+          </View>
 
           {/* Project Info Section */}
           <View style={styles.projectInfo}>
@@ -100,8 +107,17 @@ const TaskDetails = () => {
                 {tasksDetail?.attributes?.qc}
               </Text>
             </View>
+            {tasksDetail?.attributes?.rejection_comment && (
+              <View style={styles.tableRow}>
+                <Text style={styles.tableHeader}>Rejection Comment</Text>
+                <Text style={styles.tableContent}>
+                  {tasksDetail.attributes.rejection_comment}
+                </Text>
+              </View>
+            )}
           </View>
 
+          {/* Attachments Section */}
           <View style={styles.showAttechmentsContainer}>
             <View style={styles.showAttechments}>
               <Image source={icons.showAttechments} />
@@ -110,6 +126,7 @@ const TaskDetails = () => {
               </Text>
             </View>
 
+            {/* Upload Proof Button */}
             <TouchableOpacity
               style={[styles.showAttechments, styles.uploadProof]}
               onPress={() => navigation.navigate("(pages)/uploadProof", { id: id })}
@@ -134,7 +151,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.whiteColor,
     padding: 10,
-
   },
   safeAreaView: {
     flex: 1,
@@ -167,6 +183,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: 10,
     marginBottom: 16,
+  },
+  taskImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
   },
   projectInfo: {
     marginBottom: 16,
@@ -220,7 +241,7 @@ const styles = StyleSheet.create({
   showAttechmentsContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 15
+    paddingTop: 15,
   },
   showAttechments: {
     borderColor: colors.primary,
@@ -231,12 +252,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    color: colors.primary
+    color: colors.primary,
   },
   uploadProof: {
     backgroundColor: colors.primary,
-    marginTop: 15
-  }
+    marginTop: 15,
+  },
 });
 
 export default TaskDetails;

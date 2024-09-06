@@ -7,16 +7,53 @@ import { FontAwesome } from '@expo/vector-icons';
 import apiClient from '../../src/api/apiClient';
 import { icons } from '../../constants';
 import UploadedFileHIstory from '../../components/UploadedFileHIstory';
+import { getTaskById } from '../../src/api/repositories/taskRepository'; // Import the function
 
-const UploadProof = () => {
+const UploadProof = ({ route }) => {
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [cameraActive, setIsCameraActive] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [taskStatus, setTaskStatus] = useState('Yet to Upload');
+    const [uploadedHistory, setUploadedHistory] = useState([]);
+    const [rejectionComment, setRejectionComment] = useState('');
     const videoRef = useRef(null);
-    const [stream, setStream] = useState(null);
     const uploadIntervals = useRef({});
     const [filesSelected, setFilesSelected] = React.useState(false);
 
+    const { id } = 4 // Get the task ID passed from the task detail page
+
+    useEffect(() => {
+        const fetchTaskDetails = async () => {
+            try {
+                const taskData = await getTaskById(id); // Fetch the task details using the ID
+                const taskAttributes = taskData.data.data.attributes;
+                
+                // Set status based on the backend response
+                if (taskAttributes.status === 'pending') {
+                    setTaskStatus('Pending Approval');
+                } else if (taskAttributes.status === 'approved') {
+                    setTaskStatus('Approved');
+                } else if (taskAttributes.status === 'rejected') {
+                    setTaskStatus('Rejected');
+                    setRejectionComment(taskAttributes.rejection_comment);
+                }
+
+                // Set uploaded files history (mock for now, can be updated with actual URL from backend)
+                if (taskAttributes.docs) {
+                    const history = taskAttributes.docs.data.map(doc => ({
+                        id: doc.id,
+                        fileName: doc.attributes.name,
+                        url: doc.attributes.url // If URL is available
+                    }));
+                    setUploadedHistory(history);
+                }
+            } catch (error) {
+                console.error("Error fetching task details:", error);
+            }
+        };
+
+        fetchTaskDetails();
+    }, [id]);
 
     const handleFileUpload = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -34,18 +71,6 @@ const UploadProof = () => {
             setFilesSelected(false);
         }
     };
-
-    const uploadedHistory = [
-        {
-            id: 1, fileName: 'Document_name1.png',
-        },
-        {
-            id: 2, fileName: 'Document_name2.png',
-        },
-        {
-            id: 3, fileName: 'Document_name3.png',
-        }
-    ];
 
     const handleSubmit = () => {
         // Start uploading the selected files
@@ -162,12 +187,11 @@ const UploadProof = () => {
 
     useEffect(() => {
         return () => {
-            if (stream) {
-                stream.getTracks().forEach((track) => track.stop());
+            if (uploadIntervals.current) {
+                Object.values(uploadIntervals.current).forEach(clearInterval);
             }
-            Object.values(uploadIntervals.current).forEach(clearInterval);
         };
-    }, [stream]);
+    }, []);
 
     const handleRemoveFile = (fileName) => {
         if (uploadIntervals.current[fileName]) {
@@ -178,9 +202,6 @@ const UploadProof = () => {
         setUploadedFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
     };
 
-
-    const uploadDisabled = uploading;
-    const anyUploading = uploadedFiles.some(file => file.status === 'uploading'); // to check if any file is uploading
     return (
         <SafeAreaView style={{ flex: 1 }}> 
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}> 
@@ -192,7 +213,7 @@ const UploadProof = () => {
                         <TouchableOpacity
                             style={styles.uploadButton}
                             onPress={handleFileUpload}
-                            disabled={anyUploading || uploadDisabled}
+                            disabled={uploading}
                         >
                             <Text style={styles.buttonText}>Browse files</Text>
                         </TouchableOpacity>
@@ -207,16 +228,10 @@ const UploadProof = () => {
                             <TouchableOpacity
                                 style={styles.uploadButton}
                                 onPress={handleCameraUpload}
-                                disabled={anyUploading || uploadDisabled}
+                                disabled={uploading}
                             >
                                 <Text style={styles.buttonText}>Use Camera</Text>
                             </TouchableOpacity>
-                        )}
-
-                        {Platform.OS === 'web' && cameraActive && (
-                            <View style={styles.cameraContainer}>
-                                <video ref={videoRef} style={styles.videoPreview} autoPlay muted />
-                            </View>
                         )}
 
                         {uploadedFiles.map((file, index) => (
@@ -244,68 +259,37 @@ const UploadProof = () => {
                                     </View>
                                 </View>
                                 <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
+                                    <FontAwesome style={{ marginTop: 15 }} name=""></FontAwesome>
+
                                     <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color="#FC5275" />
                                 </TouchableOpacity>
                             </View>
                         ))}
 
-                        {/* Conditionally render the upload status button */}
-                        {anyUploading && (
-                            <View>
-                                <TouchableOpacity
-                                    style={styles.uploadStatusButton}
-
-                                    disabled={anyUploading || uploadDisabled}
-                                >
-                                    <Text style={{ color: '#3B82F6' }}>
-                                        {anyUploading ? 'Uploading...' : 'Uploaded'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                        {/* <View>
-                            <TouchableOpacity
-                                style={styles.uploadStatusButton}
-
-                                disabled={anyUploading || uploadDisabled}
-                            >
-                                <Text style={{ color: '#3B82F6' }}>
-                                    {anyUploading ? 'Uploading...' : 'Please select file to upload'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View> */}
                         <TouchableOpacity
                             style={[styles.uploadButton, styles.submitButton]}
                             onPress={handleSubmit}
-                            disabled={uploading || anyUploading}
+                            disabled={uploading}
                         >
                             <Text style={styles.buttonText}>Submit</Text>
                         </TouchableOpacity>
-
                     </View>
-                    <Text style={styles.instructions}>2.supervisor’s Approval</Text>
+
+                    <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
                     <View style={styles.notificationApproval}>
                         <Image source={icons.uploadApproval} />
-                        <Text style={{ color: '#FBBC55' }}>Yet to Upload</Text>
-                    </View>
-                    <View style={[styles.notificationApproval, { backgroundColor: '#D2D2D2' }]}>
-                        <Image source={icons.pending} />
-                        <Text style={{ color: '#79797B' }}>Pending Approval</Text>
+                        <Text style={{ color: '#FBBC55' }}>{taskStatus}</Text>
                     </View>
 
-                    <View style={[styles.notificationApproval, { backgroundColor: '#EEF7E0' }]}>
-                        <Image source={icons.approved} />
-                        <Text style={{ color: '#A3D65C' }}>Approved!</Text>
-                    </View>
-                    <View style={[styles.notificationApproval, { backgroundColor: '#FED5DD' }]}>
-                        <Image source={icons.reject} />
-                        <Text style={{ color: '#FC5275' }}>Rejected!</Text>
-                    </View>
+                    {taskStatus === 'Rejected' && (
+                        <View style={styles.rejectionContainer}>
+                            <Text style={styles.rejectionText}>Rejection Comment: {rejectionComment}</Text>
+                        </View>
+                    )}
 
                     {/* Uploaded history */}
                     <UploadedFileHIstory historyData={uploadedHistory} />
                 </View>
-
             </ScrollView>
         </SafeAreaView>
     );
@@ -348,7 +332,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginBottom: 16,
         height: 39,
-
     },
     buttonText: {
         color: '#FFF',
@@ -356,18 +339,6 @@ const styles = StyleSheet.create({
     },
     orText: {
         color: '#6B7280',
-        marginBottom: 16,
-    },
-    cameraContainer: {
-        width: '100%',
-        height: 'auto',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    videoPreview: {
-        width: '100%',
-        maxWidth: 400,
-        height: 'auto',
         marginBottom: 16,
     },
     fileRow: {
@@ -405,7 +376,6 @@ const styles = StyleSheet.create({
     },
     uploadStatusButton: {
         position: 'absolute',
-
         backgroundColor: '#E5E7EB',
         width: 113,
         alignItems: 'center',
@@ -435,7 +405,14 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         gap: 10
     },
-
-
-
+    rejectionContainer: {
+        backgroundColor: '#FED5DD',
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 16,
+    },
+    rejectionText: {
+        color: '#FC5275',
+        fontFamily: fonts.WorkSans500,
+    },
 });

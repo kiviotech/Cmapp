@@ -20,9 +20,9 @@ const MyProjectCard = ({ cardValue, cardColor }) => {
         }
       >
         <View style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}>
-          <Text style={styles.projectName}>{cardValue.name}</Text>
+          <Text style={styles.projectName}>{cardValue.attributes.name}</Text>
           <Text style={styles.projectDescription}>
-            {cardValue.description}
+            {cardValue.attributes.description}
           </Text>
           <View
             style={[
@@ -35,7 +35,7 @@ const MyProjectCard = ({ cardValue, cardColor }) => {
             >
               <Image source={icons.clockFilled}></Image>
               <Text style={styles.deadlineText}>
-                {cardValue.deadline}
+                {cardValue.attributes.deadline}
               </Text>
             </View>
           </View>
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
     padding: 20,
     height: "auto",
     marginVertical: 10,
+    marginRight: 10
   },
   projectName: {
     color: "#577CFF",
