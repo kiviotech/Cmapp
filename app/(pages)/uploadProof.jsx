@@ -9,7 +9,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import apiClient from '../../src/api/apiClient';
 import { icons } from '../../constants';
 import submissionEndpoints from '../../src/api/endpoints/submissionEndpoints';
-import UploadedFileHIstory from '../../components/UploadedFileHIstory/UploadedFileHistory';
+import UploadedFileHIstory from '../../components/UploadedFileHIstory';
 import { getTaskById } from '../../src/api/repositories/taskRepository'; // Import the function
 
 const UploadProof = ({ }) => {
