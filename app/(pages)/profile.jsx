@@ -5,7 +5,7 @@ import BottomNavigation from './BottomNavigation ';
 import colors from '../../constants/colors';
 import { icons } from '../../constants';
 import fonts from '../../constants/fonts';
-import UploadedFileHIstory from '../../components/UploadedFileHIstory';
+import UploadedFileHIstory from '../../components/UploadedFileHIstory/UploadedFileHistory';
 import { getProjects } from '../../src/api/repositories/projectRepository';
 
 const profile = () => {
