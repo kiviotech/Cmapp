@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image, TouchableOpacity, Modal, Button, Linking } from "react-native";
 import CustomButton from "../../components/CustomButton";
 import { icons } from "../../constants";
 import colors from "../../constants/colors";
@@ -8,18 +8,32 @@ import { useRoute } from "@react-navigation/native";
 import { getTaskById } from "../../src/api/repositories/taskRepository";
 import BottomNavigation from "./BottomNavigation ";
 import { useNavigation } from "@react-navigation/native";
+import { AntDesign } from '@expo/vector-icons'; // For close button
 
 const TaskDetails = () => {
   const [tasksDetail, setTasksDetail] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [documents, setDocuments] = useState([]);
   const route = useRoute();
-  const { id } = route.params || {}; // Default to an empty object if params is undefined
+  const { id } = route.params || {};
   const navigation = useNavigation();
-  
+  const baseURL = "http://localhost:1338"; // Base URL for localhost
+
   useEffect(() => {
     const fetchTasksByID = async () => {
       try {
         const taskData = await getTaskById(id);
         setTasksDetail(taskData.data.data);
+
+        if (taskData.data.data.attributes.docs) {
+          const docs = taskData.data.data.attributes.docs.data.map(doc => ({
+            id: doc.id,
+            fileName: doc.attributes.name,
+            url: `${baseURL}${doc.attributes.url}`, // Prepend base URL
+            mimeType: doc.attributes.mime // Handle different mime types
+          }));
+          setDocuments(docs);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -27,6 +41,26 @@ const TaskDetails = () => {
 
     fetchTasksByID();
   }, [id]);
+
+  const openDocument = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.error('Unsupported URL: ' + url);
+      }
+    } catch (error) {
+      console.error('Failed to open URL: ', error);
+    }
+  };
+
+  const renderCarouselItem = ({ item }) => (
+    <View style={styles.carouselItem}>
+      <Image source={{ uri: item.url }} style={styles.carouselImage} />
+      <Button title="Download" onPress={() => openDocument(item.url)} />
+    </View>
+  );
 
   return (
     <View style={styles.rootContainer}>
@@ -119,25 +153,42 @@ const TaskDetails = () => {
 
           {/* Attachments Section */}
           <View style={styles.showAttechmentsContainer}>
-            <View style={styles.showAttechments}>
+            <TouchableOpacity onPress={() => setShowModal(true)} style={styles.showAttechments}>
               <Image source={icons.showAttechments} />
-              <Text style={{ color: colors.primary, fontFamily: fonts.WorkSans400, fontSize: 12 }}>
-                Show attachments
-              </Text>
-            </View>
+              <Text style={styles.showAttachmentsText}>Show attachments</Text>
+            </TouchableOpacity>
 
-            {/* Upload Proof Button */}
             <TouchableOpacity
               style={[styles.showAttechments, styles.uploadProof]}
               onPress={() => navigation.navigate("(pages)/uploadProof", { id: id })}
             >
               <Image source={icons.upload} />
-              <Text style={{ color: colors.whiteColor, fontFamily: fonts.WorkSans400, fontSize: 12 }}>
-                Upload your Proof of work
-              </Text>
+              <Text style={styles.uploadProofText}>Upload your Proof of work</Text>
             </TouchableOpacity>
           </View>
 
+          {/* Modal for showing documents */}
+          {/* Modal for showing documents */}
+<Modal visible={showModal} transparent={true} animationType="slide">
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
+        <AntDesign name="close" size={24} color="black" />
+      </TouchableOpacity>
+      <Text style={styles.modalTitle}>Documents</Text>
+      
+      {/* Display documents as clickable items for download */}
+      {documents.map((doc, index) => (
+        <TouchableOpacity key={index} onPress={() => openDocument(doc.url)}>
+          <View style={styles.documentItem}>
+            <Text style={styles.documentName}>{doc.fileName}</Text>
+            <Text style={styles.downloadText}>Download</Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+</Modal>
         </SafeAreaView>
       </ScrollView>
 
@@ -257,6 +308,57 @@ const styles = StyleSheet.create({
   uploadProof: {
     backgroundColor: colors.primary,
     marginTop: 15,
+  },
+  documentItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderColor,
+  },
+  documentName: {
+    fontSize: 14,
+    color: colors.blackColor,
+    fontFamily: fonts.WorkSans500,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    width: '90%',
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: fonts.WorkSans600,
+    marginBottom: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+  },
+  documentItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderColor,
+  },
+  documentName: {
+    fontSize: 14,
+    color: colors.blackColor,
+    fontFamily: fonts.WorkSans500,
+  },
+  downloadText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontFamily: fonts.WorkSans600,
   },
 });
 
