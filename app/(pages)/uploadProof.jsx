@@ -1,15 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Image,TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import  axios  from "axios";
 import fonts from '../../constants/fonts';
+import { useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { FontAwesome } from '@expo/vector-icons';
 import apiClient from '../../src/api/apiClient';
 import { icons } from '../../constants';
+import submissionEndpoints from '../../src/api/endpoints/submissionEndpoints';
 import UploadedFileHIstory from '../../components/UploadedFileHIstory/UploadedFileHistory';
 import { getTaskById } from '../../src/api/repositories/taskRepository'; // Import the function
 
-const UploadProof = ({ route }) => {
+const UploadProof = ({ }) => {
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [cameraActive, setIsCameraActive] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -19,68 +22,178 @@ const UploadProof = ({ route }) => {
     const videoRef = useRef(null);
     const uploadIntervals = useRef({});
     const [filesSelected, setFilesSelected] = React.useState(false);
+    const [comment, setComment] = useState('');  // New state for the comment
+    const route = useRoute();
+    const { id } = route?.params;
 
-    const { id } = 4 // Get the task ID passed from the task detail page
-
-    useEffect(() => {
-        const fetchTaskDetails = async () => {
-            try {
-                const taskData = await getTaskById(id); // Fetch the task details using the ID
-                const taskAttributes = taskData.data.data.attributes;
-                
-                // Set status based on the backend response
-                if (taskAttributes.status === 'pending') {
-                    setTaskStatus('Pending Approval');
-                } else if (taskAttributes.status === 'approved') {
-                    setTaskStatus('Approved');
-                } else if (taskAttributes.status === 'rejected') {
-                    setTaskStatus('Rejected');
-                    setRejectionComment(taskAttributes.rejection_comment);
+         useEffect(() => {
+            const fetchTaskDetails = async () => {
+                try {
+                    const taskData = await getTaskById(id); // Fetch the task details using the ID
+                    const taskAttributes = taskData.data.data.attributes;
+        
+                    // Check if submissions exist
+                    if (taskAttributes.submissions && taskAttributes.submissions.data.length > 0) {
+                        // There are submissions, set the status to pending or based on the submission status
+                        const submissionHistory = taskAttributes.submissions.data.map(submission => ({
+                            id: submission.id,
+                            status: submission.attributes.status,
+                            comment: submission.attributes.comment,
+                            createdAt: submission.attributes.createdAt,
+                            updatedAt: submission.attributes.updatedAt,
+                            files: submission.attributes.proofOfWork?.data?.map(file => ({
+                                id: file.id,
+                                fileName: file.attributes.name,
+                                url: file.attributes.url // If URL is available
+                            })) || [], // Default to empty array if no files
+                        }));
+                        setUploadedHistory(submissionHistory);
+                        setTaskStatus('Pending Approval');
+                    } else {
+                        // No submissions, set the status to 'Yet to Upload'
+                        setTaskStatus('Yet to Upload');
+                    }
+        
+                    // Additional logic for rejection comments
+                    if (taskAttributes.status === 'rejected') {
+                        setTaskStatus('Rejected');
+                        setRejectionComment(taskAttributes.rejection_comment);
+                    }
+                    
+                } catch (error) {
+                    console.error("Error fetching task details:", error);
                 }
-
-                // Set uploaded files history (mock for now, can be updated with actual URL from backend)
-                if (taskAttributes.docs) {
-                    const history = taskAttributes.docs.data.map(doc => ({
-                        id: doc.id,
-                        fileName: doc.attributes.name,
-                        url: doc.attributes.url // If URL is available
-                    }));
-                    setUploadedHistory(history);
-                }
-            } catch (error) {
-                console.error("Error fetching task details:", error);
-            }
-        };
-
-        fetchTaskDetails();
-    }, [id]);
-
+            };
+        
+            fetchTaskDetails();
+        }, [id]);
     const handleFileUpload = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+          allowsMultipleSelection: true,
         });
-
+      
         if (!result.canceled) {
-            const newFile = { uri: result.assets[0].uri, name: result.assets[0].fileName || 'unknown_file', progress: 0, status: 'pending' };
-            setUploadedFiles([...uploadedFiles, newFile]);
-            setFilesSelected(true);
+          const newFiles = result.assets.map(asset => ({
+            uri: asset.uri,
+            name: asset.fileName || `image_${Date.now()}.jpg`,
+            type: 'image/jpeg',
+            progress: 0,
+            status: 'pending',
+          }));
+          setUploadedFiles([...uploadedFiles, ...newFiles]);
+          setFilesSelected(true);
+          
+          // Call uploadFiles immediately after selecting files
         } else {
-            setFilesSelected(false);
+          setFilesSelected(false);
         }
-    };
+      };
 
-    const handleSubmit = () => {
-        // Start uploading the selected files
-        uploadedFiles.forEach((file) => {
-            if (file.status === 'pending') {
-                startFileUpload(file);
-            }
-        });
-        setFilesSelected(false);
-    };
+      // Utility function to convert file to base64 string
+const toBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]); // Extract the base64 string part
+      reader.onerror = (error) => reject(error);
+    });
+  };
+  
+  const uploadFiles = async (files) => {
+    try {
+      // Prepare FormData for binary file upload
+      const formData = new FormData();
+  
+      for (const file of files) {
+        // Convert each file to base64 string
+        const base64File = await toBase64(file);
+        formData.append('files', base64File);  // Add binary string
+      }
+  
+      // Add additional fields
+      formData.append('refId', 4);  // Replace '4' with your dynamic reference ID
+      formData.append('ref', 'api::submission.submission');  // Reference to the model
+      formData.append('field', 'proofOfWork');  // Field in Strapi
+  
+      // Send the request
+      const response = await fetch('http://localhost:1338/api/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer f2f7f391c3cde0eb722388c3a3477824b39c1d7858952cc2e728da6834ca98f29a82b172e31da04b21b6bf00fc20e5d7cb19995f4a0777ccb3130333d8bd663245832223bce82dd2d2ffcd21703af961f9594a854caa3ffe2010444e1731218c99c272558dadce2111fc09f6ded861f71c285d5edf161f11c1180619484b1023',
+        //   'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        console.log('Files uploaded successfully:', data);
+        // Extract and return file IDs from the response
+        const fileIds = data.map(file => file.id);
+        return fileIds;
+      } else {
+        console.error('Error uploading files:', data);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
+  };
+  
+  // Example usage: dynamically pass a list of files
+  const filesToUpload = [
+    new File(['file1'], 'Screenshot_1.png', { type: 'image/png' }),
+    new File(['file2'], 'Screenshot_2.png', { type: 'image/png' }),
+  ];
+  
+  //uploadFiles(filesToUpload);
+
+  const createSubmission = async (fileIds, taskId) => {
+    try {
+      const response = await apiClient.post('/submissions', {
+        data: {
+          comment: comment,  // Pass the comment
+          status: 'pending',
+          task: taskId,  // Reference to the task
+          proofOfWork: fileIds.length > 0 ? fileIds : null,  // Only pass if there are files
+        },
+      });
+  
+      return response.data;
+    } catch (error) {
+      console.error('Error creating submission:', error);
+      throw error;
+    }
+  };
+
+      const handleSubmit = async () => {
+        try {
+          let fileIds = [];
+          
+          // Check if there are files to upload, otherwise skip upload
+          if (false) {
+            fileIds = await uploadFiles(uploadedFiles);
+          }
+          //startFileUpload
+          // Create submission with or without fileIds
+          const submission = await createSubmission(fileIds, id);
+          console.log('Submission created successfully:', submission);
+          
+          // Clear form after successful submission
+          setUploadedFiles([]);
+          setComment('');  // Clear the comment
+          
+          // Optionally fetch task details to refresh the submission history
+          fetchTaskDetails();
+        } catch (error) {
+          console.error('Error during submission:', error);
+        }
+      };
+
 
     const startFileUpload = (file) => {
         setUploading(true);
@@ -208,72 +321,84 @@ const UploadProof = ({ route }) => {
                 <View style={styles.mainContainer}>
                     <Text style={styles.instructions}>1. Upload your proof of work</Text>
                     <View style={styles.uploadContainer}>
-                        <Text style={styles.uploadText}>Upload your proof of work in .png or .jpeg format</Text>
+  <Text style={styles.uploadText}>Upload your proof of work in .png or .jpeg format</Text>
 
-                        <TouchableOpacity
-                            style={styles.uploadButton}
-                            onPress={handleFileUpload}
-                            disabled={uploading}
-                        >
-                            <Text style={styles.buttonText}>Browse files</Text>
-                        </TouchableOpacity>
+  {/* Browse Files Button */}
+  <TouchableOpacity
+    style={styles.uploadButton}
+    onPress={handleFileUpload}
+    disabled={uploading}
+  >
+    <Text style={styles.buttonText}>Browse files</Text>
+  </TouchableOpacity>
 
-                        <Text style={styles.orText}>OR</Text>
+  <Text style={styles.orText}>OR</Text>
 
-                        {cameraActive ? (
-                            <TouchableOpacity style={styles.uploadButton} onPress={closeCamera}>
-                                <Text style={styles.buttonText}>Close Camera</Text>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity
-                                style={styles.uploadButton}
-                                onPress={handleCameraUpload}
-                                disabled={uploading}
-                            >
-                                <Text style={styles.buttonText}>Use Camera</Text>
-                            </TouchableOpacity>
-                        )}
+  {/* Use Camera Button */}
+  {cameraActive ? (
+    <TouchableOpacity style={styles.uploadButton} onPress={closeCamera}>
+      <Text style={styles.buttonText}>Close Camera</Text>
+    </TouchableOpacity>
+  ) : (
+    <TouchableOpacity
+      style={styles.uploadButton}
+      onPress={handleCameraUpload}
+      disabled={uploading}
+    >
+      <Text style={styles.buttonText}>Use Camera</Text>
+    </TouchableOpacity>
+  )}
 
-                        {uploadedFiles.map((file, index) => (
-                            <View key={index} style={styles.fileRow}>
-                                <FontAwesome name="file" size={24} color="#6B7280" />
-                                <View style={styles.progressBarContainer}>
-                                    <View style={styles.docNameContainer}>
-                                        <Text style={styles.fileName}>{file?.name}</Text>
-                                        {file.status === 'success' ? (
-                                            <FontAwesome name="check-circle" size={15} color="#A3D65C" />
-                                        ) : file.status === 'uploading' ? (
-                                            <Text style={{ color: '#838383', fontSize: 10 }}>{`${file.progress}%`}</Text>
-                                        ) : null}
-                                    </View>
-                                    <View style={styles.progressBackground}>
-                                        <View
-                                            style={[
-                                                styles.progressBar,
-                                                {
-                                                    width: `${file.progress}%`,
-                                                    backgroundColor: file.status === 'success' ? '#A3D65C' : '#FFD439',
-                                                },
-                                            ]}
-                                        />
-                                    </View>
-                                </View>
-                                <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
-                                    <FontAwesome style={{ marginTop: 15 }} name=""></FontAwesome>
+  {/* Uploaded Files Display */}
+  {uploadedFiles.map((file, index) => (
+    <View key={index} style={styles.fileRow}>
+      <FontAwesome name="file" size={24} color="#6B7280" />
+      <View style={styles.progressBarContainer}>
+        <View style={styles.docNameContainer}>
+          <Text style={styles.fileName}>{file?.name}</Text>
+          {file.status === 'success' ? (
+            <FontAwesome name="check-circle" size={15} color="#A3D65C" />
+          ) : file.status === 'uploading' ? (
+            <Text style={{ color: '#838383', fontSize: 10 }}>{`${file.progress}%`}</Text>
+          ) : null}
+        </View>
+        <View style={styles.progressBackground}>
+          <View
+            style={[
+              styles.progressBar,
+              {
+                width: `${file.progress}%`,
+                backgroundColor: file.status === 'success' ? '#A3D65C' : '#FFD439',
+              },
+            ]}
+          />
+        </View>
+      </View>
+      <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
+        <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color="#FC5275" />
+      </TouchableOpacity>
+    </View>
+  ))}
 
-                                    <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color="#FC5275" />
-                                </TouchableOpacity>
-                            </View>
-                        ))}
+  {/* Comment Box */}
+  <TextInput
+    style={styles.commentInput}
+    placeholder="Add your comment..."
+    value={comment}
+    onChangeText={setComment}
+    multiline={true}
+    numberOfLines={5}  // This will make the text box bigger
+  />
 
-                        <TouchableOpacity
-                            style={[styles.uploadButton, styles.submitButton]}
-                            onPress={handleSubmit}
-                            disabled={uploading}
-                        >
-                            <Text style={styles.buttonText}>Submit</Text>
-                        </TouchableOpacity>
-                    </View>
+  {/* Submit Button */}
+  <TouchableOpacity
+    style={[styles.uploadButton, styles.submitButton]}
+    onPress={handleSubmit}
+    disabled={uploading || !comment}
+  >
+    <Text style={styles.buttonText}>Submit</Text>
+  </TouchableOpacity>
+</View>
 
                     <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
                     <View style={styles.notificationApproval}>
@@ -308,6 +433,16 @@ const styles = StyleSheet.create({
         fontFamily: fonts.WorkSans600,
         paddingBottom: 10,
     },
+    commentInput: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 10,
+        width: '100%',
+        minHeight: 100,  // Adjust to make the text input larger
+        textAlignVertical: 'top',  // Align text to the top in multiline mode
+      },
     uploadContainer: {
         borderStyle: 'dashed',
         borderWidth: 2,
