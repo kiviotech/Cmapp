@@ -1,72 +1,146 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomButton from '../../components/CustomButton';
-import { FontAwesome } from '@expo/vector-icons';
-import fonts from '../../constants/fonts';
-import colors from '../../constants/colors';
-const uploadProof = () => {
-    return (
-        <SafeAreaView>
-            <ScrollView>
-                <View style={styles.mainContainer}>
-                    <View style={styles.border}>
-                        <Text style={styles.instructions}>Notifications</Text>
-                    </View>
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import CustomButton from "../../components/CustomButton";
+import { FontAwesome } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native"; // Added for navigation
+import fonts from "../../constants/fonts";
+import colors from "../../constants/colors";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
-                    <Text style={styles.pagraph}>Contractor ABC has requested to something something...</Text>
-                    <Text style={[styles.pagraph, { textAlign: 'right', paddingRight: 20 }]}>see more</Text>
-                </View>
-                <View style={{
-                    flexDirection: 'row', justifyContent: 'flex-end', gap: 10, borderColor: '#DFDFDF', paddingRight: 20, borderBottomWidth: 1,
-                    paddingBottom: 30,
-                }}>
-                    <FontAwesome style={{ position: 'absolute', left: 35, zIndex: 1000, top: 12 }} name="check-circle" size={15} color="#FFFFFF" />
-                    <CustomButton
-                        buttonStyle={{ backgroundColor: colors.greenessColor, fontSize: 10, width: 170, letterSpacing: 1 }}
-                        textStyle={{ fontFamily: fonts.WorkSans600, color: colors.whiteColor, marginLeft: 20 }}
-                        text='Approve Request'
+const UploadProof = () => {
+  const navigation = useNavigation(); // Using navigation
 
-                    />
-                    <FontAwesome style={{ position: 'absolute', right: 155, zIndex: 1000, top: 12, }} name="check-circle" size={15} color="#FFFFFF" />
-                    <CustomButton
-                        buttonStyle={{ backgroundColor: colors.radiusColor, fontSize: 10, width: 160, letterSpacing: 1 }}
-                        textStyle={{ fontFamily: fonts.WorkSans400, color: colors.whiteColor, marginLeft: 10 }}
-                        text='Reject Request'
+  return (
+    <SafeAreaView>
+      <ScrollView>
+        <View style={styles.mainContainer}>
+          <View style={styles.border}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("(pages)/dashboard")}
+            >
+              <Ionicons name="arrow-back" size={24} color="black" />{" "}
+              {/* Back Icon */}
+            </TouchableOpacity>
+            <Text style={styles.instructions}>Notifications</Text>
+          </View>
 
-                    />
-                </View>
-            </ScrollView>
+          <Text style={styles.pagraph}>
+            Contractor ABC has requested to verify the project details...
+          </Text>
 
-        </SafeAreaView>
+          {/* Touchable to navigate to detailed page */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate("(pages)/notificationDetails")}
+          >
+            <Text style={[styles.pagraph, styles.seeMore]}>See more</Text>
+          </TouchableOpacity>
+        </View>
 
-    )
-}
+        <View style={styles.buttonContainer}>
+          <FontAwesome
+            style={styles.iconLeft}
+            name="check-circle"
+            size={15}
+            color="#FFFFFF"
+          />
+          <CustomButton
+            buttonStyle={styles.approveButton}
+            textStyle={styles.buttonText}
+            text="Approve Request"
+          />
+          <FontAwesome
+            style={styles.iconRight}
+            name="times-circle"
+            size={15}
+            color="#FFFFFF"
+          />
+          <CustomButton
+            buttonStyle={styles.rejectButton}
+            textStyle={styles.buttonText}
+            text="Reject Request"
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
 
-export default uploadProof
+export default UploadProof;
 
 const styles = StyleSheet.create({
-    mainContainer: {
+  mainContainer: {
         flex: 1,
-
-    },
-
-    instructions: {
-        fontSize: 24,
-        fontFamily: fonts.WorkSans600,
-        padding: 15,
-    },
-    pagraph: {
-        color: colors.blackColor,
-        fontSize: 14,
-        paddingTop: 20,
-        padding: 15,
-        fontFamily: fonts.WorkSans400,
-    },
-    border: {
-        borderColor: colors.borderColor,
-        borderBottomWidth: 1,
-        paddingBottom: 30,
-        paddingTop: 30
-    }
-})
+        padding: 10
+  },
+  instructions: {
+    fontSize: 24,
+    fontFamily: fonts.WorkSans600,
+    paddingLeft: 100,
+  },
+  pagraph: {
+    color: colors.blackColor,
+    fontSize: 14,
+    paddingTop: 20,
+    padding: 15,
+    fontFamily: fonts.WorkSans400,
+  },
+  seeMore: {
+    textAlign: "right",
+    paddingRight: 20,
+    color: colors.linkColor, // Add custom color for "see more"
+  },
+  border: {
+    borderColor: colors.borderColor,
+    borderBottomWidth: 1,
+    paddingBottom: 30,
+    paddingTop: 30,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    borderColor: "#DFDFDF",
+    paddingRight: 20,
+    borderBottomWidth: 1,
+    paddingBottom: 30,
+  },
+  iconLeft: {
+    position: "absolute",
+    left: 35,
+    zIndex: 1000,
+    top: 12,
+  },
+  iconRight: {
+    position: "absolute",
+    right: 155,
+    zIndex: 1000,
+    top: 12,
+  },
+  approveButton: {
+    backgroundColor: colors.greenessColor,
+    fontSize: 10,
+    width: 170,
+    letterSpacing: 1,
+  },
+  rejectButton: {
+    backgroundColor: colors.radiusColor,
+    fontSize: 10,
+    width: 160,
+    letterSpacing: 1,
+  },
+  buttonText: {
+    fontFamily: fonts.WorkSans600,
+    color: colors.whiteColor,
+    marginLeft: 20,
+  },
+});
