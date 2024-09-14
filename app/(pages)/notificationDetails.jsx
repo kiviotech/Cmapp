@@ -7,43 +7,101 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Alert,
+  SafeAreaView,
+  Animated,
+  Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import fonts from "../../constants/fonts";
-import colors from "../../constants/colors";
-import ImageViewer from "react-native-image-zoom-viewer";
-import { useNavigation } from "@react-navigation/native"; // Import navigation
+import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-const Details = () => {
-  const [isImageOpen, setImageOpen] = useState(false);
-  const [isPopupVisible, setPopupVisible] = useState(false); // State to control popup visibility
-  const [popupMessage, setPopupMessage] = useState(""); // State to control the popup message
-  const [popupColor, setPopupColor] = useState(""); // State to control popup color
-  const navigation = useNavigation(); // Hook for navigation
+import colors from "../../constants/colors";
+import fonts from "../../constants/fonts";
+import Swiper from "react-native-swiper";
+import { WebView } from "react-native-webview";
 
-  const images = [
+const Details = () => {
+  const [isPopupVisible, setPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupColor, setPopupColor] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null); // Handle both image and pdf
+  const [popupAnimation] = useState(new Animated.Value(-100)); // Animation for toaster
+
+  const navigation = useNavigation();
+
+  const proofs = [
     {
-      url: "https://example.com/your-image.jpg",
+      url: "https://i.pinimg.com/564x/2c/8d/7e/2c8d7e491f74b3f7c3ad2037f262f72e.jpg",
+      type: "image",
+    },
+    {
+      url: "https://publuu.com/flip-book/654309/1458936", // Sample PDF URL
+      type: "pdf", // Mark this as a PDF
+    },
+    {
+      url: "https://i.pinimg.com/564x/2c/8d/7e/2c8d7e491f74b3f7c3ad2037f262f72e.jpg",
+      type: "image",
     },
   ];
 
-  // Function to handle approve/reject actions
+  // Function to render each proof item in the carousel
+  const renderProofItem = (proof, index) => {
+    return (
+      <TouchableOpacity
+        key={index}
+        style={styles.slide}
+        onPress={() => {
+          setSelectedDocument(proof); // Save selected image or pdf
+          setModalVisible(true); // Open modal
+        }}
+      >
+        {/* Render either image or a placeholder for PDF */}
+        {proof.type === "image" ? (
+          <Image source={{ uri: proof.url }} style={styles.image} />
+        ) : (
+          <View style={styles.pdfPlaceholder}>
+            <Ionicons name="document" size={50} color={colors.blackColor} />
+            <Text style={styles.pdfText}>View PDF</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const showToast = (message, color) => {
+    setPopupMessage(message);
+    setPopupColor(color);
+    setPopupVisible(true);
+
+    // Slide in animation for the toaster
+    Animated.timing(popupAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    // Hide the popup after 1 second
+    setTimeout(() => {
+      Animated.timing(popupAnimation, {
+        toValue: -100, // Move back to the top
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setPopupVisible(false);
+      });
+    }, 500);
+  };
+
   const handleAction = (action) => {
     if (action === "approve") {
-      setPopupMessage("Request Approved");
-      setPopupColor(colors.greenessColor); // Green color for approved
-    } else if (action === "reject") {
-      setPopupMessage("Request Rejected");
-      setPopupColor(colors.radiusColor); // Red color for rejected
+      showToast("Request Approved", colors.greenessColor);
+    } else {
+      showToast("Request Rejected", colors.radiusColor);
     }
-    setPopupVisible(true); // Show the popup
 
-    // After 2 seconds, hide the popup and navigate to home
+    // Redirect to dashboard after the popup disappears
     setTimeout(() => {
-      setPopupVisible(false);
-      navigation.navigate("(pages)/dashboard"); // Redirect to home screen
-    }, 2000); // 2 seconds delay
+      navigation.navigate("(pages)/notification");
+    }, 1500);
   };
 
   return (
@@ -51,83 +109,111 @@ const Details = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
           <View style={styles.headerContainer}>
-            {/* Back Button with Icon */}
             <TouchableOpacity
               onPress={() => navigation.navigate("(pages)/notification")}
             >
-              <Ionicons name="arrow-back" size={24} color="black" />{" "}
-              {/* Back Icon */}
+              <Ionicons name="arrow-back" size={24} color="black" />
             </TouchableOpacity>
-
-            {/* Title */}
             <Text style={styles.title}>Profile Details</Text>
           </View>
-          {/* Title */}
 
-          {/* Profile Info Section */}
+          {/* Profile Information Section */}
           <View style={styles.infoContainer}>
             <Text style={styles.label}>Full Name</Text>
             <Text style={styles.value}>Jenifer K.</Text>
-
             <Text style={styles.label}>E-mail Address</Text>
             <Text style={styles.value}>jeniferk@gmail.com</Text>
-
             <Text style={styles.label}>Social Security Number</Text>
             <Text style={styles.value}>xxx-xx-xxxx</Text>
-
             <Text style={styles.label}>Project Selection</Text>
             <Text style={styles.value}>N/A</Text>
           </View>
 
           {/* Uploaded Proof Section */}
           <View style={styles.proofContainer}>
-            <Text style={styles.label}>Uploaded Proof</Text>
-
-            {/* Touchable Image to Open Modal */}
-            <TouchableOpacity onPress={() => setImageOpen(true)}>
-              <Image
-                source={{
-                  uri: "https://i.pinimg.com/564x/2c/8d/7e/2c8d7e491f74b3f7c3ad2037f262f72e.jpg",
-                }}
-                style={styles.image}
-              />
-            </TouchableOpacity>
-
-            {/* Modal for Image Viewer */}
-            <Modal visible={isImageOpen} transparent={true}>
-              <ImageViewer
-                imageUrls={images}
-                enableSwipeDown={true}
-                onCancel={() => setImageOpen(false)}
-              />
-            </Modal>
+            <Text style={styles.label}>Uploaded Proofs</Text>
+            <Swiper showsButtons loop>
+              {proofs.map(renderProofItem)}
+            </Swiper>
           </View>
 
-          {/* Action Buttons Section */}
+          {/* Action Buttons */}
           <View style={styles.buttonContainer}>
-            {/* Approve Button */}
             <TouchableOpacity
               style={[styles.actionButton, styles.approveButton]}
-              onPress={() => handleAction("approve")} // Handle approve action
+              onPress={() => handleAction("approve")}
             >
               <Text style={styles.buttonText}>Approve Request</Text>
             </TouchableOpacity>
-
-            {/* Reject Button */}
             <TouchableOpacity
               style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => handleAction("reject")} // Handle reject action
+              onPress={() => handleAction("reject")}
             >
               <Text style={styles.rejectButtonText}>Reject Request</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Popup Message */}
+          {/* Toast Notification */}
           {isPopupVisible && (
-            <View style={[styles.popup, { backgroundColor: popupColor }]}>
+            <Animated.View
+              style={[
+                styles.popup,
+                {
+                  backgroundColor: popupColor,
+                  transform: [{ translateY: popupAnimation }],
+                },
+              ]}
+            >
               <Text style={styles.popupText}>{popupMessage}</Text>
-            </View>
+            </Animated.View>
           )}
+
+          {/* Modal for Full-Screen Document View */}
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            {selectedDocument ? (
+              selectedDocument.type === "image" ? (
+                <TouchableOpacity
+                  style={styles.fullScreenModal}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Image
+                    source={{ uri: selectedDocument.url }}
+                    style={styles.fullSizeImage}
+                  />
+                </TouchableOpacity>
+              ) : selectedDocument.type === "pdf" && Platform.OS === "web" ? (
+                <TouchableOpacity
+                  style={styles.fullScreenModal}
+                  onPress={() => setModalVisible(false)}
+                >
+                  {/* Render PDF with iframe for web */}
+                  <iframe
+                    src={selectedDocument.url}
+                    style={styles.fullSizeIframe}
+                    title="PDF Viewer"
+                  />
+                </TouchableOpacity>
+              ) : (
+                selectedDocument.url && (
+                  <TouchableOpacity
+                    style={styles.fullScreenModal}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    {/* Render PDF with WebView for mobile */}
+                    <WebView
+                      source={{ uri: selectedDocument.url }}
+                      style={styles.fullSizeImage}
+                    />
+                  </TouchableOpacity>
+                )
+              )
+            ) : null}
+          </Modal>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -139,55 +225,26 @@ export default Details;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.backgroundColor,
-  },
-  scrollContainer: {},
-  proofContainer: {
-    marginBottom: 20,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: colors.grayColor,
     backgroundColor: colors.whiteColor,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    },
-  ///
-  headerContainer: {
-    flexDirection: "row", // Align items in a row
-    alignItems: "center", // Center items vertically
-    justifyContent: "space-between", // Space between back icon and title
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    width: "100%",
-  },
-  backButtonContainer: {
-    justifyContent: "flex-start", // Align back button to the left
-    flex: 0, // Ensure it doesn't take up space
-  },
-  title: {
-    fontSize: 28,
-    fontFamily: fonts.WorkSans700,
-    color: colors.blackColor,
-    textAlign: "center", // Center text
-    flex: 1, // Title takes up remaining space to be centered
-    },
-
-  image: {
-    width: "100%",
-    height: 250,
-    borderRadius: 10,
-    marginTop: 10,
-    backgroundColor: colors.grayLightColor,
-    resizeMode: "cover",
   },
   container: {
     padding: 20,
     backgroundColor: colors.whiteColor,
     shadowOpacity: 0.1,
-    },
-  
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: fonts.WorkSans700,
+    color: colors.blackColor,
+    textAlign: "center",
+    flex: 1,
+  },
   infoContainer: {
     marginBottom: 20,
   },
@@ -204,6 +261,34 @@ const styles = StyleSheet.create({
     color: colors.grayColor,
     marginBottom: 15,
     paddingLeft: 10,
+  },
+  proofContainer: {
+    height: 300, // Adjust height for carousel
+    marginBottom: 20,
+  },
+  slide: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  image: {
+    width: "100%",
+    height: 250,
+    borderRadius: 10,
+  },
+  pdfPlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+    height: 250,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.grayColor,
+  },
+  pdfText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontFamily: fonts.WorkSans600,
+    color: colors.blackColor,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -236,17 +321,33 @@ const styles = StyleSheet.create({
   },
   popup: {
     position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
+    top: 0,
+    left: 0,
+    right: 0,
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderRadius: 10,
     alignItems: "center",
+    zIndex: 1000,
   },
   popupText: {
     color: colors.whiteColor,
     fontFamily: fonts.WorkSans600,
     fontSize: 16,
+  },
+  fullScreenModal: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.85)", // Dark background for better focus on image or PDF
+  },
+  fullSizeImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain", // Maintain aspect ratio without cropping
+  },
+  fullSizeIframe: {
+    width: "100%",
+    height: "100%",
+    border: "none", // Remove iframe border
   },
 });
