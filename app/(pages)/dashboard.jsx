@@ -134,7 +134,7 @@ const Dashboard = () => {
             ? projectsDetail[0].attributes.name
             : "Project"}
         </Text>
- 
+            
         <View style={styles.milestoneContainer}>
           <View>
             <Text style={styles.userName}>Recent Milestones</Text>
@@ -148,12 +148,17 @@ const Dashboard = () => {
             </TouchableOpacity>
           </View>
         </View>
- 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.carousel}
+        >  
         <View style={styles.yourProjectContainer}>
           {completedTasks.map((cardData, index) => {
             return <SubtaskCard key={index} cardValue={cardData} />;
           })}
         </View>
+        </ScrollView>
  
         <View style={styles.milestoneContainer}>
           <View>
@@ -173,7 +178,7 @@ const Dashboard = () => {
           <CustomHomePageCard key={index} cardValue={cardData} />
         ))}
       </ScrollView>
- 
+          
       {/* <BottomNavigation style={styles.bottomNavigation} /> */}
     </SafeAreaView>
   );

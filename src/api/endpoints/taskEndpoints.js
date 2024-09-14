@@ -8,7 +8,6 @@ const taskEndpoints = {
   // New endpoint for fetching tasks by userId and projectId
   getTasksByUserAndProject: (userId, projectId) => `/tasks?filters[assigned_to][$eq]=${userId}&filters[project][$eq]=${projectId}&populate=*`,
 
-  getTasksByUser: (userId, projectId) => `/tasks?filters[assigned_to][$eq]=${userId}&populate=*`,
-};
+  getTasksByUser: (userId, projectId) => `/tasks?populate=*`,};
 
 export default taskEndpoints;
