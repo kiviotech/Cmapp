@@ -13,6 +13,7 @@ import colors from '../../constants/colors';
 import { useToast } from '../ToastContext';
 import Toast from '../Toast';
 
+
 NativeWindStyleSheet.setOutput({
     default: "native",
 });
@@ -130,6 +131,23 @@ const SignUp = () => {
             Alert.alert('Error', error.response?.data?.message || error.message);
         }
     };
+
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const projectData = await getProjects();
+
+                setProjectsDetail(projectData.data.data);
+
+                const taskData = await getTasks();
+                setTasksDetail(taskData.data.data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
+
+        fetchProjects();
+    }, []);
 
     return (
 
