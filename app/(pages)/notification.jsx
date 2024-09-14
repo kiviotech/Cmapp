@@ -9,13 +9,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "../../components/CustomButton";
 import { FontAwesome } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native"; // Added for navigation
+import { useNavigation } from "@react-navigation/native";
 import fonts from "../../constants/fonts";
 import colors from "../../constants/colors";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 const UploadProof = () => {
-  const navigation = useNavigation(); // Using navigation
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView>
@@ -31,41 +31,38 @@ const UploadProof = () => {
             <Text style={styles.instructions}>Notifications</Text>
           </View>
 
-          <Text style={styles.pagraph}>
-            Contractor ABC has requested to verify the project details...
-          </Text>
+          {/* Notification Card */}
+          <View style={styles.notificationContainer}>
+            <Text style={styles.pagraph}>
+              Contractor ABC has requested to verify the project details...
+            </Text>
 
-          {/* Touchable to navigate to detailed page */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate("(pages)/notificationDetails")}
-          >
-            <Text style={[styles.pagraph, styles.seeMore]}>See more</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Touchable to navigate to detailed page */}
+            <View style={{justifyContent:"flex-end",alignItems:"flex-end"}}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("(pages)/notificationDetails")
+                }
+                style={styles.seeMoreButton}
+              >
+                <Text style={[styles.pagraph, styles.seeMore]}>See more</Text>
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.buttonContainer}>
-          <FontAwesome
-            style={styles.iconLeft}
-            name="check-circle"
-            size={15}
-            color="#FFFFFF"
-          />
-          <CustomButton
-            buttonStyle={styles.approveButton}
-            textStyle={styles.buttonText}
-            text="Approve Request"
-          />
-          <FontAwesome
-            style={styles.iconRight}
-            name="times-circle"
-            size={15}
-            color="#FFFFFF"
-          />
-          <CustomButton
-            buttonStyle={styles.rejectButton}
-            textStyle={styles.buttonText}
-            text="Reject Request"
-          />
+            {/* Approve and Reject Buttons inside notification card */}
+            <View style={styles.buttonContainer}>
+              <CustomButton
+                buttonStyle={styles.approveButton}
+                textStyle={styles.buttonText}
+                text="Approve Request"
+              />
+              <CustomButton
+                buttonStyle={styles.rejectButton}
+                textStyle={styles.buttonText}
+                text="Reject Request"
+              />
+            </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -76,8 +73,9 @@ export default UploadProof;
 
 const styles = StyleSheet.create({
   mainContainer: {
-        flex: 1,
-        padding: 10
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
   },
   instructions: {
     fontSize: 24,
@@ -86,61 +84,80 @@ const styles = StyleSheet.create({
   },
   pagraph: {
     color: colors.blackColor,
-    fontSize: 14,
-    paddingTop: 20,
-    padding: 15,
+    fontSize: 16,
+    padding: 5,
     fontFamily: fonts.WorkSans400,
   },
   seeMore: {
-    textAlign: "right",
-    paddingRight: 20,
-    color: colors.linkColor, // Add custom color for "see more"
+    textAlign: "center",
+    color: colors.primary,
   },
   border: {
     borderColor: colors.borderColor,
     borderBottomWidth: 1,
-    paddingBottom: 30,
-    paddingTop: 30,
-    display: "flex",
+    height: 70,
     flexDirection: "row",
     alignItems: "center",
+  },
+  notificationContainer: {
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: colors.borderColor,
+    borderRadius: 10,
+    padding: 15,
+    backgroundColor: "#F9F9F9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5, // Adds a subtle shadow effect
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 10,
-    borderColor: "#DFDFDF",
-    paddingRight: 20,
-    borderBottomWidth: 1,
-    paddingBottom: 30,
-  },
-  iconLeft: {
-    position: "absolute",
-    left: 35,
-    zIndex: 1000,
-    top: 12,
-  },
-  iconRight: {
-    position: "absolute",
-    right: 155,
-    zIndex: 1000,
-    top: 12,
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#DFDFDF", // Border line between content and buttons
   },
   approveButton: {
     backgroundColor: colors.greenessColor,
     fontSize: 10,
-    width: 170,
+    width: 150,
     letterSpacing: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   rejectButton: {
     backgroundColor: colors.radiusColor,
     fontSize: 10,
-    width: 160,
+    width: 150,
     letterSpacing: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   buttonText: {
     fontFamily: fonts.WorkSans600,
     color: colors.whiteColor,
-    marginLeft: 20,
+  },
+  seeMoreButton: {
+    // backgroundColor: "#000",
+    backgroundColor: "#ffffff",
+    padding: 3,
+    borderRadius: 100,
+    shadowColor: "#000", // Shadow color
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset (x and y)
+    shadowOpacity: 0.25, // Shadow opacity
+    shadowRadius: 3.84, // Shadow blur radius
+    elevation: 5, // Shadow for Android
+    justifyContent: "flex-end",
+    width: 120,
   },
 });
