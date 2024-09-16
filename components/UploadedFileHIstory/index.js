@@ -1,1 +1,1 @@
-export {default} from "./UploadedFileHistory"
+export {default} from "./UploadedFileHIstory"
