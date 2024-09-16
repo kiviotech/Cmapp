@@ -12,7 +12,7 @@ import { signup } from '../../src/utils/auth';  // Import the signup function
 import colors from '../../constants/colors';
 import { useToast } from '../ToastContext';
 import Toast from '../Toast';
-
+import { getProjects } from '../../src/api/repositories/projectRepository';
 
 NativeWindStyleSheet.setOutput({
     default: "native",
@@ -35,62 +35,62 @@ const SignUp = () => {
     const [errors, setErrors] = useState({});
     const router = useRouter();
 
-    const cardDataArray = [
-        {
-            projectId: 1,
-            projectName: "Survey and Marking",
-            projectDescription: "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
-            deadline: Date.now(),
-            taskStatus: "Task Completed",
-            taskStatusColor: "#A3D65C",
-            cardColor: "#EEF7E0",
-            status: "",
-        },
-        {
-            projectId: 2,
-            projectName: "Verification & Inspection",
-            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-            deadline: Date.now(),
-            taskStatus: "Rejected",
-            taskStatusColor: "#FC5275",
-            cardColor: "#FED5DD",
-            status: "rejected",
-        },
-        {
-            projectId: 2,
-            projectName: "Verification & Inspection",
-            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-            deadline: Date.now(),
-            taskStatus: "Rejected",
-            taskStatusColor: "#FC5275",
-            cardColor: "#FED5DD",
-            status: "rejected",
-        },
-        {
-            projectId: 2,
-            projectName: "Verification & Inspection",
-            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-            deadline: Date.now(),
-            taskStatus: "Rejected",
-            taskStatusColor: "#FC5275",
-            cardColor: "#FED5DD",
-            status: "rejected",
-        },
-        {
-            projectId: 2,
-            projectName: "Verification & Inspection",
-            projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-            deadline: Date.now(),
-            taskStatus: "Rejected",
-            taskStatusColor: "#FC5275",
-            cardColor: "#FED5DD",
-            status: "rejected",
-        },
-    ];
+    // const cardDataArray = [
+    //     {
+    //         projectId: 1,
+    //         projectName: "Survey and Marking",
+    //         projectDescription: "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
+    //         deadline: Date.now(),
+    //         taskStatus: "Task Completed",
+    //         taskStatusColor: "#A3D65C",
+    //         cardColor: "#EEF7E0",
+    //         status: "",
+    //     },
+    //     {
+    //         projectId: 2,
+    //         projectName: "Verification & Inspection",
+    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+    //         deadline: Date.now(),
+    //         taskStatus: "Rejected",
+    //         taskStatusColor: "#FC5275",
+    //         cardColor: "#FED5DD",
+    //         status: "rejected",
+    //     },
+    //     {
+    //         projectId: 2,
+    //         projectName: "Verification & Inspection",
+    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+    //         deadline: Date.now(),
+    //         taskStatus: "Rejected",
+    //         taskStatusColor: "#FC5275",
+    //         cardColor: "#FED5DD",
+    //         status: "rejected",
+    //     },
+    //     {
+    //         projectId: 2,
+    //         projectName: "Verification & Inspection",
+    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+    //         deadline: Date.now(),
+    //         taskStatus: "Rejected",
+    //         taskStatusColor: "#FC5275",
+    //         cardColor: "#FED5DD",
+    //         status: "rejected",
+    //     },
+    //     {
+    //         projectId: 2,
+    //         projectName: "Verification & Inspection",
+    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
+    //         deadline: Date.now(),
+    //         taskStatus: "Rejected",
+    //         taskStatusColor: "#FC5275",
+    //         cardColor: "#FED5DD",
+    //         status: "rejected",
+    //     },
+    // ];
 
-    useEffect(() => {
-        setProjectsDetail(cardDataArray);
-    }, []);
+    // useEffect(() => {
+    //     setProjectsDetail(cardDataArray);
+    // }, []);
 
     const handleChangeText = (field, value) => {
         setForm({ ...form, [field]: value });
@@ -118,12 +118,11 @@ const SignUp = () => {
             setErrors(newErrors);
             return;
         }
-
+        
         try {
             const { name, email, password, socialSecurity } = form;
             const contractorLicense = uploadedFiles || form.contractorLicense;
-
-            const res = await signup(name, email, password, socialSecurity, contractorLicense);
+            const res = await signup(name, email, password, socialSecurity, contractorLicense, selectedProject);
             if (res) {
                 router.replace('/login');
             }
@@ -148,6 +147,8 @@ const SignUp = () => {
 
         fetchProjects();
     }, []);
+
+    
 
     return (
 
@@ -211,8 +212,8 @@ const SignUp = () => {
                         <View style={styles.dropdownContainer}>
                             <Dropdown
                                 data={projectsDetail.map(project => ({
-                                    label: project.projectName,
-                                    value: project.projectId,
+                                    label: project.attributes.name,
+                                    value: project.id,
                                 }))}
                                 labelField="label"
                                 valueField="value"

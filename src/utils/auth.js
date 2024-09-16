@@ -21,7 +21,7 @@ export const login = async (email, password) => {
   }
 };
 
-export const signup = async (name, email, password, socialSecurity, contractorLicense) => {
+export const signup = async (name, email, password, socialSecurity, contractorLicense, projectId) => {
   try {
     const response = await apiClient.post("/registrations", {
       data: {
@@ -29,25 +29,14 @@ export const signup = async (name, email, password, socialSecurity, contractorLi
         email: email,
         password: password,
         socialSecurityNumber: socialSecurity,
-        project: '',
+        project: projectId,
         approver: '',
         documents: [],
+        // documents: contractorLicense[0].uri,
+        // documents: contractorLicense,
       }
-      // {
-      //   "data": {
-      //     "fullName": "string",
-      //     "socialSecurityNumber": "123456789",
-      //     "email": "user@example.com",
-      //     "password": "*******",
-      //     "project": "string or id",
-      //     "documents": [
-      //       "string or id",
-      //       "string or id"
-      //     ],
-      //     "approver": "string or id"
-      //   }
-      // }
-
+      
+      
     });
     return response.data;
   } catch (error) {
