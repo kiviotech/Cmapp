@@ -84,6 +84,10 @@ const Layout = () => {
           name="(pages)/notificationDetails"
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="(pages)/submissionDetails"
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack>
     </ToastProvider>

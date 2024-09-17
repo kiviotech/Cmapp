@@ -17,64 +17,70 @@ import CustomHomePageCard from "../../components/CustomHomePageCard/CustomHomePa
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import { getProjects } from "../../src/api/repositories/projectRepository";
-import { getTasksByUserAndProject, getTasksByUser } from "../../src/api/repositories/taskRepository";
-import { getUserId } from '../../src/utils/storage';
- 
+import {
+  getTasksByUserAndProject,
+  getTasksByUser,
+} from "../../src/api/repositories/taskRepository";
+import { getUserId } from "../../src/utils/storage";
+
 const Dashboard = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const navigation = useNavigation(); // Use the hook to get navigation object
   const [projectsDetail, setProjectsDetail] = useState([]);
   const [tasksDetail, setTasksDetail] = useState([]);
- 
+  const [selectedProjectId, setSelectedProjectId] = useState(null); // New state for selected project
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const projectData = await getProjects();
         setProjectsDetail(projectData.data.data);
+        setSelectedProjectId(projectData.data.data[0]?.id); // Default to first project
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
     };
-    const fetchTasksForUser = async () => {
-      try {
-        const userId = await getUserId(); // Fetch the user ID from local storage or wherever it's stored
-        const taskData = await getTasksByUser(userId);
-        setTasksDetail(taskData.data.data);
-      } catch (error) {
-        console.error("Error fetching tasks for project:", error);
-      }
-    };
-    fetchTasksForUser();
+
     fetchProjects();
   }, []);
- 
-  const fetchTasksForProject = async (projectId) => {
-    try {
-      const userId = await getUserId(); // Fetch the user ID from local storage or wherever it's stored
-      const taskData = await getTasksByUserAndProject(userId, projectId);
-      setTasksDetail(taskData.data.data);
-    } catch (error) {
-      console.error("Error fetching tasks for project:", error);
-    }
-  };
- 
+
+  useEffect(() => {
+    const fetchTasksForUser = async () => {
+      if (selectedProjectId) {
+        try {
+          const userId = await getUserId(); // Fetch the user ID from local storage or wherever it's stored
+          const taskData = await getTasksByUserAndProject(
+            userId,
+            selectedProjectId
+          );
+          setTasksDetail(taskData.data.data);
+        } catch (error) {
+          console.error("Error fetching tasks for project:", error);
+        }
+      }
+    };
+
+    fetchTasksForUser();
+  }, [selectedProjectId]); // Refetch tasks when project changes
+
   const handleSearchPress = () => {
     setSearchVisible(!isSearchVisible);
   };
- 
-  console.log("Projects Detail:", projectsDetail);
-  console.log("Tasks Detail:", tasksDetail);
- 
+
+  const handleProjectSelect = (projectId) => {
+    setSelectedProjectId(projectId); // Update selected project when clicked
+  };
+
   const completedTasks = tasksDetail.filter(
     (task) => task.attributes.status === "completed"
   );
- 
+
   const notCompletedTasks = tasksDetail.filter(
     (task) =>
       task.attributes.status === "not_completed" ||
       task.attributes.status === "rejected"
   );
- 
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -96,7 +102,7 @@ const Dashboard = () => {
             </TouchableOpacity>
           </View>
         </View>
- 
+
         {isSearchVisible && (
           <View style={styles.searchBarContainer}>
             <TextInput
@@ -106,9 +112,9 @@ const Dashboard = () => {
             />
           </View>
         )}
- 
+
         <Text style={styles.title}>Select Your Project</Text>
- 
+
         {/* Horizontal ScrollView for the Carousel */}
         <ScrollView
           horizontal
@@ -116,7 +122,14 @@ const Dashboard = () => {
           style={styles.carousel}
         >
           {projectsDetail.map((project, index) => (
-            <View key={index} style={styles.cardWrapper}>
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.cardWrapper,
+                selectedProjectId === project.id && styles.selectedCardWrapper, // Apply selected style
+              ]}
+              onPress={() => handleProjectSelect(project.id)} // Handle project select
+            >
               <SelectYourProjectCard
                 cardValue={{
                   name: project.attributes.name,
@@ -125,16 +138,16 @@ const Dashboard = () => {
                   deadline: project.attributes.deadline,
                 }}
               />
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
- 
+
         <Text style={styles.projectitle}>
-          {projectsDetail.length > 0
-            ? projectsDetail[0].attributes.name
-            : "Project"}
+          {projectsDetail.find((project) => project.id === selectedProjectId)
+            ?.attributes.name || "Project"}
         </Text>
-            
+
+        {/* Recent Milestones */}
         <View style={styles.milestoneContainer}>
           <View>
             <Text style={styles.userName}>Recent Milestones</Text>
@@ -152,14 +165,15 @@ const Dashboard = () => {
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.carousel}
-        >  
-        <View style={styles.yourProjectContainer}>
-          {completedTasks.map((cardData, index) => {
-            return <SubtaskCard key={index} cardValue={cardData} />;
-          })}
-        </View>
+        >
+          <View style={styles.yourProjectContainer}>
+            {completedTasks.map((cardData, index) => {
+              return <SubtaskCard key={index} cardValue={cardData} />;
+            })}
+          </View>
         </ScrollView>
- 
+
+        {/* Upcoming Milestones */}
         <View style={styles.milestoneContainer}>
           <View>
             <Text style={styles.userName}>Upcoming Milestones</Text>
@@ -173,28 +187,30 @@ const Dashboard = () => {
             </TouchableOpacity>
           </View>
         </View>
- 
+
         {notCompletedTasks.map((cardData, index) => (
           <CustomHomePageCard key={index} cardValue={cardData} />
         ))}
       </ScrollView>
-          
-      {/* <BottomNavigation style={styles.bottomNavigation} /> */}
     </SafeAreaView>
   );
 };
- 
+
 export default Dashboard;
+
+
+  // ... existing styles ...
  
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    padding:20
- 
   },
   scrollContainer: {
-    paddingBottom: 150, // Ensure enough padding so that scroll content doesn't overlap the BottomNavigation
+    padding: 20,
+    paddingBottom: 150,
+    // Ensure enough padding so that scroll content doesn't overlap the BottomNavigation
   },
   header: {
     flexDirection: "row",
@@ -286,7 +302,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   bottomNavigation: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -294,5 +310,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.whiteColor,
     borderTopWidth: 1,
     borderColor: colors.borderColor,
+  },
+  selectedCardWrapper: {
+    borderWidth: 2,
+    borderColor: colors.primary, // Indicate selected project with border color or background color
+    borderRadius: 10,
   },
 });
