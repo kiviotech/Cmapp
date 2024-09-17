@@ -21,20 +21,22 @@ export const login = async (email, password) => {
   }
 };
 
-export const signup = async (name, email, password, socialSecurity, contractorLicense) => {
+export const signup = async (name, email, password, socialSecurity, contractorLicense, projectId) => {
   try {
-    const response = await apiClient.post("/sign-ups", {
+    const response = await apiClient.post("/registrations", {
       data: {
         fullName: name,
         email: email,
         password: password,
-        socialSecurity: socialSecurity,
-        projectSelection: '',
-        contractorLicense: contractorLicense[0].uri,
+        socialSecurityNumber: socialSecurity,
+        project: projectId,
         approver: '',
-        project: ''
+        documents: [],
+        // documents: contractorLicense[0].uri,
+        // documents: contractorLicense,
       }
-
+      
+      
     });
     return response.data;
   } catch (error) {
