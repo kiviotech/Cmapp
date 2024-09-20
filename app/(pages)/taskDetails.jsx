@@ -11,7 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from '@expo/vector-icons'; // For close button
 
 const TaskDetails = () => {
-  const [tasksDetail, setTasksDetail] = useState([]);
+  const [tasksDetail, setTasksDetail] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [documents, setDocuments] = useState([]);
   const route = useRoute();
@@ -66,7 +66,6 @@ const TaskDetails = () => {
     <View style={styles.rootContainer}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <SafeAreaView style={styles.safeAreaView}>
-
           {/* Header Section */}
           <View style={styles.header}>
             <Text style={styles.detailsText}>Details</Text>
@@ -153,42 +152,57 @@ const TaskDetails = () => {
 
           {/* Attachments Section */}
           <View style={styles.showAttechmentsContainer}>
-            <TouchableOpacity onPress={() => setShowModal(true)} style={styles.showAttechments}>
+            <TouchableOpacity
+              onPress={() => setShowModal(true)}
+              style={styles.showAttechments}
+            >
               <Image source={icons.showAttechments} />
               <Text style={styles.showAttachmentsText}>Show attachments</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.showAttechments, styles.uploadProof]}
-              onPress={() => navigation.navigate("(pages)/uploadProof", { id: id })}
-            >
-              <Image source={icons.upload} />
-              <Text style={styles.uploadProofText}>Upload your Proof of work</Text>
-            </TouchableOpacity>
+            {tasksDetail && tasksDetail?.attributes?.status !== "completed" && (
+              <TouchableOpacity
+                style={[styles.showAttechments, styles.uploadProof]}
+                onPress={() =>
+                  navigation.navigate("(pages)/uploadProof", { id: id })
+                }
+              >
+                <Image source={icons.upload} />
+                <Text style={styles.uploadProofText}>
+                  Upload your Proof of work
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Modal for showing documents */}
           {/* Modal for showing documents */}
-<Modal visible={showModal} transparent={true} animationType="slide">
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
-        <AntDesign name="close" size={24} color="black" />
-      </TouchableOpacity>
-      <Text style={styles.modalTitle}>Documents</Text>
-      
-      {/* Display documents as clickable items for download */}
-      {documents.map((doc, index) => (
-        <TouchableOpacity key={index} onPress={() => openDocument(doc.url)}>
-          <View style={styles.documentItem}>
-            <Text style={styles.documentName}>{doc.fileName}</Text>
-            <Text style={styles.downloadText}>Download</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
-    </View>
-  </View>
-</Modal>
+          <Modal visible={showModal} transparent={true} animationType="slide">
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowModal(false)}
+                >
+                  <AntDesign name="close" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Documents</Text>
+
+                {/* Display documents as clickable items for download */}
+                {documents.map((doc, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => openDocument(doc.url)}
+                  >
+                    <View style={styles.documentItem}>
+                      <Text style={styles.documentName}>{doc.fileName}</Text>
+                      <Text style={styles.downloadText}>Download</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </Modal>
         </SafeAreaView>
       </ScrollView>
 

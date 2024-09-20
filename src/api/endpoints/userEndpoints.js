@@ -1,7 +1,7 @@
 const userEndpoints = {
   getUsers: '/users',
   getUserById: id => `/users/${id}`,
-  createUser: '/users',
+  createUser: '/auth/local/register',
   updateUser: id => `/users/${id}`,
   deleteUser: id => `/users/${id}`,
 };

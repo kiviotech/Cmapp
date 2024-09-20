@@ -11,6 +11,7 @@ import { icons } from '../../constants';
 import submissionEndpoints from '../../src/api/endpoints/submissionEndpoints';
 import UploadedFileHIstory from '../../components/UploadedFileHIstory';
 import { getTaskById } from '../../src/api/repositories/taskRepository'; // Import the function
+import BottomNavigation from './BottomNavigation ';
 
 const UploadProof = ({ }) => {
     const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -316,107 +317,129 @@ const toBase64 = (file) => {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1 }}> 
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }}> 
-                <View style={styles.mainContainer}>
-                    <Text style={styles.instructions}>1. Upload your proof of work</Text>
-                    <View style={styles.uploadContainer}>
-  <Text style={styles.uploadText}>Upload your proof of work in .png or .jpeg format</Text>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View style={styles.mainContainer}>
+            <Text style={styles.instructions}>
+              1. Upload your proof of work
+            </Text>
+            <View style={styles.uploadContainer}>
+              <Text style={styles.uploadText}>
+                Upload your proof of work in .png or .jpeg format
+              </Text>
 
-  {/* Browse Files Button */}
-  <TouchableOpacity
-    style={styles.uploadButton}
-    onPress={handleFileUpload}
-    disabled={uploading}
-  >
-    <Text style={styles.buttonText}>Browse files</Text>
-  </TouchableOpacity>
+              {/* Browse Files Button */}
+              <TouchableOpacity
+                style={styles.uploadButton}
+                onPress={handleFileUpload}
+                disabled={uploading}
+              >
+                <Text style={styles.buttonText}>Browse files</Text>
+              </TouchableOpacity>
 
-  <Text style={styles.orText}>OR</Text>
+              <Text style={styles.orText}>OR</Text>
 
-  {/* Use Camera Button */}
-  {cameraActive ? (
-    <TouchableOpacity style={styles.uploadButton} onPress={closeCamera}>
-      <Text style={styles.buttonText}>Close Camera</Text>
-    </TouchableOpacity>
-  ) : (
-    <TouchableOpacity
-      style={styles.uploadButton}
-      onPress={handleCameraUpload}
-      disabled={uploading}
-    >
-      <Text style={styles.buttonText}>Use Camera</Text>
-    </TouchableOpacity>
-  )}
+              {/* Use Camera Button */}
+              {cameraActive ? (
+                <TouchableOpacity
+                  style={styles.uploadButton}
+                  onPress={closeCamera}
+                >
+                  <Text style={styles.buttonText}>Close Camera</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.uploadButton}
+                  onPress={handleCameraUpload}
+                  disabled={uploading}
+                >
+                  <Text style={styles.buttonText}>Use Camera</Text>
+                </TouchableOpacity>
+              )}
 
-  {/* Uploaded Files Display */}
-  {uploadedFiles.map((file, index) => (
-    <View key={index} style={styles.fileRow}>
-      <FontAwesome name="file" size={24} color="#6B7280" />
-      <View style={styles.progressBarContainer}>
-        <View style={styles.docNameContainer}>
-          <Text style={styles.fileName}>{file?.name}</Text>
-          {file.status === 'success' ? (
-            <FontAwesome name="check-circle" size={15} color="#A3D65C" />
-          ) : file.status === 'uploading' ? (
-            <Text style={{ color: '#838383', fontSize: 10 }}>{`${file.progress}%`}</Text>
-          ) : null}
-        </View>
-        <View style={styles.progressBackground}>
-          <View
-            style={[
-              styles.progressBar,
-              {
-                width: `${file.progress}%`,
-                backgroundColor: file.status === 'success' ? '#A3D65C' : '#FFD439',
-              },
-            ]}
-          />
-        </View>
-      </View>
-      <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
-        <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color="#FC5275" />
-      </TouchableOpacity>
-    </View>
-  ))}
-
-  {/* Comment Box */}
-  <TextInput
-    style={styles.commentInput}
-    placeholder="Add your comment..."
-    value={comment}
-    onChangeText={setComment}
-    multiline={true}
-    numberOfLines={5}  // This will make the text box bigger
-  />
-
-  {/* Submit Button */}
-  <TouchableOpacity
-    style={[styles.uploadButton, styles.submitButton]}
-    onPress={handleSubmit}
-    disabled={uploading || !comment}
-  >
-    <Text style={styles.buttonText}>Submit</Text>
-  </TouchableOpacity>
-</View>
-
-                    <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
-                    <View style={styles.notificationApproval}>
-                        <Image source={icons.uploadApproval} />
-                        <Text style={{ color: '#FBBC55' }}>{taskStatus}</Text>
+              {/* Uploaded Files Display */}
+              {uploadedFiles.map((file, index) => (
+                <View key={index} style={styles.fileRow}>
+                  <FontAwesome name="file" size={24} color="#6B7280" />
+                  <View style={styles.progressBarContainer}>
+                    <View style={styles.docNameContainer}>
+                      <Text style={styles.fileName}>{file?.name}</Text>
+                      {file.status === "success" ? (
+                        <FontAwesome
+                          name="check-circle"
+                          size={15}
+                          color="#A3D65C"
+                        />
+                      ) : file.status === "uploading" ? (
+                        <Text
+                          style={{ color: "#838383", fontSize: 10 }}
+                        >{`${file.progress}%`}</Text>
+                      ) : null}
                     </View>
-
-                    {taskStatus === 'Rejected' && (
-                        <View style={styles.rejectionContainer}>
-                            <Text style={styles.rejectionText}>Rejection Comment: {rejectionComment}</Text>
-                        </View>
-                    )}
-
-                    {/* Uploaded history */}
-                    <UploadedFileHIstory historyData={uploadedHistory} />
+                    <View style={styles.progressBackground}>
+                      <View
+                        style={[
+                          styles.progressBar,
+                          {
+                            width: `${file.progress}%`,
+                            backgroundColor:
+                              file.status === "success" ? "#A3D65C" : "#FFD439",
+                          },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
+                    <FontAwesome
+                      style={{ marginTop: 15 }}
+                      name="trash"
+                      size={15}
+                      color="#FC5275"
+                    />
+                  </TouchableOpacity>
                 </View>
-            </ScrollView>
-        </SafeAreaView>
+              ))}
+
+              {/* Comment Box */}
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Add your comment..."
+                value={comment}
+                onChangeText={setComment}
+                multiline={true}
+                numberOfLines={5} // This will make the text box bigger
+              />
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={[styles.uploadButton, styles.submitButton]}
+                onPress={handleSubmit}
+                disabled={uploading || !comment}
+              >
+                <Text style={styles.buttonText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
+            <View style={styles.notificationApproval}>
+              <Image source={icons.uploadApproval} />
+              <Text style={{ color: "#FBBC55" }}>{taskStatus}</Text>
+            </View>
+
+            {taskStatus === "Rejected" && (
+              <View style={styles.rejectionContainer}>
+                <Text style={styles.rejectionText}>
+                  Rejection Comment: {rejectionComment}
+                </Text>
+              </View>
+            )}
+
+            {/* Uploaded history */}
+            <UploadedFileHIstory historyData={uploadedHistory} />
+          </View>
+        </ScrollView>
+        <BottomNavigation />
+      </SafeAreaView>
     );
 };
 

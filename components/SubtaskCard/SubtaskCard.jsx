@@ -9,9 +9,16 @@ import {
 } from "react-native";
 import { icons } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
-const MyProjectCard = ({ cardValue, cardColor }) => {
+const MyProjectCard = ({ cardValue, cardColor}) => {
   const navigation = useNavigation();
-
+  const wrapTextAfterWords = (text, wordsPerLine) => {
+    const words = text.split(" ");
+    let wrappedText = "";
+    for (let i = 0; i < words.length; i += wordsPerLine) {
+      wrappedText += words.slice(i, i + wordsPerLine).join(" ") + "\n";
+    }
+    return wrappedText.trim();
+  };
   return (
     <ScrollView>
       <TouchableOpacity
@@ -22,7 +29,7 @@ const MyProjectCard = ({ cardValue, cardColor }) => {
         <View style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}>
           <Text style={styles.projectName}>{cardValue.attributes.name}</Text>
           <Text style={styles.projectDescription}>
-            {cardValue.attributes.description}
+            {wrapTextAfterWords(cardValue.attributes.description, 5)}
           </Text>
           <View
             style={[
@@ -51,7 +58,7 @@ const styles = StyleSheet.create({
     padding: 20,
     height: "auto",
     marginVertical: 10,
-    marginRight: 10
+    marginRight: 10,
   },
   projectName: {
     color: "#577CFF",
@@ -69,6 +76,7 @@ const styles = StyleSheet.create({
     fontWeight: "300",
     lineHeight: 15, // Adjust as needed
     letterSpacing: -0.06,
+    whiteSpace: "pre-wrap", // Ensure newlines are respected
   },
   deadlineContainer: {
     marginTop: 30,

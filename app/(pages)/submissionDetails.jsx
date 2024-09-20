@@ -17,19 +17,20 @@ import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import Swiper from "react-native-swiper";
 import { WebView } from "react-native-webview";
-import { getRegistrationById } from "../../src/api/repositories/registrationRepository";
+import { getSubmissionById } from "../../src/api/repositories/submissionRepository";
 import { useRoute } from "@react-navigation/native";
+import submissionEndpoints from "../../src/api/endpoints/submissionEndpoints";
 
-const Details = () => {
+const SubmissionDetails = () => {
   const [isPopupVisible, setPopupVisible] = useState(false);
-  const [registrationDetail, setRegistrationDetail] = useState([]);
+  const [submissionDetail, setSubmissionDetail] = useState([]);
   const [popupMessage, setPopupMessage] = useState("");
   const [popupColor, setPopupColor] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null); // Handle both image and pdf
   const [popupAnimation] = useState(new Animated.Value(-100)); // Animation for toaster
   const route = useRoute();
-  const  id  = route.params.registrationId || 0;
+  const id = route.params.submissionId || 0;
   const navigation = useNavigation();
   const baseURL = "http://localhost:1338"; // Base URL for localhost
 
@@ -49,13 +50,13 @@ const Details = () => {
   ];
 
   useEffect(() => {
-    const fetchRegistrationByID = async () => {
+    const fetchSubmissionByID = async () => {
       try {
-        const registrationData = await getRegistrationById(Number(id));
-        setRegistrationDetail(registrationData.data.data);
+        const submissionData = await getSubmissionById(Number(id));
+        setSubmissionDetail(submissionData.data.data);
 
-        if (registrationData.data.data.attributes.docs) {
-          const docs = registrationData.data.data.attributes.docs.data.map(
+        if (submissionData.data.data.attributes.docs) {
+          const docs = submissionData.data.data.attributes.docs.data.map(
             (doc) => ({
               id: doc.id,
               fileName: doc.attributes.name,
@@ -66,14 +67,13 @@ const Details = () => {
           setDocuments(docs);
         }
       } catch (error) {
-        console.error("Error fetching registration data:", error);
+        console.error("Error fetching submission data:", error);
       }
     };
 
-    fetchRegistrationByID();
+    fetchSubmissionByID();
   }, [id]);
 
-  // Function to render each proof item in the carousel
   const renderProofItem = (proof, index) => {
     return (
       <TouchableOpacity
@@ -84,7 +84,6 @@ const Details = () => {
           setModalVisible(true); // Open modal
         }}
       >
-        {/* Render either image or a placeholder for PDF */}
         {proof.type === "image" ? (
           <Image source={{ uri: proof.url }} style={styles.image} />
         ) : (
@@ -102,17 +101,15 @@ const Details = () => {
     setPopupColor(color);
     setPopupVisible(true);
 
-    // Slide in animation for the toaster
     Animated.timing(popupAnimation, {
       toValue: 0,
       duration: 300,
       useNativeDriver: true,
     }).start();
 
-    // Hide the popup after 1 second
     setTimeout(() => {
       Animated.timing(popupAnimation, {
-        toValue: -100, // Move back to the top
+        toValue: -100,
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
@@ -123,14 +120,13 @@ const Details = () => {
 
   const handleAction = (action) => {
     if (action === "approve") {
-      showToast("Request Approved", colors.greenessColor);
+      showToast("Submission Approved", colors.greenessColor);
     } else {
-      showToast("Request Rejected", colors.radiusColor);
+      showToast("Submission Rejected", colors.radiusColor);
     }
 
-    // Redirect to dashboard after the popup disappears
     setTimeout(() => {
-      navigation.navigate("(pages)/notification");
+      navigation.navigate("(pages)/submission");
     }, 1500);
   };
 
@@ -144,24 +140,24 @@ const Details = () => {
             >
               <Ionicons name="arrow-back" size={24} color="black" />
             </TouchableOpacity>
-            <Text style={styles.title}>Profile Details</Text>
+            <Text style={styles.title}>Submission Details</Text>
           </View>
 
-          {/* Profile Information Section */}
+          {/* Submission Information Section */}
           <View style={styles.infoContainer}>
             <Text style={styles.label}>Name</Text>
+            <Text style={styles.value}>{submissionDetail?.id}</Text>
+            <Text style={styles.label}>Comment</Text>
             <Text style={styles.value}>
-              {registrationDetail?.attributes?.fullName}
+              {submissionDetail?.attributes?.comment}
             </Text>
-            <Text style={styles.label}>E-mail Address</Text>
+            <Text style={styles.label}>Project</Text>
             <Text style={styles.value}>
-              {registrationDetail?.attributes?.email}
+              {submissionDetail?.attributes?.task?.data?.attributes?.name}
             </Text>
-            <Text style={styles.label}>Social Security Number</Text>
-            <Text style={styles.value}>xxx-xx-xxxx</Text>
-            <Text style={styles.label}>Project Selection</Text>
+            <Text style={styles.label}>Task</Text>
             <Text style={styles.value}>
-              {registrationDetail?.attributes?.project?.data?.attributes?.name}
+              {submissionDetail?.attributes?.task?.data?.attributes?.name}
             </Text>
           </View>
 
@@ -179,13 +175,13 @@ const Details = () => {
               style={[styles.actionButton, styles.approveButton]}
               onPress={() => handleAction("approve")}
             >
-              <Text style={styles.buttonText}>Approve Request</Text>
+              <Text style={styles.buttonText}>Approve Submission</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.rejectButton]}
               onPress={() => handleAction("reject")}
             >
-              <Text style={styles.rejectButtonText}>Reject Request</Text>
+              <Text style={styles.rejectButtonText}>Reject Submission</Text>
             </TouchableOpacity>
           </View>
 
@@ -227,7 +223,6 @@ const Details = () => {
                   style={styles.fullScreenModal}
                   onPress={() => setModalVisible(false)}
                 >
-                  {/* Render PDF with iframe for web */}
                   <iframe
                     src={selectedDocument.url}
                     style={styles.fullSizeIframe}
@@ -240,7 +235,6 @@ const Details = () => {
                     style={styles.fullScreenModal}
                     onPress={() => setModalVisible(false)}
                   >
-                    {/* Render PDF with WebView for mobile */}
                     <WebView
                       source={{ uri: selectedDocument.url }}
                       style={styles.fullSizeImage}
@@ -256,7 +250,7 @@ const Details = () => {
   );
 };
 
-export default Details;
+export default SubmissionDetails;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -299,7 +293,7 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   proofContainer: {
-    height: 300, // Adjust height for carousel
+    height: 300,
     marginBottom: 20,
   },
   slide: {
@@ -347,12 +341,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: colors.whiteColor,
     fontFamily: fonts.WorkSans600,
-    fontSize: 16,
+    fontSize: 14,
     letterSpacing: 0.5,
   },
   rejectButtonText: {
     color: colors.whiteColor,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: fonts.WorkSans600,
   },
   popup: {
@@ -374,16 +368,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.85)", // Dark background for better focus on image or PDF
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
   },
   fullSizeImage: {
     width: "100%",
     height: "100%",
-    resizeMode: "contain", // Maintain aspect ratio without cropping
+    resizeMode: "contain",
   },
   fullSizeIframe: {
     width: "100%",
     height: "100%",
-    border: "none", // Remove iframe border
+    border: "none",
   },
 });

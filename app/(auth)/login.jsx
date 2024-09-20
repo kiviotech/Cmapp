@@ -11,6 +11,7 @@ import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import { login } from '../../src/utils/auth';
 import { saveToken, deleteToken } from '../../src/utils/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -65,36 +66,44 @@ const Login = () => {
     setForm({ ...form, [name]: value });
   };
 
-  const handleLogin = async () => {
+  
+  
+const handleLogin = async () => {
+  try {
+    const mobileError = validateField("mobile", form.mobile);
+    const passwordError = usePassword
+      ? validateField("password", form.password)
+      : "";
+    const otpError = !usePassword ? validateField("otp", form.otp) : "";
 
-    try {
-      const mobileError = validateField('mobile', form.mobile);
-      const passwordError = usePassword ? validateField('password', form.password) : '';
-      const otpError = !usePassword ? validateField('otp', form.otp) : '';
-
-      if (mobileError || passwordError || otpError) {
-        setErrors({
-          mobile: mobileError,
-          password: passwordError,
-          otp: otpError,
-        });
-        return;
-      }
-
-      // Attempt to log in with the provided mobile and password/otp
-      const response = await login(form.mobile, usePassword ? form.password : form.otp);
-
-      if (response) {
-        // Navigate to the dashboard after successful login
-        router.replace("/dashboard");
-      }
-
-
-    } catch (error) {
-      console.error('Error', error.message);
-      // Handle error, such as showing an error message to the user
+    if (mobileError || passwordError || otpError) {
+      setErrors({
+        mobile: mobileError,
+        password: passwordError,
+        otp: otpError,
+      });
+      return;
     }
-  };
+
+    // Attempt to log in with the provided mobile and password/otp
+    const response = await login(
+      form.mobile,
+      usePassword ? form.password : form.otp
+    );
+
+    if (response && response.user && response.user.username) {
+      // Store the username in AsyncStorage
+      await AsyncStorage.setItem("username", response.user.username);
+      console.log("Username stored in AsyncStorage:", response.user.username);
+
+      // Navigate to the dashboard after successful login
+      router.replace("/dashboard");
+    }
+  } catch (error) {
+    console.error("Error", error.message);
+    // Handle error, such as showing an error message to the user
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>

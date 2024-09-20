@@ -59,6 +59,7 @@ const Layout = () => {
       <Stack>
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/SignUp" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/Wait" options={{ headerShown: false }} />
         <Stack.Screen
           name="(pages)/dashboard"
           options={{ headerShown: false }}
@@ -82,6 +83,10 @@ const Layout = () => {
         />
         <Stack.Screen
           name="(pages)/notificationDetails"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/submissionDetails"
           options={{ headerShown: false }}
         />
         <Stack.Screen name="index" options={{ headerShown: false }} />
