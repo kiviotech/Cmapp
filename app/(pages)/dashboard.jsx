@@ -22,6 +22,8 @@ import {
   getTasksByUser,
 } from "../../src/api/repositories/taskRepository";
 import { getUserId } from "../../src/utils/storage";
+import BottomNavigation from "./BottomNavigation ";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Dashboard = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
@@ -62,7 +64,7 @@ const Dashboard = () => {
 
     fetchTasksForUser();
   }, [selectedProjectId]); // Refetch tasks when project changes
-
+  console.log(tasksDetail);
   const handleSearchPress = () => {
     setSearchVisible(!isSearchVisible);
   };
@@ -80,14 +82,35 @@ const Dashboard = () => {
       task.attributes.status === "not_completed" ||
       task.attributes.status === "rejected"
   );
+const [username, setUsername] = useState(null); // Set initial state as null for loading state
 
+const getUsername = async () => {
+  try {
+    const storedUsername = await AsyncStorage.getItem("username");
+    console.log("Stored username from AsyncStorage:", storedUsername); // Debug log
+    if (storedUsername) {
+      setUsername(storedUsername);
+    } else {
+      setUsername("Guest"); // Set default if no username is stored
+    }
+  } catch (error) {
+    console.error("Error retrieving username from AsyncStorage:", error);
+  }
+};
+
+useEffect(() => {
+  getUsername();
+}, []);
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <Image source={icons.user1} style={styles.profileImage} />
           <View>
-            <Text style={styles.userName}>Dan Smith</Text>
+            <Text style={styles.userName}>
+              {username ? username : "Loading..."}{" "}
+              {/* Display username or loading */}
+            </Text>
             <Text style={styles.greeting}>Project Supervisor</Text>
           </View>
           <View style={styles.iconsContainer}>
@@ -192,6 +215,7 @@ const Dashboard = () => {
           <CustomHomePageCard key={index} cardValue={cardData} />
         ))}
       </ScrollView>
+      <BottomNavigation />
     </SafeAreaView>
   );
 };

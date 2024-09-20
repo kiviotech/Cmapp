@@ -111,25 +111,33 @@ const SignUp = () => {
         return newErrors;
     };
 
-    const submit = async () => {
-        showToast('Request for new account sent', 'success')
-        const newErrors = validate();
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
-        }
-        
-        try {
-            const { name, email, password, socialSecurity } = form;
-            const contractorLicense = uploadedFiles || form.contractorLicense;
-            const res = await signup(name, email, password, socialSecurity, contractorLicense, selectedProject);
-            if (res) {
-                router.replace('/login');
-            }
-        } catch (error) {
-            Alert.alert('Error', error.response?.data?.message || error.message);
-        }
-    };
+   const submit = async () => {
+     const newErrors = validate();
+     if (Object.keys(newErrors).length > 0) {
+       setErrors(newErrors);
+       return;
+     }
+
+     try {
+       const { name, email, password, socialSecurity } = form;
+       const contractorLicense = uploadedFiles || form.contractorLicense;
+       const res = await signup(
+         name,
+         email,
+         password,
+         socialSecurity,
+         contractorLicense,
+         selectedProject
+       );
+
+       if (res) {
+         showToast("Request for new account sent", "success");
+        //  router.replace("/Wait");
+       }
+     } catch (error) {
+       Alert.alert("Error", error.response?.data?.message || error.message);
+     }
+   };
 
     useEffect(() => {
         const fetchProjects = async () => {

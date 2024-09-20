@@ -7,6 +7,8 @@ import { icons } from '../../constants';
 import fonts from '../../constants/fonts';
 import UploadedFileHIstory from '../../components/UploadedFileHIstory';
 import { getProjects } from '../../src/api/repositories/projectRepository';
+import SelectYourProjectCard from '../../components/SelectYourProjectCard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const profile = () => {
     const uploadedHistory = [
@@ -40,6 +42,26 @@ const profile = () => {
         fetchProjects();
     }, []);
 
+    const [username, setUsername] = useState(null); // Set initial state as null for loading state
+
+    const getUsername = async () => {
+      try {
+        const storedUsername = await AsyncStorage.getItem("username");
+        console.log("Stored username from AsyncStorage:", storedUsername); // Debug log
+        if (storedUsername) {
+          setUsername(storedUsername);
+        } else {
+          setUsername("Guest"); // Set default if no username is stored
+        }
+      } catch (error) {
+        console.error("Error retrieving username from AsyncStorage:", error);
+      }
+    };
+
+    useEffect(() => {
+      getUsername();
+    }, []);
+
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView style={{ padding: 10 }}>
@@ -48,7 +70,7 @@ const profile = () => {
                         <Image style={styles.userImage} source={icons.userProfile}></Image>
                     </View>
                     <View style={styles.profileDetailSection}>
-                        <Text style={styles.userName}>Dan Smith</Text>
+                        <Text style={styles.userName}>{ username }</Text>
                         <Text style={[styles.userName, { color: colors.primary }]}>Project Supervisor</Text>
                     </View>
 
@@ -68,7 +90,7 @@ const profile = () => {
                         showsHorizontalScrollIndicator={false}
                         style={styles.carousel}
                     >
-                        {projectsDetail.map((project, index) => (
+                        {projectsDetail?.map((project, index) => (
                             <View key={index} style={styles.cardWrapper}>
                                 <SelectYourProjectCard
                                     cardValue={{

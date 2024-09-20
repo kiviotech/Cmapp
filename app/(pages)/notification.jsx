@@ -14,7 +14,7 @@ import fonts from "../../constants/fonts";
 import colors from "../../constants/colors";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { getRegistrations, updateRegistration } from "../../src/api/repositories/registrationRepository";
-import { getSubmissions } from "../../src/api/repositories/submissionRepository";
+import { getSubmissions, updateSubmission } from "../../src/api/repositories/submissionRepository";
 import { createUser } from "../../src/api/repositories/userRepository";
 
 
@@ -47,23 +47,28 @@ const UploadProof = () => {
         fetchSubmissions();
       }
     }, [selectedTab]);
-  
-  const handleApproveSubmission = async (submissionId) => {
-    try {
-      await updateSubmission(submissionId, { status: "approved" });
-      // Remove the approved submission from the list
-      setSubmissionDetail((prevSubmissions) =>
-        prevSubmissions.filter((submission) => submission.id !== submissionId)
-      );
-    } catch (error) {
-      console.error("Error approving submission:", error);
-    }
-  };
-
   const handleRejectSubmission = async (submissionId) => {
     try {
-      await updateSubmission(submissionId, { status: "rejected" });
-      // Remove the rejected submission from the list
+      const selectedSubmission = submissionDetail.find(
+        (submission) => submission.id === submissionId
+      );
+
+      if (!selectedSubmission) {
+        console.error("Submission not found!");
+        return;
+      }
+
+      const payload = {
+        data: {
+          status: "rejected", // Update status to rejected
+          taskName: selectedSubmission.attributes.task.data.attributes.name,
+          userId: selectedSubmission.attributes.user.data.id,
+        },
+      };
+
+      await updateSubmission(submissionId, payload); // Call your API
+
+      // Remove the rejected submission from the state
       setSubmissionDetail((prevSubmissions) =>
         prevSubmissions.filter((submission) => submission.id !== submissionId)
       );
@@ -71,6 +76,69 @@ const UploadProof = () => {
       console.error("Error rejecting submission:", error);
     }
   };
+
+  
+  const handleApproveSubmission = async (submissionId) => {
+    try {
+      // Find the submission object that matches the selected submissionId
+      const selectedSubmission = submissionDetail.find(
+        (submission) => submission.id === submissionId
+      );
+
+      if (!selectedSubmission) {
+        console.error("Submission not found!");
+        return;
+      }
+
+      // Construct the payload using data from the selected submission
+      const payload = {
+        data: {
+          status: "approved", // Update status to approved
+          task: selectedSubmission.attributes.task.data.attributes.id,
+          submissionDate: selectedSubmission.attributes.submissionDate,
+          comment: selectedSubmission.attributes.comment,
+          count: 0,
+          proofOfWork : []
+        },
+      };
+
+//       Example Value
+// Schema
+// {
+//   "data": {
+//     "comment": "string",
+//     "proofOfWork": [
+//       "string or id",
+//       "string or id"
+//     ],
+//     "count": 0,
+//     "status": "pending",
+//     "task": "string or id"
+//   }
+
+      // Send the payload to update the submission
+      const response = await updateSubmission(submissionId, payload); // Assuming updateSubmission is a function from your repository to update the submission
+
+      // Update the state to remove the approved submission from the list
+      setSubmissionDetail((prevSubmissions) =>
+        prevSubmissions.map((submission) =>
+          submission.id === submissionId
+            ? {
+                ...submission,
+                attributes: { ...submission.attributes, status: "approved" },
+              }
+            : submission
+        )
+      );
+
+      if (response.status === 200) {
+        console.log("Submission approved successfully!");
+      }
+    } catch (error) {
+      console.error("Error approving submission:", error);
+    }
+  };
+
 
   // Existing handleApprove and handleReject functions for registrations
   const handleApprove = async (registrationId) => {
@@ -163,54 +231,52 @@ const UploadProof = () => {
 
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={styles.border}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("(pages)/dashboard")}
+        >
+          <Ionicons name="arrow-back" size={24} color="black" />
+          {/* Back Icon */}
+        </TouchableOpacity>
+        <Text style={styles.instructions}>Notifications</Text>
+      </View>
+      <View style={styles.tabBar}>
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            selectedTab === "joinRequests" && styles.activeTab,
+          ]}
+          onPress={() => setSelectedTab("joinRequests")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === "joinRequests" && styles.activeTabText,
+            ]}
+          >
+            Registrant
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            selectedTab === "uploadedProofs" && styles.activeTab,
+          ]}
+          onPress={() => setSelectedTab("uploadedProofs")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              selectedTab === "uploadedProofs" && styles.activeTabText,
+            ]}
+          >
+            Submissions
+          </Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView>
         <View style={styles.mainContainer}>
-          <View style={styles.border}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("(pages)/dashboard")}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
-              {/* Back Icon */}
-            </TouchableOpacity>
-            <Text style={styles.instructions}>Notifications</Text>
-          </View>
-
-          <View style={styles.tabBar}>
-            <TouchableOpacity
-              style={[
-                styles.tabItem,
-                selectedTab === "joinRequests" && styles.activeTab,
-              ]}
-              onPress={() => setSelectedTab("joinRequests")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  selectedTab === "joinRequests" && styles.activeTabText,
-                ]}
-              >
-                Registrant
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tabItem,
-                selectedTab === "uploadedProofs" && styles.activeTab,
-              ]}
-              onPress={() => setSelectedTab("uploadedProofs")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  selectedTab === "uploadedProofs" && styles.activeTabText,
-                ]}
-              >
-                Submissions
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Registration Notifications */}
           {selectedTab === "joinRequests" &&
             registrationDetail
@@ -295,13 +361,13 @@ const UploadProof = () => {
                     buttonStyle={styles.approveSubmission}
                     textStyle={styles.buttonText}
                     text="Approve Submission"
-                    onPress={() => handleApproveSubmission(submission.id)}
+                    handlePress={() => handleApproveSubmission(submission.id)}
                   />
                   <CustomButton
                     buttonStyle={styles.rejectSubmission}
                     textStyle={styles.buttonText}
                     text="Reject Submission"
-                    onPress={() => handleRejectSubmission(submission.id)}
+                    handlePress={() => handleRejectSubmission(submission.id)}
                   />
                 </View>
               </View>
@@ -341,6 +407,7 @@ const styles = StyleSheet.create({
     height: 70,
     flexDirection: "row",
     alignItems: "center",
+    margin: 10
   },
   notificationContainer: {
     marginTop: 20,
