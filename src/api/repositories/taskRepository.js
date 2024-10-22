@@ -11,6 +11,7 @@ export const updateTask = (id, data) => apiClient.put(taskEndpoints.updateTask(i
 
 export const deleteTask = id => apiClient.delete(taskEndpoints.deleteTask(id));
 
-export const getTasksByUserAndProject = (id,projectId) => apiClient.get(taskEndpoints.getTasksByUserAndProject(id,projectId))
+export const getTasksByUserAndProject = (userId, projectId) =>
+  apiClient.get(taskEndpoints.getTasksByUserAndProject(userId, projectId));
 
 export const getTasksByUser = (id) => apiClient.get(taskEndpoints.getTasksByUser(id))

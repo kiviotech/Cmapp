@@ -17,7 +17,7 @@ const TaskDetails = () => {
   const route = useRoute();
   const { id } = route.params || {};
   const navigation = useNavigation();
-  const baseURL = "http://localhost:1338"; // Base URL for localhost
+  const baseURL = "http://localhost:1337"; // Base URL for localhost
 
   useEffect(() => {
     const fetchTasksByID = async () => {

@@ -94,10 +94,10 @@ const profile = () => {
                             <View key={index} style={styles.cardWrapper}>
                                 <SelectYourProjectCard
                                     cardValue={{
-                                        name: project.attributes.name,
-                                        desc: project.attributes.description,
-                                        update: project.attributes.update_status,
-                                        deadline: project.attributes.deadline,
+                                        name: project?.name,
+                                        desc: project?.description,
+                                        update: project?.update_status,
+                                        deadline: project?.deadline,
                                     }}
                                 />
                             </View>

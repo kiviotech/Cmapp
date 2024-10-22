@@ -29,9 +29,9 @@ const Details = () => {
   const [selectedDocument, setSelectedDocument] = useState(null); // Handle both image and pdf
   const [popupAnimation] = useState(new Animated.Value(-100)); // Animation for toaster
   const route = useRoute();
-  const  id  = route.params.registrationId || 0;
+  const id = route.params.registrationId || 0;
   const navigation = useNavigation();
-  const baseURL = "http://localhost:1338"; // Base URL for localhost
+  const baseURL = "http://localhost:1337"; // Base URL for localhost
 
   const proofs = [
     {

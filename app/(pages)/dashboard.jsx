@@ -19,7 +19,6 @@ import fonts from "../../constants/fonts";
 import { getProjects } from "../../src/api/repositories/projectRepository";
 import {
   getTasksByUserAndProject,
-  getTasksByUser,
 } from "../../src/api/repositories/taskRepository";
 import { getUserId } from "../../src/utils/storage";
 import BottomNavigation from "./BottomNavigation ";
@@ -74,13 +73,13 @@ const Dashboard = () => {
   };
 
   const completedTasks = tasksDetail.filter(
-    (task) => task.attributes.status === "completed"
+    (task) => task.label === "completed"
   );
 
   const notCompletedTasks = tasksDetail.filter(
     (task) =>
-      task.attributes.status === "not_completed" ||
-      task.attributes.status === "rejected"
+      task.label === "not_completed" ||
+      task.label === "rejected"
   );
 const [username, setUsername] = useState(null); // Set initial state as null for loading state
 
@@ -155,10 +154,10 @@ useEffect(() => {
             >
               <SelectYourProjectCard
                 cardValue={{
-                  name: project.attributes.name,
-                  desc: project.attributes.description,
-                  update: project.attributes.update_status,
-                  deadline: project.attributes.deadline,
+                  name: project?.name,
+                  desc: project?.description,
+                  update: project?.update_status,
+                  deadline: project?.deadline,
                 }}
               />
             </TouchableOpacity>
@@ -167,7 +166,7 @@ useEffect(() => {
 
         <Text style={styles.projectitle}>
           {projectsDetail.find((project) => project.id === selectedProjectId)
-            ?.attributes.name || "Project"}
+            ?.name || "Project"}
         </Text>
 
         {/* Recent Milestones */}

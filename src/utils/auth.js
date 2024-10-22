@@ -21,7 +21,7 @@ export const login = async (email, password) => {
   }
 };
 
-export const signup = async (name, email, password, socialSecurity, contractorLicense, projectId) => {
+export const signup = async (name, email, password, socialSecurity, projectId) => {
   try {
 
     

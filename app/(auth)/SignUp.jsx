@@ -1,14 +1,15 @@
-import { View, Text, Alert, StyleSheet, ScrollView, Button } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown'; // Import the Dropdown component
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown';
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomButton from '../../components/CustomButton';
 import LoginField from '../../components/LoginField';
 import { useRouter } from 'expo-router';
 import { NativeWindStyleSheet } from "nativewind";
-import FileUpload from '../../components/FileUploading/FileUpload';
+import * as DocumentPicker from 'expo-document-picker';
+import axios from 'axios';
+
 import fonts from '../../constants/fonts';
-import { signup } from '../../src/utils/auth';  // Import the signup function
 import colors from '../../constants/colors';
 import { useToast } from '../ToastContext';
 import Toast from '../Toast';
@@ -19,81 +20,27 @@ NativeWindStyleSheet.setOutput({
 });
 
 const SignUp = () => {
-    const [selectedProject, setSelectedProject] = useState(''); // State for dropdown selection
+    const [selectedProject, setSelectedProject] = useState('');
     const [projectsDetail, setProjectsDetail] = useState([]);
     const [uploadedFiles, setUploadedFiles] = useState([]);
-    const [isDropdownFocused, setIsDropdownFocused] = useState(false); // Add state for dropdown focus
+    const [isDropdownFocused, setIsDropdownFocused] = useState(false);
     const { toast, showToast } = useToast();
     const [form, setForm] = useState({
         name: '',
         email: '',
         password: '',
         socialSecurity: '',
-        contractorLicense: null
     });
 
     const [errors, setErrors] = useState({});
     const router = useRouter();
 
-    // const cardDataArray = [
-    //     {
-    //         projectId: 1,
-    //         projectName: "Survey and Marking",
-    //         projectDescription: "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Task Completed",
-    //         taskStatusColor: "#A3D65C",
-    //         cardColor: "#EEF7E0",
-    //         status: "",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    // ];
-
-    // useEffect(() => {
-    //     setProjectsDetail(cardDataArray);
-    // }, []);
-
     const handleChangeText = (field, value) => {
         setForm({ ...form, [field]: value });
+        // Clear error when user starts typing
+        if (errors[field]) {
+            setErrors({ ...errors, [field]: '' });
+        }
     };
 
     const validate = () => {
@@ -106,65 +53,151 @@ const SignUp = () => {
         else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
         if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
         else if (form.socialSecurity.length < 6) newErrors.socialSecurity = 'Enter a valid 6-digit Social Security Number';
-        if (!uploadedFiles && !form.contractorLicense) newErrors.contractorLicense = 'File is required';
+        if (!uploadedFiles.length) newErrors.contractorLicense = 'Please upload contractor license documents';
+        if (!selectedProject) newErrors.project = 'Please select a project';
 
         return newErrors;
     };
 
-   const submit = async () => {
-     const newErrors = validate();
-     if (Object.keys(newErrors).length > 0) {
-       setErrors(newErrors);
-       return;
-     }
+    const handleDocumentPick = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: '*/*',
+                multiple: true,
+                copyToCacheDirectory: false
+            });
 
-     try {
-       const { name, email, password, socialSecurity } = form;
-       const contractorLicense = uploadedFiles || form.contractorLicense;
-       const res = await signup(
-         name,
-         email,
-         password,
-         socialSecurity,
-         contractorLicense,
-         selectedProject
-       );
+            if (result.canceled === false && result.assets) {
+                setUploadedFiles(result.assets);
+                if (errors.contractorLicense) {
+                    setErrors({ ...errors, contractorLicense: '' });
+                }
+            }
+        } catch (err) {
+            console.error('DocumentPicker Error:', err);
+            showToast('Error selecting documents', 'error');
+        }
+    };
 
-       if (res) {
-         showToast("Request for new account sent", "success");
-        //  router.replace("/Wait");
-       }
-     } catch (error) {
-       Alert.alert("Error", error.response?.data?.message || error.message);
-     }
-   };
+    const createFormData = (files) => {
+        const formData = new FormData();
+
+        files.forEach((file) => {
+            // For web, we can directly append the File object
+            if (Platform.OS === 'web') {
+                const fileObj = {
+                    uri: file.uri,
+                    name: file.name,
+                    type: file.mimeType,
+                };
+                formData.append('files', fileObj);
+            } else {
+                // For native platforms
+                formData.append('files', {
+                    uri: file.uri,
+                    name: file.name,
+                    type: file.mimeType
+                });
+            }
+        });
+
+        return formData;
+    };
+
+    const uploadFiles = async () => {
+        if (!uploadedFiles.length) {
+            throw new Error('Please select files to upload');
+        }
+
+        try {
+            const formData = createFormData(uploadedFiles);
+
+            // First, upload the files
+            const uploadResponse = await axios.post('http://localhost:1337/api/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (!uploadResponse.data) {
+                throw new Error('Failed to upload files');
+            }
+
+            // Return the array of file IDs
+            return uploadResponse.data.map(file => file.id);
+        } catch (error) {
+            console.error('Upload error:', error.response?.data || error);
+            throw new Error(
+                error.response?.data?.error?.message || 'Failed to upload files. Please try again.'
+            );
+        }
+    };
+
+    const registerUser = async (fileIds) => {
+        const registrationData = {
+            data: {
+                fullname: form.name,
+                socialSecurityNumber: form.socialSecurity,
+                email: form.email,
+                password: form.password,
+                project: selectedProject,
+                label: "pending",
+                locale: "en",
+                documents: fileIds
+            }
+        };
+
+        try {
+            const response = await axios.post('http://localhost:1337/api/registrations', registrationData);
+            return response.data;
+        } catch (error) {
+            console.error('Registration error:', error.response?.data || error);
+            throw new Error(
+                error.response?.data?.error?.message || 'Registration failed. Please try again.'
+            );
+        }
+    };
+
+    const submit = async () => {
+        try {
+            const newErrors = validate();
+            if (Object.keys(newErrors).length > 0) {
+                setErrors(newErrors);
+                return;
+            }
+
+            showToast('Uploading files...', 'info');
+            const fileIds = await uploadFiles();
+
+            showToast('Registering user...', 'info');
+            await registerUser(fileIds);
+
+            showToast('Registration successful!', 'success');
+            router.replace('/login');
+        } catch (error) {
+            console.error('Submit error:', error);
+            showToast(error.message, 'error');
+        }
+    };
 
     useEffect(() => {
         const fetchProjects = async () => {
             try {
                 const projectData = await getProjects();
-
                 setProjectsDetail(projectData.data.data);
-
-                const taskData = await getTasks();
-                setTasksDetail(taskData.data.data);
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error fetching projects:", error);
+                showToast("Failed to load projects", "error");
             }
         };
 
         fetchProjects();
     }, []);
 
-    
-
     return (
-
         <SafeAreaView style={styles.container}>
             <Toast visible={toast.visible} message={toast.message} type={toast.type} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
-
-
                 <View style={styles.content}>
                     <View style={styles.header}>
                         <Text className="font-pbold text-3xl font-inter600">Sign Up</Text>
@@ -182,7 +215,7 @@ const SignUp = () => {
 
                         <Text className="font-inter400 mt-8" style={styles.labelText}>E-mail</Text>
                         <LoginField
-                            placeholder="Your email or phone"
+                            placeholder="Your email"
                             value={form.email}
                             handleChangeText={(e) => handleChangeText('email', e)}
                             keyboardType='email-address'
@@ -193,7 +226,6 @@ const SignUp = () => {
                         <View style={styles.passwordContainer}>
                             <Text className="font-inter400" style={styles.labelText}>Password</Text>
                             <LoginField
-                                style={styles.loginField}
                                 placeholder="Password"
                                 value={form.password}
                                 handleChangeText={(e) => handleChangeText('password', e)}
@@ -214,13 +246,12 @@ const SignUp = () => {
                         </View>
                     </View>
 
-                    {/* Project Selection Dropdown with search */}
                     <View style={styles.projectSelectionContainer}>
                         <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
                         <View style={styles.dropdownContainer}>
                             <Dropdown
                                 data={projectsDetail.map(project => ({
-                                    label: project.attributes.name,
+                                    label: project?.name,
                                     value: project.id,
                                 }))}
                                 labelField="label"
@@ -229,7 +260,6 @@ const SignUp = () => {
                                 search
                                 searchPlaceholder="Search your project"
                                 value={selectedProject}
-
                                 onFocus={() => setIsDropdownFocused(true)}
                                 onBlur={() => setIsDropdownFocused(false)}
                                 onChange={item => {
@@ -237,16 +267,40 @@ const SignUp = () => {
                                     setIsDropdownFocused(false);
                                 }}
                                 style={styles.dropdown}
-                                containerStyle={styles.dropdownContainerStyle} // Apply style for dropdown list container
-                                searchStyle={styles.searchBox} // Apply style for search box
+                                containerStyle={styles.dropdownContainerStyle}
+                                searchStyle={styles.searchBox}
                             />
                         </View>
                         {errors.project && <Text style={styles.errorText}>{errors.project}</Text>}
                     </View>
 
-                    <View>
-                        <FileUpload uploadedFiles={uploadedFiles} setUploadedFiles={setUploadedFiles} />
-                        {errors.contractorLicense && <Text style={styles.errorText}>{errors.contractorLicense}</Text>}
+                    <View style={styles.uploadSection}>
+                        <Text className="font-inter400" style={styles.labelText}>
+                            Contractor License Documents
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.uploadButton}
+                            onPress={handleDocumentPick}
+                        >
+                            <Text style={styles.uploadButtonText}>
+                                Select Documents
+                            </Text>
+                        </TouchableOpacity>
+                        {uploadedFiles.length > 0 && (
+                            <View style={styles.fileList}>
+                                <Text style={styles.fileCountText}>
+                                    {uploadedFiles.length} file(s) selected
+                                </Text>
+                                {uploadedFiles.map((file, index) => (
+                                    <Text key={index} style={styles.fileName}>
+                                        {file.name}
+                                    </Text>
+                                ))}
+                            </View>
+                        )}
+                        {errors.contractorLicense && (
+                            <Text style={styles.errorText}>{errors.contractorLicense}</Text>
+                        )}
                     </View>
 
                     <View style={styles.buttonContainer}>
@@ -258,97 +312,125 @@ const SignUp = () => {
                         />
                     </View>
 
-                    <View style={styles.SignUpContainer}>
+                    <View style={styles.signUpContainer}>
                         <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
                             Already have an account? <Text className="text-[#577CFF]" onPress={() => router.replace('/login')}>Login</Text>
                         </Text>
                     </View>
                 </View>
-
-
-
-
             </ScrollView>
         </SafeAreaView>
     );
 };
 
-export default SignUp;
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#FFFFFF',
+    },
+    scrollContent: {
+        flexGrow: 1,
     },
     content: {
         flex: 1,
-        justifyContent: 'center',
         padding: 24,
     },
+    header: {
+        marginBottom: 30,
+    },
     inputContainer: {
-        marginVertical: 20,
+        marginBottom: 20,
     },
     passwordContainer: {
         marginTop: 20,
     },
+    projectSelectionContainer: {
+        marginVertical: 20,
+    },
+    dropdownContainer: {
+        marginTop: 5,
+    },
     buttonContainer: {
-        marginTop: 20,
+        marginTop: 30,
+        alignItems: 'center',
+    },
+    signUpContainer: {
+        marginTop: 30,
         alignItems: 'center',
     },
     labelText: {
         marginBottom: 5,
         fontFamily: fonts.inter400,
         color: colors.loginSignUpLabelColor,
-        fontSize: 14
-    },
-    loginField: {
-        marginBottom: 10,
-    },
-
-    dropdown: {
-        height: 50,
-        borderColor: 'gray',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 8,
-
-    },
-    dropdownContainerStyle: {
-        maxHeight: 200, // Maximum height for the dropdown list
-        overflow: 'scroll',
-        marginTop: 10,
-        borderRadius: 10,
-        borderWidth: 1, // Set the border width
-        borderColor: '#B3B3B3', // Set the border color
-        backgroundColor: '#FFF', // Set the background color
-        shadowColor: 'rgba(211, 209, 216, 0.25)', // Set the shadow color
-        shadowOffset: { width: 15, height: 15 }, // Offset for the shadow
-        shadowOpacity: 1, // Set the shadow opacity
-        shadowRadius: 30, // Set the shadow radius
-        elevation: 5, // Needed for Android to apply shadow
-    },
-    searchBox: {
-        borderRadius: 5, // Border radius for search box
-        borderColor: 'transparent', // Make the border disappear while typing
-        padding: 8,
-        padding: 10,
-        backgroundColor: '#F0F0F0', // Add a background color if needed
-        borderRadius: 8, // Optional: for rounded corners
-        fontSize: 16, // Optional: Adjust font size
-
+        fontSize: 14,
     },
     errorText: {
-        color: 'red',
+        color: '#FF4444',
         marginTop: 5,
         fontFamily: fonts.inter400,
+        fontSize: 12,
     },
-    buttonContainer: {
-        marginTop: 20,
+    dropdown: {
+        height: 50,
+        borderColor: '#DDDDDD',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#FFFFFF',
+    },
+    dropdownContainerStyle: {
+        maxHeight: 200,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#DDDDDD',
+        backgroundColor: '#FFFFFF',
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    searchBox: {
+        borderRadius: 8,
+        backgroundColor: '#F5F5F5',
+        padding: 10,
+        fontSize: 14,
+        fontFamily: fonts.inter400,
+    },
+    uploadSection: {
+        marginVertical: 20,
+    },
+    uploadButton: {
+        backgroundColor: '#F5F5F5',
+        padding: 15,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#DDDDDD',
         alignItems: 'center',
     },
-
-    SignUpContainer: {
-        marginTop: 50,
-        alignItems: 'center',
+    uploadButtonText: {
+        color: '#577CFF',
+        fontFamily: fonts.inter400,
+        fontSize: 14,
     },
-
+    fileList: {
+        marginTop: 10,
+        padding: 10,
+        backgroundColor: '#F8F8F8',
+        borderRadius: 8,
+    },
+    fileCountText: {
+        color: '#4CAF50',
+        fontFamily: fonts.inter400,
+        marginBottom: 8,
+        fontSize: 14,
+    },
+    fileName: {
+        color: '#666666',
+        fontFamily: fonts.inter400,
+        fontSize: 12,
+        marginBottom: 4,
+    },
 });
+
+export default SignUp;
