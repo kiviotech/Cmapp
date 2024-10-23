@@ -61,7 +61,7 @@ const UploadProof = () => {
       const payload = {
         data: {
           status: "rejected", // Update status to rejected
-          taskName: selectedSubmission.attributes.task.data.attributes.name,
+          taskName: selectedSubmission?.attributes?.task?.data?.attributes?.name,
           userId: selectedSubmission.attributes.user.data.id,
         },
       };
@@ -94,9 +94,9 @@ const UploadProof = () => {
       const payload = {
         data: {
           status: "approved", // Update status to approved
-          task: selectedSubmission.attributes.task.data.attributes.id,
-          submissionDate: selectedSubmission.attributes.submissionDate,
-          comment: selectedSubmission.attributes.comment,
+          task: selectedSubmission?.attributes?.task?.data?.attributes?.id,
+          submissionDate: selectedSubmission?.attributes?.submissionDate,
+          comment: selectedSubmission?.attributes?.comment,
           count: 0,
           proofOfWork : []
         },
@@ -125,7 +125,7 @@ const UploadProof = () => {
           submission.id === submissionId
             ? {
                 ...submission,
-                attributes: { ...submission.attributes, status: "approved" },
+                attributes: { ...submission?.attributes, status: "approved" },
               }
             : submission
         )
@@ -210,9 +210,9 @@ const UploadProof = () => {
         data: {
           status: "rejected", // Update status to approved
           socialSecurityNumber:
-            selectedRegistration.attributes.socialSecurityNumber,
-          fullName: selectedRegistration.attributes.fullName,
-          email: selectedRegistration.attributes.email,
+            selectedRegistration?.attributes?.socialSecurityNumber,
+          fullName: selectedRegistration?.attributes?.fullName,
+          email: selectedRegistration?.attributes?.email,
         },
       };
 
@@ -336,7 +336,7 @@ const UploadProof = () => {
               <View key={submission.id} style={styles.notificationContainer}>
                 <Text style={styles.paragraph}>
                   {submission?.id} has submitted proof of{" "}
-                  {submission?.attributes.task.data.attributes.name}
+                  {submission?.attributes?.task?.data?.attributes?.name}
                 </Text>
 
                 <View

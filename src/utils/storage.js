@@ -1,28 +1,45 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 // Save the token securely
-export function saveToken(token) {
-  localStorage.setItem("userToken", token);
-  
+export async function saveToken(token) {
+  try {
+    await AsyncStorage.setItem("userToken", token);
+  } catch (error) {
+    console.error("Error saving token", error);
+  }
 }
 
 // Retrieve the token securely
-export function getToken() {
-  return localStorage.getItem("userToken");
+export async function getToken() {
+  try {
+    return await AsyncStorage.getItem("userToken");
+  } catch (error) {
+    console.error("Error retrieving token", error);
+  }
 }
 
 // Save the id securely
-export function saveUserId(id) {
-  localStorage.setItem("id", id);
-  
+export async function saveUserId(id) {
+  try {
+    await AsyncStorage.setItem("id", id);
+  } catch (error) {
+    console.error("Error saving user ID", error);
+  }
 }
+
 // Retrieve the id securely
-export function getUserId() {
-  return localStorage.getItem("id");
+export async function getUserId() {
+  try {
+    return await AsyncStorage.getItem("id");
+  } catch (error) {
+    console.error("Error retrieving user ID", error);
+  }
 }
 
 // Delete the token securely
-export function deleteToken() {
+export async function deleteToken() {
   try {
-    localStorage.removeItem("userToken");
+    await AsyncStorage.removeItem("userToken");
   } catch (error) {
     console.error("Error deleting token", error);
   }

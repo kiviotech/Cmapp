@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    borderRadius: 10,
+    // borderRadius: 10,
     paddingBottom: 20,
   },
   searchBarContainer: {
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 10,
     backgroundColor: colors.whiteColor,
-    borderRadius: 10,
+    // borderRadius: 10,
     shadowColor: "#171717",
     shadowOffset: { width: -2, height: 4 },
     shadowOpacity: 0.2,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 50,
     height: 50,
-    borderRadius: 25,
+    // borderRadius: 25,
     marginRight: 10,
   },
   greeting: {
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   icon: {
     marginLeft: 15,
     borderColor: colors.borderColor,
-    borderRadius: "100%",
+    // borderRadius: "100%",
     borderWidth: 1,
     padding: 10,
   },
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderColor: colors.borderColor,
     borderBottomWidth: 1,
-    borderRadius: 5,
+    // borderRadius: 5,
     paddingBottom: 20,
   },
   cardWrapper: {
@@ -338,6 +338,6 @@ const styles = StyleSheet.create({
   selectedCardWrapper: {
     borderWidth: 2,
     borderColor: colors.primary, // Indicate selected project with border color or background color
-    borderRadius: 10,
+    // borderRadius: 10,
   },
 });

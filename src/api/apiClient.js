@@ -1,9 +1,21 @@
 import axios from 'axios';
 import { getToken } from '../utils/storage';
+import { Platform } from 'react-native';
 
-export const BASE_URL = 'https://cmapp.kivio.in/dash/api';
-export const MEDIA_BASE_URL = 'https://cmapp.kivio.in/dash/';
+// Configure base URLs based on platform
+const BASE_URL = Platform.select({
+  web: "http://localhost:1337/api",
+  android: "http://10.51.10.146:1337/api", 
+  // ios: "http://localhost:1337/api", // For iOS simulator
+});
 
+const MEDIA_BASE_URL = Platform.select({
+  web: "http://localhost:1337",
+  android: "http://10.51.10.146:1337",
+  // ios: "http://localhost:1337",
+});
+
+// Create Axios instance
 const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -11,9 +23,11 @@ const apiClient = axios.create({
   },
 });
 
+// Add a request interceptor to attach the token
 apiClient.interceptors.request.use(
-  config => {
-    const token = getToken(); // Call the function to get the token
+  async config => {
+    const token = await getToken(); // Call the function to get the token
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -22,4 +36,5 @@ apiClient.interceptors.request.use(
   error => Promise.reject(error)
 );
 
+export { BASE_URL, MEDIA_BASE_URL };
 export default apiClient;

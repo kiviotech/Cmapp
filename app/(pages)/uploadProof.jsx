@@ -25,7 +25,7 @@ const UploadProof = ({ }) => {
     const [filesSelected, setFilesSelected] = React.useState(false);
     const [comment, setComment] = useState('');  // New state for the comment
     const route = useRoute();
-    const { id } = route?.params;
+    const  id  = route?.params;
 
          useEffect(() => {
             const fetchTaskDetails = async () => {
