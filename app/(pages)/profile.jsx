@@ -9,6 +9,7 @@ import UploadedFileHIstory from '../../components/UploadedFileHIstory';
 import { getProjects } from '../../src/api/repositories/projectRepository';
 import SelectYourProjectCard from '../../components/SelectYourProjectCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTasks } from '../../src/api/repositories/taskRepository';
 
 const profile = () => {
     const uploadedHistory = [
@@ -32,8 +33,8 @@ const profile = () => {
 
                 setProjectsDetail(projectData.data.data);
 
-                const taskData = await getTasks();
-                setTasksDetail(taskData.data.data);
+                // const taskData = await getTasks();
+                // setTasksDetail(taskData.data.data);
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -82,7 +83,7 @@ const profile = () => {
                 {/* to view user project  */}
                 <View style={{ marginTop: 20 }}>
 
-                    <Text style={{ fontFamily: fonts.WorkSans600, fontSize: 16, letterSpacing: 0.8, color:colors.blackColor,paddingLeft:10 }}>Your Projects</Text>
+                    <Text style={{ fontSize: 16, letterSpacing: 0.8, color:colors.blackColor,paddingLeft:10 }}>Your Projects</Text>
 
 
                     <ScrollView
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     userImage: {
         width: 115,
         height: 115,
-        borderRadius: '100%',
+        // borderRadius: '100%',
         objectFit: 'cover'
     },
     profileDetailSection: {
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     },
     userName: {
         color: colors.blackColor,
-        fontFamily: fonts.WorkSans600,
+        // fontFamily: fonts.WorkSans600,
         fontSize: 26,
         letterSpacing: 0.13,
         paddingBottom: 10

@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     },
     projectName: {
         color: '#577CFF',
-        fontFamily: 'WorkSans_600SemiBold',
+        // fontFamily: 'WorkSans_600SemiBold',
         fontSize: 20,
         fontWeight: 600,
         lineHeight: 40,
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     },
     projectDescription: {
         color: '#000000',
-        fontFamily: 'WorkSans_500Medium',
+        // fontFamily: 'WorkSans_500Medium',
         fontSize: 12,
         fontStyle: 'normal',
         fontWeight: '300',
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     },
     deadlineText: {
         color: '#000000',
-        fontFamily: 'WorkSans_400Regular',
+        // fontFamily: 'WorkSans_400Regular',
         fontSize: 14,
         fontStyle: 'normal',
         fontWeight: '400',

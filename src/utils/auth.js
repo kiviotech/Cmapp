@@ -14,7 +14,7 @@ export const login = async (email, password) => {
     console.log("auth.js", jwt, response.data);
     // Save the JWT to secure storage
     saveToken(jwt);
-    saveUserId(user.id);
+    saveUserId(JSON.stringify(user.id));
     return response.data;
   } catch (error) {
     throw error;

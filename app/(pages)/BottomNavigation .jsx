@@ -65,11 +65,11 @@ const styles = StyleSheet.create({
     },
     navTextActive: {
         color: '#577CFF',
-        fontFamily: 'WorkSans_500Medium',
+        // fontFamily: 'WorkSans_500Medium',
     },
     navText: {
         color: '#A8A8A8',
-        fontFamily: 'WorkSans_500Medium',
+        // fontFamily: 'WorkSans_500Medium',
         marginTop: 6,
         fontSize: 12
     },

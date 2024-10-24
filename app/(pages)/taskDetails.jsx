@@ -23,14 +23,14 @@ const TaskDetails = () => {
     const fetchTasksByID = async () => {
       try {
         const taskData = await getTaskById(id);
-        setTasksDetail(taskData.data.data);
+        setTasksDetail(taskData?.data?.data);
 
-        if (taskData.data.data.attributes.docs) {
-          const docs = taskData.data.data.attributes.docs.data.map(doc => ({
-            id: doc.id,
-            fileName: doc.attributes.name,
+        if (taskData?.data?.data?.attributes?.docs) {
+          const docs = taskData?.data?.data?.attributes?.docs?.data?.map(doc => ({
+            id: doc?.id,
+            fileName: doc?.attributes?.name,
             url: `${baseURL}${doc.attributes.url}`, // Prepend base URL
-            mimeType: doc.attributes.mime // Handle different mime types
+            mimeType: doc?.attributes?.mime // Handle different mime types
           }));
           setDocuments(docs);
         }
@@ -189,7 +189,7 @@ const TaskDetails = () => {
                 <Text style={styles.modalTitle}>Documents</Text>
 
                 {/* Display documents as clickable items for download */}
-                {documents.map((doc, index) => (
+                {documents?.map((doc, index) => (
                   <TouchableOpacity
                     key={index}
                     onPress={() => openDocument(doc.url)}
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   detailsText: {
     fontSize: 24,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
   },
   deadlineContainer: {
     flexDirection: "row",
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   deadlineText: {
     color: colors.radiusColor,
     marginLeft: 8,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
   },
   imagePlaceholder: {
     height: 150,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   taskImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    // borderRadius: 10,
   },
   projectInfo: {
     marginBottom: 16,
@@ -265,11 +265,11 @@ const styles = StyleSheet.create({
   },
   projectTitle: {
     fontSize: 18,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
   },
   projectDescription: {
     color: colors.blackColor,
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
     fontSize: 12,
     paddingTop: 25,
   },
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     flex: 2,
     fontWeight: "600",
     color: colors.primary,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
     fontSize: 12,
     borderRightWidth: 1,
     borderRightColor: colors.borderColor,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
     color: colors.blackColor,
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
     fontSize: 10,
     paddingLeft: 10,
   },
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   documentName: {
     fontSize: 14,
     color: colors.blackColor,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
   },
   modalContainer: {
     flex: 1,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     marginBottom: 20,
   },
   closeButton: {
@@ -367,12 +367,12 @@ const styles = StyleSheet.create({
   documentName: {
     fontSize: 14,
     color: colors.blackColor,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
   },
   downloadText: {
     color: colors.primary,
     fontSize: 14,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
   },
 });
 

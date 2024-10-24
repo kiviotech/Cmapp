@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        fontFamily: fonts.WorkSans400,
+        // fontFamily: fonts.WorkSans400,
         marginBottom: 10,
         color: '#ADADAD',
         fontSize: 18
@@ -143,6 +143,6 @@ const styles = StyleSheet.create({
     itemText: {
         fontSize: 18,
         color: colors.blackColor,
-        fontFamily: fonts.WorkSans400
+        // fontFamily: fonts.WorkSans400
     },
 });

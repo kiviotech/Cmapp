@@ -32,30 +32,55 @@ const Dashboard = () => {
   const [tasksDetail, setTasksDetail] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null); // New state for selected project
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
+    let isMounted = true;
+
     const fetchProjects = async () => {
+      setIsLoading(true);
       try {
         const projectData = await getProjects();
-        setProjectsDetail(projectData.data.data);
-        setSelectedProjectId(projectData.data.data[0]?.id); // Default to first project
+        if (isMounted && projectData?.data?.data) {
+          // Ensure we have unique projects based on ID
+          const uniqueProjects = Array.from(
+            new Map(projectData.data.data.map(item => [item.id, item])).values()
+          );
+          setProjectsDetail(uniqueProjects);
+          if (uniqueProjects.length > 0) {
+            setSelectedProjectId(uniqueProjects[0]?.id);
+          }
+        }
       } catch (error) {
         console.error("Error fetching projects:", error);
+        if (isMounted) {
+          setProjectsDetail([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchProjects();
-  }, []);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array means this only runs once on mount
+
 
   useEffect(() => {
     const fetchTasksForUser = async () => {
       if (selectedProjectId) {
         try {
-          const userId = await getUserId(); // Fetch the user ID from local storage or wherever it's stored
-          const taskData = await getTasksByUserAndProject(
-            userId,
-            selectedProjectId
-          );
-          setTasksDetail(taskData.data.data);
+          const storedId = JSON.parse(await AsyncStorage.getItem('id')); // Fetch the user ID from local storage
+          if (storedId) {
+            const taskData = await getTasksByUserAndProject(storedId, selectedProjectId);
+            setTasksDetail(taskData.data.data);
+          }
         } catch (error) {
           console.error("Error fetching tasks for project:", error);
         }
@@ -139,31 +164,43 @@ useEffect(() => {
         <Text style={styles.title}>Select Your Project</Text>
 
         {/* Horizontal ScrollView for the Carousel */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.carousel}
-        >
-          {projectsDetail.map((project, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.cardWrapper,
-                selectedProjectId === project.id && styles.selectedCardWrapper, // Apply selected style
-              ]}
-              onPress={() => handleProjectSelect(project.id)} // Handle project select
-            >
-              <SelectYourProjectCard
-                cardValue={{
-                  name: project.attributes.name,
-                  desc: project.attributes.description,
-                  update: project.attributes.update_status,
-                  deadline: project.attributes.deadline,
-                }}
-              />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text>Loading projects...</Text>
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.carousel}
+          >
+            {projectsDetail.length > 0 ? (
+              projectsDetail.map((project) => (
+                <TouchableOpacity
+                  key={project.id}
+                  style={[
+                    styles.cardWrapper,
+                    selectedProjectId === project.id && styles.selectedCardWrapper,
+                  ]}
+                  onPress={() => handleProjectSelect(project.id)}
+                >
+                  <SelectYourProjectCard
+                    cardValue={{
+                      name: project.attributes.name,
+                      desc: project.attributes.description,
+                      update: project.attributes.update_status,
+                      deadline: project.attributes.deadline,
+                    }}
+                  />
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.noProjectsContainer}>
+                <Text style={styles.noProjectsText}>No projects available</Text>
+              </View>
+            )}
+          </ScrollView>
+        )}
 
         <Text style={styles.projectitle}>
           {projectsDetail.find((project) => project.id === selectedProjectId)
@@ -189,11 +226,21 @@ useEffect(() => {
           showsHorizontalScrollIndicator={false}
           style={styles.carousel}
         >
-          <View style={styles.yourProjectContainer}>
-            {completedTasks.map((cardData, index) => {
-              return <SubtaskCard key={index} cardValue={cardData} />;
-            })}
-          </View>
+          {completedTasks.length > 0 ? (
+            <View style={styles.yourProjectContainer}>
+              {completedTasks.map((cardData, index) => (
+                <SubtaskCard
+                  key={cardData.id || index}
+                  cardValue={cardData}
+                  cardColor="#EEF7E0"
+                />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.noTasksContainer}>
+              <Text style={styles.noTasksText}>No completed tasks</Text>
+            </View>
+          )}
         </ScrollView>
 
         {/* Upcoming Milestones */}
@@ -240,7 +287,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    // borderRadius: 10,
+    borderRadius: 10,
     paddingBottom: 20,
   },
   searchBarContainer: {
@@ -248,7 +295,7 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 10,
     backgroundColor: colors.whiteColor,
-    // borderRadius: 10,
+    borderRadius: 10,
     shadowColor: "#171717",
     shadowOffset: { width: -2, height: 4 },
     shadowOpacity: 0.2,
@@ -265,13 +312,13 @@ const styles = StyleSheet.create({
   },
   projectitle: {
     color: "#000",
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 26,
     marginTop: 20,
   },
   title: {
     color: "#000",
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 26,
     marginTop: 40,
   },
@@ -284,12 +331,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 12,
     color: "#577CFF",
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
   },
   userName: {
     color: "#000B23",
     fontSize: 20,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
   },
   iconsContainer: {
     flexDirection: "row",
@@ -306,7 +353,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderColor: colors.borderColor,
     borderBottomWidth: 1,
-    // borderRadius: 5,
+    borderRadius: 5,
     paddingBottom: 20,
   },
   cardWrapper: {
@@ -338,6 +385,30 @@ const styles = StyleSheet.create({
   selectedCardWrapper: {
     borderWidth: 2,
     borderColor: colors.primary, // Indicate selected project with border color or background color
-    // borderRadius: 10,
+    borderRadius: 10,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  noProjectsContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  noProjectsText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  noTasksContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  noTasksText: {
+    fontSize: 16,
+    color: '#666',
   },
 });

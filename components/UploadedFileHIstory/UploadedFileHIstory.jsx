@@ -42,26 +42,26 @@ const styles = StyleSheet.create({
   },
   historyTitle: {
     fontSize: 18,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     marginBottom: 10,
   },
   noHistoryText: {
     fontSize: 14,
     color: colors.noHistoryTextColor,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
   },
   submissionContainer: {
     marginBottom: 20,
   },
   commentText: {
     fontSize: 14,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
     color: colors.blackColor,
     marginBottom: 5,
   },
   statusText: {
     fontSize: 14,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
     color: colors.statusTextColor,
     marginBottom: 5,
   },
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     marginLeft: 10,
-    fontFamily: fonts.WorkSans500,
+    // fontFamily: fonts.WorkSans500,
     color: colors.blackColor,
   },
 });

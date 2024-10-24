@@ -5,13 +5,13 @@ import { Platform } from 'react-native';
 // Configure base URLs based on platform
 const BASE_URL = Platform.select({
   web: "http://localhost:1337/api",
-  android: "http://10.51.10.146:1337/api", 
+  android: "http://192.168.0.101:1337/api",
   // ios: "http://localhost:1337/api", // For iOS simulator
 });
 
 const MEDIA_BASE_URL = Platform.select({
   web: "http://localhost:1337",
-  android: "http://10.51.10.146:1337",
+  android: "http://192.168.0.101:1337",
   // ios: "http://localhost:1337",
 });
 

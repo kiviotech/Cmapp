@@ -36,7 +36,7 @@ const UploadProof = ({ }) => {
                     // Check if submissions exist
                     if (taskAttributes.submissions && taskAttributes.submissions.data.length > 0) {
                         // There are submissions, set the status to pending or based on the submission status
-                        const submissionHistory = taskAttributes.submissions.data.map(submission => ({
+                        const submissionHistory = taskAttributes.submissions.data?.map(submission => ({
                             id: submission.id,
                             status: submission.attributes.status,
                             comment: submission.attributes.comment,
@@ -135,7 +135,7 @@ const toBase64 = (file) => {
       if (response.ok) {
         console.log('Files uploaded successfully:', data);
         // Extract and return file IDs from the response
-        const fileIds = data.map(file => file.id);
+        const fileIds = data?.map(file => file?.id);
         return fileIds;
       } else {
         console.error('Error uploading files:', data);
@@ -204,13 +204,13 @@ const toBase64 = (file) => {
         const interval = setInterval(() => {
             progress += 10;
             setUploadedFiles((prevFiles) =>
-                prevFiles.map((f) => f.name === file.name ? { ...f, progress, status: 'uploading' } : f)
+                prevFiles?.map((f) => f.name === file.name ? { ...f, progress, status: 'uploading' } : f)
             );
 
             if (progress >= 100) {
                 clearInterval(interval);
                 setUploadedFiles((prevFiles) =>
-                    prevFiles.map((f) =>
+                    prevFiles?.map((f) =>
                         f.name === file.name ? { ...f, status: 'success', progress: 100 } : f
                     )
                 );
@@ -247,7 +247,7 @@ const toBase64 = (file) => {
             const interval = setInterval(() => {
                 progress += 10;
                 setUploadedFiles((prevFiles) =>
-                    prevFiles.map((file) =>
+                    prevFiles?.map((file) =>
                         file.name === newFile.name ? { ...file, progress } : file
                     )
                 );
@@ -255,7 +255,7 @@ const toBase64 = (file) => {
                 if (progress >= 100) {
                     clearInterval(interval);
                     setUploadedFiles((prevFiles) =>
-                        prevFiles.map((file) =>
+                        prevFiles?.map((file) =>
                             file.name === newFile.name ? { ...file, status: 'success', progress: 100 } : file
                         )
                     );
@@ -358,7 +358,7 @@ const toBase64 = (file) => {
               )}
 
               {/* Uploaded Files Display */}
-              {uploadedFiles.map((file, index) => (
+              {uploadedFiles?.map((file, index) => (
                 <View key={index} style={styles.fileRow}>
                   <FontAwesome name="file" size={24} color="#6B7280" />
                   <View style={styles.progressBarContainer}>
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     },
     instructions: {
         fontSize: 18,
-        fontFamily: fonts.WorkSans600,
+        // fontFamily: fonts.WorkSans600,
         paddingBottom: 10,
     },
     commentInput: {
@@ -571,6 +571,6 @@ const styles = StyleSheet.create({
     },
     rejectionText: {
         color: '#FC5275',
-        fontFamily: fonts.WorkSans500,
+        // fontFamily: fonts.WorkSans500,
     },
 });

@@ -388,14 +388,14 @@ const styles = StyleSheet.create({
   },
   instructions: {
     fontSize: 24,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     paddingLeft: 100,
   },
   pagraph: {
     color: colors.blackColor,
     fontSize: 16,
     padding: 5,
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
   },
   seeMore: {
     textAlign: "center",
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     color: colors.whiteColor,
   },
   seeMoreButton: {
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     color: colors.blackColor,
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
   },
   activeTab: {
     borderBottomWidth: 2,
@@ -516,6 +516,6 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: colors.primary,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
   },
 });

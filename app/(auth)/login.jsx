@@ -1,23 +1,49 @@
-import { View, Text, TouchableOpacity, Alert, Image, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Alert, Image, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  WorkSans_400Regular,
+  WorkSans_500Medium,
+  WorkSans_600SemiBold,
+  WorkSans_700Bold,
+} from '@expo-google-fonts/work-sans';
 import CustomButton from '../../components/CustomButton';
 import LoginField from '../../components/LoginField';
 import { useRouter } from 'expo-router';
-import { NativeWindStyleSheet } from "nativewind";
+import { NativeWindStyleSheet } from 'nativewind';
 import { icons } from '../../constants';
 import { useNavigation } from '@react-navigation/native';
 import colors from '../../constants/colors';
 import fonts from '../../constants/fonts';
 import { login } from '../../src/utils/auth';
-import { saveToken, deleteToken } from '../../src/utils/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 NativeWindStyleSheet.setOutput({
-  default: "native",
+  default: 'native',
 });
 
+SplashScreen.preventAutoHideAsync();
+
 const Login = () => {
+  const [fontsLoaded] = useFonts({
+    WorkSans_400Regular,
+    WorkSans_500Medium,
+    WorkSans_600SemiBold,
+    WorkSans_700Bold,
+  });
+
+  React.useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   const [usePassword, setUsePassword] = useState(true);
   const [form, setForm] = useState({
     mobile: '',
@@ -66,51 +92,53 @@ const Login = () => {
     setForm({ ...form, [name]: value });
   };
 
-  
-  
-const handleLogin = async () => {
-  try {
-    const mobileError = validateField("mobile", form.mobile);
-    const passwordError = usePassword
-      ? validateField("password", form.password)
-      : "";
-    const otpError = !usePassword ? validateField("otp", form.otp) : "";
+  const handleLogin = async () => {
+    try {
+      const mobileError = validateField("mobile", form.mobile);
+      const passwordError = usePassword
+        ? validateField("password", form.password)
+        : "";
+      const otpError = !usePassword ? validateField("otp", form.otp) : "";
 
-    if (mobileError || passwordError || otpError) {
-      setErrors({
-        mobile: mobileError,
-        password: passwordError,
-        otp: otpError,
-      });
-      return;
+      if (mobileError || passwordError || otpError) {
+        setErrors({
+          mobile: mobileError,
+          password: passwordError,
+          otp: otpError,
+        });
+        return;
+      }
+
+      // Attempt to log in with the provided mobile and password/otp
+      const response = await login(
+        form.mobile,
+        usePassword ? form.password : form.otp
+      );
+
+      if (response && response.user && response.user.username) {
+        // Store the username in AsyncStorage
+        await AsyncStorage.setItem("username", response.user.username);
+      
+        // await AsyncStorage.setItem("id", JSON.stringify(response.user.id));  // Convert ID to string
+        console.log("Username stored in AsyncStorage:", response.user.username);
+        console.log("User ID stored in AsyncStorage:", response.user.id);
+        console.log("Type of user ID:", typeof response.user.id.toString());  // This will help you debug what type it is
+
+        // Navigate to the dashboard after successful login
+        router.replace("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error", error.message);
+      // Handle error, such as showing an error message to the user
     }
-
-    // Attempt to log in with the provided mobile and password/otp
-    const response = await login(
-      form.mobile,
-      usePassword ? form.password : form.otp
-    );
-
-    if (response && response.user && response.user.username) {
-      // Store the username in AsyncStorage
-      await AsyncStorage.setItem("username", response.user.username);
-      console.log("Username stored in AsyncStorage:", response.user.username);
-
-      // Navigate to the dashboard after successful login
-      router.replace("/dashboard");
-    }
-  } catch (error) {
-    console.error("Error", error.message);
-    // Handle error, such as showing an error message to the user
-  }
-};
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View>
           <View style={styles.header}>
-            <Text className="font-pbold text-3xl font-inter600">Login</Text>
+            <Text style={styles.headerText}>Login</Text>
           </View>
 
           <View style={styles.inputContainer}>
@@ -120,7 +148,7 @@ const handleLogin = async () => {
               value={form.mobile}
               handleChangeText={(value) => handleChangeText('mobile', value)}
               keyboardType='email-address'
-              className="mb-4"
+              style={styles.loginField}
             />
             {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
 
@@ -138,57 +166,40 @@ const handleLogin = async () => {
               </View>
             ) : (
               <View style={styles.otpContainer}>
-                <Text className="font-pbold">OTP</Text>
+                <Text style={styles.labelText}>OTP</Text>
                 <LoginField
                   placeholder="OTP"
                   value={form.otp}
                   handleChangeText={(value) => handleChangeText('otp', value)}
                   keyboardType='number-pad'
-                  className="mb-4"
+                  style={styles.loginField}
                 />
                 {errors.otp ? <Text style={styles.errorText}>{errors.otp}</Text> : null}
               </View>
             )}
 
             <TouchableOpacity activeOpacity={0.8}>
-              <Text className="font-pmedium text-sm text-left text-[#577CFF] font-inter400" style={styles.forgotPasswordText}>Forgot password?</Text>
+              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.buttonContainer}>
           <CustomButton
-            buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
-            textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
+            buttonStyle={styles.loginButton}
+            textStyle={styles.loginButtonText}
             text='LOGIN'
             handlePress={() => handleLogin('login')}
           />
         </View>
 
         <View style={styles.signUpContainer}>
-          <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
+          <Text style={styles.signUpText}>
             Don’t have an account?
             <TouchableOpacity onPress={() => navigation.navigate('(auth)/SignUp')}>
-              <Text className="text-[#577CFF]"> Sign Up</Text>
+              <Text style={styles.signUpLink}> Sign Up</Text>
             </TouchableOpacity>
           </Text>
-
-          {/* <View style={styles.separatorContainer}>
-            <View style={styles.separator} />
-            <Text className="mx-4 font-pmedium text-sm text-[#9C9C9C] font-inter400">Sign up with</Text>
-            <View style={styles.separator} />
-          </View> */}
-
-          {/* <View style={styles.socialButtonsContainer}>
-            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex flex-row justify-center items-center space-x-2" style={styles.socialButton}>
-              <Image source={icons.facebook} className="w-6 h-6" />
-              <Text className="font-inter400" style={styles.socialButtonText}>FACEBOOK</Text>
-            </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full p-4 shadow flex flex-row justify-center items-center space-x-2" style={styles.socialButton}>
-              <Image source={icons.google} className="w-6 h-6" />
-              <Text className="font-inter400" style={styles.socialButtonText}>GOOGLE</Text>
-            </TouchableOpacity>
-          </View> */}
         </View>
       </View>
     </SafeAreaView>
@@ -213,6 +224,11 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 32,
   },
+  headerText: {
+    // fontFamily: fonts.WorkSans600,
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
   inputContainer: {
     marginBottom: 16,
   },
@@ -225,11 +241,13 @@ const styles = StyleSheet.create({
   labelText: {
     color: colors.loginSignUpLabelColor,
     fontSize: 13,
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
     paddingBottom: 2,
   },
   forgotPasswordText: {
     marginTop: 5,
+    fontSize: 14,
+    color: '#577CFF',
   },
   errorText: {
     color: 'red',
@@ -240,35 +258,28 @@ const styles = StyleSheet.create({
     marginTop: 32,
     alignItems: 'center',
   },
+  loginButton: {
+    backgroundColor: '#577CFF',
+    fontSize: 13,
+    width: 140,
+    letterSpacing: 1,
+  },
+  loginButtonText: {
+    // fontFamily: fonts.WorkSans400,
+    color: '#FFFFFF',
+  },
   signUpContainer: {
     alignItems: 'center',
     marginTop: 32,
   },
-  separatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
+  signUpText: {
+    fontSize: 14,
+    color: '#9C9C9C',
   },
-  // separator: {
-  //   borderColor: colors.borderColor,
-  //   borderWidth: 1,
-  //   width: 100,
-  // },
-  // socialButtonsContainer: {
-  //   flexDirection: 'row',
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   marginTop: 24,
-  //   spaceX: 16,
-  // },
-  // socialButton: {
-  //   width: 147,
-  //   height: 50,
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   marginRight: 10
-  // },
-  // socialButtonText: {
-  //   fontSize: 13,
-  // },
+  signUpLink: {
+    color: '#577CFF',
+  },
+  loginField: {
+    marginBottom: 4,
+  },
 });

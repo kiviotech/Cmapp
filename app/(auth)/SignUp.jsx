@@ -35,63 +35,6 @@ const SignUp = () => {
     const [errors, setErrors] = useState({});
     const router = useRouter();
 
-    // const cardDataArray = [
-    //     {
-    //         projectId: 1,
-    //         projectName: "Survey and Marking",
-    //         projectDescription: "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Task Completed",
-    //         taskStatusColor: "#A3D65C",
-    //         cardColor: "#EEF7E0",
-    //         status: "",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    // ];
-
-    // useEffect(() => {
-    //     setProjectsDetail(cardDataArray);
-    // }, []);
-
     const handleChangeText = (field, value) => {
         setForm({ ...form, [field]: value });
     };
@@ -111,43 +54,39 @@ const SignUp = () => {
         return newErrors;
     };
 
-   const submit = async () => {
-     const newErrors = validate();
-     if (Object.keys(newErrors).length > 0) {
-       setErrors(newErrors);
-       return;
-     }
+    const submit = async () => {
+        const newErrors = validate();
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
 
-     try {
-       const { name, email, password, socialSecurity } = form;
-       const contractorLicense = uploadedFiles || form.contractorLicense;
-       const res = await signup(
-         name,
-         email,
-         password,
-         socialSecurity,
-         contractorLicense,
-         selectedProject
-       );
+        try {
+            const { name, email, password, socialSecurity } = form;
+            const contractorLicense = uploadedFiles || form.contractorLicense;
+            const res = await signup(
+                name,
+                email,
+                password,
+                socialSecurity,
+                contractorLicense,
+                selectedProject
+            );
 
-       if (res) {
-         showToast("Request for new account sent", "success");
-        //  router.replace("/Wait");
-       }
-     } catch (error) {
-       Alert.alert("Error", error.response?.data?.message || error.message);
-     }
-   };
+            if (res) {
+                showToast("Request for new account sent", "success");
+                //  router.replace("/Wait");
+            }
+        } catch (error) {
+            Alert.alert("Error", error.response?.data?.message || error.message);
+        }
+    };
 
     useEffect(() => {
         const fetchProjects = async () => {
             try {
                 const projectData = await getProjects();
-
                 setProjectsDetail(projectData.data.data);
-
-                const taskData = await getTasks();
-                setTasksDetail(taskData.data.data);
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -156,44 +95,42 @@ const SignUp = () => {
         fetchProjects();
     }, []);
 
-    
-
     return (
-
         <SafeAreaView style={styles.container}>
             <Toast visible={toast.visible} message={toast.message} type={toast.type} />
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
-
                 <View style={styles.content}>
                     <View style={styles.header}>
-                        <Text className="font-pbold text-3xl font-inter600">Sign Up</Text>
+                        <Text style={{
+                            // fontFamily: fonts.inter600,
+                            fontSize: 24
+                        }}>Sign Up</Text>
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Text className="font-inter400" style={styles.labelText}>Full name</Text>
+                        <Text style={styles.labelText}>Full name</Text>
                         <LoginField
                             placeholder="Your full name"
                             value={form.name}
                             handleChangeText={(e) => handleChangeText('name', e)}
-                            className="mb-4"
+                            style={{ marginBottom: 16 }}
                         />
                         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
-                        <Text className="font-inter400 mt-8" style={styles.labelText}>E-mail</Text>
+                        <Text style={[styles.labelText, { marginTop: 32 }]}>E-mail</Text>
                         <LoginField
                             placeholder="Your email or phone"
                             value={form.email}
                             handleChangeText={(e) => handleChangeText('email', e)}
                             keyboardType='email-address'
-                            className="mb-4"
+                            style={{ marginBottom: 16 }}
                         />
                         {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
                         <View style={styles.passwordContainer}>
-                            <Text className="font-inter400" style={styles.labelText}>Password</Text>
+                            <Text style={styles.labelText}>Password</Text>
                             <LoginField
-                                style={styles.loginField}
                                 placeholder="Password"
                                 value={form.password}
                                 handleChangeText={(e) => handleChangeText('password', e)}
@@ -203,7 +140,7 @@ const SignUp = () => {
                         </View>
 
                         <View style={styles.passwordContainer}>
-                            <Text className="font-inter400" style={styles.labelText}>Social Security Number</Text>
+                            <Text style={styles.labelText}>Social Security Number</Text>
                             <LoginField
                                 placeholder="Social Security"
                                 value={form.socialSecurity}
@@ -216,7 +153,7 @@ const SignUp = () => {
 
                     {/* Project Selection Dropdown with search */}
                     <View style={styles.projectSelectionContainer}>
-                        <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
+                        <Text style={styles.labelText}>Project Selection</Text>
                         <View style={styles.dropdownContainer}>
                             <Dropdown
                                 data={projectsDetail.map(project => ({
@@ -229,7 +166,6 @@ const SignUp = () => {
                                 search
                                 searchPlaceholder="Search your project"
                                 value={selectedProject}
-
                                 onFocus={() => setIsDropdownFocused(true)}
                                 onBlur={() => setIsDropdownFocused(false)}
                                 onChange={item => {
@@ -252,21 +188,21 @@ const SignUp = () => {
                     <View style={styles.buttonContainer}>
                         <CustomButton
                             buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
-                            textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
+                            textStyle={{
+                                // fontFamily: 'font-inter400',
+                                color: '#FFFFFF'
+                            }}
                             text='SIGNUP'
                             handlePress={submit}
                         />
                     </View>
 
                     <View style={styles.SignUpContainer}>
-                        <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
-                            Already have an account? <Text className="text-[#577CFF]" onPress={() => router.replace('/login')}>Login</Text>
+                        <Text style={{ fontSize: 12, color: '#9C9C9C'}}>
+                            Already have an account? <Text style={{ color: '#577CFF' }} onPress={() => router.replace('/login')}>Login</Text>
                         </Text>
                     </View>
                 </View>
-
-
-
 
             </ScrollView>
         </SafeAreaView>
@@ -296,21 +232,16 @@ const styles = StyleSheet.create({
     },
     labelText: {
         marginBottom: 5,
-        fontFamily: fonts.inter400,
+        // fontFamily: fonts.inter400,
         color: colors.loginSignUpLabelColor,
         fontSize: 14
     },
-    loginField: {
-        marginBottom: 10,
-    },
-
     dropdown: {
         height: 50,
         borderColor: 'gray',
         borderWidth: 1,
         borderRadius: 8,
         paddingHorizontal: 8,
-
     },
     dropdownContainerStyle: {
         maxHeight: 200, // Maximum height for the dropdown list
@@ -319,36 +250,34 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         borderWidth: 1, // Set the border width
         borderColor: '#B3B3B3', // Set the border color
-        backgroundColor: '#FFF', // Set the background color
-        shadowColor: 'rgba(211, 209, 216, 0.25)', // Set the shadow color
-        shadowOffset: { width: 15, height: 15 }, // Offset for the shadow
-        shadowOpacity: 1, // Set the shadow opacity
-        shadowRadius: 30, // Set the shadow radius
-        elevation: 5, // Needed for Android to apply shadow
     },
     searchBox: {
-        borderRadius: 5, // Border radius for search box
-        borderColor: 'transparent', // Make the border disappear while typing
-        padding: 8,
-        padding: 10,
-        backgroundColor: '#F0F0F0', // Add a background color if needed
-        borderRadius: 8, // Optional: for rounded corners
-        fontSize: 16, // Optional: Adjust font size
-
+        height: 40,
+        borderColor: '#B3B3B3', // Set the border color
+        borderWidth: 1, // Set the border width
+        borderRadius: 8,
     },
     errorText: {
         color: 'red',
         marginTop: 5,
-        fontFamily: fonts.inter400,
+        fontSize: 12,
     },
-    buttonContainer: {
-        marginTop: 20,
+    header: {
         alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
     },
-
     SignUpContainer: {
-        marginTop: 50,
+        marginTop: 20,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-
+    scrollContent: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingBottom: 20,
+    },
+    projectSelectionContainer: {
+        marginTop: 32,
+    },
 });

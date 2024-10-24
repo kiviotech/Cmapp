@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: fonts.WorkSans700,
+    // fontFamily: fonts.WorkSans700,
     color: colors.blackColor,
     textAlign: "center",
     flex: 1,
@@ -279,14 +279,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 16,
     color: colors.blackColor,
     marginTop: 10,
     marginBottom: 5,
   },
   value: {
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
     fontSize: 16,
     color: colors.grayColor,
     marginBottom: 15,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   pdfText: {
     marginTop: 10,
     fontSize: 16,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     color: colors.blackColor,
   },
   buttonContainer: {
@@ -340,14 +340,14 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: colors.whiteColor,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 14,
     letterSpacing: 0.5,
   },
   rejectButtonText: {
     color: colors.whiteColor,
     fontSize: 14,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
   },
   popup: {
     position: "absolute",
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   },
   popupText: {
     color: colors.whiteColor,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 16,
   },
   fullScreenModal: {
