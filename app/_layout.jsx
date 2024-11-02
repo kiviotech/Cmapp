@@ -1,20 +1,20 @@
-import React, { useEffect } from 'react';
-import { Stack } from 'expo-router';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-import { ToastProvider } from './ToastContext';
+import React, { useEffect } from "react";
+import { Stack } from "expo-router";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { ToastProvider } from "./ToastContext";
 import {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
-} from '@expo-google-fonts/inter';
+} from "@expo-google-fonts/inter";
 import {
   WorkSans_400Regular,
   WorkSans_500Medium,
   WorkSans_600SemiBold,
   WorkSans_700Bold,
-} from '@expo-google-fonts/work-sans';
+} from "@expo-google-fonts/work-sans";
 
 const Layout = () => {
   const [fontsLoaded, error] = useFonts({
@@ -29,7 +29,7 @@ const Layout = () => {
     "Poppins-Thin": require("../assets/fonts/Poppins-Thin.ttf"),
     "Montserrat-Black": require("../assets/fonts/Montserrat/static/Montserrat-Black.ttf"),
     "Montserrat-Regular": require("../assets/fonts/Montserrat/static/Montserrat-Regular.ttf"),
-    "Montserrat": require("../assets/fonts/Montserrat/static/Montserrat-Medium.ttf"),
+    Montserrat: require("../assets/fonts/Montserrat/static/Montserrat-Medium.ttf"),
     "Montserrat-SemiBold": require("../assets/fonts/Montserrat/static/Montserrat-SemiBold.ttf"),
     Inter_400Regular,
     Inter_500Medium,
@@ -40,7 +40,6 @@ const Layout = () => {
     WorkSans_600SemiBold,
     WorkSans_700Bold,
   });
-
 
   useEffect(() => {
     if (error) {
@@ -87,6 +86,26 @@ const Layout = () => {
         />
         <Stack.Screen
           name="(pages)/submissionDetails"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/projectTeam/ProjectDetails"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/AddTasks"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/AssignContractors"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/projectTeam/ProjectList"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/ProjectForm"
           options={{ headerShown: false }}
         />
         <Stack.Screen name="index" options={{ headerShown: false }} />

@@ -1,7 +1,13 @@
-// import React, { useState, useRef, useEffect } from 'react';
-// import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-// import * as ImagePicker from 'expo-image-picker';
-// import { FontAwesome } from '@expo/vector-icons';
+// import React, { useState, useRef, useEffect } from "react";
+// import {
+//   View,
+//   Text,
+//   TouchableOpacity,
+//   StyleSheet,
+//   Platform,
+// } from "react-native";
+// import * as ImagePicker from "expo-image-picker";
+// import { FontAwesome } from "@expo/vector-icons";
 
 // const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
 //   const [cameraActive, setIsCameraActive] = useState(false);
@@ -19,11 +25,15 @@
 //     });
 
 //     if (!result.canceled) {
-//       const newFile = { uri: result.assets[0].uri, name: result.assets[0].fileName, progress: 0, status: 'uploading' };
+//       const newFile = {
+//         uri: result.assets[0].uri,
+//         name: result.assets[0].fileName || "upload.jpg",
+//         progress: 0,
+//         status: "uploading",
+//       };
 //       setUploadedFiles([...uploadedFiles, newFile]);
 //       setUploading(true);
 
-//       // Simulate the file upload progress
 //       let progress = 0;
 //       const interval = setInterval(() => {
 //         progress += 10;
@@ -37,7 +47,9 @@
 //           clearInterval(interval);
 //           setUploadedFiles((prevFiles) =>
 //             prevFiles.map((file) =>
-//               file.name === newFile.name ? { ...file, status: 'success', progress: 100 } : file
+//               file.name === newFile.name
+//                 ? { ...file, status: "success", progress: 100 }
+//                 : file
 //             )
 //           );
 //           setUploading(false);
@@ -52,80 +64,112 @@
 //   };
 
 //   const handleCameraUpload = async () => {
-//     if (Platform.OS === 'web') {
-//       setIsCameraActive(true);
-//       openWebCamera();
-//     } else {
-//       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-//       if (status !== 'granted') {
-//         alert('Camera permission is required to use this feature.');
-//         return;
-//       }
+//     const { status } = await ImagePicker.requestCameraPermissionsAsync();
+//     if (status !== "granted") {
+//       alert("Camera permission is required to use this feature.");
+//       return;
+//     }
 
-//       let result = await ImagePicker.launchCameraAsync({
-//         allowsEditing: true,
-//         aspect: [4, 3],
-//         quality: 1,
-//       });
+//     let result = await ImagePicker.launchCameraAsync({
+//       allowsEditing: true,
+//       aspect: [4, 3],
+//       quality: 1,
+//     });
 
-//       if (!result.canceled) {
-//         const newFile = { uri: result.uri, name: result.uri.split('/').pop(), progress: 0, status: 'uploading' };
-//         setUploadedFiles([...uploadedFiles, newFile]);
-//         setUploading(true);
+//     if (!result.canceled) {
+//       const newFile = {
+//         uri: result.uri,
+//         name: result.uri.split("/").pop() || "camera-upload.jpg",
+//         progress: 0,
+//         status: "uploading",
+//       };
+//       setUploadedFiles([...uploadedFiles, newFile]);
+//       setUploading(true);
 
-//         // Simulate the file upload progress
-//         let progress = 0;
-//         const interval = setInterval(() => {
-//           progress += 10;
+//       let progress = 0;
+//       const interval = setInterval(() => {
+//         progress += 10;
+//         setUploadedFiles((prevFiles) =>
+//           prevFiles.map((file) =>
+//             file.name === newFile.name ? { ...file, progress } : file
+//           )
+//         );
+
+//         if (progress >= 100) {
+//           clearInterval(interval);
 //           setUploadedFiles((prevFiles) =>
 //             prevFiles.map((file) =>
-//               file.name === newFile.name ? { ...file, progress } : file
+//               file.name === newFile.name
+//                 ? { ...file, status: "success", progress: 100 }
+//                 : file
 //             )
 //           );
+//           setUploading(false);
 
-//           if (progress >= 100) {
-//             clearInterval(interval);
-//             setUploadedFiles((prevFiles) =>
-//               prevFiles.map((file) =>
-//                 file.name === newFile.name ? { ...file, status: 'success', progress: 100 } : file
-//               )
-//             );
-//             setUploading(false);
+//           // Send the file to the API after upload is complete
+//           uploadFileToAPI(newFile);
+//         }
+//       }, 500);
 
-//             // Send the file to the API after upload is complete
-//             uploadFileToAPI(newFile);
-//           }
-//         }, 500);
-
-//         uploadIntervals.current[newFile.name] = interval;
-//       }
+//       uploadIntervals.current[newFile.name] = interval;
 //     }
 //   };
 
+//   // const uploadFileToAPI = async (file) => {
+//   //   const formData = new FormData();
+//   //   formData.append("files", {
+//   //     uri: file.uri,
+//   //     name: file.name,
+//   //     type: "image/jpeg", // Set dynamically if different types are allowed
+//   //   });
+
+//   //   try {
+//   //     const response = await fetch("http://localhost:1337/api/upload", {
+//   //       method: "POST",
+//   //       headers: {
+//   //         "Content-Type": "multipart/form-data",
+//   //       },
+//   //       body: formData,
+//   //     });
+
+//   //     if (response.ok) {
+//   //       console.log("File uploaded successfully");
+//   //     } else {
+//   //       console.log("Failed to upload file");
+//   //     }
+//   //   } catch (error) {
+//   //     console.error("Error uploading file:", error);
+//   //   }
+//   // };
+
 //   const uploadFileToAPI = async (file) => {
 //     const formData = new FormData();
-//     formData.append('file', {
+//     formData.append("files", {
 //       uri: file.uri,
-//       name: file.name,
-//       type: 'image/jpeg', // You can set this dynamically based on the file type
+//       name: file.name || "upload.jpg", // Make sure file has a name
+//       type: "image/jpeg", // Adjust this type according to the actual file type (e.g., "image/png" or "image/jpeg")
 //     });
 
 //     try {
-//       const response = await fetch('your-api-endpoint', {
-//         method: 'POST',
+//       const response = await fetch("http://localhost:1337/api/upload", {
+//         method: "POST",
 //         headers: {
-//           'Content-Type': 'multipart/form-data',
+//           "Content-Type": "multipart/form-data",
 //         },
 //         body: formData,
 //       });
 
 //       if (response.ok) {
-//         console.log('File uploaded successfully');
+//         console.log("File uploaded successfully");
 //       } else {
-//         console.log('Failed to upload file');
+//         console.error(
+//           "Failed to upload file:",
+//           response.status,
+//           response.statusText
+//         );
 //       }
 //     } catch (error) {
-//       console.error('Error uploading file:', error);
+//       console.error("Error uploading file:", error);
 //     }
 //   };
 
@@ -133,30 +177,14 @@
 //     setIsCameraActive(false);
 //   };
 
-//   const openWebCamera = () => {
-//     navigator.mediaDevices
-//       .getUserMedia({ video: true })
-//       .then((mediaStream) => {
-//         setStream(mediaStream);
-//         if (videoRef.current) {
-//           videoRef.current.srcObject = mediaStream;
-//           videoRef.current.play();
-//         }
-//       })
-//       .catch((error) => {
-//         console.error('Error accessing the camera: ', error);
-//       });
-//   };
-
 //   const handleRemoveFile = (fileName) => {
-//     // Clear the interval if the file is uploading
 //     if (uploadIntervals.current[fileName]) {
 //       clearInterval(uploadIntervals.current[fileName]);
 //       delete uploadIntervals.current[fileName];
 //     }
-
-//     // Remove the file from the list
-//     setUploadedFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+//     setUploadedFiles((prevFiles) =>
+//       prevFiles.filter((file) => file.name !== fileName)
+//     );
 //   };
 
 //   useEffect(() => {
@@ -164,7 +192,6 @@
 //       if (stream) {
 //         stream.getTracks().forEach((track) => track.stop());
 //       }
-//       // Clear all intervals on component unmount
 //       Object.values(uploadIntervals.current).forEach(clearInterval);
 //     };
 //   }, [stream]);
@@ -172,62 +199,62 @@
 //   return (
 //     <View style={styles.container}>
 //       <View style={styles.uploadContainer}>
-//         <Text style={styles.uploadText}>Upload your proof of work in .png or .jpeg format</Text>
-
-//         {/* Browse Files Button */}
-//         <TouchableOpacity style={styles.uploadButton} onPress={handleFileUpload}>
+//         <Text style={styles.uploadText}>
+//           Upload your proof of work in .png or .jpeg format
+//         </Text>
+//         <TouchableOpacity
+//           style={styles.uploadButton}
+//           onPress={handleFileUpload}
+//         >
 //           <Text style={styles.buttonText}>Browse files</Text>
 //         </TouchableOpacity>
-
-//         {/* OR Separator */}
 //         <Text style={styles.orText}>OR</Text>
-
-//         {/* Use Camera Button */}
 //         {cameraActive ? (
 //           <TouchableOpacity style={styles.uploadButton} onPress={closeCamera}>
 //             <Text style={styles.buttonText}>Close Camera</Text>
 //           </TouchableOpacity>
 //         ) : (
-//           <TouchableOpacity style={styles.uploadButton} onPress={handleCameraUpload}>
+//           <TouchableOpacity
+//             style={styles.uploadButton}
+//             onPress={handleCameraUpload}
+//           >
 //             <Text style={styles.buttonText}>Use Camera</Text>
 //           </TouchableOpacity>
 //         )}
-
-//         {/* Camera Preview */}
-//         {Platform.OS === 'web' && cameraActive && (
-//           <View style={styles.cameraContainer}>
-//             <video ref={videoRef} style={styles.videoPreview} autoPlay muted />
-//           </View>
-//         )}
-
-//         {/* Uploaded Files List */}
 //         {uploadedFiles.map((file, index) => (
 //           <View key={index} style={styles.fileRow}>
 //             <FontAwesome name="file" size={24} color="#6B7280" />
 //             <View style={styles.progressBarContainer}>
 //               <View style={styles.docNameContainer}>
 //                 <Text style={styles.fileName}>{file?.name}</Text>
-//                 {file.status === 'success' ? (
+//                 {file.status === "success" ? (
 //                   <FontAwesome name="check-circle" size={15} color="#A3D65C" />
-//                 ) : file.status === 'uploading' ? (
-//                   <Text style={{ color: '#838383', fontSize: 10 }}>{`${file.progress}%`}</Text>
-//                 ) : null}
+//                 ) : (
+//                   <Text style={{ color: "#838383", fontSize: 10 }}>
+//                     {`${file.progress}%`}
+//                   </Text>
+//                 )}
 //               </View>
-//               {/* Always render progress bar */}
 //               <View style={styles.progressBackground}>
 //                 <View
 //                   style={[
 //                     styles.progressBar,
 //                     {
 //                       width: `${file.progress}%`,
-//                       backgroundColor: file.status === 'success' ? '#A3D65C' : '#FFD439',
+//                       backgroundColor:
+//                         file.status === "success" ? "#A3D65C" : "#FFD439",
 //                     },
 //                   ]}
 //                 />
 //               </View>
 //             </View>
 //             <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
-//               <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color="#FC5275" />
+//               <FontAwesome
+//                 style={{ marginTop: 15 }}
+//                 name="trash"
+//                 size={15}
+//                 color="#FC5275"
+//               />
 //             </TouchableOpacity>
 //           </View>
 //         ))}
@@ -236,11 +263,101 @@
 //   );
 // };
 
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     paddingTop: 16,
+//     backgroundColor: "#F1F1F1",
+//   },
+//   uploadContainer: {
+//     borderStyle: "dashed",
+//     borderWidth: 2,
+//     borderColor: "#8D8D8D",
+//     borderRadius: 10,
+//     padding: 16,
+//     alignItems: "center",
+//     marginBottom: 16,
+//     height: "auto",
+//     paddingBottom: 40,
+//   },
+//   uploadText: {
+//     textAlign: "center",
+//     marginBottom: 16,
+//     marginTop: 20,
+//     color: "#4B5563",
+//   },
+//   uploadButton: {
+//     backgroundColor: "#3B82F6",
+//     paddingVertical: 10,
+//     paddingHorizontal: 20,
+//     borderRadius: 20,
+//     marginBottom: 16,
+//     height: 39,
+//   },
+//   buttonText: {
+//     color: "#FFF",
+//     fontWeight: "600",
+//   },
+//   orText: {
+//     color: "#6B7280",
+//     marginBottom: 16,
+//   },
+//   cameraContainer: {
+//     width: "100%",
+//     height: "auto",
+//     marginTop: 16,
+//   },
+//   videoPreview: {
+//     width: "100%",
+//     height: "auto",
+//     borderRadius: 10,
+//   },
+//   fileRow: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: 10,
+//     marginBottom: 10,
+//     width: "100%",
+//     marginTop: 20,
+//   },
+//   docNameContainer: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     marginBottom: 5,
+//   },
+//   fileName: {
+//     color: "#4B5563",
+//   },
+//   progressBarContainer: {
+//     flex: 1,
+//     borderRadius: 4,
+//     overflow: "hidden",
+//   },
+//   progressBackground: {
+//     height: 8,
+//     backgroundColor: "#DADADA",
+//     borderRadius: 4,
+//     overflow: "hidden",
+//   },
+//   progressBar: {
+//     height: "100%",
+//     borderRadius: 4,
+//   },
+// });
 
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { FontAwesome } from '@expo/vector-icons';
+// export default FileUpload;
+
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { FontAwesome } from "@expo/vector-icons";
+import axios from "axios";
 
 const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   const [cameraActive, setIsCameraActive] = useState(false);
@@ -253,12 +370,18 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      // aspect: [4, 3],
+      // quality: 1,
+      base64: false,
     });
 
     if (!result.canceled) {
-      const newFile = { uri: result.assets[0].uri, name: result.assets[0].fileName, progress: 0, status: 'uploading' };
+      const newFile = {
+        uri: result.assets[0].uri,
+        name: result.assets[0].fileName,
+        progress: 0,
+        status: "uploading",
+      };
       setUploadedFiles([...uploadedFiles, newFile]);
       setUploading(true);
 
@@ -276,7 +399,9 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
           clearInterval(interval);
           setUploadedFiles((prevFiles) =>
             prevFiles.map((file) =>
-              file.name === newFile.name ? { ...file, status: 'success', progress: 100 } : file
+              file.name === newFile.name
+                ? { ...file, status: "success", progress: 100 }
+                : file
             )
           );
           setUploading(false);
@@ -291,13 +416,13 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   };
 
   const handleCameraUpload = async () => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       setIsCameraActive(true);
       openWebCamera();
     } else {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Camera permission is required to use this feature.');
+      if (status !== "granted") {
+        alert("Camera permission is required to use this feature.");
         return;
       }
 
@@ -308,7 +433,12 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
       });
 
       if (!result.canceled) {
-        const newFile = { uri: result.uri, name: result.uri.split('/').pop(), progress: 0, status: 'uploading' };
+        const newFile = {
+          uri: result.uri,
+          name: result.uri.split("/").pop(),
+          progress: 0,
+          status: "uploading",
+        };
         setUploadedFiles([...uploadedFiles, newFile]);
         setUploading(true);
 
@@ -326,7 +456,9 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
             clearInterval(interval);
             setUploadedFiles((prevFiles) =>
               prevFiles.map((file) =>
-                file.name === newFile.name ? { ...file, status: 'success', progress: 100 } : file
+                file.name === newFile.name
+                  ? { ...file, status: "success", progress: 100 }
+                  : file
               )
             );
             setUploading(false);
@@ -342,29 +474,51 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   };
 
   const uploadFileToAPI = async (file) => {
+    console.log(file);
     const formData = new FormData();
-    formData.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: 'image/jpeg', // You can set this dynamically based on the file type
-    });
+    // formData.append('files', {
+    //   uri: file.uri,
+    //   filename: file.name,
+    //   type: 'image/png',// You can set this dynamically based on the file type
+    // });
+    const imgblob = await (await fetch(file.uri)).blob();
+
+    // formData.append('files', {
+    //   name: file.name,
+    //   type: 'image/png',
+    //   uri: file.uri
+    // });
+    formData.append("files", imgblob, file.name);
 
     try {
-      const response = await fetch('your-api-endpoint', {
-        method: 'POST',
+      const response = await fetch("http://localhost:1337/api/upload", {
+        method: "POST",
         headers: {
-          'Content-Type': 'multipart/form-data',
+          Authorization:
+            "Bearer 897b133848c81089b70c04803b26a8debc43b387b9cd33bc9dfdc253824bafaf3bd2b6040334838cea9fb67bf221f653da52d554e028e639068cc16f3397d1a983fcf5b1f833aff1da5377146cd031eeae17c3049ebc43ea011b57a322963b37ddbd17dd3cf215b582586302495e25dd40a2e3ca04165cbe5debc9a15b9cf8e0",
+          // 'Content-Type': 'form-data',
         },
         body: formData,
       });
 
+      // const response = await axios.post('http://localhost:1337/api/upload',
+      //   formData,
+      //   {
+      //     headers: {
+      //       'Authorization': 'Bearer 897b133848c81089b70c04803b26a8debc43b387b9cd33bc9dfdc253824bafaf3bd2b6040334838cea9fb67bf221f653da52d554e028e639068cc16f3397d1a983fcf5b1f833aff1da5377146cd031eeae17c3049ebc43ea011b57a322963b37ddbd17dd3cf215b582586302495e25dd40a2e3ca04165cbe5debc9a15b9cf8e0',
+      //       'Content-Type': 'multipart/form-data',
+      //       // ...formData.getHeaders()
+      //     }
+      //   }
+      // );
+
       if (response.ok) {
-        console.log('File uploaded successfully');
+        console.log("File uploaded successfully", response.data[0]);
       } else {
-        console.log('Failed to upload file');
+        console.log("Failed to upload file");
       }
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error("Error uploading file:", error);
     }
   };
 
@@ -383,7 +537,7 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
         }
       })
       .catch((error) => {
-        console.error('Error accessing the camera: ', error);
+        console.error("Error accessing the camera: ", error);
       });
   };
 
@@ -395,7 +549,9 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
     }
 
     // Remove the file from the list
-    setUploadedFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+    setUploadedFiles((prevFiles) =>
+      prevFiles.filter((file) => file.name !== fileName)
+    );
   };
 
   useEffect(() => {
@@ -411,10 +567,15 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   return (
     <View style={styles.container}>
       <View style={styles.uploadContainer}>
-        <Text style={styles.uploadText}>Upload your proof of work in .png or .jpeg format</Text>
+        <Text style={styles.uploadText}>
+          Upload your proof of work in .png or .jpeg format
+        </Text>
 
         {/* Browse Files Button */}
-        <TouchableOpacity style={styles.uploadButton} onPress={handleFileUpload}>
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={handleFileUpload}
+        >
           <Text style={styles.buttonText}>Browse files</Text>
         </TouchableOpacity>
 
@@ -427,13 +588,16 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
             <Text style={styles.buttonText}>Close Camera</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.uploadButton} onPress={handleCameraUpload}>
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={handleCameraUpload}
+          >
             <Text style={styles.buttonText}>Use Camera</Text>
           </TouchableOpacity>
         )}
 
         {/* Camera Preview */}
-        {Platform.OS === 'web' && cameraActive && (
+        {Platform.OS === "web" && cameraActive && (
           <View style={styles.cameraContainer}>
             <video ref={videoRef} style={styles.videoPreview} autoPlay muted />
           </View>
@@ -446,10 +610,12 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
             <View style={styles.progressBarContainer}>
               <View style={styles.docNameContainer}>
                 <Text style={styles.fileName}>{file?.name}</Text>
-                {file.status === 'success' ? (
+                {file.status === "success" ? (
                   <FontAwesome name="check-circle" size={15} color="#A3D65C" />
-                ) : file.status === 'uploading' ? (
-                  <Text style={{ color: '#838383', fontSize: 10 }}>{`${file.progress}%`}</Text>
+                ) : file.status === "uploading" ? (
+                  <Text
+                    style={{ color: "#838383", fontSize: 10 }}
+                  >{`${file.progress}%`}</Text>
                 ) : null}
               </View>
               {/* Always render progress bar */}
@@ -459,14 +625,20 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
                     styles.progressBar,
                     {
                       width: `${file.progress}%`,
-                      backgroundColor: file.status === 'success' ? '#A3D65C' : '#FFD439',
+                      backgroundColor:
+                        file.status === "success" ? "#A3D65C" : "#FFD439",
                     },
                   ]}
                 />
               </View>
             </View>
             <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
-              <FontAwesome style={{ marginTop: 15 }} name="trash" size={15} color="#FC5275" />
+              <FontAwesome
+                style={{ marginTop: 15 }}
+                name="trash"
+                size={15}
+                color="#FC5275"
+              />
             </TouchableOpacity>
           </View>
         ))}
@@ -475,32 +647,31 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 16,
-    backgroundColor: '#F1F1F1',
+    backgroundColor: "#F1F1F1",
   },
   uploadContainer: {
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderWidth: 2,
-    borderColor: '#8D8D8D',
+    borderColor: "#8D8D8D",
     borderRadius: 10,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
-    height: 'auto',
+    height: "auto",
     paddingBottom: 40,
   },
   uploadText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
     marginTop: 20,
-    color: '#4B5563',
+    color: "#4B5563",
   },
   uploadButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: "#3B82F6",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
@@ -508,52 +679,52 @@ const styles = StyleSheet.create({
     height: 39,
   },
   buttonText: {
-    color: '#FFF',
-    fontWeight: '600',
+    color: "#FFF",
+    fontWeight: "600",
   },
   orText: {
-    color: '#6B7280',
+    color: "#6B7280",
     marginBottom: 16,
   },
   cameraContainer: {
-    width: '100%',
-    height: 'auto',
+    width: "100%",
+    height: "auto",
     marginTop: 16,
   },
   videoPreview: {
-    width: '100%',
-    height: 'auto',
+    width: "100%",
+    height: "auto",
     borderRadius: 10,
   },
   fileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     marginBottom: 10,
-    width: '100%',
+    width: "100%",
     marginTop: 20,
   },
   docNameContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 5,
   },
   fileName: {
-    color: '#4B5563',
+    color: "#4B5563",
   },
   progressBarContainer: {
     flex: 1,
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBackground: {
     height: 8,
-    backgroundColor: '#DADADA',
+    backgroundColor: "#DADADA",
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBar: {
-    height: '100%',
+    height: "100%",
     borderRadius: 4,
   },
 });

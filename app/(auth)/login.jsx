@@ -1,27 +1,34 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, Image, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Image,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
 import {
   WorkSans_400Regular,
   WorkSans_500Medium,
   WorkSans_600SemiBold,
   WorkSans_700Bold,
-} from '@expo-google-fonts/work-sans';
-import CustomButton from '../../components/CustomButton';
-import LoginField from '../../components/LoginField';
-import { useRouter } from 'expo-router';
-import { NativeWindStyleSheet } from 'nativewind';
-import { icons } from '../../constants';
-import { useNavigation } from '@react-navigation/native';
-import colors from '../../constants/colors';
-import fonts from '../../constants/fonts';
-import { login } from '../../src/utils/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+} from "@expo-google-fonts/work-sans";
+import CustomButton from "../../components/CustomButton";
+import LoginField from "../../components/LoginField";
+import { useRouter } from "expo-router";
+import { NativeWindStyleSheet } from "nativewind";
+import { icons } from "../../constants";
+import { useNavigation } from "@react-navigation/native";
+import colors from "../../constants/colors";
+import fonts from "../../constants/fonts";
+import { login } from "../../src/utils/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 NativeWindStyleSheet.setOutput({
-  default: 'native',
+  default: "native",
 });
 
 SplashScreen.preventAutoHideAsync();
@@ -46,41 +53,41 @@ const Login = () => {
 
   const [usePassword, setUsePassword] = useState(true);
   const [form, setForm] = useState({
-    mobile: '',
-    password: '',
-    otp: '',
+    mobile: "",
+    password: "",
+    otp: "",
   });
   const [errors, setErrors] = useState({
-    mobile: '',
-    password: '',
-    otp: '',
+    mobile: "",
+    password: "",
+    otp: "",
   });
 
   const router = useRouter();
   const navigation = useNavigation();
 
   const validateField = (name, value) => {
-    let error = '';
-    if (name === 'mobile') {
+    let error = "";
+    if (name === "mobile") {
       const mobileRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!value) {
-        error = 'Email is required';
+        error = "Email is required";
       } else if (!mobileRegex.test(value)) {
-        error = 'Invalid email';
+        error = "Invalid email";
       }
     }
-    if (usePassword && name === 'password') {
+    if (usePassword && name === "password") {
       if (!value) {
-        error = 'Password is required';
+        error = "Password is required";
       } else if (value.length < 6) {
-        error = 'Password must be at least 6 characters';
+        error = "Password must be at least 6 characters";
       }
     }
-    if (!usePassword && name === 'otp') {
+    if (!usePassword && name === "otp") {
       if (!value) {
-        error = 'OTP is required';
+        error = "OTP is required";
       } else if (value.length !== 6) {
-        error = 'OTP must be 6 digits';
+        error = "OTP must be 6 digits";
       }
     }
     return error;
@@ -94,6 +101,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
+      // Validate form fields based on the login method (password or OTP)
       const mobileError = validateField("mobile", form.mobile);
       const passwordError = usePassword
         ? validateField("password", form.password)
@@ -101,6 +109,7 @@ const Login = () => {
       const otpError = !usePassword ? validateField("otp", form.otp) : "";
 
       if (mobileError || passwordError || otpError) {
+        // Set errors if any validation fails and return early
         setErrors({
           mobile: mobileError,
           password: passwordError,
@@ -109,27 +118,27 @@ const Login = () => {
         return;
       }
 
-      // Attempt to log in with the provided mobile and password/otp
+      // Attempt to log in using the appropriate credential (password or OTP)
       const response = await login(
         form.mobile,
         usePassword ? form.password : form.otp
       );
 
+      // If login is successful and user data is returned
       if (response && response.user && response.user.username) {
-        // Store the username in AsyncStorage
+        // Store the username and user ID in AsyncStorage
         await AsyncStorage.setItem("username", response.user.username);
-      
-        // await AsyncStorage.setItem("id", JSON.stringify(response.user.id));  // Convert ID to string
+        await AsyncStorage.setItem("id", response.user.id.toString());
+
         console.log("Username stored in AsyncStorage:", response.user.username);
         console.log("User ID stored in AsyncStorage:", response.user.id);
-        console.log("Type of user ID:", typeof response.user.id.toString());  // This will help you debug what type it is
 
-        // Navigate to the dashboard after successful login
+        // Navigate to the dashboard using the router
         router.replace("/dashboard");
       }
     } catch (error) {
-      console.error("Error", error.message);
-      // Handle error, such as showing an error message to the user
+      console.error("Error during login:", error.message);
+      // Handle the error, such as displaying an error message to the user
     }
   };
 
@@ -146,11 +155,13 @@ const Login = () => {
             <LoginField
               placeholder="Your email or phone"
               value={form.mobile}
-              handleChangeText={(value) => handleChangeText('mobile', value)}
-              keyboardType='email-address'
+              handleChangeText={(value) => handleChangeText("mobile", value)}
+              keyboardType="email-address"
               style={styles.loginField}
             />
-            {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
+            {errors.mobile ? (
+              <Text style={styles.errorText}>{errors.mobile}</Text>
+            ) : null}
 
             {usePassword ? (
               <View style={styles.passwordContainer}>
@@ -159,10 +170,14 @@ const Login = () => {
                   style={styles.loginField}
                   placeholder="Password"
                   value={form.password}
-                  handleChangeText={(value) => handleChangeText('password', value)}
+                  handleChangeText={(value) =>
+                    handleChangeText("password", value)
+                  }
                   secureTextEntry={true}
                 />
-                {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+                {errors.password ? (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                ) : null}
               </View>
             ) : (
               <View style={styles.otpContainer}>
@@ -170,11 +185,13 @@ const Login = () => {
                 <LoginField
                   placeholder="OTP"
                   value={form.otp}
-                  handleChangeText={(value) => handleChangeText('otp', value)}
-                  keyboardType='number-pad'
+                  handleChangeText={(value) => handleChangeText("otp", value)}
+                  keyboardType="number-pad"
                   style={styles.loginField}
                 />
-                {errors.otp ? <Text style={styles.errorText}>{errors.otp}</Text> : null}
+                {errors.otp ? (
+                  <Text style={styles.errorText}>{errors.otp}</Text>
+                ) : null}
               </View>
             )}
 
@@ -188,15 +205,17 @@ const Login = () => {
           <CustomButton
             buttonStyle={styles.loginButton}
             textStyle={styles.loginButtonText}
-            text='LOGIN'
-            handlePress={() => handleLogin('login')}
+            text="LOGIN"
+            handlePress={() => handleLogin("login")}
           />
         </View>
 
         <View style={styles.signUpContainer}>
           <Text style={styles.signUpText}>
             Don’t have an account?
-            <TouchableOpacity onPress={() => navigation.navigate('(auth)/SignUp')}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("(auth)/SignUp")}
+            >
               <Text style={styles.signUpLink}> Sign Up</Text>
             </TouchableOpacity>
           </Text>
@@ -212,12 +231,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 10,
   },
   content: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     paddingHorizontal: 16,
   },
@@ -227,7 +246,7 @@ const styles = StyleSheet.create({
   headerText: {
     // fontFamily: fonts.WorkSans600,
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   inputContainer: {
     marginBottom: 16,
@@ -247,37 +266,37 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     marginTop: 5,
     fontSize: 14,
-    color: '#577CFF',
+    color: "#577CFF",
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: 12,
     marginTop: 4,
   },
   buttonContainer: {
     marginTop: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loginButton: {
-    backgroundColor: '#577CFF',
+    backgroundColor: "#577CFF",
     fontSize: 13,
     width: 140,
     letterSpacing: 1,
   },
   loginButtonText: {
     // fontFamily: fonts.WorkSans400,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   signUpContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 32,
   },
   signUpText: {
     fontSize: 14,
-    color: '#9C9C9C',
+    color: "#9C9C9C",
   },
   signUpLink: {
-    color: '#577CFF',
+    color: "#577CFF",
   },
   loginField: {
     marginBottom: 4,

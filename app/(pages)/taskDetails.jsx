@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, Image, TouchableOpacity, Modal, Button, Linking } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  Image,
+  TouchableOpacity,
+  Modal,
+  Button,
+  Linking,
+} from "react-native";
 import CustomButton from "../../components/CustomButton";
 import { icons } from "../../constants";
 import colors from "../../constants/colors";
@@ -8,39 +19,13 @@ import { useRoute } from "@react-navigation/native";
 import { getTaskById } from "../../src/api/repositories/taskRepository";
 import BottomNavigation from "./BottomNavigation ";
 import { useNavigation } from "@react-navigation/native";
-import { AntDesign } from '@expo/vector-icons'; // For close button
+import { AntDesign } from "@expo/vector-icons"; // For close button
 
 const TaskDetails = () => {
-  const [tasksDetail, setTasksDetail] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [documents, setDocuments] = useState([]);
   const route = useRoute();
-  const { id } = route.params || {};
-  const navigation = useNavigation();
-  const baseURL = "http://localhost:1338"; // Base URL for localhost
-
-  useEffect(() => {
-    const fetchTasksByID = async () => {
-      try {
-        const taskData = await getTaskById(id);
-        setTasksDetail(taskData?.data?.data);
-
-        if (taskData?.data?.data?.attributes?.docs) {
-          const docs = taskData?.data?.data?.attributes?.docs?.data?.map(doc => ({
-            id: doc?.id,
-            fileName: doc?.attributes?.name,
-            url: `${baseURL}${doc.attributes.url}`, // Prepend base URL
-            mimeType: doc?.attributes?.mime // Handle different mime types
-          }));
-          setDocuments(docs);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchTasksByID();
-  }, [id]);
+  const { taskData } = route.params || {}; // Extract task data
+  const [showModal, setShowModal] = useState(false);
+  const documents = taskData.documents ? [taskData.documents] : [];
 
   const openDocument = async (url) => {
     try {
@@ -48,19 +33,12 @@ const TaskDetails = () => {
       if (supported) {
         await Linking.openURL(url);
       } else {
-        console.error('Unsupported URL: ' + url);
+        console.error("Unsupported URL: " + url);
       }
     } catch (error) {
-      console.error('Failed to open URL: ', error);
+      console.error("Failed to open URL: ", error);
     }
   };
-
-  const renderCarouselItem = ({ item }) => (
-    <View style={styles.carouselItem}>
-      <Image source={{ uri: item.url }} style={styles.carouselImage} />
-      <Button title="Download" onPress={() => openDocument(item.url)} />
-    </View>
-  );
 
   return (
     <View style={styles.rootContainer}>
@@ -72,16 +50,16 @@ const TaskDetails = () => {
             <View style={styles.deadlineContainer}>
               <Image source={icons.calendar} />
               <Text style={styles.deadlineText}>
-                Deadline: {tasksDetail?.attributes?.deadline}
+                Deadline: {taskData.deadline || "No deadline specified"}
               </Text>
             </View>
           </View>
 
           {/* Image Placeholder */}
           <View style={styles.imagePlaceholder}>
-            {tasksDetail?.attributes?.image_url && (
+            {taskData.image_url && (
               <Image
-                source={{ uri: tasksDetail.attributes.image_url }}
+                source={{ uri: taskData.image_url }}
                 style={styles.taskImage}
               />
             )}
@@ -91,7 +69,7 @@ const TaskDetails = () => {
           <View style={styles.projectInfo}>
             <View style={styles.projectTitleContainer}>
               <Text style={styles.projectTitle}>
-                {tasksDetail?.attributes?.name}
+                {taskData.name || "No Task Name"}
               </Text>
               <CustomButton
                 buttonStyle={{
@@ -104,11 +82,12 @@ const TaskDetails = () => {
                   fontFamily: "WorkSans_500Medium",
                   color: "#577CFF",
                 }}
-                text={tasksDetail?.attributes?.stage?.data?.attributes?.name}
+                text={taskData.stage?.data?.attributes?.name || "No Stage"}
               />
             </View>
             <Text style={styles.projectDescription}>
-              {tasksDetail?.attributes?.description}
+              {taskData.description ||
+                "No description available for this task."}
             </Text>
           </View>
 
@@ -125,26 +104,26 @@ const TaskDetails = () => {
                 Required Drawings / Documents
               </Text>
               <Text style={styles.tableContent}>
-                {tasksDetail?.attributes?.documents}
+                {taskData.documents || "No documents"}
               </Text>
             </View>
             <View style={styles.tableRow}>
               <Text style={styles.tableHeader}>QA Team Process</Text>
               <Text style={styles.tableContent}>
-                {tasksDetail?.attributes?.qa}
+                {taskData.qa || "No QA process"}
               </Text>
             </View>
             <View style={styles.tableRow}>
               <Text style={styles.tableHeader}>QC Team Process</Text>
               <Text style={styles.tableContent}>
-                {tasksDetail?.attributes?.qc}
+                {taskData.qc || "No QC process"}
               </Text>
             </View>
-            {tasksDetail?.attributes?.rejection_comment && (
+            {taskData.rejection_comment && (
               <View style={styles.tableRow}>
                 <Text style={styles.tableHeader}>Rejection Comment</Text>
                 <Text style={styles.tableContent}>
-                  {tasksDetail.attributes.rejection_comment}
+                  {taskData.rejection_comment}
                 </Text>
               </View>
             )}
@@ -160,12 +139,12 @@ const TaskDetails = () => {
               <Text style={styles.showAttachmentsText}>Show attachments</Text>
             </TouchableOpacity>
 
-            {tasksDetail && tasksDetail?.attributes?.status !== "completed" && (
+            {taskData.status !== "completed" && (
               <TouchableOpacity
                 style={[styles.showAttechments, styles.uploadProof]}
-                onPress={() =>
-                  navigation.navigate("(pages)/uploadProof", { id: id })
-                }
+                // onPress={() =>
+                //   navigation.navigate("(pages)/uploadProof", { id: id })
+                // }
               >
                 <Image source={icons.upload} />
                 <Text style={styles.uploadProofText}>
@@ -175,7 +154,6 @@ const TaskDetails = () => {
             )}
           </View>
 
-          {/* Modal for showing documents */}
           {/* Modal for showing documents */}
           <Modal visible={showModal} transparent={true} animationType="slide">
             <View style={styles.modalContainer}>
@@ -189,7 +167,7 @@ const TaskDetails = () => {
                 <Text style={styles.modalTitle}>Documents</Text>
 
                 {/* Display documents as clickable items for download */}
-                {documents?.map((doc, index) => (
+                {documents.map((doc, index) => (
                   <TouchableOpacity
                     key={index}
                     onPress={() => openDocument(doc.url)}
@@ -205,8 +183,6 @@ const TaskDetails = () => {
           </Modal>
         </SafeAreaView>
       </ScrollView>
-
-      <BottomNavigation />
     </View>
   );
 };
@@ -250,8 +226,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   taskImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     // borderRadius: 10,
   },
   projectInfo: {
@@ -304,18 +280,18 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   showAttechmentsContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingTop: 15,
   },
   showAttechments: {
     borderColor: colors.primary,
     borderWidth: 1,
     padding: 10,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 10,
     color: colors.primary,
   },
@@ -324,8 +300,8 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   documentItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderColor,
@@ -337,13 +313,13 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: 'white',
-    width: '90%',
+    backgroundColor: "white",
+    width: "90%",
     padding: 20,
     borderRadius: 10,
   },
@@ -353,13 +329,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 10,
     top: 10,
   },
   documentItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderColor,
