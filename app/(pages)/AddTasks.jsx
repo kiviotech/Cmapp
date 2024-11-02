@@ -101,15 +101,12 @@ const TaskMilestoneForm = () => {
       console.log("Submitting Project Data with Tasks:", updatedProjectData);
 
       await updateExistingProject(projectData.id, updatedProjectData);
-
-      alert("Project with tasks created successfully!");
-      navigation.navigate("(pages)/Projects");
+      navigation.navigate("(pages)/AssignContractors");
     } catch (error) {
       console.error(
         "Error updating project with tasks:",
         error.response?.data || error.message
       );
-      alert("Error updating project with tasks.");
     }
   };
 
@@ -167,10 +164,7 @@ const TaskMilestoneForm = () => {
           ))}
 
           <View style={styles.nextButtonContainer}>
-            <Button
-              title="Submit Project with Tasks"
-              onPress={handleSubmitProject}
-            />
+            <Button title="Next" onPress={handleSubmitProject} />
           </View>
         </View>
       </ScrollView>
