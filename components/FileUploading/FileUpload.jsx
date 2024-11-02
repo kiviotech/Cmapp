@@ -241,6 +241,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { FontAwesome } from '@expo/vector-icons';
+import axios from 'axios';
 
 const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   const [cameraActive, setIsCameraActive] = useState(false);
@@ -253,8 +254,9 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      // aspect: [4, 3],
+      // quality: 1,
+      base64: false
     });
 
     if (!result.canceled) {
@@ -342,24 +344,45 @@ const FileUpload = ({ uploadedFiles, setUploadedFiles }) => {
   };
 
   const uploadFileToAPI = async (file) => {
+    console.log(file);
     const formData = new FormData();
-    formData.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: 'image/jpeg', // You can set this dynamically based on the file type
-    });
+    // formData.append('files', {
+    //   uri: file.uri,
+    //   filename: file.name,
+    //   type: 'image/png',// You can set this dynamically based on the file type
+    // });
+    const imgblob = await (await fetch(file.uri)).blob();
+    
+    // formData.append('files', {
+    //   name: file.name,
+    //   type: 'image/png',
+    //   uri: file.uri
+    // });
+    formData.append("files", imgblob, file.name);
 
     try {
-      const response = await fetch('your-api-endpoint', {
+      const response = await fetch('http://localhost:1337/api/upload', {
         method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Authorization': 'Bearer 897b133848c81089b70c04803b26a8debc43b387b9cd33bc9dfdc253824bafaf3bd2b6040334838cea9fb67bf221f653da52d554e028e639068cc16f3397d1a983fcf5b1f833aff1da5377146cd031eeae17c3049ebc43ea011b57a322963b37ddbd17dd3cf215b582586302495e25dd40a2e3ca04165cbe5debc9a15b9cf8e0',
+          // 'Content-Type': 'form-data',
         },
         body: formData,
       });
 
+      // const response = await axios.post('http://localhost:1337/api/upload',
+      //   formData,
+      //   {
+      //     headers: {
+      //       'Authorization': 'Bearer 897b133848c81089b70c04803b26a8debc43b387b9cd33bc9dfdc253824bafaf3bd2b6040334838cea9fb67bf221f653da52d554e028e639068cc16f3397d1a983fcf5b1f833aff1da5377146cd031eeae17c3049ebc43ea011b57a322963b37ddbd17dd3cf215b582586302495e25dd40a2e3ca04165cbe5debc9a15b9cf8e0',
+      //       'Content-Type': 'multipart/form-data',
+      //       // ...formData.getHeaders()
+      //     }
+      //   }
+      // );
+
       if (response.ok) {
-        console.log('File uploaded successfully');
+        console.log('File uploaded successfully', response.data[0]);
       } else {
         console.log('Failed to upload file');
       }
