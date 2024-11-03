@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -8,17 +8,24 @@ import {
   SafeAreaView,
 } from "react-native";
 import ProgressBar from "react-native-progress/Bar";
-import { FontAwesome } from "@expo/vector-icons"; // For the calendar icon
-import { useRoute } from "@react-navigation/native";
-import BottomNavigation from "./BottomNavigation";
-import { useNavigation } from "@react-navigation/native";
+import { FontAwesome } from "@expo/vector-icons";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import useProjectStore from "../../../projectStore";
 
 const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { projectData } = route.params || {};
+  const { projectData: routeProjectData } = route.params || {};
+
+  const { projectData, setProjectData } = useProjectStore();
+
+  useEffect(() => {
+    if (routeProjectData) {
+      setProjectData(routeProjectData);
+    }
+  }, [routeProjectData, setProjectData]);
+
   const project = projectData?.attributes || {};
-  console.log(project);
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -31,10 +38,10 @@ const ProjectDetails = () => {
           </Text>
         </View>
 
-        <View style={styles.CalenderContainer}>
+        <View style={styles.calendarContainer}>
           <FontAwesome name="calendar" size={24} color="#F5C37F" />
           <View style={styles.dateContainer}>
-            <Text style={styles.DuedateText}>Due Date</Text>
+            <Text style={styles.dueDateText}>Due Date</Text>
             <Text style={styles.dateText}>{project.deadline || "N/A"}</Text>
           </View>
         </View>
@@ -42,7 +49,7 @@ const ProjectDetails = () => {
         <Text style={styles.label}>
           Project Manager:{" "}
           <Text style={styles.text}>
-            {project.user.data.attributes.username}
+            {project.user?.data?.attributes?.username || "N/A"}
           </Text>
         </Text>
 
@@ -54,7 +61,7 @@ const ProjectDetails = () => {
         <View style={styles.progressContainer}>
           <Text style={styles.progressLabel}>Project Progress:</Text>
           <ProgressBar
-            progress={0.68} // Assuming static progress for now, replace with dynamic value if available
+            progress={0.68}
             width={200}
             color="#66B8FC"
             style={styles.progressBarContainer}
@@ -80,7 +87,7 @@ const ProjectDetails = () => {
                   : "Pending..."}
               </Text>
             </View>
-            <View style={styles.Assign}>
+            <View style={styles.assign}>
               <Text style={styles.assignedInfo}>Assigned Contractor Name</Text>
               <Text
                 style={
@@ -113,7 +120,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 5,
     marginTop: 20,
-    //  backgroundColor: '#fff',
     width: "100%",
   },
   container: {
@@ -128,7 +134,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   projectNameContainer: {
-    alignItems: "start",
+    alignItems: "flex-start",
     marginBottom: 10,
   },
   projectName: {
@@ -136,28 +142,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#192252",
   },
+  calendarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   dateContainer: {
     flexDirection: "column",
     alignItems: "center",
-    marginBottom: 10,
-    // position:"absolute"
+    marginLeft: 8,
   },
-  CalenderContainer: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    flexDirection: "row",
-    top: 10,
-    // position:"relative",
-    bottom: 50,
+  dueDateText: {
+    fontSize: 16,
   },
   dateText: {
     fontSize: 16,
     color: "#F5C37F",
-    marginLeft: 8,
-  },
-  DuedateText: {
-    fontSize: 16,
   },
   label: {
     fontSize: 16,
@@ -182,7 +182,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     position: "relative",
   },
-
   progressBarContainer: {
     marginLeft: 5,
     marginTop: 5,
@@ -195,9 +194,8 @@ const styles = StyleSheet.create({
   progressPercentage: {
     fontSize: 14,
     color: "#66B8FC",
-    marginLeft: "87%",
     position: "absolute",
-    bottom: 15,
+    right: 0,
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
@@ -207,16 +205,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   task: {
-    display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    flexDirection: "row",
   },
-  Assign: {
-    display: "flex",
+  assign: {
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    flexDirection: "row",
     marginTop: 10,
   },
   taskName: {
@@ -246,14 +242,13 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: "#5E8BFF",
-    // paddingVertical: 12
     padding: 15,
     borderRadius: 25,
     alignItems: "center",
     marginTop: 20,
     height: 50,
     width: 150,
-    marginLeft: 103,
+    alignSelf: "center",
   },
   addButtonText: {
     fontSize: 14,

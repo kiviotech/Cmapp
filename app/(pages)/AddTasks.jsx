@@ -21,17 +21,22 @@ const TaskMilestoneForm = () => {
   const [taskName, setTaskName] = useState("");
   const [taskDate, setTaskDate] = useState(null);
   const [tasks, setTasks] = useState([]);
-  const [taskIds, setTaskIds] = useState([]);
 
   const navigation = useNavigation();
   const route = useRoute();
-
   const projectData =
     route.params?.projectData || useProjectStore((state) => state.projectData);
 
   useEffect(() => {
     if (projectData) {
-      console.log("Project Data:", projectData);
+      const existingTasks = projectData.tasks?.data || [];
+      setTasks(
+        existingTasks.map((task) => ({
+          id: task.id,
+          name: task.attributes.name,
+          date: new Date(task.attributes.deadline).toLocaleDateString(),
+        }))
+      );
     }
   }, [projectData]);
 
@@ -54,10 +59,8 @@ const TaskMilestoneForm = () => {
         if (taskId) {
           setTasks((prevTasks) => [
             ...prevTasks,
-            { name: taskName, date: taskDate.toLocaleDateString() },
+            { id: taskId, name: taskName, date: taskDate.toLocaleDateString() },
           ]);
-          setTaskIds((prevIds) => [...prevIds, taskId]);
-          console.log("Added Task ID:", taskId);
         } else {
           console.error("Task creation failed. No ID received.");
         }
@@ -78,7 +81,7 @@ const TaskMilestoneForm = () => {
 
   const handleSubmitProject = async () => {
     try {
-      const formattedTaskIds = taskIds.map((id) => ({ id }));
+      const allTaskIds = tasks.map((task) => ({ id: task.id }));
 
       const updatedProjectData = {
         data: {
@@ -88,7 +91,7 @@ const TaskMilestoneForm = () => {
           deadline: milestoneDate
             ? milestoneDate.toISOString().split("T")[0]
             : null,
-          tasks: formattedTaskIds,
+          tasks: allTaskIds,
           registrations: projectData?.registrations || [],
           user: projectData?.user,
           documents: projectData?.documents || [],
@@ -97,8 +100,6 @@ const TaskMilestoneForm = () => {
             : null,
         },
       };
-
-      console.log("Submitting Project Data with Tasks:", updatedProjectData);
 
       await updateExistingProject(projectData.id, updatedProjectData);
       navigation.navigate("(pages)/AssignContractors");
@@ -156,7 +157,7 @@ const TaskMilestoneForm = () => {
           </TouchableOpacity>
 
           {tasks.map((task, index) => (
-            <View key={index} style={styles.taskItem}>
+            <View key={task.id || index} style={styles.taskItem}>
               <Text style={styles.taskText}>
                 {index + 1}. {task.name} - {task.date}
               </Text>
@@ -189,7 +190,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
-    right: 35,
   },
   sectionTitleContainer: {
     flexDirection: "row",
@@ -202,13 +202,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#C4C4C4",
     flex: 1,
     marginRight: 10,
-    left: 10,
-    top: 2,
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    flexShrink: 0,
   },
   label: {
     fontSize: 16,
@@ -224,7 +221,6 @@ const styles = StyleSheet.create({
   addButton: {
     alignItems: "center",
     marginBottom: 20,
-    left: 120,
   },
   addButtonText: {
     color: "#007BFF",
@@ -241,7 +237,6 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   nextButtonContainer: {
-    height: 50,
     marginTop: 20,
     alignSelf: "center",
   },

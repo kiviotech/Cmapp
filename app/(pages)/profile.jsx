@@ -9,7 +9,7 @@ import {
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import BottomNavigation from "./BottomNavigation ";
+// import BottomNavigation from "./BottomNavigation";
 import colors from "../../constants/colors";
 import { icons } from "../../constants";
 import fonts from "../../constants/fonts";
@@ -127,7 +127,7 @@ const profile = () => {
           </ScrollView>
         </View>
       </ScrollView>
-      <BottomNavigation />
+      {/* <BottomNavigation /> */}
     </SafeAreaView>
   );
 };

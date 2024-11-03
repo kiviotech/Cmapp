@@ -34,9 +34,8 @@ const ProjectForm = () => {
   const [projectDescription, setProjectDescription] = useState("");
   const [projectManagers, setProjectManagers] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [documentIds, setDocumentIds] = useState([]);
   const [errors, setErrors] = useState({});
-
-  const fileUploadEndpoint = "/upload";
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -63,63 +62,30 @@ const ProjectForm = () => {
     if (!endDate) newErrors.endDate = "End date is required";
     if (!projectManagerId)
       newErrors.projectManagerId = "Project manager selection is required";
-    // if (!uploadedFiles.length)
-    //   newErrors.uploadedFiles = "At least one document is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const uploadFileToServer = async (file) => {
-    const formData = new FormData();
-    formData.append("files", {
-      uri: file.uri,
-      name: file.name,
-      type: file.type || "image/jpeg",
-    });
-
-    try {
-      const response = await fetch(fileUploadEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data[0].id;
-      } else {
-        const errorDetails = await response.text();
-        console.error("File upload failed:", errorDetails);
-        throw new Error(`File upload failed with status ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      throw error;
-    }
   };
 
   const handleProjectCreation = async () => {
     if (!validate()) return;
 
     try {
-      const documentIds = await Promise.all(
-        uploadedFiles.map(async (file) => {
-          const documentId = await uploadFileToServer(file);
-          return documentId;
-        })
-      );
+      const formattedStartDate = startDate
+        ? startDate.toISOString().slice(0, 10)
+        : null;
+      const formattedEndDate = endDate
+        ? endDate.toISOString().slice(0, 10)
+        : null;
 
       const projectData = {
         data: {
           name: projectName,
           description: projectDescription,
           update_status: "pending",
-          start_date: startDate ? startDate.toISOString().split("T")[0] : null,
-          deadline: endDate ? endDate.toISOString().split("T")[0] : null,
+          start_date: formattedStartDate,
+          deadline: formattedEndDate,
           user: projectManagerId,
-          documents: documentIds,
+          documents: documentIds, // Pass only file IDs
         },
       };
 
@@ -153,6 +119,11 @@ const ProjectForm = () => {
     setProjectManagerId(null);
     setProjectDescription("");
     setUploadedFiles([]);
+    setDocumentIds([]);
+  };
+
+  const handleFileUploadSuccess = (id) => {
+    setDocumentIds((prevIds) => [...prevIds, id]);
   };
 
   return (
@@ -265,6 +236,7 @@ const ProjectForm = () => {
         <FileUpload
           uploadedFiles={uploadedFiles}
           setUploadedFiles={setUploadedFiles}
+          onFileUploadSuccess={handleFileUploadSuccess}
         />
         {errors.uploadedFiles && (
           <Text style={styles.errorText}>{errors.uploadedFiles}</Text>

@@ -34,7 +34,7 @@ const BottomNavigation = () => {
       {/* My Activity */}
       <TouchableOpacity
         style={styles.navItem}
-        onPress={() => navigation.navigate("(pages)/profile")}
+        // onPress={() => navigation.navigate("(pages)/profile")}
       >
         <Icon
           name={
@@ -113,7 +113,7 @@ const BottomNavigation = () => {
         style={styles.navItem}
         onPress={() => {
           logout(); // Call the logout function
-          navigation.navigate("(pages)/profile");
+          // navigation.navigate("(pages)/profile");
         }}
       >
         <Icon

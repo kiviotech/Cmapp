@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,24 +8,22 @@ import {
   Image,
   TouchableOpacity,
   Modal,
-  Button,
   Linking,
 } from "react-native";
 import CustomButton from "../../components/CustomButton";
 import { icons } from "../../constants";
 import colors from "../../constants/colors";
-import fonts from "../../constants/fonts";
-import { useRoute } from "@react-navigation/native";
-import { getTaskById } from "../../src/api/repositories/taskRepository";
-import BottomNavigation from "./BottomNavigation ";
-import { useNavigation } from "@react-navigation/native";
-import { AntDesign } from "@expo/vector-icons"; // For close button
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { AntDesign } from "@expo/vector-icons";
 
 const TaskDetails = () => {
   const route = useRoute();
-  const { taskData } = route.params || {}; // Extract task data
+  const navigation = useNavigation();
+  const { taskData } = route.params || {};
   const [showModal, setShowModal] = useState(false);
+
   const documents = taskData.documents ? [taskData.documents] : [];
+  console.log("Task Details:", taskData);
 
   const openDocument = async (url) => {
     try {
@@ -79,7 +77,6 @@ const TaskDetails = () => {
                   height: 35,
                 }}
                 textStyle={{
-                  fontFamily: "WorkSans_500Medium",
                   color: "#577CFF",
                 }}
                 text={taskData.stage?.data?.attributes?.name || "No Stage"}
@@ -130,21 +127,23 @@ const TaskDetails = () => {
           </View>
 
           {/* Attachments Section */}
-          <View style={styles.showAttechmentsContainer}>
+          <View style={styles.showAttachmentsContainer}>
             <TouchableOpacity
               onPress={() => setShowModal(true)}
-              style={styles.showAttechments}
+              style={styles.showAttachments}
             >
-              <Image source={icons.showAttechments} />
+              <Image source={icons.showAttachments} />
               <Text style={styles.showAttachmentsText}>Show attachments</Text>
             </TouchableOpacity>
 
             {taskData.status !== "completed" && (
               <TouchableOpacity
-                style={[styles.showAttechments, styles.uploadProof]}
-                // onPress={() =>
-                //   navigation.navigate("(pages)/uploadProof", { id: id })
-                // }
+                style={[styles.showAttachments, styles.uploadProof]}
+                onPress={() =>
+                  navigation.navigate("(pages)/uploadProof", {
+                    id: taskData.id, // Ensure task ID is passed correctly here
+                  })
+                }
               >
                 <Image source={icons.upload} />
                 <Text style={styles.uploadProofText}>
@@ -207,7 +206,6 @@ const styles = StyleSheet.create({
   },
   detailsText: {
     fontSize: 24,
-    // fontFamily: fonts.WorkSans600,
   },
   deadlineContainer: {
     flexDirection: "row",
@@ -217,7 +215,6 @@ const styles = StyleSheet.create({
   deadlineText: {
     color: colors.radiusColor,
     marginLeft: 8,
-    // fontFamily: fonts.WorkSans500,
   },
   imagePlaceholder: {
     height: 150,
@@ -228,7 +225,6 @@ const styles = StyleSheet.create({
   taskImage: {
     width: "100%",
     height: "100%",
-    // borderRadius: 10,
   },
   projectInfo: {
     marginBottom: 16,
@@ -241,11 +237,9 @@ const styles = StyleSheet.create({
   },
   projectTitle: {
     fontSize: 18,
-    // fontFamily: fonts.WorkSans600,
   },
   projectDescription: {
     color: colors.blackColor,
-    // fontFamily: fonts.WorkSans400,
     fontSize: 12,
     paddingTop: 25,
   },
@@ -265,7 +259,6 @@ const styles = StyleSheet.create({
     flex: 2,
     fontWeight: "600",
     color: colors.primary,
-    // fontFamily: fonts.WorkSans500,
     fontSize: 12,
     borderRightWidth: 1,
     borderRightColor: colors.borderColor,
@@ -275,16 +268,15 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
     color: colors.blackColor,
-    // fontFamily: fonts.WorkSans400,
     fontSize: 10,
     paddingLeft: 10,
   },
-  showAttechmentsContainer: {
+  showAttachmentsContainer: {
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 15,
   },
-  showAttechments: {
+  showAttachments: {
     borderColor: colors.primary,
     borderWidth: 1,
     padding: 10,
@@ -309,7 +301,6 @@ const styles = StyleSheet.create({
   documentName: {
     fontSize: 14,
     color: colors.blackColor,
-    // fontFamily: fonts.WorkSans500,
   },
   modalContainer: {
     flex: 1,
@@ -325,7 +316,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    // fontFamily: fonts.WorkSans600,
     marginBottom: 20,
   },
   closeButton: {
@@ -333,22 +323,9 @@ const styles = StyleSheet.create({
     right: 10,
     top: 10,
   },
-  documentItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderColor,
-  },
-  documentName: {
-    fontSize: 14,
-    color: colors.blackColor,
-    // fontFamily: fonts.WorkSans500,
-  },
   downloadText: {
     color: colors.primary,
     fontSize: 14,
-    // fontFamily: fonts.WorkSans600,
   },
 });
 

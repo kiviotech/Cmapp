@@ -13,9 +13,9 @@ import { fetchSubContractors } from "../../src/services/subContractorService";
 import { fetchUsers } from "../../src/services/userService";
 import {
   fetchProjectById,
-  updateTask,
-  createProjectAssignment,
+  createNewProject,
 } from "../../src/services/projectService";
+import { updateTask } from "../../src/services/taskService";
 import useProjectStore from "../../projectStore";
 import { useRoute } from "@react-navigation/native";
 
@@ -67,21 +67,17 @@ const AssignContractors = () => {
     const loadContractorTypes = async () => {
       try {
         const response = await fetchSubContractors();
-        const contractors = response.data ? response.data : response;
+        const contractors = response.data || response;
 
         if (!Array.isArray(contractors)) {
           console.error("Unexpected format: contractors is not an array");
           return;
         }
 
-        const types = [
-          ...new Set(
-            contractors.map((contractor) => contractor.attributes.name)
-          ),
-        ].map((type, index) => ({
-          label: type,
-          value: type.toLowerCase(),
-          key: `type-${index}`,
+        const types = contractors.map((contractor) => ({
+          label: contractor.attributes.name,
+          value: contractor.id,
+          key: contractor.id.toString(),
         }));
 
         setContractorTypeItems(types);
@@ -123,24 +119,19 @@ const AssignContractors = () => {
       return;
     }
 
-    const assignmentData = {
-      project_name: projectName,
-      assigned_to: contractorValue,
-      sub_contractor: contractorTypeValue,
-      task_id: taskValue,
-    };
-
-    // Create project assignment
-    try {
-      await createProjectAssignment(assignmentData); // Call the function to create a project assignment
-      await updateTask(taskValue, {
+    const taskUpdateData = {
+      data: {
         assigned_to: contractorValue,
         sub_contractor: contractorTypeValue,
-      });
-      console.log("Project assignment data submitted:", assignmentData);
+      },
+    };
+
+    try {
+      await updateTask(taskValue, taskUpdateData);
+      console.log("Project assignment data submitted:", taskUpdateData);
       Alert.alert("Success", "Project setup completed and task updated!");
     } catch (error) {
-      console.error("Error updating task or creating assignment:", error);
+      console.error("Error updating task:", error);
       Alert.alert("Error", "There was an issue saving the project assignment.");
     }
   };

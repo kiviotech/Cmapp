@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,13 +10,14 @@ import {
   Dimensions,
   FlatList,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import useAuthStore from "../../../useAuthStore";
 import { getProjects } from "../../../src/api/repositories/projectRepository";
 import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import BottomNavigation from "./BottomNavigation";
 import { fetchSubcategories } from "../../../src/services/subcategoryService";
+import { fetchSubmissions } from "../../../src/services/submissionService";
 
 const data = [
   {
@@ -40,7 +41,6 @@ const data = [
     date: "Mon, 10 July 2022",
     time: "9 AM - 10:30 AM",
   },
-  // Add more items if needed
 ];
 
 const renderCard = ({ item }) => (
@@ -64,13 +64,14 @@ const renderCard = ({ item }) => (
 
 const ProjectTeam = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
-  const navigation = useNavigation(); // Use the hook to get navigation object
+  const navigation = useNavigation();
   const [projectsDetail, setProjectsDetail] = useState([]);
   const [tasksDetail, setTasksDetail] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(null); // New state for selected project
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [jobProfile, setJobProfile] = useState("");
   const [subcategories, setSubcategories] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [requests, setRequests] = useState([]);
 
   const { user, designation, role, projects, permissions } = useAuthStore();
 
@@ -98,7 +99,6 @@ const ProjectTeam = () => {
       try {
         const projectData = await getProjects();
         if (isMounted && projectData?.data?.data) {
-          // Ensure we have unique projects based on ID
           const uniqueProjects = Array.from(
             new Map(
               projectData.data.data.map((item) => [item.id, item])
@@ -123,7 +123,6 @@ const ProjectTeam = () => {
 
     fetchProjects();
 
-    // Cleanup function
     return () => {
       isMounted = false;
     };
@@ -135,7 +134,6 @@ const ProjectTeam = () => {
         const data = await fetchSubcategories();
         setSubcategories(data);
 
-        // Aggregate all tasks from subcategories into a single array
         const allTasks = [];
         data.data.forEach((subcategory) => {
           subcategory.attributes.tasks.data.forEach((task) => {
@@ -144,7 +142,7 @@ const ProjectTeam = () => {
           });
         });
 
-        setTasks(allTasks); // Set the tasks array with all tasks
+        setTasks(allTasks);
       } catch (error) {
         console.error("Error fetching subcategories:", error);
       }
@@ -153,13 +151,38 @@ const ProjectTeam = () => {
     loadSubcategories();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      const fetchRequests = async () => {
+        try {
+          const response = await fetchSubmissions();
+          const submissions = response?.data || [];
+          const recentRequests = submissions
+            .sort(
+              (a, b) =>
+                new Date(b.attributes.createdAt) -
+                new Date(a.attributes.createdAt)
+            )
+            .slice(0, 2);
+
+          setRequests(recentRequests);
+        } catch (error) {
+          console.error("Error fetching submissions:", error);
+        }
+      };
+
+      fetchRequests();
+    }, [])
+  );
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container}>
-        {/* User Info */}
         <View style={styles.userInfoContainer}>
           <Image
-            source={{ uri: "https://your-profile-picture-url.com" }} // Replace with the user's profile picture URL
+            source={{
+              uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+            }}
             style={styles.profileImage}
           />
           <View>
@@ -171,7 +194,6 @@ const ProjectTeam = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Project Overview */}
         <Text style={styles.sectionHeader}>Project Overview</Text>
         <View style={styles.overviewContainer}>
           <View style={styles.overviewItem}>
@@ -188,7 +210,6 @@ const ProjectTeam = () => {
           </View>
         </View>
 
-        {/* Select Your Project */}
         <Text style={styles.sectionHeader}>Select Your Project</Text>
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -259,47 +280,42 @@ const ProjectTeam = () => {
           </ScrollView>
         )}
 
-        {/* Requests Section */}
         <View style={styles.requestsHeader}>
           <Text style={styles.sectionHeader}>Requests</Text>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("(pages)/Request")}
+          >
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.requestItem}>
-          <TouchableOpacity>
-            <Text style={styles.requestTitle}>Request for E-mail Change</Text>
-            <Text style={styles.requestDescription}>
-              Contractor ABC has requested to something...
-            </Text>
-            <View style={styles.requestStatusContainer}>
-              <Text style={styles.requestStatusPending}>Pending..</Text>
-              <TouchableOpacity>
-                <Text style={styles.viewLink}>View</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {requests.map((request) => (
+          <View key={request.id} style={styles.requestItem}>
+            <TouchableOpacity>
+              <Text style={styles.requestTitle}>
+                {request.attributes.title || "No Title"}
+              </Text>
+              <Text style={styles.requestDescription}>
+                {request.attributes.description || "No description available."}
+              </Text>
+              <View style={styles.requestStatusContainer}>
+                <Text style={styles.requestStatusPending}>
+                  {request.attributes.status || "Pending"}
+                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("(pages)/RequestDetails", {
+                      requestData: request,
+                    })
+                  }
+                >
+                  <Text style={styles.viewLink}>View</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        ))}
 
-        <View style={styles.requestItem}>
-          <TouchableOpacity>
-            <Text style={styles.requestTitle}>
-              Submitted Project 1 work docs
-            </Text>
-            <Text style={styles.requestDescription}>
-              Contractor ABC has submitted proof of work...
-            </Text>
-            <View style={styles.requestStatusContainer}>
-              <Text style={styles.requestStatusPending}>Pending..</Text>
-              <TouchableOpacity>
-                <Text style={styles.viewLink}>View</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Header */}
         <Text style={styles.projectTitle}>Project 1</Text>
         <View style={styles.headerContainer}>
           <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
@@ -307,7 +323,6 @@ const ProjectTeam = () => {
           <Icon name="tune" size={24} color="#333" style={styles.filterIcon} />
         </View>
 
-        {/* Milestone Cards */}
         {tasks.map((task, index) => (
           <TouchableOpacity
             key={index}
@@ -356,7 +371,7 @@ const ProjectTeam = () => {
 
         <View style={styles.milestoneCard}>
           <Image
-            source={{ uri: "https://via.placeholder.com/150" }} // Placeholder image, replace with your image URL
+            source={{ uri: "https://via.placeholder.com/150" }}
             style={styles.milestoneImage}
           />
           <View style={styles.milestoneContent}>
@@ -389,8 +404,6 @@ const ProjectTeam = () => {
           </View>
         </View>
 
-        {/* ================================================================= */}
-
         <Text style={styles.heading}>Upcoming Appointments</Text>
         <FlatList
           data={data}
@@ -411,7 +424,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 5,
     marginTop: 20,
-    //  backgroundColor: '#fff',
+    // backgroundColor: "#fff",
     width: "100%",
   },
   container: {
@@ -705,7 +718,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#576CE4", // Matches the blue color in the screenshot
+    color: "#576CE4",
   },
   projectName: {
     fontSize: 16,

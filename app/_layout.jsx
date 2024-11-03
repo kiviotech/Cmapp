@@ -108,6 +108,11 @@ const Layout = () => {
           name="(pages)/ProjectForm"
           options={{ headerShown: false }}
         />
+        <Stack.Screen name="(pages)/Request" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(pages)/RequestDetails"
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack>
     </ToastProvider>
