@@ -36,7 +36,6 @@ const ProjectForm = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [documentIds, setDocumentIds] = useState([]);
   const [errors, setErrors] = useState({});
-
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -85,7 +84,7 @@ const ProjectForm = () => {
           start_date: formattedStartDate,
           deadline: formattedEndDate,
           user: projectManagerId,
-          documents: documentIds, // Pass only file IDs
+          documents: documentIds.flat(), // Pass only file IDs
         },
       };
 
@@ -102,7 +101,7 @@ const ProjectForm = () => {
           response.error?.message || "Failed to create project."
         );
       }
-      navigation.navigate("(pages)/AddTasks");
+      navigation.navigate("(pages)/AssignContractors");
     } catch (error) {
       console.error("Error creating project:", error);
       Alert.alert("Error", "An error occurred while creating the project.");

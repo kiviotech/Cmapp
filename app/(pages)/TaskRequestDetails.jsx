@@ -13,7 +13,7 @@ import {
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { updateExistingSubmission } from "../../src/services/submissionService";
-import { MEDIA_BASE_URL } from "../../src/api/apiClient"; // Import MEDIA_BASE_URL
+import { MEDIA_BASE_URL } from "../../src/api/apiClient";
 
 const RequestDetails = () => {
   const route = useRoute();
@@ -44,7 +44,7 @@ const RequestDetails = () => {
         updatedData
       );
       Alert.alert("Success", `Request ${newStatus} successfully!`);
-      navigation.goBack(); // Navigate back after updating
+      navigation.goBack();
     } catch (error) {
       console.error("Error updating request:", error);
       Alert.alert(
@@ -55,7 +55,6 @@ const RequestDetails = () => {
   };
 
   const handleImagePreview = (imageFormats) => {
-    // Construct the full URL using MEDIA_BASE_URL and the large image path
     const imageUrl = `${MEDIA_BASE_URL}${
       imageFormats?.large?.url || imageFormats?.url
     }`;
@@ -120,7 +119,6 @@ const RequestDetails = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Image Preview Modal */}
         <Modal
           visible={modalVisible}
           transparent={true}

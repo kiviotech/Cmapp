@@ -103,13 +103,6 @@ const ProjectDetails = () => {
             </View>
           </View>
         ))}
-
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate("(pages)/AddTasks")}
-        >
-          <Text style={styles.addButtonText}>Add New Task</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

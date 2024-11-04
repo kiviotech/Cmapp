@@ -110,7 +110,11 @@ const Layout = () => {
         />
         <Stack.Screen name="(pages)/Request" options={{ headerShown: false }} />
         <Stack.Screen
-          name="(pages)/RequestDetails"
+          name="(pages)/TaskRequestDetails"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/EmailRequestDetails"
           options={{ headerShown: false }}
         />
         <Stack.Screen name="index" options={{ headerShown: false }} />
