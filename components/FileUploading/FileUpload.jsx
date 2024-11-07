@@ -134,7 +134,7 @@ const FileUpload = ({
       const imgblob = await (await fetch(file.uri)).blob();
       formData.append("files", imgblob, file.name);
 
-      const response = await fetch("http://localhost:1337/api/upload", {
+      const response = await fetch("http://192.168.0.253:1337/api/upload", {
         method: "POST",
         headers: {
           Authorization:

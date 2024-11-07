@@ -10,15 +10,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // import BottomNavigation from "./BottomNavigation";
-import colors from "../../constants/colors";
-import { icons } from "../../constants";
-import fonts from "../../constants/fonts";
-import UploadedFileHIstory from "../../components/UploadedFileHIstory";
-import { getProjects } from "../../src/api/repositories/projectRepository";
-import SelectYourProjectCard from "../../components/SelectYourProjectCard";
+import BottomNavigation from "./BottomNavigation ";
+import colors from "../../../constants/colors";
+import { icons } from "../../../constants";
+import fonts from "../../../constants/fonts";
+import UploadedFileHIstory from "../../../components/UploadedFileHIstory";
+import { getProjects } from "../../../src/api/repositories/projectRepository";
+import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getTasks } from "../../src/api/repositories/taskRepository";
-import useAuthStore from "../../useAuthStore";
+import { getTasks } from "../../../src/api/repositories/taskRepository";
+import useAuthStore from "../../../useAuthStore";
 
 const profile = () => {
   const { user, roles, permissions } = useAuthStore();
@@ -127,7 +128,7 @@ const profile = () => {
           </ScrollView>
         </View>
       </ScrollView>
-      {/* <BottomNavigation /> */}
+      <BottomNavigation />
     </SafeAreaView>
   );
 };

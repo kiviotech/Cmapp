@@ -9,6 +9,7 @@ import {
   FlatList,
   Alert,
   StyleSheet,
+  Dimensions,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
@@ -17,6 +18,8 @@ import { createNewProject } from "../../src/services/projectService";
 import FileUpload from "../../components/FileUploading/FileUpload";
 import { useNavigation } from "@react-navigation/native";
 import useProjectStore from "../../projectStore";
+
+const { width, height } = Dimensions.get("window");
 
 const ProjectForm = () => {
   const navigation = useNavigation();
@@ -162,21 +165,29 @@ const ProjectForm = () => {
         <Text style={styles.errorText}>{errors.projectAddress}</Text>
       )}
 
-      <CrossPlatformDatePicker
-        label="Start Date"
-        value={startDate}
-        onChange={setStartDate}
-      />
-      {errors.startDate && (
-        <Text style={styles.errorText}>{errors.startDate}</Text>
-      )}
+      <View style={styles.dateContainer}>
+        <View style={styles.dateWrapper}>
+          <CrossPlatformDatePicker
+            label="Start Date"
+            value={startDate}
+            onChange={setStartDate}
+          />
+          {errors.startDate && (
+            <Text style={styles.errorText}>{errors.startDate}</Text>
+          )}
+        </View>
 
-      <CrossPlatformDatePicker
-        label="Estimated End Date"
-        value={endDate}
-        onChange={setEndDate}
-      />
-      {errors.endDate && <Text style={styles.errorText}>{errors.endDate}</Text>}
+        <View style={styles.dateWrapper}>
+          <CrossPlatformDatePicker
+            label="End Date"
+            value={endDate}
+            onChange={setEndDate}
+          />
+          {errors.endDate && (
+            <Text style={styles.errorText}>{errors.endDate}</Text>
+          )}
+        </View>
+      </View>
 
       <TouchableOpacity
         onPress={() => setDropdownVisible(true)}
@@ -264,29 +275,42 @@ const ProjectForm = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: width * 0.05,
+    paddingTop: width * 0.1,
     backgroundColor: "#F8F8F8",
   },
+  scrollContent: {
+    paddingBottom: height * 0.1,
+  },
   title: {
-    fontSize: 20,
+    fontSize: width * 0.06,
     fontWeight: "600",
-    marginBottom: 20,
+    marginBottom: height * 0.02,
     color: "#1A1A1A",
   },
   input: {
     borderWidth: 1,
     borderColor: "#E0E0E0",
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    padding: height * 0.015,
+    marginBottom: height * 0.015,
     backgroundColor: "#FFFFFF",
+    fontSize: width * 0.04,
+  },
+  dateContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: height * 0.015,
+  },
+  dateWrapper: {
+    width: "48%",
   },
   dropdownButton: {
     borderWidth: 1,
     borderColor: "#E0E0E0",
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    padding: height * 0.015,
+    marginBottom: height * 0.015,
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
@@ -296,34 +320,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: width * 0.05,
   },
   modalContainer: {
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
-    padding: 15,
+    padding: width * 0.05,
   },
   modalTitle: {
     fontWeight: "600",
-    fontSize: 16,
-    marginBottom: 10,
+    fontSize: width * 0.05,
+    marginBottom: height * 0.01,
   },
   modalItem: {
-    padding: 10,
+    padding: height * 0.015,
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
   },
   modalCancel: {
-    marginTop: 10,
+    marginTop: height * 0.015,
     alignItems: "center",
   },
   uploadContainer: {
     borderWidth: 1,
     borderColor: "#E0E0E0",
     borderRadius: 8,
-    padding: 15,
+    padding: height * 0.015,
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: height * 0.015,
     borderStyle: "dashed",
     backgroundColor: "#F8F8F8",
   },
@@ -331,26 +355,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
     borderRadius: 8,
-    padding: 12,
-    height: 100,
+    padding: height * 0.015,
+    height: height * 0.15,
     textAlignVertical: "top",
-    marginBottom: 20,
+    marginBottom: height * 0.02,
     backgroundColor: "#FFFFFF",
+    fontSize: width * 0.04,
   },
   createButton: {
     backgroundColor: "#4a90e2",
-    padding: 15,
+    padding: height * 0.02,
     borderRadius: 8,
     alignItems: "center",
+    marginBottom: height * 0.1,
   },
   createButtonText: {
     color: "#FFFFFF",
     fontWeight: "bold",
+    fontSize: width * 0.045,
   },
   errorText: {
     color: "red",
-    fontSize: 12,
-    marginBottom: 10,
+    fontSize: width * 0.035,
+    marginBottom: height * 0.01,
   },
 });
 

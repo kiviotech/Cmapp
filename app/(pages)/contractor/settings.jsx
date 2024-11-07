@@ -6,18 +6,29 @@ import {
   Text,
   TouchableOpacity,
   Switch,
-  Image,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FontAwesome } from "@expo/vector-icons";
-import colors from "../../constants/colors";
-// import BottomNavigation from './BottomNavigation';
-import fonts from "../../constants/fonts";
-import { icons } from "../../constants";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import colors from "../../../constants/colors";
+import BottomNavigation from "./BottomNavigation ";
+import { logout } from "../../../src/utils/auth";
+import { useNavigation } from "@react-navigation/native";
+import useAuthStore from "../../../useAuthStore";
+
+const { width, height } = Dimensions.get("window");
 
 const Settings = () => {
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+  const navigation = useNavigation();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  const handleLogout = () => {
+    logout();
+    clearAuth();
+    navigation.navigate("(auth)/login");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -41,7 +52,6 @@ const Settings = () => {
               style={{ color: colors.blackColor }}
               name="chevron-right"
               size={15}
-              color="#FFFFFF"
             />
           </TouchableOpacity>
 
@@ -51,7 +61,6 @@ const Settings = () => {
               style={{ color: colors.blackColor }}
               name="chevron-right"
               size={15}
-              color="#FFFFFF"
             />
           </TouchableOpacity>
 
@@ -78,7 +87,6 @@ const Settings = () => {
               style={{ color: colors.blackColor }}
               name="chevron-right"
               size={15}
-              color="#FFFFFF"
             />
           </TouchableOpacity>
 
@@ -88,7 +96,6 @@ const Settings = () => {
               style={{ color: colors.blackColor }}
               name="chevron-right"
               size={15}
-              color="#FFFFFF"
             />
           </TouchableOpacity>
 
@@ -98,12 +105,15 @@ const Settings = () => {
               style={{ color: colors.blackColor }}
               name="chevron-right"
               size={15}
-              color="#FFFFFF"
             />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+            <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-      {/* <BottomNavigation /> */}
+      <BottomNavigation />
     </SafeAreaView>
   );
 };
@@ -113,46 +123,57 @@ export default Settings;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: width * 0.05,
+    paddingTop: width * 0.05,
     backgroundColor: colors.background,
-    paddingBottom: 45,
+    paddingBottom: height * 0.05,
   },
   title: {
-    fontSize: 24,
+    fontSize: width * 0.06,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: height * 0.02,
+    color: colors.blackColor,
   },
   section: {
-    marginBottom: 30,
-    marginTop: 20,
-    paddingBottom: 20,
+    marginBottom: height * 0.03,
+    paddingBottom: height * 0.015,
   },
-
   switchContainer: {
-    height: 50, // Adjust height as needed
-    justifyContent: "center", // Centers the switch vertically
-    paddingRight: 20,
+    height: height * 0.06,
+    justifyContent: "center",
+    paddingRight: width * 0.05,
   },
-
   switch: {
-    transform: [{ scale: 2 }], // Adjust the scale factor to increase or decrease the size
+    transform: [{ scale: 1.5 }], // Slightly smaller switch for mobile view
   },
   sectionTitle: {
-    fontSize: 18,
-    // fontFamily: fonts.WorkSans400,
-    marginBottom: 10,
+    fontSize: width * 0.045,
+    marginBottom: height * 0.01,
     color: "#ADADAD",
-    fontSize: 18,
   },
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 15,
+    paddingVertical: height * 0.018,
   },
   itemText: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     color: colors.blackColor,
-    // fontFamily: fonts.WorkSans400
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: height * 0.015,
+    borderRadius: 10,
+    marginTop: height * 0.02,
+  },
+  logoutText: {
+    fontSize: width * 0.045,
+    color: "#FF3B30",
+    marginLeft: width * 0.02,
+    fontWeight: "bold",
   },
 });

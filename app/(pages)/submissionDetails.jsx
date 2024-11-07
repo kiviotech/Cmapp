@@ -16,7 +16,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import Swiper from "react-native-swiper";
-import { WebView } from "react-native-webview";
+// import { WebView } from "react-native-webview";
 import { getSubmissionById } from "../../src/api/repositories/submissionRepository";
 import { useRoute } from "@react-navigation/native";
 import submissionEndpoints from "../../src/api/endpoints/submissionEndpoints";
@@ -235,10 +235,10 @@ const SubmissionDetails = () => {
                     style={styles.fullScreenModal}
                     onPress={() => setModalVisible(false)}
                   >
-                    <WebView
+                    {/* <WebView
                       source={{ uri: selectedDocument.url }}
                       style={styles.fullSizeImage}
-                    />
+                    /> */}
                   </TouchableOpacity>
                 )
               )

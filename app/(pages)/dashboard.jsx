@@ -20,7 +20,6 @@ const useRoleComponent = (designation) => {
 const Dashboard = () => {
   const { user, designation, role, projects, tasks, permissions } =
     useAuthStore();
-  console.log(user, designation, role, projects, tasks, permissions);
 
   return (
     <SafeAreaView style={styles.container}>

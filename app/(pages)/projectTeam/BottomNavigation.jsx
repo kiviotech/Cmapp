@@ -32,20 +32,21 @@ const BottomNavigation = () => {
       </TouchableOpacity>
 
       {/* My Activity */}
-      <TouchableOpacity
-        style={styles.navItem}
-        // onPress={() => navigation.navigate("(pages)/profile")}
-      >
+      <TouchableOpacity style={styles.navItem}>
         <Icon
           name={
-            route.name === "(pages)/profile" ? "bar-chart" : "bar-chart-outline"
+            route.name === "(pages)/contractor/profile"
+              ? "bar-chart"
+              : "bar-chart-outline"
           }
           size={24}
-          color={route.name === "(pages)/profile" ? "#577CFF" : "#A8A8A8"}
+          color={
+            route.name === "(pages)/contractor/profile" ? "#577CFF" : "#A8A8A8"
+          }
         />
         <Text
           style={
-            route.name === "(pages)/profile"
+            route.name === "(pages)/contractor/profile"
               ? styles.navTextActive
               : styles.navText
           }
@@ -86,7 +87,7 @@ const BottomNavigation = () => {
       {/* Notifications */}
       <TouchableOpacity
         style={styles.navItem}
-        onPress={() => navigation.navigate("(pages)/notifications")}
+        // onPress={() => navigation.navigate("(pages)/notifications")}
       >
         <Icon
           name={
@@ -112,18 +113,21 @@ const BottomNavigation = () => {
       <TouchableOpacity
         style={styles.navItem}
         onPress={() => {
-          logout(); // Call the logout function
-          // navigation.navigate("(pages)/profile");
+          navigation.navigate("(pages)/projectTeam/ProfileScreen");
         }}
       >
         <Icon
           name="person-outline" // Change this to the profile icon
           size={24}
-          color={route.name === "(pages)/profile" ? "#577CFF" : "#A8A8A8"}
+          color={
+            route.name === "(pages)/projectTeam/ProfileScreen"
+              ? "#577CFF"
+              : "#A8A8A8"
+          }
         />
         <Text
           style={
-            route.name === "(pages)/profile"
+            route.name === "(pages)/projectTeam/ProfileScreen"
               ? styles.navTextActive
               : styles.navText
           }

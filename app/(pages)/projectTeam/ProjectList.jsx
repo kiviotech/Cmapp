@@ -1,173 +1,3 @@
-// import React, { useEffect, useState } from "react";
-// import {
-//   View,
-//   Text,
-//   FlatList,
-//   TouchableOpacity,
-//   SafeAreaView,
-//   ActivityIndicator,
-// } from "react-native";
-// import { getProjects } from "../../../src/api/repositories/projectRepository";
-// import BottomNavigation from "./BottomNavigation";
-// import { useNavigation, useRoute } from "@react-navigation/native";
-
-// const ProjectList = () => {
-//   const [projectsDetail, setProjectsDetail] = useState([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const navigation = useNavigation();
-
-//   useEffect(() => {
-//     let isMounted = true;
-
-//     const fetchProjects = async () => {
-//       setIsLoading(true);
-//       try {
-//         const projectData = await getProjects();
-//         if (isMounted && projectData?.data?.data) {
-//           const uniqueProjects = Array.from(
-//             new Map(
-//               projectData.data.data.map((item) => [item.id, item])
-//             ).values()
-//           );
-//           setProjectsDetail(uniqueProjects);
-//           console.log(projectsDetail);
-//         }
-//       } catch (error) {
-//         console.error("Error fetching projects:", error);
-//         if (isMounted) {
-//           setProjectsDetail([]);
-//         }
-//       } finally {
-//         if (isMounted) {
-//           setIsLoading(false);
-//         }
-//       }
-//     };
-
-//     fetchProjects();
-
-//     return () => {
-//       isMounted = false;
-//     };
-//   }, []);
-
-//   const renderProject = ({ item }) => (
-//     <View
-//       style={{
-//         flexDirection: "row",
-//         backgroundColor: "#ffffff",
-//         borderRadius: 12,
-//         padding: 16,
-//         marginBottom: 12,
-//         shadowColor: "#000",
-//         shadowOpacity: 0.1,
-//         shadowRadius: 10,
-//         shadowOffset: { width: 0, height: 4 },
-//         elevation: 5, // Added for Android shadow
-//         alignItems: "center",
-//         width: "90%",
-//         alignSelf: "center",
-//       }}
-//     >
-//       <View
-//         style={{
-//           width: 6,
-//           height: "100%",
-//           borderRadius: 4,
-//           marginRight: 12,
-//           backgroundColor: item.color || "#4A90E2",
-//         }}
-//       />
-//       <View style={{ flex: 1 }}>
-//         <Text style={{ fontSize: 14, color: "#999" }}>
-//           {item.attributes.user.data.attributes.username}
-//         </Text>
-//         <Text
-//           style={{
-//             fontSize: 20,
-//             fontWeight: "bold",
-//             color: item.color || "#4A90E2",
-//             marginVertical: 4,
-//           }}
-//         >
-//           {item.attributes.name}
-//         </Text>
-//         <Text style={{ fontSize: 14, color: "#4CAF50" }}>
-//           Started on {new Date(item.attributes.createdAt).toLocaleDateString()}
-//         </Text>
-//         <Text
-//           style={{
-//             fontSize: 14,
-//             color: "#FC5275",
-//             fontWeight: "500",
-//             position: "absolute",
-//             right: 16,
-//             bottom: 16,
-//           }}
-//         >
-//           Due {new Date(item.attributes.deadline).toLocaleDateString()}
-//         </Text>
-//       </View>
-//     </View>
-//   );
-
-//   return (
-//     <SafeAreaView
-//       style={{ flex: 1, backgroundColor: "#f7f8fc", paddingTop: 20 }}
-//     >
-//       <View style={{ flex: 1, paddingHorizontal: 16 }}>
-//         <Text
-//           style={{
-//             fontSize: 24,
-//             fontWeight: "bold",
-//             color: "#1e1e1e",
-//             marginBottom: 16,
-//           }}
-//         >
-//           Projects
-//         </Text>
-//         {isLoading ? (
-//           <ActivityIndicator size="large" color="#4A90E2" />
-//         ) : (
-//           <FlatList
-//             data={projectsDetail}
-//             keyExtractor={(item) => item.id}
-//             renderItem={renderProject}
-//             contentContainerStyle={{ paddingBottom: 150 }} // Extra bottom padding for navigation
-//             showsVerticalScrollIndicator={false}
-//           />
-//         )}
-//         <TouchableOpacity
-//           onPress={() => navigation.navigate("(pages)/ProjectForm")}
-//           style={{
-//             position: "absolute",
-//             bottom: 100, // Extra space above BottomNavigation
-//             right: 20, // Positioned on the right
-//             backgroundColor: "transparent",
-//             borderWidth: 1,
-//             borderColor: "#4A90E2",
-//             borderRadius: 20,
-//             paddingHorizontal: 20,
-//             paddingVertical: 10,
-//             shadowColor: "#000",
-//             shadowOpacity: 0.1,
-//             shadowRadius: 5,
-//             shadowOffset: { width: 0, height: 2 },
-//             elevation: 5,
-//           }}
-//         >
-//           <Text style={{ color: "#4A90E2", fontSize: 16, fontWeight: "500" }}>
-//             Add New Project
-//           </Text>
-//         </TouchableOpacity>
-//       </View>
-//       <BottomNavigation />
-//     </SafeAreaView>
-//   );
-// };
-
-// export default ProjectList;
-
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -176,10 +6,14 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  StyleSheet,
+  Dimensions,
 } from "react-native";
 import { getProjects } from "../../../src/api/repositories/projectRepository";
 import BottomNavigation from "./BottomNavigation";
 import { useNavigation } from "@react-navigation/native";
+
+const { width, height } = Dimensions.get("window");
 
 const ProjectList = () => {
   const [projectsDetail, setProjectsDetail] = useState([]);
@@ -221,59 +55,21 @@ const ProjectList = () => {
   }, []);
 
   const renderProject = ({ item }) => (
-    <View
-      style={{
-        flexDirection: "row",
-        backgroundColor: "#ffffff",
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 5,
-        alignItems: "center",
-        width: "90%",
-        alignSelf: "center",
-      }}
-    >
+    <View style={styles.projectContainer}>
       <View
-        style={{
-          width: 6,
-          height: "100%",
-          borderRadius: 4,
-          marginRight: 12,
-          backgroundColor: item.color || "#4A90E2",
-        }}
+        style={[styles.colorBar, { backgroundColor: item.color || "#4A90E2" }]}
       />
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, color: "#999" }}>
+      <View style={styles.projectDetails}>
+        <Text style={styles.username}>
           {item.attributes.user?.data?.attributes?.username || "Unknown User"}
         </Text>
-        <Text
-          style={{
-            fontSize: 20,
-            fontWeight: "bold",
-            color: item.color || "#4A90E2",
-            marginVertical: 4,
-          }}
-        >
+        <Text style={[styles.projectName, { color: item.color || "#4A90E2" }]}>
           {item.attributes.name || "Unnamed Project"}
         </Text>
-        <Text style={{ fontSize: 14, color: "#4CAF50" }}>
+        <Text style={styles.startDate}>
           Started on {new Date(item.attributes.createdAt).toLocaleDateString()}
         </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: "#FC5275",
-            fontWeight: "500",
-            position: "absolute",
-            right: 16,
-            bottom: 16,
-          }}
-        >
+        <Text style={styles.dueDate}>
           Due {new Date(item.attributes.deadline).toLocaleDateString()}
         </Text>
       </View>
@@ -281,20 +77,9 @@ const ProjectList = () => {
   );
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#f7f8fc", paddingTop: 20 }}
-    >
-      <View style={{ flex: 1, paddingHorizontal: 16 }}>
-        <Text
-          style={{
-            fontSize: 24,
-            fontWeight: "bold",
-            color: "#1e1e1e",
-            marginBottom: 16,
-          }}
-        >
-          Projects
-        </Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.headerText}>Projects</Text>
         {isLoading ? (
           <ActivityIndicator size="large" color="#4A90E2" />
         ) : (
@@ -302,35 +87,105 @@ const ProjectList = () => {
             data={projectsDetail}
             keyExtractor={(item) => item.id}
             renderItem={renderProject}
-            contentContainerStyle={{ paddingBottom: 150 }}
+            contentContainerStyle={styles.flatListContainer}
             showsVerticalScrollIndicator={false}
           />
         )}
         <TouchableOpacity
-          onPress={() => navigation.navigate("(pages)/ProjectForm")} // Adjusted route name
-          style={{
-            position: "absolute",
-            bottom: 100,
-            right: 20,
-            backgroundColor: "#4A90E2",
-            borderRadius: 20,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            shadowColor: "#000",
-            shadowOpacity: 0.1,
-            shadowRadius: 5,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: 5,
-          }}
+          onPress={() => navigation.navigate("(pages)/ProjectForm")}
+          style={styles.addButton}
         >
-          <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>
-            Add New Project
-          </Text>
+          <Text style={styles.addButtonText}>Add New Project</Text>
         </TouchableOpacity>
       </View>
       <BottomNavigation />
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f7f8fc",
+    paddingTop: height * 0.05,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: width * 0.04,
+  },
+  headerText: {
+    fontSize: width * 0.06,
+    fontWeight: "bold",
+    color: "#1e1e1e",
+    marginBottom: height * 0.02,
+  },
+  projectContainer: {
+    flexDirection: "row",
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: width * 0.04,
+    marginBottom: height * 0.015,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+    alignItems: "center",
+    width: "90%",
+    alignSelf: "center",
+  },
+  colorBar: {
+    width: width * 0.02,
+    height: "100%",
+    borderRadius: 4,
+    marginRight: width * 0.03,
+  },
+  projectDetails: {
+    flex: 1,
+  },
+  username: {
+    fontSize: width * 0.035,
+    color: "#999",
+  },
+  projectName: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    marginVertical: height * 0.005,
+  },
+  startDate: {
+    fontSize: width * 0.035,
+    color: "#4CAF50",
+  },
+  dueDate: {
+    fontSize: width * 0.035,
+    color: "#FC5275",
+    fontWeight: "500",
+    position: "absolute",
+    right: width * 0.04,
+    bottom: height * 0.015,
+  },
+  flatListContainer: {
+    paddingBottom: height * 0.18,
+  },
+  addButton: {
+    position: "absolute",
+    bottom: height * 0.12,
+    right: width * 0.05,
+    backgroundColor: "#4A90E2",
+    borderRadius: 20,
+    paddingHorizontal: width * 0.05,
+    paddingVertical: height * 0.015,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: width * 0.04,
+    fontWeight: "500",
+  },
+});
 
 export default ProjectList;

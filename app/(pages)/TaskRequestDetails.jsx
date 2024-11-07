@@ -9,11 +9,14 @@ import {
   Alert,
   Modal,
   Image,
+  Dimensions,
 } from "react-native";
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { updateExistingSubmission } from "../../src/services/submissionService";
 import { MEDIA_BASE_URL } from "../../src/api/apiClient";
+
+const { width, height } = Dimensions.get("window");
 
 const RequestDetails = () => {
   const route = useRoute();
@@ -72,7 +75,7 @@ const RequestDetails = () => {
         />
         <View style={styles.documentText}>
           <Text style={styles.documentName}>{doc.attributes.name}</Text>
-          <Text style={styles.documentSize}>{`${doc.attributes.size} mb`}</Text>
+          <Text style={styles.documentSize}>{`${doc.attributes.size} kb`}</Text>
         </View>
       </View>
       <View style={styles.documentActions}>
@@ -149,61 +152,67 @@ const RequestDetails = () => {
 const styles = StyleSheet.create({
   AreaContainer: {
     flex: 1,
-    padding: 5,
-    marginTop: 20,
-    width: "100%",
+    backgroundColor: "#f7f8fc",
   },
   container: {
-    padding: 16,
+    padding: width * 0.04,
+    paddingTop: height * 0.05,
     backgroundColor: "#FFF",
     flexGrow: 1,
   },
   header: {
-    fontSize: 22,
+    fontSize: width * 0.06,
     fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
+    marginBottom: height * 0.02,
+    color: "#333",
   },
   detailsContainer: {
-    marginBottom: 20,
+    marginBottom: height * 0.02,
   },
   label: {
-    fontSize: 19,
+    fontSize: width * 0.05,
     fontWeight: "600",
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: height * 0.015,
+    marginBottom: height * 0.01,
+    color: "#333",
   },
   textBold: {
     fontWeight: "bold",
+    color: "#333",
   },
   requesterDetail: {
     color: "#888",
-    lineHeight: 20,
+    lineHeight: height * 0.025,
+    fontSize: width * 0.04,
   },
   documentContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    padding: height * 0.015,
     backgroundColor: "#F7F7F7",
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: height * 0.01,
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "#E0E0E0",
+    flexWrap: "wrap",
   },
   documentInfo: {
     flexDirection: "row",
     alignItems: "center",
+    maxWidth: "70%",
   },
   documentText: {
-    marginLeft: 10,
+    marginLeft: width * 0.03,
   },
   documentName: {
-    fontSize: 16,
+    fontSize: width * 0.04,
     fontWeight: "500",
+    flexShrink: 1,
+    color: "#333",
   },
   documentSize: {
-    fontSize: 12,
+    fontSize: width * 0.035,
     color: "#888",
   },
   documentActions: {
@@ -212,35 +221,33 @@ const styles = StyleSheet.create({
   },
   downloadButton: {
     color: "#3182CE",
-    marginLeft: 10,
-    fontSize: 14,
+    marginLeft: width * 0.03,
+    fontSize: width * 0.04,
     fontWeight: "600",
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: 20,
+    marginTop: height * 0.015,
   },
   rejectButton: {
     backgroundColor: "#FC5275",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    flexDirection: "row",
+    paddingVertical: height * 0.01,
+    paddingHorizontal: width * 0.05,
+    borderRadius: 20,
     alignItems: "center",
   },
   approveButton: {
     backgroundColor: "#A3D65C",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    flexDirection: "row",
+    paddingVertical: height * 0.01,
+    paddingHorizontal: width * 0.05,
+    borderRadius: 20,
     alignItems: "center",
   },
   buttonText: {
     color: "#FFF",
     fontWeight: "600",
-    fontSize: 16,
+    fontSize: width * 0.04,
   },
   // Modal styles
   modalOverlay: {
@@ -253,23 +260,24 @@ const styles = StyleSheet.create({
     width: "90%",
     backgroundColor: "#FFF",
     borderRadius: 8,
-    padding: 16,
+    padding: width * 0.04,
     alignItems: "center",
   },
   previewImage: {
     width: "100%",
-    height: 300,
+    height: height * 0.4,
     borderRadius: 8,
   },
   closeButton: {
-    marginTop: 15,
-    padding: 10,
+    marginTop: height * 0.02,
+    paddingVertical: height * 0.015,
+    paddingHorizontal: width * 0.1,
     backgroundColor: "#3182CE",
     borderRadius: 5,
   },
   closeButtonText: {
     color: "#FFF",
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: "600",
   },
 });

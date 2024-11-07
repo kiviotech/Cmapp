@@ -71,9 +71,16 @@ const Layout = () => {
           name="(pages)/uploadProof"
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="(pages)/profile" options={{ headerShown: false }} />
         <Stack.Screen
-          name="(pages)/settings"
+          name="(pages)/contractor/profile"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/projectTeam/ProfileScreen"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/contractor/settings"
           options={{ headerShown: false }}
         />
         <Stack.Screen

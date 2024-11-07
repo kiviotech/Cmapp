@@ -6,11 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Dimensions,
 } from "react-native";
 import ProgressBar from "react-native-progress/Bar";
 import { FontAwesome } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import useProjectStore from "../../../projectStore";
+
+const { width, height } = Dimensions.get("window");
 
 const ProjectDetails = () => {
   const navigation = useNavigation();
@@ -50,6 +53,7 @@ const ProjectDetails = () => {
           Project Manager:{" "}
           <Text style={styles.text}>
             {project.user?.data?.attributes?.username || "N/A"}
+            {console.log("project user", project)}
           </Text>
         </Text>
 
@@ -66,7 +70,7 @@ const ProjectDetails = () => {
             color="#66B8FC"
             style={styles.progressBarContainer}
           />
-          <Text style={styles.progressPercentage}>68%</Text>
+          {/* <Text style={styles.progressPercentage}>68%</Text> */}
         </View>
 
         <Text style={styles.label}>All Tasks</Text>
@@ -111,91 +115,95 @@ const ProjectDetails = () => {
 const styles = StyleSheet.create({
   AreaContainer: {
     flex: 1,
-    padding: 5,
-    marginTop: 20,
-    width: "100%",
+    paddingHorizontal: width * 0.03,
+    backgroundColor: "#FFFFFF",
   },
   container: {
     flexGrow: 1,
-    padding: 16,
+    paddingHorizontal: width * 0.04,
+    paddingTop: height * 0.02,
     backgroundColor: "#FFFFFF",
   },
   header: {
-    fontSize: 20,
+    fontSize: width * 0.06,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: height * 0.02,
+    color: "#192252",
   },
   projectNameContainer: {
     alignItems: "flex-start",
-    marginBottom: 10,
+    marginBottom: height * 0.015,
   },
   projectName: {
-    fontSize: 24,
+    fontSize: width * 0.06,
     fontWeight: "bold",
     color: "#192252",
   },
   calendarContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: height * 0.015,
   },
   dateContainer: {
     flexDirection: "column",
     alignItems: "center",
-    marginLeft: 8,
+    marginLeft: width * 0.02,
   },
   dueDateText: {
-    fontSize: 16,
+    fontSize: width * 0.04,
+    color: "#000",
   },
   dateText: {
-    fontSize: 16,
+    fontSize: width * 0.04,
     color: "#F5C37F",
   },
   label: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#192252",
-    marginBottom: 5,
-    marginTop: 15,
+    marginBottom: height * 0.01,
+    marginTop: height * 0.02,
   },
   text: {
-    fontSize: 16,
+    fontSize: width * 0.04,
     color: "#000",
   },
   projectDescription: {
-    fontSize: 14,
+    fontSize: width * 0.038,
     color: "#A0A0A0",
-    marginBottom: 20,
-    padding: 10,
+    marginBottom: height * 0.02,
+    padding: width * 0.04,
   },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: height * 0.015,
     position: "relative",
+    paddingVertical: height * 0.01, // Reduced padding
   },
   progressBarContainer: {
-    marginLeft: 5,
-    marginTop: 5,
+    marginLeft: width * 0.02,
+    marginTop: height * 0.005, // Reduced margin to make the section more compact
   },
   progressLabel: {
-    fontSize: 16,
+    fontSize: width * 0.04, // Slightly smaller font size
     fontWeight: "bold",
     color: "#192252",
   },
   progressPercentage: {
-    fontSize: 14,
+    fontSize: width * 0.035, // Smaller font size
     color: "#66B8FC",
     position: "absolute",
     right: 0,
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
-    padding: 10,
-    borderRadius: 15,
-    marginBottom: 10,
+    padding: width * 0.04,
+    borderRadius: 10,
+    marginBottom: height * 0.015,
     borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
   task: {
     flexDirection: "row",
@@ -206,45 +214,44 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: height * 0.01,
   },
   taskName: {
-    fontSize: 16,
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#000",
   },
   pendingStatus: {
-    fontSize: 14,
+    fontSize: width * 0.04,
     color: "#FB8951",
   },
   completedStatus: {
-    fontSize: 14,
+    fontSize: width * 0.04,
     color: "#A3D65C",
   },
   assignedInfo: {
-    fontSize: 12,
+    fontSize: width * 0.035,
     color: "#A0A0A0",
   },
   dueDate: {
-    fontSize: 12,
+    fontSize: width * 0.035,
     color: "#FC5275",
   },
   completionDate: {
-    fontSize: 12,
+    fontSize: width * 0.035,
     color: "#A8A8A8",
   },
   addButton: {
     backgroundColor: "#5E8BFF",
-    padding: 15,
-    borderRadius: 25,
+    paddingVertical: height * 0.015,
+    paddingHorizontal: width * 0.1,
+    borderRadius: 20,
     alignItems: "center",
-    marginTop: 20,
-    height: 50,
-    width: 150,
+    marginTop: height * 0.02,
     alignSelf: "center",
   },
   addButtonText: {
-    fontSize: 14,
+    fontSize: width * 0.04,
     color: "#FFFFFF",
   },
 });

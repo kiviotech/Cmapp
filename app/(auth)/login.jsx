@@ -25,7 +25,7 @@ import { useNavigation } from "@react-navigation/native";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import { login } from "../../src/utils/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -125,17 +125,17 @@ const Login = () => {
       );
 
       // If login is successful and user data is returned
-      if (response && response.user && response.user.username) {
-        // Store the username and user ID in AsyncStorage
-        await AsyncStorage.setItem("username", response.user.username);
-        await AsyncStorage.setItem("id", response.user.id.toString());
+      // if (response && response.user && response.user.username) {
+      //   // Store the username and user ID in AsyncStorage
+      //   await AsyncStorage.setItem("username", response.user.username);
+      //   await AsyncStorage.setItem("id", response.user.id.toString());
 
-        console.log("Username stored in AsyncStorage:", response.user.username);
-        console.log("User ID stored in AsyncStorage:", response.user.id);
+      //   console.log("Username stored in AsyncStorage:", response.user.username);
+      //   console.log("User ID stored in AsyncStorage:", response.user.id);
 
-        // Navigate to the dashboard using the router
-        router.replace("/dashboard");
-      }
+      //   // Navigate to the dashboard using the router
+      // }
+      router.replace("/dashboard");
     } catch (error) {
       console.error("Error during login:", error.message);
       // Handle the error, such as displaying an error message to the user

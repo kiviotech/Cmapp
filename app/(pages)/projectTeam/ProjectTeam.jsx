@@ -18,6 +18,7 @@ import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import BottomNavigation from "./BottomNavigation";
 import { fetchSubcategories } from "../../../src/services/subcategoryService";
 import { fetchSubmissions } from "../../../src/services/submissionService";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 const data = [
   {
@@ -47,16 +48,16 @@ const renderCard = ({ item }) => (
   <View style={styles.card}>
     <View style={styles.cardHeader}>
       <Text style={styles.title}>{item.title}</Text>
-      <Icon name="bell-outline" size={20} color="green" />
+      <MaterialCommunityIcons name="bell-outline" size={20} color="green" />
     </View>
     <Text style={styles.projectName}>{item.projectName}</Text>
     <View style={styles.divider} />
     <View style={styles.infoRow}>
-      <Icon name="calendar" size={20} color="black" />
+      <MaterialCommunityIcons name="calendar" size={20} color="black" />
       <Text style={styles.infoText}>{item.date}</Text>
     </View>
     <View style={styles.infoRow}>
-      <Icon name="clock-outline" size={20} color="black" />
+      <MaterialCommunityIcons name="clock-outline" size={20} color="black" />
       <Text style={styles.infoText}>{item.time}</Text>
     </View>
   </View>
@@ -74,6 +75,10 @@ const ProjectTeam = () => {
   const [requests, setRequests] = useState([]);
 
   const { user, designation, role, projects, permissions } = useAuthStore();
+  console.log("user", user);
+  console.log("designation", designation);
+  console.log("role", role), console.log("projects", projects);
+  console.log("permisions", permissions);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -137,8 +142,10 @@ const ProjectTeam = () => {
         const allTasks = [];
         data.data.forEach((subcategory) => {
           subcategory.attributes.tasks.data.forEach((task) => {
-            allTasks.push(task.attributes);
-            console.log("tasks", task.attributes);
+            // Add task id to its attributes
+            const taskWithId = { ...task.attributes, id: task.id };
+            allTasks.push(taskWithId);
+            console.log("task", taskWithId);
           });
         });
 
@@ -293,7 +300,7 @@ const ProjectTeam = () => {
           <View key={request.id} style={styles.requestItem}>
             <TouchableOpacity>
               <Text style={styles.requestTitle}>
-                {request.attributes.title || "No Title"}
+                {request.attributes.title || "Submitted Riverra work docs"}
               </Text>
               <Text style={styles.requestDescription}>
                 {request.attributes.description || "No description available."}

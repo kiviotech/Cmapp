@@ -16,7 +16,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import Swiper from "react-native-swiper";
-import { WebView } from "react-native-webview";
+// import { WebView } from "react-native-webview";
 import { getRegistrationById } from "../../src/api/repositories/registrationRepository";
 import { useRoute } from "@react-navigation/native";
 
@@ -29,7 +29,7 @@ const Details = () => {
   const [selectedDocument, setSelectedDocument] = useState(null); // Handle both image and pdf
   const [popupAnimation] = useState(new Animated.Value(-100)); // Animation for toaster
   const route = useRoute();
-  const  id  = route.params.registrationId || 0;
+  const id = route.params.registrationId || 0;
   const navigation = useNavigation();
   const baseURL = "http://localhost:1338"; // Base URL for localhost
 
@@ -237,10 +237,10 @@ const Details = () => {
                     onPress={() => setModalVisible(false)}
                   >
                     {/* Render PDF with WebView for mobile */}
-                    <WebView
+                    {/* <WebView
                       source={{ uri: selectedDocument.url }}
                       style={styles.fullSizeImage}
-                    />
+                    /> */}
                   </TouchableOpacity>
                 )
               )

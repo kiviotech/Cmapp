@@ -15,25 +15,25 @@ import {
   fetchProjectById,
   createNewProject,
 } from "../../src/services/projectService";
-import { updateTask } from "../../src/services/taskService";
+import { updateTask, fetchTasks } from "../../src/services/taskService";
 import useProjectStore from "../../projectStore";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 
 const AssignContractors = () => {
-  const [projectName, setProjectName] = useState("");
+  const [projectId, setProjectId] = useState("");
   const [contractorTypeOpen, setContractorTypeOpen] = useState(false);
   const [contractorTypeValue, setContractorTypeValue] = useState(null);
   const [contractorTypeItems, setContractorTypeItems] = useState([]);
-
   const [contractorOpen, setContractorOpen] = useState(false);
   const [contractorValue, setContractorValue] = useState(null);
   const [contractorItems, setContractorItems] = useState([]);
-
   const [taskOpen, setTaskOpen] = useState(false);
   const [taskValue, setTaskValue] = useState(null);
   const [taskItems, setTaskItems] = useState([]);
+  const [assignedContractors, setAssignedContractors] = useState([]);
 
   const route = useRoute();
+  const navigation = useNavigation();
   const projectData =
     route.params?.projectData || useProjectStore((state) => state.projectData);
 
@@ -44,7 +44,7 @@ const AssignContractors = () => {
           const response = await fetchProjectById(projectData.id);
           const projectDetails = response.data;
 
-          setProjectName(projectDetails.attributes.name);
+          setProjectId(projectDetails.id);
 
           const tasks = projectDetails.attributes.tasks?.data || [];
           setTaskItems(
@@ -113,26 +113,86 @@ const AssignContractors = () => {
     loadContractors();
   }, []);
 
-  const handleFinishProjectSetup = async () => {
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const tasksResponse = await fetchTasks();
+
+        const tasks = Array.isArray(tasksResponse)
+          ? tasksResponse
+          : tasksResponse.data || [];
+
+        setTaskItems(
+          tasks.map((task) => ({
+            label: task.attributes.name,
+            value: task.id,
+            key: task.id.toString(),
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    loadTasks();
+  }, []);
+
+  const handleAddContractor = () => {
     if (!contractorTypeValue || !contractorValue || !taskValue) {
       Alert.alert("Error", "Please select all required fields.");
       return;
     }
 
-    const taskUpdateData = {
-      data: {
-        assigned_to: contractorValue,
-        sub_contractor: contractorTypeValue,
-      },
+    const contractorTypeLabel = contractorTypeItems.find(
+      (item) => item.value === contractorTypeValue
+    )?.label;
+    const contractorLabel = contractorItems.find(
+      (item) => item.value === contractorValue
+    )?.label;
+    const taskLabel = taskItems.find((item) => item.value === taskValue)?.label;
+
+    const newContractor = {
+      contractorType: contractorTypeValue,
+      contractor: contractorValue,
+      task: taskValue,
+      contractorTypeLabel,
+      contractorLabel,
+      taskLabel,
     };
 
+    setAssignedContractors([...assignedContractors, newContractor]);
+    setContractorTypeValue(null);
+    setContractorValue(null);
+    setTaskValue(null);
+  };
+
+  const handleFinishProjectSetup = async () => {
+    if (assignedContractors.length === 0) {
+      Alert.alert("Error", "Please add at least one contractor.");
+      return;
+    }
+
     try {
-      await updateTask(taskValue, taskUpdateData);
-      console.log("Project assignment data submitted:", taskUpdateData);
-      Alert.alert("Success", "Project setup completed and task updated!");
+      for (const contractor of assignedContractors) {
+        const taskUpdateData = {
+          data: {
+            assigned_to: contractor.contractor,
+            sub_contractor: contractor.contractorType,
+            project: projectId,
+          },
+        };
+        await updateTask(contractor.task, taskUpdateData);
+      }
+
+      console.log("Project assignment data submitted:", assignedContractors);
+      navigation.navigate("(pages)/dashboard");
+      Alert.alert("Success", "Project setup completed and tasks updated!");
     } catch (error) {
-      console.error("Error updating task:", error);
-      Alert.alert("Error", "There was an issue saving the project assignment.");
+      console.error("Error updating tasks:", error);
+      Alert.alert(
+        "Error",
+        "There was an issue saving the project assignments."
+      );
     }
   };
 
@@ -141,8 +201,6 @@ const AssignContractors = () => {
       <ScrollView>
         <View style={styles.container}>
           <Text style={styles.mainHeading}>Assign Contractors</Text>
-
-          <Text style={styles.projectName}>Project Name: {projectName}</Text>
 
           <Text style={styles.label}>Contractor Type</Text>
           <DropDownPicker
@@ -191,6 +249,30 @@ const AssignContractors = () => {
           />
 
           <TouchableOpacity
+            style={styles.addButton}
+            onPress={handleAddContractor}
+          >
+            <Text style={styles.addButtonText}>+ Add Contractor</Text>
+          </TouchableOpacity>
+
+          {assignedContractors.map((contractor, index) => (
+            <View key={index} style={styles.assignedContractor}>
+              <Text style={styles.contractorInfo}>
+                <Text style={styles.boldText}>Contractor Type:</Text>{" "}
+                {contractor.contractorTypeLabel}
+              </Text>
+              <Text style={styles.contractorInfo}>
+                <Text style={styles.boldText}>Contractor:</Text>{" "}
+                {contractor.contractorLabel}
+              </Text>
+              <Text style={styles.contractorInfo}>
+                <Text style={styles.boldText}>Task:</Text>{" "}
+                {contractor.taskLabel}
+              </Text>
+            </View>
+          ))}
+
+          <TouchableOpacity
             style={styles.finishButton}
             onPress={handleFinishProjectSetup}
           >
@@ -219,12 +301,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
     marginBottom: 20,
   },
-  projectName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
-  },
   label: {
     fontSize: 16,
     marginBottom: 10,
@@ -244,7 +320,7 @@ const styles = StyleSheet.create({
   finishButton: {
     marginTop: 20,
     width: "60%",
-    margin: "auto",
+    alignSelf: "center",
     backgroundColor: "#0000FF",
     padding: 15,
     borderRadius: 15,
@@ -253,6 +329,27 @@ const styles = StyleSheet.create({
   finishButtonText: {
     color: "#fff",
     fontSize: 16,
+    fontWeight: "bold",
+  },
+  addButton: {
+    alignItems: "flex-end",
+    marginBottom: 20,
+  },
+  addButtonText: {
+    color: "#007BFF",
+    fontSize: 16,
+  },
+  assignedContractor: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+  },
+  contractorInfo: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  boldText: {
     fontWeight: "bold",
   },
 });

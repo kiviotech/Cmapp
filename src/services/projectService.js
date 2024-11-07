@@ -4,6 +4,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  getAssignedProjectById,
 } from "../api/repositories/projectRepository";
 
 // Fetch all projects
@@ -24,6 +25,20 @@ export const fetchProjectById = async (id) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching project with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Fetch assigned projects by user ID
+export const fetchAssignedProjectById = async (id) => {
+  try {
+    const response = await getAssignedProjectById(id);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching assigned projects for user with ID ${id}:`,
+      error
+    );
     throw error;
   }
 };

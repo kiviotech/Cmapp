@@ -1,13 +1,15 @@
 const taskEndpoints = {
-  getTasks: '/tasks?populate=*',
-  getTaskById: id => `/tasks/${id}?populate=*`,
-  createTask: '/tasks',
-  updateTask: id => `/tasks/${id}`,
-  deleteTask: id => `/tasks/${id}`,
+  getTasks: "/tasks?populate=*",
+  getTaskById: (id) => `/tasks/${id}?populate=*`,
+  getTaskDetailsById: (id) =>
+    `tasks?populate[0]=assigned_to&populate[1]=project&filters[assigned_to][id][$eq]=${id}`,
+  createTask: "/tasks",
+  updateTask: (id) => `/tasks/${id}`,
+  deleteTask: (id) => `/tasks/${id}`,
+  getTasksByUserAndProject: (userId, projectId) =>
+    `/tasks?filters[assigned_to][$eq]=${userId}&filters[project][$eq]=${projectId}&populate=*`,
 
-  // New endpoint for fetching tasks by userId and projectId
-  getTasksByUserAndProject: (userId, projectId) => `/tasks?filters[assigned_to][$eq]=${userId}&filters[project][$eq]=${projectId}&populate=*`,
-
-  getTasksByUser: (userId, projectId) => `/tasks?populate=*`,};
+  getTasksByUser: (userId, projectId) => `/tasks?populate=*`,
+};
 
 export default taskEndpoints;
