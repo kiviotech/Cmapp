@@ -11,19 +11,21 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
 import { fetchUsers } from "../../src/services/userService";
 import { createNewProject } from "../../src/services/projectService";
 import FileUpload from "../../components/FileUploading/FileUpload";
 import { useNavigation } from "@react-navigation/native";
-import useProjectStore from "../../projectStore";
+import apiClient from "../../src/api/apiClient";
+import { fetchProjectTeamManager } from "../../src/services/projectTeamService";
+import useAuthStore from "../../useAuthStore";
 
 const { width, height } = Dimensions.get("window");
 
 const ProjectForm = () => {
+  const { user } = useAuthStore();
   const navigation = useNavigation();
-  const setProjectData = useProjectStore((state) => state.setProjectData);
   const [projectManager, setProjectManager] = useState(
     "Select Project Manager"
   );
@@ -39,21 +41,26 @@ const ProjectForm = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [documentIds, setDocumentIds] = useState([]);
   const [errors, setErrors] = useState({});
+  const [projectData, setProjectData] = useState([]);
+
   useEffect(() => {
-    const loadUsers = async () => {
+    const loadProjectManagers = async () => {
       try {
-        const users = await fetchUsers();
-        const projectManagersList = users.filter(
-          (user) => user.designation?.Name === "Project Manager"
+        const response = await fetchProjectTeamManager();
+        const managersList = response.data.flatMap((team) =>
+          team.attributes.users.data.map((user) => ({
+            id: team.id,
+            username: user.attributes.username,
+          }))
         );
-        setProjectManagers(projectManagersList);
+        setProjectManagers(managersList);
       } catch (error) {
-        console.error("Error loading users:", error);
+        console.error("Error fetching project managers:", error);
       }
     };
-    loadUsers();
-  }, []);
 
+    loadProjectManagers();
+  }, []);
   const validate = () => {
     const newErrors = {};
     if (!projectName) newErrors.projectName = "Project name is required";
@@ -78,16 +85,19 @@ const ProjectForm = () => {
       const formattedEndDate = endDate
         ? endDate.toISOString().slice(0, 10)
         : null;
+      console.log(documentIds.flat());
 
       const projectData = {
         data: {
           name: projectName,
           description: projectDescription,
-          update_status: "pending",
+          end_date: formattedEndDate,
           start_date: formattedStartDate,
-          deadline: formattedEndDate,
-          user: projectManagerId,
-          documents: documentIds.flat(), // Pass only file IDs
+          project_type: projectType,
+          location: projectAddress,
+          approver: projectManagerId,
+          project_status: "ongoing",
+          documents: documentIds.flat(),
         },
       };
 
@@ -104,7 +114,20 @@ const ProjectForm = () => {
           response.error?.message || "Failed to create project."
         );
       }
-      navigation.navigate("(pages)/AssignContractors");
+      if (response?.data) {
+        setProjectData(response.data);
+        Alert.alert("Success", "Project created successfully!");
+        resetForm();
+        navigation.navigate("(pages)/AssignContractors", {
+          projectId: response.data.id, // Pass only the id
+        });
+      } else {
+        console.error("Error details:", response.error);
+        Alert.alert(
+          "Error",
+          response.error?.message || "Failed to create project."
+        );
+      }
     } catch (error) {
       console.error("Error creating project:", error);
       Alert.alert("Error", "An error occurred while creating the project.");
@@ -125,12 +148,21 @@ const ProjectForm = () => {
   };
 
   const handleFileUploadSuccess = (id) => {
+    console.log("File uploaded with ID:", id);
     setDocumentIds((prevIds) => [...prevIds, id]);
   };
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>New Project</Text>
+      <View style={styles.header}>
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color="black"
+          onPress={() => navigation.goBack()}
+        />
+        <Text style={styles.headerText}>New Project</Text>
+      </View>
 
       <TextInput
         placeholder="Enter project name"
@@ -287,6 +319,18 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: height * 0.02,
     color: "#1A1A1A",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  headerText: {
+    fontSize: width * 0.06,
+    fontWeight: "600",
+    color: "#1C1C1E",
+    marginLeft: 20,
+    marginTop: -5,
   },
   input: {
     borderWidth: 1,

@@ -9,6 +9,9 @@ export const getProjectById = (id) =>
 export const getAssignedProjectById = (id) =>
   apiClient.get(projectEndpoints.getAssignedProjectById(id));
 
+export const getProjectDetailsById = (id) =>
+  apiClient.get(projectEndpoints.getProjectDetailsById(id));
+
 export const createProject = (data) =>
   apiClient.post(projectEndpoints.createProject, data);
 

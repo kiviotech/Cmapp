@@ -70,40 +70,59 @@ const ProjectList = () => {
           Started on {new Date(item.attributes.createdAt).toLocaleDateString()}
         </Text>
         <Text style={styles.dueDate}>
-          Due {new Date(item.attributes.deadline).toLocaleDateString()}
+          Due {new Date(item.attributes.end_date).toLocaleDateString()}
         </Text>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.headerText}>Projects</Text>
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#4A90E2" />
-        ) : (
-          <FlatList
-            data={projectsDetail}
-            keyExtractor={(item) => item.id}
-            renderItem={renderProject}
-            contentContainerStyle={styles.flatListContainer}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
-        <TouchableOpacity
-          onPress={() => navigation.navigate("(pages)/ProjectForm")}
-          style={styles.addButton}
-        >
-          <Text style={styles.addButtonText}>Add New Project</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={styles.areaContainer}>
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Projects</Text>
+        </View>
       </View>
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#4A90E2" />
+      ) : (
+        <FlatList
+          data={projectsDetail}
+          keyExtractor={(item) => item.id}
+          renderItem={renderProject}
+          contentContainerStyle={styles.flatListContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+      {/* </View> */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate("(pages)/ProjectForm")}
+        style={styles.addButton}
+      >
+        <Text style={styles.addButtonText}>Add New Project</Text>
+      </TouchableOpacity>
+      {/* </View> */}
       <BottomNavigation />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  areaContainer: {
+    flex: 1,
+    padding: 5,
+    marginTop: 20,
+    width: "100%",
+  },
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 5,
+    // elevation: 3,
+    // shadowOpacity: 0.2,
+    // shadowRadius: 2,
+    zIndex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: "#f7f8fc",

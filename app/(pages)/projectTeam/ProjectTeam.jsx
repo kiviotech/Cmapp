@@ -18,7 +18,14 @@ import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import BottomNavigation from "./BottomNavigation";
 import { fetchSubcategories } from "../../../src/services/subcategoryService";
 import { fetchSubmissions } from "../../../src/services/submissionService";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  FontAwesome,
+} from "@expo/vector-icons";
+import { fetchProjectTeamIdByUserId } from "../../../src/services/projectTeamService";
+import { fetchProjectDetailsByApproverId } from "../../../src/services/projectService";
+import apiClient, { MEDIA_BASE_URL } from "../../../src/api/apiClient";
 
 const data = [
   {
@@ -73,28 +80,126 @@ const ProjectTeam = () => {
   const [subcategories, setSubcategories] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [requests, setRequests] = useState([]);
-
+  const [projectTeamId, setProjectTeamId] = useState(null);
+  const [projectDetails, setProjectDetails] = useState([]);
+  const [taskDetails, setTaskDetails] = useState([]);
   const { user, designation, role, projects, permissions } = useAuthStore();
-  console.log("user", user);
-  console.log("designation", designation);
-  console.log("role", role), console.log("projects", projects);
-  console.log("permisions", permissions);
-
   const [isLoading, setIsLoading] = useState(true);
 
+  const ongoingProjectsCount = projectDetails.filter(
+    (item) => item.attributes.project_status === "ongoing"
+  ).length;
+
+  const completedProjectsCount = projectDetails.filter(
+    (item) => item.attributes.project_status === "completed"
+  ).length;
+
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userResponse = await getAuthenticatedUserWithPopulate(
-          "job_profile"
-        );
-        setJobProfile(userResponse.data.job_profile.name);
-      } catch (error) {
-        console.log("error");
+    const fetchProjectTeamId = async () => {
+      if (user && user.id) {
+        try {
+          const response = await fetchProjectTeamIdByUserId(user.id);
+          const [{ id }] = response.data;
+          setProjectTeamId(id);
+        } catch (error) {
+          console.error("Error fetching project team ID:", error);
+        }
       }
     };
-    fetchUserData();
-  }, []);
+    fetchProjectTeamId();
+  }, [user]);
+
+  useEffect(() => {
+    const fetchProjectDetails = async () => {
+      if (projectTeamId) {
+        try {
+          const projectResponse = await fetchProjectDetailsByApproverId(
+            projectTeamId
+          );
+          const projects = projectResponse.data;
+
+          const projectsWithTasks = await Promise.all(
+            projects.map(async (project) => {
+              const tasks = project.attributes.tasks.data;
+              const taskDetails = await Promise.all(
+                tasks.map(async (task) => {
+                  const taskResponse = await apiClient.get(
+                    `/tasks/${task.id}?populate=*`
+                  );
+
+                  return { id: task.id, ...taskResponse.data };
+                })
+              );
+              return { ...project, taskDetails };
+            })
+          );
+
+          setProjectDetails(projectsWithTasks);
+        } catch (error) {
+          console.error("Error fetching project details:", error);
+        }
+      }
+    };
+
+    fetchProjectDetails();
+  }, [projectTeamId]);
+
+  useEffect(() => {
+    const fetchProjectDetails = async () => {
+      if (projectTeamId) {
+        try {
+          const response = await fetchProjectDetailsByApproverId(projectTeamId);
+          setProjectDetails(response.data); // Store project details with tasks
+        } catch (error) {
+          console.error("Error fetching project details:", error);
+        }
+      }
+    };
+    fetchProjectDetails();
+  }, [projectTeamId]);
+
+  useEffect(() => {
+    const fetchTaskDetails = async () => {
+      const allTaskDetails = [];
+
+      for (const project of projectDetails) {
+        const tasks = project.attributes.tasks.data;
+        for (const task of tasks) {
+          try {
+            const taskResponse = await apiClient.get(
+              `http://192.168.0.253:1337/api/tasks/${task.id}?populate=*`
+            );
+            allTaskDetails.push(taskResponse.data);
+          } catch (error) {
+            console.error(
+              `Error fetching details for task ID ${task.id}:`,
+              error
+            );
+          }
+        }
+      }
+
+      setTaskDetails(allTaskDetails);
+    };
+
+    if (projectDetails.length > 0) {
+      fetchTaskDetails();
+    }
+  }, [projectDetails]);
+
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     try {
+  //       const userResponse = await getAuthenticatedUserWithPopulate(
+  //         "job_profile"
+  //       );
+  //       setJobProfile(userResponse.data.job_profile.name);
+  //     } catch (error) {
+  //       console.log("error");
+  //     }
+  //   };
+  //   fetchUserData();
+  // }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -131,31 +236,6 @@ const ProjectTeam = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    const loadSubcategories = async () => {
-      try {
-        const data = await fetchSubcategories();
-        setSubcategories(data);
-
-        const allTasks = [];
-        data.data.forEach((subcategory) => {
-          subcategory.attributes.tasks.data.forEach((task) => {
-            // Add task id to its attributes
-            const taskWithId = { ...task.attributes, id: task.id };
-            allTasks.push(taskWithId);
-            console.log("task", taskWithId);
-          });
-        });
-
-        setTasks(allTasks);
-      } catch (error) {
-        console.error("Error fetching subcategories:", error);
-      }
-    };
-
-    loadSubcategories();
   }, []);
 
   useFocusEffect(
@@ -196,23 +276,23 @@ const ProjectTeam = () => {
             <Text style={styles.userName}>{user.username}</Text>
             <Text style={styles.userRole}>{designation}</Text>
           </View>
-          <TouchableOpacity style={styles.searchIcon}>
+          {/* <TouchableOpacity style={styles.searchIcon}>
             <Icon name="search" size={24} color="#333" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <Text style={styles.sectionHeader}>Project Overview</Text>
         <View style={styles.overviewContainer}>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewNumber1}>15</Text>
+            <Text style={styles.overviewNumber1}>{projectDetails.length}</Text>
             <Text style={styles.overviewLabel1}>Total Projects</Text>
           </View>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewNumber2}>6</Text>
+            <Text style={styles.overviewNumber2}>{ongoingProjectsCount}</Text>
             <Text style={styles.overviewLabel2}>Active</Text>
           </View>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewNumber3}>9</Text>
+            <Text style={styles.overviewNumber3}>{completedProjectsCount}</Text>
             <Text style={styles.overviewLabel3}>Completed</Text>
           </View>
         </View>
@@ -228,15 +308,13 @@ const ProjectTeam = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScrollContainer}
           >
-            {projectsDetail.length > 0 ? (
-              projectsDetail.map((project) => (
+            {projectDetails.length > 0 ? (
+              projectDetails.map((project) => (
                 <TouchableOpacity
                   key={project.id}
                   style={[
                     styles.projectCard,
-                    selectedProjectId === project.id &&
-                      styles.selectedCardWrapper,
-                    project.attributes.status === "ongoing"
+                    project.attributes.project_status === "ongoing"
                       ? { backgroundColor: "#e8f5e9" }
                       : { backgroundColor: "#ffebee" },
                   ]}
@@ -247,15 +325,24 @@ const ProjectTeam = () => {
                   }
                 >
                   <View style={styles.projectCardContent}>
+                    {/* Project Name and Description */}
                     <Text style={styles.projectTitle}>
                       {project.attributes.name}
                     </Text>
                     <Text style={styles.projectDescription}>
                       {project.attributes.description}
                     </Text>
+
+                    {/* Project Status */}
                     <Text style={styles.projectStatus}>
-                      ● {project.attributes.status}: {project.attributes.phase}
+                      ●{" "}
+                      {project.attributes.project_status
+                        ? "Status"
+                        : "Status unknown"}
+                      : {project.attributes.project_status || "N/A"}
                     </Text>
+
+                    {/* Additional Project Info */}
                     <View style={styles.projectStatusContainer}>
                       <Icon
                         name={
@@ -298,9 +385,14 @@ const ProjectTeam = () => {
 
         {requests.map((request) => (
           <View key={request.id} style={styles.requestItem}>
-            <TouchableOpacity>
+            <View>
               <Text style={styles.requestTitle}>
-                {request.attributes.title || "Submitted Riverra work docs"}
+                Submitted{" "}
+                {
+                  request.attributes.task.data.attributes.project.data
+                    .attributes.name
+                }{" "}
+                Work
               </Text>
               <Text style={styles.requestDescription}>
                 {request.attributes.description || "No description available."}
@@ -310,120 +402,212 @@ const ProjectTeam = () => {
                   {request.attributes.status || "Pending"}
                 </Text>
                 <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("(pages)/RequestDetails", {
+                  onPress={() => {
+                    navigation.navigate("(pages)/TaskRequestDetails", {
                       requestData: request,
-                    })
-                  }
+                    });
+                  }}
                 >
                   <Text style={styles.viewLink}>View</Text>
                 </TouchableOpacity>
               </View>
-            </TouchableOpacity>
+            </View>
           </View>
         ))}
 
-        <Text style={styles.projectTitle}>Project 1</Text>
-        <View style={styles.headerContainer}>
-          <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
-          <Text style={styles.taskStatus}>7 Tasks Pending</Text>
-          <Icon name="tune" size={24} color="#333" style={styles.filterIcon} />
+        <View style={styles.container1}>
+          <View style={styles.milestoneContainer}>
+            <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
+          </View>
+          {/* <View style={styles.iconContainer}>
+            <Icon
+              name="tune"
+              size={24}
+              color="#333"
+              style={styles.filterIcon}
+            />
+          </View> */}
         </View>
 
-        {tasks.map((task, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.milestoneCard}
-            onPress={() =>
-              navigation.navigate("(pages)/taskDetails", {
-                taskData: task,
-              })
-            }
-          >
-            <View style={styles.milestoneCard}>
-              <Image
-                source={{
-                  uri: task.image_url || "https://via.placeholder.com/150",
-                }}
-                style={styles.milestoneImage}
-              />
-              <View style={styles.milestoneContent}>
-                <View style={styles.milestoneHeaderContainer}>
-                  <Text style={styles.milestoneTitle}>
-                    {task.name || "Task"}
-                  </Text>
-                  <TouchableOpacity style={styles.substituteButton}>
-                    <Text style={styles.substituteText}>Substitute</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.milestoneDescription}>
-                  {task.description ||
-                    "No description available for this task."}
-                </Text>
-                <View style={styles.divider} />
-                <Text style={styles.deadlineText}>
-                  <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                  {task.deadline || "No deadline specified"}
-                </Text>
-                <TouchableOpacity style={styles.uploadButton}>
-                  <Icon name="file-upload" size={16} color="#fff" />
-                  <Text style={styles.uploadButtonText}>
-                    Upload your Proof of work
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+        {/* {projectDetails.map((projectItem, projectIndex) => {
+          const project = projectItem.attributes;
+          console.log("project", project);
+          const tasks = projectItem.taskDetails || [];
 
-        <View style={styles.milestoneCard}>
-          <Image
-            source={{ uri: "https://via.placeholder.com/150" }}
-            style={styles.milestoneImage}
-          />
-          <View style={styles.milestoneContent}>
-            <View style={styles.milestoneHeaderContainer}>
-              <Text style={styles.milestoneTitle}>
-                Verification & Inspection
+          return (
+            <View key={projectIndex}>
+              <Text style={styles.projectTitle}>
+                {project.name || "Project"}
               </Text>
-              <TouchableOpacity style={styles.substituteButton}>
-                <Text style={styles.substituteText}>Substitute</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.projectName}>Project Name</Text>
-            <Text style={styles.milestoneDescription}>
-              Regular site walkthroughs to ensure compliance with safety
-              regulations and quality standards.
-            </Text>
-            <View style={styles.divider} />
-            <Text style={styles.deadlineText}>
-              <Icon name="event" size={16} color="#333" /> Deadline: Mon, 10
-              July 2022
-            </Text>
-            <View style={styles.statusContainer}>
-              <Icon name="check-circle" size={16} color="green" />
-              <Text style={styles.statusText}>Uploaded Proof of Work</Text>
-            </View>
-            <View style={styles.statusContainer}>
-              <View style={styles.pendingDot} />
-              <Text style={styles.statusText}>Pending Approval</Text>
-            </View>
-          </View>
-        </View>
 
-        <Text style={styles.heading}>Upcoming Appointments</Text>
-        <FlatList
-          data={data}
-          horizontal
-          keyExtractor={(item) => item.id}
-          renderItem={renderCard}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carousel}
-        />
+              <View style={styles.headerContainer}>
+                <Text style={styles.taskStatus}>
+                  {tasks.length}{" "}
+                  {tasks.length === 1 ? "Task Pending" : "Tasks Pending"}
+                </Text>
+              </View>
+
+              {tasks.length > 0 ? (
+                tasks.map((taskDetail, taskIndex) => {
+                  const task = taskDetail.data.attributes;
+                  const standardTask =
+                    task.standard_task?.data?.attributes || {};
+                  const statusText = task.task_status || "Pending";
+                  const statusStyle = getStatusStyle(task.task_status);
+
+                  const taskImageUrl = task.documents?.data?.[0]?.attributes
+                    ?.url
+                    ? `${MEDIA_BASE_URL}${task.documents.data[0].attributes.url}`
+                    : "https://via.placeholder.com/150";
+
+                  return (
+                    <View key={taskIndex} style={styles.milestoneCard}>
+                      <View style={styles.milestoneCard}>
+                        <Image
+                          source={{ uri: taskImageUrl }}
+                          style={styles.milestoneImage}
+                        />
+                        <View style={styles.milestoneContent}>
+                          <View style={styles.milestoneHeaderContainer}>
+                            <Text style={styles.milestoneTitle}>
+                              {standardTask.Name || "Task"}
+                            </Text>
+                            <View style={styles.substituteButton}>
+                              <Text style={styles.substituteText}>
+                                Substructure
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={styles.milestoneDescription}>
+                            {standardTask.Description ||
+                              "No description available."}
+                          </Text>
+                          <View style={styles.divider} />
+                          <Text style={styles.deadlineText}>
+                            <FontAwesome
+                              name="calendar"
+                              size={16}
+                              color="#333"
+                            />{" "}
+                            Deadline: {task.due_date || "No deadline specified"}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                <View style={styles.noTasksContainer}>
+                  <Text style={styles.noTasksText}>No tasks available</Text>
+                </View>
+              )}
+            </View>
+          );
+        })} */}
+
+        {projectDetails.map((projectItem, projectIndex) => {
+          const project = projectItem.attributes;
+
+          // Filter tasks that are not completed
+          const tasks = (projectItem.taskDetails || []).filter(
+            (taskDetail) =>
+              taskDetail.data.attributes.task_status !== "completed"
+          );
+
+          // Only display project if it has non-completed tasks and is not completed itself
+          if (tasks.length === 0 || project.project_status === "completed") {
+            return null;
+          }
+
+          return (
+            <View key={projectIndex}>
+              <Text style={styles.projectTitle}>
+                {project.name || "Project"}
+              </Text>
+
+              <View style={styles.headerContainer}>
+                <Text style={styles.taskStatus}>
+                  {tasks.length}{" "}
+                  {tasks.length === 1 ? "Task Pending" : "Tasks Pending"}
+                </Text>
+              </View>
+
+              {tasks.length > 0 ? (
+                tasks.map((taskDetail, taskIndex) => {
+                  const task = taskDetail.data.attributes;
+                  const standardTask =
+                    task.standard_task?.data?.attributes || {};
+                  const statusText = task.task_status || "Pending";
+                  const statusStyle = getStatusStyle(task.task_status);
+
+                  const taskImageUrl = task.documents?.data?.[0]?.attributes
+                    ?.url
+                    ? `${MEDIA_BASE_URL}${task.documents.data[0].attributes.url}`
+                    : "https://via.placeholder.com/150";
+
+                  return (
+                    <View key={taskIndex} style={styles.milestoneCard}>
+                      <View style={styles.milestoneCard}>
+                        <Image
+                          source={{ uri: taskImageUrl }}
+                          style={styles.milestoneImage}
+                        />
+                        <View style={styles.milestoneContent}>
+                          <View style={styles.milestoneHeaderContainer}>
+                            <Text style={styles.milestoneTitle}>
+                              {standardTask.Name || "Task"}
+                            </Text>
+                            <View style={styles.substituteButton}>
+                              <Text style={styles.substituteText}>
+                                Substructure
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={styles.milestoneDescription}>
+                            {standardTask.Description ||
+                              "No description available."}
+                          </Text>
+                          <View style={styles.divider} />
+                          <Text style={styles.deadlineText}>
+                            <FontAwesome
+                              name="calendar"
+                              size={16}
+                              color="#333"
+                            />{" "}
+                            Deadline: {task.due_date || "No deadline specified"}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                <View style={styles.noTasksContainer}>
+                  <Text style={styles.noTasksText}>No tasks available</Text>
+                </View>
+              )}
+            </View>
+          );
+        })}
       </ScrollView>
       <BottomNavigation />
     </SafeAreaView>
   );
+};
+
+const getStatusStyle = (status) => {
+  switch (status) {
+    case "completed":
+      return styles.completedStatus;
+    case "ongoing":
+      return styles.ongoingStatus;
+    case "ahead":
+      return styles.aheadStatus;
+    case "delayed":
+      return styles.delayedStatus;
+    default:
+      return styles.pendingStatus;
+  }
 };
 
 const styles = StyleSheet.create({
@@ -433,11 +617,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
     // backgroundColor: "#fff",
     width: "100%",
+    paddingBottom: 80,
   },
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
     padding: 20,
+    paddingBottom: 100,
+  },
+  container1: {
+    flex: 1,
+    backgroundColor: "#f8f8f8",
+    paddingVertical: 20,
   },
   userInfoContainer: {
     flexDirection: "row",
@@ -597,9 +788,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
+  milestoneContainer: {
+    flex: 1,
+  },
   milestoneHeader: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
+  },
+  iconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   taskStatus: {
     color: "#888",

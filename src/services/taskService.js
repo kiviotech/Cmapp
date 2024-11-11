@@ -7,6 +7,7 @@ import {
   getTasksByUserAndProject,
   getTasksByUser,
   getTaskDetailsById,
+  getTaskByContractorId,
 } from "../api/repositories/taskRepository";
 
 // Fetch all tasks
@@ -83,6 +84,15 @@ export const updateTask = async (id, taskData) => {
 export const deleteTask = async (id) => {
   try {
     const response = await deleteTaskApi(id);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchTaskByContractorId = async (projectId, id) => {
+  try {
+    const response = await getTaskByContractorId(projectId, id);
     return response.data;
   } catch (error) {
     throw error;

@@ -11,7 +11,7 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { updateExistingSubmission } from "../../src/services/submissionService";
 import { MEDIA_BASE_URL } from "../../src/api/apiClient";
@@ -57,10 +57,7 @@ const RequestDetails = () => {
     }
   };
 
-  const handleImagePreview = (imageFormats) => {
-    const imageUrl = `${MEDIA_BASE_URL}${
-      imageFormats?.large?.url || imageFormats?.url
-    }`;
+  const handleImagePreview = (imageUrl) => {
     setSelectedImage(imageUrl);
     setModalVisible(true);
   };
@@ -80,7 +77,9 @@ const RequestDetails = () => {
       </View>
       <View style={styles.documentActions}>
         <TouchableOpacity
-          onPress={() => handleImagePreview(doc.attributes.formats)}
+          onPress={() =>
+            handleImagePreview(`${MEDIA_BASE_URL}${doc.attributes.url}`)
+          }
         >
           <MaterialIcons name="visibility" size={20} color="#666" />
         </TouchableOpacity>
@@ -94,10 +93,24 @@ const RequestDetails = () => {
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>Request detail</Text>
+        <View style={styles.header}>
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color="black"
+            onPress={() => navigation.goBack()}
+          />
+          <Text style={styles.headerText}>Request Details</Text>
+        </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.label}>
-            Requester Name: <Text style={styles.textBold}>ABC</Text>
+            Requester Name:{" "}
+            <Text style={styles.textBold}>
+              {
+                requestData.attributes.task.data.attributes.contractor.data
+                  .attributes.username
+              }
+            </Text>
           </Text>
           <Text style={styles.label}>Requester Detail:</Text>
           <Text style={styles.requesterDetail}>
@@ -107,10 +120,10 @@ const RequestDetails = () => {
           <Text style={styles.label}>Documents:</Text>
           <View>{documents.map(renderDocument)}</View>
         </View>
-        <View style={styles.buttonContainer}>
+        {/* <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.rejectButton}
-            onPress={() => handleStatusChange("declined")}
+            onPress={() => handleStatusChange("rejected")}
           >
             <Text style={styles.buttonText}>Reject Request</Text>
           </TouchableOpacity>
@@ -120,7 +133,23 @@ const RequestDetails = () => {
           >
             <Text style={styles.buttonText}>Approve Request</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
+        {requestData?.attributes?.status === "pending" && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.rejectButton}
+              onPress={() => handleStatusChange("rejected")}
+            >
+              <Text style={styles.buttonText}>Reject Request</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.approveButton}
+              onPress={() => handleStatusChange("approved")}
+            >
+              <Text style={styles.buttonText}>Approve Request</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <Modal
           visible={modalVisible}
@@ -155,16 +184,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f8fc",
   },
   container: {
-    padding: width * 0.04,
-    paddingTop: height * 0.05,
+    padding: width * 0.037,
+    paddingTop: height * 0.038,
     backgroundColor: "#FFF",
     flexGrow: 1,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: 20,
+  },
+  headerText: {
     fontSize: width * 0.06,
-    fontWeight: "bold",
-    marginBottom: height * 0.02,
-    color: "#333",
+    fontWeight: "600",
+    color: "#1C1C1E",
+    marginLeft: 20,
+    marginTop: -5,
   },
   detailsContainer: {
     marginBottom: height * 0.02,

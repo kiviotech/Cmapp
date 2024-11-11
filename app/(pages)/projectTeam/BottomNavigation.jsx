@@ -32,21 +32,26 @@ const BottomNavigation = () => {
       </TouchableOpacity>
 
       {/* My Activity */}
-      <TouchableOpacity style={styles.navItem}>
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => navigation.navigate("(pages)/projectTeam/Myactivity")}
+      >
         <Icon
           name={
-            route.name === "(pages)/contractor/profile"
+            route.name === "(pages)/projectTeam/Myactivity"
               ? "bar-chart"
               : "bar-chart-outline"
           }
           size={24}
           color={
-            route.name === "(pages)/contractor/profile" ? "#577CFF" : "#A8A8A8"
+            route.name === "(pages)/projectTeam/Myactivity"
+              ? "#577CFF"
+              : "#A8A8A8"
           }
         />
         <Text
           style={
-            route.name === "(pages)/contractor/profile"
+            route.name === "(pages)/projectTeam/Myactivity"
               ? styles.navTextActive
               : styles.navText
           }
@@ -87,20 +92,24 @@ const BottomNavigation = () => {
       {/* Notifications */}
       <TouchableOpacity
         style={styles.navItem}
-        // onPress={() => navigation.navigate("(pages)/notifications")}
+        onPress={() => navigation.navigate("(pages)/projectTeam/Notification")}
       >
         <Icon
           name={
-            route.name === "(pages)/notifications"
+            route.name === "(pages)/projectTeam/Notification"
               ? "notifications"
               : "notifications-outline"
           }
           size={24}
-          color={route.name === "(pages)/notifications" ? "#577CFF" : "#A8A8A8"}
+          color={
+            route.name === "(pages)/projectTeam/Notification"
+              ? "#577CFF"
+              : "#A8A8A8"
+          }
         />
         <Text
           style={
-            route.name === "(pages)/notifications"
+            route.name === "(pages)/projectTeam/Notification"
               ? styles.navTextActive
               : styles.navText
           }

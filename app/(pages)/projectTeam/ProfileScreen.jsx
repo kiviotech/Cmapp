@@ -15,6 +15,7 @@ import BottomNavigation from "./BottomNavigation";
 import { logout } from "../../../src/utils/auth";
 import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../../useAuthStore";
+import { Button } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -34,14 +35,31 @@ const ProfileScreen = () => {
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
-        <View style={styles.container}>
-          <Text style={styles.headerText}>Profile</Text>
+        <View style={styles.headerContainer}>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>Profile</Text>
+          </View>
 
           <Text style={styles.sectionHeader}>My Account</Text>
           <View style={styles.sectionContainer}>
-            <ProfileItem title="Personal details" />
-            <ProfileItem title="Change password" />
-            <ProfileItem title="My Activity" />
+            <ProfileItem
+              title="Personal details"
+              onPress={() =>
+                navigation.navigate("(pages)/projectTeam/PersonalDetails")
+              }
+            />
+            <ProfileItem
+              title="Change password"
+              onPress={() =>
+                navigation.navigate("(pages)/projectTeam/ChangePassword")
+              }
+            />
+            <ProfileItem
+              title="My Activity"
+              onPress={() => {
+                navigation.navigate("(pages)/projectTeam/Myactivity");
+              }}
+            />
           </View>
 
           <Text style={styles.sectionHeader}>Settings</Text>
@@ -75,8 +93,8 @@ const ProfileScreen = () => {
   );
 };
 
-const ProfileItem = ({ title }) => (
-  <TouchableOpacity style={styles.itemContainer}>
+const ProfileItem = ({ title, onPress }) => (
+  <TouchableOpacity style={styles.itemContainer} onPress={onPress}>
     <Text style={styles.itemText}>{title}</Text>
     <Ionicons name="chevron-forward-outline" size={20} color="#C7C7CC" />
   </TouchableOpacity>
@@ -95,6 +113,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     height: 800,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    zIndex: 1,
   },
   headerText: {
     fontSize: 24,

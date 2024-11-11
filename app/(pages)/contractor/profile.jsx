@@ -18,63 +18,66 @@ import UploadedFileHIstory from "../../../components/UploadedFileHIstory";
 import { getProjects } from "../../../src/api/repositories/projectRepository";
 import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getTasks } from "../../../src/api/repositories/taskRepository";
+import {
+  getTaskByContractorId,
+  getTasks,
+} from "../../../src/api/repositories/taskRepository";
 import useAuthStore from "../../../useAuthStore";
+import { fetchContractorsByUserId } from "../../../src/services/contractorService";
 
 const profile = () => {
-  const { user, roles, permissions } = useAuthStore();
-  const uploadedHistory = [
-    {
-      id: 1,
-      fileName: "Document_name1.png",
-    },
-    {
-      id: 2,
-      fileName: "Document_name2.png",
-    },
-    {
-      id: 3,
-      fileName: "Document_name3.png",
-    },
-  ];
+  const { user, designation } = useAuthStore();
 
   const [projectsDetail, setProjectsDetail] = useState([]); // to store all user project
+  const [tasks, setTasks] = useState([]); // to store tasks per project
+  // const [contractorsDetails, setContractorsDetails] = useState([])
+  const [uploadedHistory, setUploadedHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const projectData = await getProjects();
+    const ContractorData = async () => {
+      if (user && user.id) {
+        try {
+          const data = await fetchContractorsByUserId(user.id);
+          // setContractorsData(data.data); // Set entire array of contractors
+          var filteredData = [];
+          if (data.data.length > 0) {
+            const contractorId = data.data[0].id; // Assuming one contractor per user
+            const projectData = data.data.map(
+              (project) => (filteredData = project.attributes.projects.data)
+            );
 
-        setProjectsDetail(projectData.data.data);
+            setProjectsDetail(filteredData);
 
-        // const taskData = await getTasks();
-        // setTasksDetail(taskData.data.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+            // Fetch tasks for each project ID in selectedProjectId
+            const allTasks = [];
+            const submissionData = [];
+            for (const projectId of filteredData) {
+              const taskData = await getTaskByContractorId(
+                projectId.id,
+                contractorId
+              );
+              // console.log('task data',taskData.data.data)
+              const ongoingTasks = taskData.data.data.filter(
+                (task) => task.attributes.task_status === "ongoing"
+              );
+              allTasks.push(...ongoingTasks); // Accumulate tasks for each project
+            }
+            setTasks(allTasks); // Update tasks state with all fetched tasks
+
+            for (const submission of allTasks) {
+              submissionData.push(submission.attributes.submissions.data);
+            }
+            setUploadedHistory(submissionData);
+          }
+        } catch (error) {
+          console.error("Error fetching contractor data:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
-
-    fetchProjects();
-  }, []);
-
-  const [username, setUsername] = useState(null); // Set initial state as null for loading state
-
-  const getUsername = async () => {
-    try {
-      const storedUsername = await AsyncStorage.getItem("username");
-      console.log("Stored username from AsyncStorage:", storedUsername); // Debug log
-      if (storedUsername) {
-        setUsername(storedUsername);
-      } else {
-        setUsername("Guest"); // Set default if no username is stored
-      }
-    } catch (error) {
-      console.error("Error retrieving username from AsyncStorage:", error);
-    }
-  };
-
-  useEffect(() => {
-    getUsername();
+    ContractorData();
   }, []);
 
   return (
@@ -85,17 +88,49 @@ const profile = () => {
             <Image style={styles.userImage} source={icons.userProfile}></Image>
           </View>
           <View style={styles.profileDetailSection}>
-            <Text style={styles.userName}>{username}</Text>
+            <Text style={styles.userName}>
+              {user.username ? user.username : "Guest"}
+            </Text>
             <Text style={[styles.userName, { color: colors.primary }]}>
-              {roles}
+              {designation ? designation : ""}
             </Text>
           </View>
         </View>
 
-        <UploadedFileHIstory historyData={uploadedHistory} />
-        {/* to view user uploaded file history */}
+        {uploadedHistory.map((history, index) =>
+          history.slice(2).map((data) => {
+            console.log(data);
+            return (
+              <View style={{ margin: 10 }}>
+                <Text>
+                  {index + 1}. Status: {data.attributes.status}
+                </Text>
+                <Text>
+                  Comments:{" "}
+                  {data.attributes.comments ? data.attributes.comments : "NA"}
+                </Text>
+                {data.attributes.proofOfWork?.map((file, fileIndex) => {
+                  <TouchableOpacity
+                    key={fileIndex}
+                    style={styles.fileRow}
+                    onPress={() => Linking.openURL(file.url)}
+                  >
+                    <FontAwesome name="file" size={24} color={colors.primary} />
+                    <Text style={styles.fileName}>{data.fileName}</Text>
+                    <FontAwesome
+                      name="download"
+                      size={15}
+                      color={colors.downloadIconColor}
+                    />
+                  </TouchableOpacity>;
+                })}
+              </View>
+            );
+          })
+        )}
 
-        {/* to view user project  */}
+        {/* <UploadedFileHIstory historyData={uploadedHistory} /> */}
+
         <View style={{ marginTop: 20 }}>
           <Text
             style={{
@@ -119,8 +154,8 @@ const profile = () => {
                   cardValue={{
                     name: project.attributes.name,
                     desc: project.attributes.description,
-                    update: project.attributes.update_status,
-                    deadline: project.attributes.deadline,
+                    update: project.attributes.project_status,
+                    deadline: project.attributes.end_date,
                   }}
                 />
               </View>
@@ -164,5 +199,17 @@ const styles = StyleSheet.create({
     fontSize: 26,
     letterSpacing: 0.13,
     paddingBottom: 10,
+  },
+  fileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  fileName: {
+    flex: 1,
+    fontSize: 14,
+    marginLeft: 10,
+    // fontFamily: fonts.WorkSans500,
+    color: colors.blackColor,
   },
 });

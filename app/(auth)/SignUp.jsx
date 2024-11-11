@@ -18,6 +18,7 @@ import colors from "../../constants/colors";
 import { useToast } from "../ToastContext";
 import Toast from "../Toast";
 import { getProjects } from "../../src/api/repositories/projectRepository";
+import { fetchSubContractors } from "../../src/services/subContractorService";
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -26,6 +27,8 @@ NativeWindStyleSheet.setOutput({
 const SignUp = () => {
   const [selectedProject, setSelectedProject] = useState("");
   const [projectsDetail, setProjectsDetail] = useState([]);
+  const [subContractors, setSubContractors] = useState([]);
+  const [selectedSubContractor, setSelectedSubContractor] = useState("");
   const [uploadedFileIds, setUploadedFileIds] = useState([]);
   const [isDropdownFocused, setIsDropdownFocused] = useState(false);
   const { toast, showToast } = useToast();
@@ -60,6 +63,8 @@ const SignUp = () => {
       newErrors.socialSecurity = "Social Security Number is required";
     else if (form.socialSecurity.length < 6)
       newErrors.socialSecurity = "Enter a valid 6-digit Social Security Number";
+    if (!selectedSubContractor)
+      newErrors.subContractor = "Subcontractor selection is required";
     if (!uploadedFileIds.length)
       newErrors.contractorLicense = "File is required";
     return newErrors;
@@ -81,6 +86,7 @@ const SignUp = () => {
         socialSecurity,
         uploadedFileIds,
         selectedProject,
+        selectedSubContractor,
       });
 
       const res = await signup(
@@ -89,7 +95,8 @@ const SignUp = () => {
         password,
         socialSecurity,
         uploadedFileIds,
-        selectedProject
+        selectedProject,
+        selectedSubContractor
       );
 
       if (res) {
@@ -112,6 +119,22 @@ const SignUp = () => {
       }
     };
     fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    const loadSubContractors = async () => {
+      try {
+        const response = await fetchSubContractors();
+        const contractors = response.data.map((contractor) => ({
+          label: contractor.attributes.name,
+          value: contractor.id,
+        }));
+        setSubContractors(contractors);
+      } catch (error) {
+        console.error("Error fetching subcontractors:", error);
+      }
+    };
+    loadSubContractors();
   }, []);
 
   return (
@@ -176,7 +199,32 @@ const SignUp = () => {
             </View>
           </View>
 
-          <View style={styles.projectSelectionContainer}>
+          <View style={styles.subContractorContainer}>
+            <Text style={styles.labelText}>Subcontractor</Text>
+            <Dropdown
+              data={subContractors}
+              labelField="label"
+              valueField="value"
+              placeholder={!isDropdownFocused ? "Select subcontractor" : ""}
+              search
+              searchPlaceholder="Search your subcontractor"
+              value={selectedSubContractor}
+              onFocus={() => setIsDropdownFocused(true)}
+              onBlur={() => setIsDropdownFocused(false)}
+              onChange={(item) => {
+                setSelectedSubContractor(item.value);
+                setIsDropdownFocused(false);
+              }}
+              style={styles.dropdown}
+              containerStyle={styles.dropdownContainerStyle}
+              searchStyle={styles.searchBox}
+            />
+            {errors.subContractor && (
+              <Text style={styles.errorText}>{errors.subContractor}</Text>
+            )}
+          </View>
+
+          {/* <View style={styles.projectSelectionContainer}>
             <Text style={styles.labelText}>Project Selection</Text>
             <Dropdown
               data={projectsDetail.map((project) => ({
@@ -202,7 +250,7 @@ const SignUp = () => {
             {errors.project && (
               <Text style={styles.errorText}>{errors.project}</Text>
             )}
-          </View>
+          </View> */}
 
           <View>
             <FileUpload

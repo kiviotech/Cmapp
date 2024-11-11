@@ -135,10 +135,10 @@ const FileUpload = ({
       formData.append("files", imgblob, file.name);
 
       const response = await fetch("http://192.168.0.253:1337/api/upload", {
+        // const response = await fetch("http://localhost:1337/api/upload", {
         method: "POST",
         headers: {
-          Authorization:
-            "Bearer 774c8271487ea9952dfacae2ed7b92fe9286acbe3e9a59cc38580ea335cefb62ef20ace353793ed34130a988701498b8aa096e02a1afdda6621bffe733bd17fd83e5170a03b3ee068a8c132b70d0dce216cb198b65b5d59058cf08335338e34dd7b31379bed78f4170108dfd68e83cf37be35f6df30d3346f7985f651a7fedb3",
+          Authorization: `Bearer e1b533cdcb4d0cbd882a6f3cbf6fe6550f2b8bbce8b3f19ca804198d340317f0b41080ebd09c09177f139c7b20c80610ccdf8c043a76af92d0129617a9f252bdcc738b3a06ff4c358568e9cee1cfab1fefdef83370ce234c4448d2970436d06b30eec8f4e71841ec9601cac88b2f4b6067f373313dc3785bddf54049d3a3ddd9`,
           // 'Content-Type': 'form-data',
         },
         body: formData,

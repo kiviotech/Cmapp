@@ -5,6 +5,7 @@ import {
   updateProject,
   deleteProject,
   getAssignedProjectById,
+  getProjectDetailsById,
 } from "../api/repositories/projectRepository";
 
 // Fetch all projects
@@ -37,6 +38,20 @@ export const fetchAssignedProjectById = async (id) => {
   } catch (error) {
     console.error(
       `Error fetching assigned projects for user with ID ${id}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+// Fetch project details by approver ID
+export const fetchProjectDetailsByApproverId = async (id) => {
+  try {
+    const response = await getProjectDetailsById(id);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching project details for approver with ID ${id}:`,
       error
     );
     throw error;

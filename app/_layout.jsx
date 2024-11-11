@@ -96,13 +96,17 @@ const Layout = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="(pages)/projectTeam/ProjectDetails"
+          name="(pages)/contractor/ProjectDetails"
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="(pages)/AddTasks"
+          name="(pages)/projectTeam/ProjectDetails"
           options={{ headerShown: false }}
         />
+        {/* <Stack.Screen
+          name="(pages)/AddTasks"
+          options={{ headerShown: false }}
+        /> */}
         <Stack.Screen
           name="(pages)/AssignContractors"
           options={{ headerShown: false }}
@@ -122,6 +126,30 @@ const Layout = () => {
         />
         <Stack.Screen
           name="(pages)/EmailRequestDetails"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/projectTeam/Myactivity"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/contractor/PersonalDetailsScreen"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/projectTeam/PersonalDetails"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/contractor/ChangePasswordScreen"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/projectTeam/ChangePassword"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(pages)/projectTeam/Notification"
           options={{ headerShown: false }}
         />
         <Stack.Screen name="index" options={{ headerShown: false }} />

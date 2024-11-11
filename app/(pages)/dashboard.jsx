@@ -12,6 +12,10 @@ const useRoleComponent = (designation) => {
       return <Contractor />;
     case "Project Manager":
       return <ProjectTeam />;
+    case "Project Supervisor":
+      return <ProjectTeam />;
+    case "Site Supervisor":
+      return <ProjectTeam />;
     default:
       return <Contractor />;
   }

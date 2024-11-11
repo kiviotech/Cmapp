@@ -11,11 +11,18 @@ import {
   Image,
   Dimensions,
 } from "react-native";
-import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../useAuthStore";
 import { updateExistingRegistration } from "../../src/services/registrationService";
 import { MEDIA_BASE_URL } from "../../src/api/apiClient";
+import { createNewUser } from "../../src/services/userService";
+import {
+  fetchUserGroupsWithContractorRole,
+  fetchUserGroupById,
+  updateUserGroupById,
+} from "../../src/services/userGroupService";
+import { createNewContractor } from "../../src/services/contractorService";
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,9 +32,24 @@ const RequestDetails = () => {
   const { requestData } = route.params || {};
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [contractorGroupIds, setContractorGroupIds] = useState([]);
+  const user = useAuthStore();
 
   useEffect(() => {
     console.log("Request Details:", requestData);
+
+    const fetchContractorGroups = async () => {
+      try {
+        const response = await fetchUserGroupsWithContractorRole();
+        const ids = response?.data?.map((item) => item.id) || [];
+        console.log("Contractor Group IDs:", ids);
+        setContractorGroupIds(ids);
+      } catch (error) {
+        console.error("Error fetching contractor groups:", error);
+      }
+    };
+
+    fetchContractorGroups();
   }, [requestData]);
 
   const documents = requestData?.attributes?.documents?.data || [];
@@ -37,15 +59,22 @@ const RequestDetails = () => {
       const updatedData = {
         data: {
           status: newStatus,
-          docs: documents.map((doc) => doc.id),
+          approver: user.user.id,
+          documents: documents.map((doc) => doc.id),
         },
       };
       const response = await updateExistingRegistration(
         requestData?.id,
         updatedData
       );
+
       if (response.data) {
         Alert.alert("Success", `Request ${newStatus} successfully!`);
+
+        if (newStatus === "approved") {
+          await handleCreateUser();
+        }
+
         navigation.goBack();
       }
     } catch (error) {
@@ -53,6 +82,90 @@ const RequestDetails = () => {
       Alert.alert(
         "Error",
         "An error occurred while updating the request status."
+      );
+    }
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      const userData = {
+        username: requestData.attributes.username,
+        email: requestData.attributes.email,
+        password: requestData.attributes.password,
+      };
+
+      const response = await createNewUser(userData);
+      if (response) {
+        const newUserId = response.user.id;
+        console.log("User created successfully with ID:", newUserId);
+        Alert.alert("Success", "User account created successfully.");
+
+        if (contractorGroupIds.length > 0) {
+          await updateContractorGroup(newUserId);
+        }
+
+        await createContractorRecord(newUserId);
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+      Alert.alert("Error", "An error occurred while creating the user.");
+    }
+  };
+
+  const updateContractorGroup = async (newUserId) => {
+    try {
+      const contractorGroupId = contractorGroupIds[0];
+
+      const currentGroup = await fetchUserGroupById(contractorGroupId);
+      const existingUserIds =
+        currentGroup?.data?.attributes?.users?.data?.map((user) => user.id) ||
+        [];
+
+      const updatedUserIds = [...new Set([...existingUserIds, newUserId])];
+
+      const updatedGroupData = {
+        data: {
+          users: updatedUserIds,
+        },
+      };
+      const response = await updateUserGroupById(
+        contractorGroupId,
+        updatedGroupData
+      );
+      if (response) {
+        console.log("User added to contractor group:", response);
+      }
+    } catch (error) {
+      console.error("Error updating contractor group:", error);
+    }
+  };
+
+  const createContractorRecord = async (newUserId) => {
+    try {
+      const contractorData = {
+        data: {
+          username: requestData.attributes.username,
+          socialSecurityNumber: requestData.attributes.socialSecurityNumber,
+          email: requestData.attributes.email,
+          documents: documents.map((doc) => doc.id),
+          user: newUserId,
+          sub_contractor:
+            requestData.attributes.sub_contractor?.data?.id || null,
+          projects: [], // Populate with project IDs if available
+          tasks: [], // Populate with task IDs if available
+        },
+      };
+
+      const response = await createNewContractor(contractorData);
+      if (response) {
+        console.log("Contractor record created successfully:", response);
+        Alert.alert("Success", "Contractor record created successfully.");
+      }
+    } catch (error) {
+      console.error("Error creating contractor record:", error);
+      Alert.alert(
+        "Error",
+        "An error occurred while creating the contractor record."
       );
     }
   };
@@ -75,9 +188,9 @@ const RequestDetails = () => {
         />
         <View style={styles.documentText}>
           <Text style={styles.documentName}>{docs.attributes.name}</Text>
-          <Text
-            style={styles.documentSize}
-          >{`${docs.attributes.size} kb`}</Text>
+          <Text style={styles.documentSize}>
+            {`${docs.attributes.size} kb`}
+          </Text>
         </View>
       </View>
       <View style={styles.documentActions}>
@@ -96,7 +209,15 @@ const RequestDetails = () => {
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>Request Details</Text>
+        <View style={styles.header}>
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color="black"
+            onPress={() => navigation.goBack()}
+          />
+          <Text style={styles.headerText}>Request Details</Text>
+        </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.label}>
             Requester Name:{" "}
@@ -169,15 +290,23 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   container: {
-    padding: width * 0.04,
-    paddingTop: height * 0.05,
+    padding: width * 0.037,
+    paddingTop: height * 0.038,
     backgroundColor: "#FFF",
     flexGrow: 1,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: 20,
+  },
+  headerText: {
     fontSize: width * 0.06,
-    fontWeight: "bold",
-    marginBottom: height * 0.02,
+    fontWeight: "600",
+    color: "#1C1C1E",
+    marginLeft: 20,
+    marginTop: -5,
   },
   detailsContainer: {
     marginBottom: height * 0.02,

@@ -46,7 +46,12 @@ const Settings = () => {
         >
           <Text style={styles.sectionTitle}>Account Settings</Text>
 
-          <TouchableOpacity style={styles.item}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() =>
+              navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
+            }
+          >
             <Text style={styles.itemText}>Edit profile</Text>
             <FontAwesome
               style={{ color: colors.blackColor }}
@@ -55,7 +60,12 @@ const Settings = () => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.item}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() =>
+              navigation.navigate("(pages)/contractor/ChangePasswordScreen")
+            }
+          >
             <Text style={styles.itemText}>Change password</Text>
             <FontAwesome
               style={{ color: colors.blackColor }}

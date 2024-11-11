@@ -1,17 +1,12 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware"; // Import persist middleware
+import { persist } from "zustand/middleware";
 
 const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
       designation: null,
-      role: null,
-      projects: [],
-      tasks: [],
-      permissions: {},
 
-      // Method to set full user data
       setUser: (userData) =>
         set({
           user: {
@@ -26,32 +21,17 @@ const useAuthStore = create(
             token: userData.token,
           },
           designation: userData.designation,
-          role: userData.role,
-          projects: userData.projects,
-          tasks: userData.tasks,
-          permissions: userData.permissions || {},
         }),
 
-      // Method to set roles
-      setRoles: (roles) => set({ roles }),
-
-      // Method to set permissions
-      setPermissions: (permissions) => set({ permissions }),
-
-      // Method to clear auth data
       clearAuth: () =>
         set({
           user: null,
           designation: null,
-          role: null,
-          projects: [],
-          tasks: [],
-          permissions: {},
         }),
     }),
     {
-      name: "auth-store", // Name for local storage key
-      getStorage: () => localStorage, // Specify localStorage for web
+      name: "auth-store",
+      getStorage: () => localStorage,
     }
   )
 );
