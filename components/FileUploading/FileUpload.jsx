@@ -70,6 +70,123 @@ const FileUpload = ({
     }
   };
 
+  // const handleCameraUpload = async () => {
+  //   if (Platform.OS === "web") {
+  //     setIsCameraActive(true);
+  //     openWebCamera();
+  //   } else {
+  //     const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  //     if (status !== "granted") {
+  //       alert("Camera permission is required to use this feature.");
+  //       return;
+  //     }
+
+  //     let result = await ImagePicker.launchCameraAsync({
+  //       allowsEditing: true,
+  //       aspect: [4, 3],
+  //       quality: 1,
+  //     });
+
+  //     if (!result.canceled) {
+  //       const newFile = {
+  //         uri: result.uri,
+  //         name: result.uri.split("/").pop(),
+  //         progress: 0,
+  //         status: "uploading",
+  //       };
+  //       setUploadedFiles([...uploadedFiles, newFile]);
+  //       setUploading(true);
+
+  //       // Simulate the file upload progress
+  //       let progress = 0;
+  //       const interval = setInterval(() => {
+  //         progress += 10;
+  //         setUploadedFiles((prevFiles) =>
+  //           prevFiles.map((file) =>
+  //             file.name === newFile.name ? { ...file, progress } : file
+  //           )
+  //         );
+
+  //         if (progress >= 100) {
+  //           clearInterval(interval);
+  //           setUploadedFiles((prevFiles) =>
+  //             prevFiles.map((file) =>
+  //               file.name === newFile.name
+  //                 ? { ...file, status: "success", progress: 100 }
+  //                 : file
+  //             )
+  //           );
+  //           setUploading(false);
+
+  //           // Send the file to the API after upload is complete
+  //           uploadFileToAPI(newFile);
+  //         }
+  //       }, 500);
+
+  //       uploadIntervals.current[newFile.name] = interval;
+  //     }
+  //   }
+  // };
+
+  // const handleCameraUpload = async () => {
+  //   if (Platform.OS === "web") {
+  //     setIsCameraActive(true);
+  //     openWebCamera();
+  //   } else {
+  //     const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  //     if (status !== "granted") {
+  //       alert("Camera permission is required to use this feature.");
+  //       return;
+  //     }
+
+  //     let result = await ImagePicker.launchCameraAsync({
+  //       allowsEditing: true,
+  //       aspect: [4, 3],
+  //       quality: 1,
+  //     });
+
+  //     if (!result.canceled && result.uri) {
+  //       // Ensure result.uri exists
+  //       const newFile = {
+  //         uri: result.uri,
+  //         name: result.uri.split("/").pop() || "untitled", // Fallback name
+  //         progress: 0,
+  //         status: "uploading",
+  //       };
+  //       setUploadedFiles([...uploadedFiles, newFile]);
+  //       setUploading(true);
+
+  //       // Simulate the file upload progress
+  //       let progress = 0;
+  //       const interval = setInterval(() => {
+  //         progress += 10;
+  //         setUploadedFiles((prevFiles) =>
+  //           prevFiles.map((file) =>
+  //             file.name === newFile.name ? { ...file, progress } : file
+  //           )
+  //         );
+
+  //         if (progress >= 100) {
+  //           clearInterval(interval);
+  //           setUploadedFiles((prevFiles) =>
+  //             prevFiles.map((file) =>
+  //               file.name === newFile.name
+  //                 ? { ...file, status: "success", progress: 100 }
+  //                 : file
+  //             )
+  //           );
+  //           setUploading(false);
+
+  //           // Send the file to the API after upload is complete
+  //           uploadFileToAPI(newFile);
+  //         }
+  //       }, 500);
+
+  //       uploadIntervals.current[newFile.name] = interval;
+  //     }
+  //   }
+  // };
+
   const handleCameraUpload = async () => {
     if (Platform.OS === "web") {
       setIsCameraActive(true);
@@ -87,10 +204,11 @@ const FileUpload = ({
         quality: 1,
       });
 
-      if (!result.canceled) {
+      if (!result.canceled && result.uri) {
+        // Create a new file object
         const newFile = {
           uri: result.uri,
-          name: result.uri.split("/").pop(),
+          name: result.uri.split("/").pop() || "untitled",
           progress: 0,
           status: "uploading",
         };
@@ -119,7 +237,7 @@ const FileUpload = ({
             setUploading(false);
 
             // Send the file to the API after upload is complete
-            uploadFileToAPI(newFile);
+            uploadFileToAPI(newFile); // Upload file after progress completion
           }
         }, 500);
 
@@ -131,15 +249,13 @@ const FileUpload = ({
   const uploadFileToAPI = async (file) => {
     try {
       const formData = new FormData();
-      const imgblob = await (await fetch(file.uri)).blob();
+      const imgblob = await (await fetch(file.uri)).blob(); // Convert URI to blob
       formData.append("files", imgblob, file.name);
 
-      const response = await fetch("http://192.168.0.253:1337/api/upload", {
-        // const response = await fetch("http://localhost:1337/api/upload", {
+      const response = await fetch("https://cmappapi.kivio.in/api/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer e1b533cdcb4d0cbd882a6f3cbf6fe6550f2b8bbce8b3f19ca804198d340317f0b41080ebd09c09177f139c7b20c80610ccdf8c043a76af92d0129617a9f252bdcc738b3a06ff4c358568e9cee1cfab1fefdef83370ce234c4448d2970436d06b30eec8f4e71841ec9601cac88b2f4b6067f373313dc3785bddf54049d3a3ddd9`,
-          // 'Content-Type': 'form-data',
         },
         body: formData,
       });

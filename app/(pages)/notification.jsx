@@ -35,7 +35,10 @@ const UploadProof = () => {
   const [submissionDetail, setSubmissionDetail] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadedHistory, setUploadedHistory] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([]); 
+  const [unreadNotifications, setUnreadNotifications] = useState([]);
+  const [readNotifications, setReadNotifications] = useState([]);
+
   const { user } = useAuthStore();
 
   useEffect(() => {
@@ -56,12 +59,14 @@ const UploadProof = () => {
             // Fetch tasks for each project ID in selectedProjectId
             const allTasks = [];
             const submissionData = [];
+            let submission = [];
+            let unread = [];
+            let read = [];
             for (const projectId of filteredData) {
               const taskData = await getTaskByContractorId(
                 projectId.id,
                 contractorId
               );
-              // console.log('task data',taskData.data.data)
               const ongoingTasks = taskData.data.data.filter(
                 (task) => task.attributes.task_status === "ongoing"
               );
@@ -69,11 +74,19 @@ const UploadProof = () => {
             }
             setTasks(allTasks); // Update tasks state with all fetched tasks
 
-            for (const submission of allTasks) {
-              submissionData.push(submission.attributes.submissions.data);
+            for (const item of allTasks) {
+              submission = item.attributes.submissions.data
+              submissionData.push(submission);
+              unread = unread.concat(
+                submission?.filter((elem) => elem.attributes.notification_status === 'unread')
+              );
+              read = read.concat(
+                submission?.filter((elem) => elem.attributes.notification_status === 'read')
+              );
             }
             setSubmissionDetail(submissionData);
-            // updateNotifications(submissionData); // Set notifications based on submissions
+            setUnreadNotifications(unread);
+            setReadNotifications(read);
           }
         } catch (error) {
           console.error("Error fetching contractor data:", error);
@@ -85,7 +98,6 @@ const UploadProof = () => {
     SubmissionData();
   }, []);
 
-  // console.log('first', tasks)
 
   const handleDeleteNotification = (id) => {
     const updatedDetails = submissionDetail.map((history) =>
@@ -112,9 +124,17 @@ const UploadProof = () => {
         ) : (
           tasks.map((task, index) => {
             return (
-              <View style={{ marginBottom: 20 }}>
+              <View style={{ marginBottom: 20 }} >
                 {task.attributes.submissions.data?.map((history) => (
-                  <View style={styles.notificationContainer}>
+                  <TouchableOpacity
+                  key={history.id}
+                  style={styles.notificationContainer}
+                  // onPress={() =>
+                  //   navigation.navigate("(pages)/notificationDetails", {
+                  //     historyId: history.id, // Pass history.id as a parameter
+                  //   })
+                  // }
+                >
                     <View
                       style={{ flexDirection: "row", alignItems: "center" }}
                     >
@@ -132,7 +152,7 @@ const UploadProof = () => {
                         ? history.attributes.comment
                         : "No Comments"}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 ))}
                 {/* <CustomButton
                 buttonStyle={styles.deleteButton}

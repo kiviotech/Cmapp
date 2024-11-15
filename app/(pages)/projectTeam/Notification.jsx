@@ -8,12 +8,21 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import BottomNavigation from "./BottomNavigation";
-import { fetchRegistrations } from "../../../src/services/registrationService";
-import { fetchSubmissions } from "../../../src/services/submissionService";
+import {
+  fetchRegistrations,
+  updateExistingRegistration,
+} from "../../../src/services/registrationService";
+import {
+  fetchSubmissions,
+  updateExistingSubmission,
+} from "../../../src/services/submissionService";
 
 const Notification = () => {
-  const [notifications, setNotifications] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState([]);
+  const [readNotifications, setReadNotifications] = useState([]);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,7 +34,17 @@ const Notification = () => {
 
         const registrations = registrationsResponse?.data || [];
         const submissions = submissionsResponse?.data || [];
-        setNotifications([...registrations, ...submissions]);
+        const combinedNotifications = [...registrations, ...submissions];
+
+        const unread = combinedNotifications.filter(
+          (item) => item.attributes.notification_status === "unread"
+        );
+        const read = combinedNotifications.filter(
+          (item) => item.attributes.notification_status === "read"
+        );
+
+        setUnreadNotifications(unread);
+        setReadNotifications(read);
       } catch (error) {
         console.error("Error fetching notifications:", error);
       }
@@ -33,47 +52,118 @@ const Notification = () => {
     fetchData();
   }, []);
 
-  const renderNotificationItem = ({ item }) => (
-    <View style={styles.notificationContainer}>
-      <Ionicons
-        name={item.attributes.email ? "mail-outline" : "document-text-outline"}
-        size={24}
-        color="#4CAF50"
-        style={styles.icon}
-      />
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>
-          {item.attributes.email
-            ? `Registration Request from ${item.attributes.username}`
-            : `Submission for ${
-                item.attributes.task?.data?.attributes?.project?.data
-                  ?.attributes?.name || "Project"
-              }`}
-        </Text>
-        <Text style={styles.message}>
-          {item.attributes.comment || "No additional information"}
-        </Text>
-      </View>
-      <Text style={styles.time}>Status: {item.attributes.status}</Text>
-    </View>
-  );
+  // Function to update notification status to "read"
+  const markAsRead = async (item) => {
+    try {
+      const isRegistration = !!item.attributes.email;
+      const payload = { data: { notification_status: "read" } }; // Updated payload structure
+
+      if (isRegistration) {
+        await updateExistingRegistration(item.id, payload);
+      } else {
+        await updateExistingSubmission(item.id, payload);
+      }
+
+      // Update the state to reflect the change
+      setUnreadNotifications((prev) =>
+        prev.filter((notification) => notification.id !== item.id)
+      );
+      setReadNotifications((prev) => [
+        ...prev,
+        {
+          ...item,
+          attributes: { ...item.attributes, notification_status: "read" },
+        },
+      ]);
+    } catch (error) {
+      console.error("Error updating notification status:", error);
+    }
+  };
+  const renderNotificationItem = ({ item }) => {
+    const isRegistration = !!item.attributes.email;
+    const notificationTitle = isRegistration
+      ? `Registration Request from ${item.attributes.username}`
+      : `Submission for ${
+          item.attributes.task?.data?.attributes?.project?.data?.attributes
+            ?.name || "Project"
+        }`;
+
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          markAsRead(item); // Mark the notification as read on click
+          navigation.navigate(
+            isRegistration
+              ? "(pages)/EmailRequestDetails"
+              : "(pages)/TaskRequestDetails",
+            {
+              requestData: item,
+              source: "notification",
+            }
+          );
+        }}
+      >
+        <View style={styles.notificationContainer}>
+          <Ionicons
+            name={isRegistration ? "mail-outline" : "document-text-outline"}
+            size={24}
+            color="#4CAF50"
+            style={styles.icon}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>{notificationTitle}</Text>
+            <Text style={styles.message}>
+              {item.attributes.comment || "No additional information"}
+            </Text>
+          </View>
+          <Text style={styles.time}>Status: {item.attributes.status}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.areaContainer}>
       <View style={styles.headerContainer}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Notifications</Text>
-          {/* <Ionicons name="search-outline" size={24} color="black" /> */}
+        </View>
+      </View>
+
+      <View style={styles.sectionHeaderContainer}>
+        <Text style={styles.sectionHeader}>Unread</Text>
+        <View style={styles.countBubble}>
+          <Text style={styles.countText}>{unreadNotifications.length}</Text>
         </View>
       </View>
       <FlatList
-        data={notifications}
-        keyExtractor={(item) => item.id.toString()}
+        data={unreadNotifications}
+        keyExtractor={(item) =>
+          item.attributes.email ? `reg-${item.id}` : `sub-${item.id}`
+        }
         renderItem={renderNotificationItem}
         contentContainerStyle={styles.listContent}
         style={styles.flatList}
         showsVerticalScrollIndicator={false}
       />
+
+      <View style={styles.sectionHeaderContainer}>
+        <Text style={styles.sectionHeader}>Read</Text>
+        <View style={styles.countBubble}>
+          <Text style={styles.countText}>{readNotifications.length}</Text>
+        </View>
+      </View>
+      <FlatList
+        data={readNotifications}
+        keyExtractor={(item) =>
+          item.attributes.email ? `reg-${item.id}` : `sub-${item.id}`
+        }
+        renderItem={renderNotificationItem}
+        contentContainerStyle={styles.listContent}
+        style={styles.flatList}
+        showsVerticalScrollIndicator={false}
+      />
+
       <BottomNavigation />
     </SafeAreaView>
   );
@@ -90,9 +180,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
-    // elevation: 3,
-    // shadowOpacity: 0.2,
-    // shadowRadius: 2,
     zIndex: 1,
   },
   header: {
@@ -105,6 +192,30 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#1C1C1E",
+  },
+  sectionHeaderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    marginBottom: 10,
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1C1C1E",
+    marginRight: 8,
+  },
+  countBubble: {
+    backgroundColor: "#E0E7FF",
+    borderRadius: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+  },
+  countText: {
+    color: "#3B82F6",
+    fontWeight: "700",
+    fontSize: 14,
   },
   flatList: {
     flex: 1,

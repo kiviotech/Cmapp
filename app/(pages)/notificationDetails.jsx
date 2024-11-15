@@ -31,7 +31,7 @@ const Details = () => {
   const route = useRoute();
   const id = route.params.registrationId || 0;
   const navigation = useNavigation();
-  const baseURL = "http://localhost:1338"; // Base URL for localhost
+  const baseURL = "https://cmappapi.kivio.in"; // Base URL for localhost
 
   const proofs = [
     {

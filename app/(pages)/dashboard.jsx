@@ -5,6 +5,7 @@ import Contractor from "./contractor/Contractor";
 import ProjectTeam from "./projectTeam/ProjectTeam";
 import useAuthStore from "../../useAuthStore";
 import colors from "../../constants/colors";
+import NotFound from "./NotFound";
 
 const useRoleComponent = (designation) => {
   switch (designation) {
@@ -17,13 +18,15 @@ const useRoleComponent = (designation) => {
     case "Site Supervisor":
       return <ProjectTeam />;
     default:
-      return <Contractor />;
+      return <NotFound />;
   }
 };
 
 const Dashboard = () => {
-  const { user, designation, role, projects, tasks, permissions } =
+  const { user, token, designation, role, projects, tasks, permissions } =
     useAuthStore();
+
+  console.log("token", token);
 
   return (
     <SafeAreaView style={styles.container}>

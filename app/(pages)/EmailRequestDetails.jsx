@@ -10,18 +10,22 @@ import {
   Modal,
   Image,
   Dimensions,
+  Platform,
 } from "react-native";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../useAuthStore";
 import { updateExistingRegistration } from "../../src/services/registrationService";
 import { MEDIA_BASE_URL } from "../../src/api/apiClient";
+import { URL } from "../../src/api/apiClient";
 import { createNewUser } from "../../src/services/userService";
 import {
   fetchUserGroupsWithContractorRole,
   fetchUserGroupById,
   updateUserGroupById,
 } from "../../src/services/userGroupService";
+import * as FileSystem from "expo-file-system";
+import * as WebBrowser from "expo-web-browser";
 import { createNewContractor } from "../../src/services/contractorService";
 
 const { width, height } = Dimensions.get("window");
@@ -53,6 +57,30 @@ const RequestDetails = () => {
   }, [requestData]);
 
   const documents = requestData?.attributes?.documents?.data || [];
+
+  const handleDownloadImage = async (imageFormats) => {
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    if (Platform.OS === "web") {
+      console.log(imageUrl);
+      // Open the image in a new tab for download on web
+      WebBrowser.openBrowserAsync(imageUrl);
+    } else {
+      // Native download
+      try {
+        const fileUri = FileSystem.documentDirectory + imageFormats?.name;
+        const downloadResumable = FileSystem.createDownloadResumable(
+          imageUrl,
+          fileUri
+        );
+        const { uri } = await downloadResumable.downloadAsync();
+        console.log("Downloaded image:", uri);
+        Alert.alert("Download complete!", `File saved to: ${uri}`);
+      } catch (error) {
+        console.error("Error downloading image:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
+      }
+    }
+  };
 
   const handleStatusChange = async (newStatus) => {
     try {
@@ -171,9 +199,7 @@ const RequestDetails = () => {
   };
 
   const handleImagePreview = (imageFormats) => {
-    const imageUrl = `${MEDIA_BASE_URL}${
-      imageFormats?.large?.url || imageFormats?.url
-    }`;
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
     setSelectedImage(imageUrl);
     setModalVisible(true);
   };
@@ -199,7 +225,9 @@ const RequestDetails = () => {
         >
           <MaterialIcons name="visibility" size={20} color="#666" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => alert("Download initiated")}>
+        <TouchableOpacity
+          onPress={() => handleDownloadImage(docs.attributes.formats)}
+        >
           <Text style={styles.downloadButton}>Download</Text>
         </TouchableOpacity>
       </View>

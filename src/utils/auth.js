@@ -2,16 +2,60 @@ import apiClient from "../api/apiClient";
 import { deleteToken, saveToken, saveUserId } from "./storage";
 import useAuthStore from "../../useAuthStore";
 
+// export const login = async (email, password) => {
+//   try {
+//     // Initial login request to get JWT token and basic user info
+//     const response = await apiClient.post("/auth/local", {
+//       identifier: email,
+//       password,
+//     });
+//     const { jwt, user } = response.data;
+
+//     // Fetch additional user details, including designation
+//     const populatedResponse = await apiClient.get(
+//       `/users/${user.id}?populate[user_group][populate][designation]=*`,
+//       {
+//         headers: { Authorization: `Bearer ${jwt}` },
+//       }
+//     );
+//     const populatedUserData = populatedResponse.data;
+
+//     // Extract designation if available
+//     const designation = populatedUserData.user_group?.designation?.Name || "";
+
+//     // Store the user information and token in the Zustand store
+//     useAuthStore.getState().setUser({
+//       id: populatedUserData.id,
+//       username: populatedUserData.username,
+//       email: populatedUserData.email,
+//       provider: populatedUserData.provider,
+//       confirmed: populatedUserData.confirmed,
+//       blocked: populatedUserData.blocked,
+//       createdAt: populatedUserData.createdAt,
+//       updatedAt: populatedUserData.updatedAt,
+//       token: jwt, // Save the token in Zustand
+//       designation, // Save the designation in Zustand
+//     });
+
+//     return {
+//       user: populatedUserData,
+//     };
+//   } catch (error) {
+//     console.error("Error during login API call:", error);
+//     throw error;
+//   }
+// };
+
 export const login = async (email, password) => {
   try {
+    // Initial login request to get JWT token and basic user info
     const response = await apiClient.post("/auth/local", {
       identifier: email,
-      password: password,
+      password,
     });
     const { jwt, user } = response.data;
 
-    saveToken(jwt);
-
+    // Fetch additional user details, including designation
     const populatedResponse = await apiClient.get(
       `/users/${user.id}?populate[user_group][populate][designation]=*`,
       {
@@ -20,21 +64,21 @@ export const login = async (email, password) => {
     );
     const populatedUserData = populatedResponse.data;
 
-    const designation = populatedUserData.user_group?.designation?.Name;
+    // Extract designation if available
+    const designation = populatedUserData.user_group?.designation?.Name || "";
 
-    useAuthStore.setState({
-      user: {
-        id: populatedUserData.id,
-        username: populatedUserData.username,
-        email: populatedUserData.email,
-        provider: populatedUserData.provider,
-        confirmed: populatedUserData.confirmed,
-        blocked: populatedUserData.blocked,
-        createdAt: populatedUserData.createdAt,
-        updatedAt: populatedUserData.updatedAt,
-        token: jwt,
-      },
-      designation: designation || "",
+    // Store the user information and token in the Zustand store
+    useAuthStore.getState().setUser({
+      id: populatedUserData.id,
+      username: populatedUserData.username,
+      email: populatedUserData.email,
+      provider: populatedUserData.provider,
+      confirmed: populatedUserData.confirmed,
+      blocked: populatedUserData.blocked,
+      createdAt: populatedUserData.createdAt,
+      updatedAt: populatedUserData.updatedAt,
+      token: jwt, // Save the token in Zustand
+      designation, // Save the designation in Zustand
     });
 
     return {

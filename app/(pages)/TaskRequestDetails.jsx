@@ -15,6 +15,9 @@ import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { updateExistingSubmission } from "../../src/services/submissionService";
 import { MEDIA_BASE_URL } from "../../src/api/apiClient";
+import { URL } from "../../src/api/apiClient";
+import * as FileSystem from "expo-file-system";
+import * as WebBrowser from "expo-web-browser";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,6 +33,30 @@ const RequestDetails = () => {
   }, [requestData]);
 
   const documents = requestData?.attributes?.proofOfWork?.data || [];
+
+  const handleDownloadImage = async (imageFormats) => {
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    if (Platform.OS === "web") {
+      console.log(imageUrl);
+      // Open the image in a new tab for download on web
+      WebBrowser.openBrowserAsync(imageUrl);
+    } else {
+      // Native download
+      try {
+        const fileUri = FileSystem.documentDirectory + imageFormats?.name;
+        const downloadResumable = FileSystem.createDownloadResumable(
+          imageUrl,
+          fileUri
+        );
+        const { uri } = await downloadResumable.downloadAsync();
+        console.log("Downloaded image:", uri);
+        Alert.alert("Download complete!", `File saved to: ${uri}`);
+      } catch (error) {
+        console.error("Error downloading image:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
+      }
+    }
+  };
 
   const handleStatusChange = async (newStatus) => {
     try {
@@ -57,7 +84,8 @@ const RequestDetails = () => {
     }
   };
 
-  const handleImagePreview = (imageUrl) => {
+  const handleImagePreview = (imageFormats) => {
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
     setSelectedImage(imageUrl);
     setModalVisible(true);
   };
@@ -77,13 +105,13 @@ const RequestDetails = () => {
       </View>
       <View style={styles.documentActions}>
         <TouchableOpacity
-          onPress={() =>
-            handleImagePreview(`${MEDIA_BASE_URL}${doc.attributes.url}`)
-          }
+          onPress={() => handleImagePreview(doc.attributes.formats)}
         >
           <MaterialIcons name="visibility" size={20} color="#666" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => alert("Download initiated")}>
+        <TouchableOpacity
+          onPress={() => handleDownloadImage(doc.attributes.formats)}
+        >
           <Text style={styles.downloadButton}>Download</Text>
         </TouchableOpacity>
       </View>

@@ -145,7 +145,7 @@ const Myactivity = () => {
         for (const task of tasks) {
           try {
             const taskResponse = await apiClient.get(
-              `http://192.168.0.253:1337/api/tasks/${task.id}?populate=*`
+              `https://cmappapi.kivio.in/api/tasks/${task.id}?populate=*`
             );
             allTaskDetails.push(taskResponse.data);
           } catch (error) {

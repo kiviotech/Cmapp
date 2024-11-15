@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Switch,
   Dimensions,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import colors from "../../../constants/colors";
+// import BottomNavigation from "./BottomNavigation";
 import BottomNavigation from "./BottomNavigation ";
 import { logout } from "../../../src/utils/auth";
 import { useNavigation } from "@react-navigation/native";
@@ -20,6 +22,9 @@ const { width, height } = Dimensions.get("window");
 
 const Settings = () => {
   const [isEnabled, setIsEnabled] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState("");
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
   const navigation = useNavigation();
   const clearAuth = useAuthStore((state) => state.clearAuth);
@@ -28,6 +33,25 @@ const Settings = () => {
     logout();
     clearAuth();
     navigation.navigate("(auth)/login");
+    setIsModalVisible(false);
+  };
+
+  const showLogoutPopup = () => {
+    setIsModalVisible(true);
+  };
+
+  const closeLogoutModal = () => {
+    setIsModalVisible(false);
+  };
+
+  const showInfoModal = (title) => {
+    setInfoModalTitle(title);
+    setIsInfoModalVisible(true);
+  };
+
+  const closeInfoModal = () => {
+    setIsInfoModalVisible(false);
+    setInfoModalTitle("");
   };
 
   return (
@@ -38,10 +62,7 @@ const Settings = () => {
         <View
           style={[
             styles.section,
-            {
-              borderBottomWidth: 1,
-              borderBottomColor: "#CACACA",
-            },
+            { borderBottomWidth: 1, borderBottomColor: "#CACACA" },
           ]}
         >
           <Text style={styles.sectionTitle}>Account Settings</Text>
@@ -91,7 +112,10 @@ const Settings = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>More</Text>
 
-          <TouchableOpacity style={styles.item}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => showInfoModal("About us")}
+          >
             <Text style={styles.itemText}>About us</Text>
             <FontAwesome
               style={{ color: colors.blackColor }}
@@ -100,7 +124,10 @@ const Settings = () => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.item}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => showInfoModal("Privacy policy")}
+          >
             <Text style={styles.itemText}>Privacy policy</Text>
             <FontAwesome
               style={{ color: colors.blackColor }}
@@ -109,7 +136,10 @@ const Settings = () => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.item}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => showInfoModal("Terms and conditions")}
+          >
             <Text style={styles.itemText}>Terms and conditions</Text>
             <FontAwesome
               style={{ color: colors.blackColor }}
@@ -117,13 +147,71 @@ const Settings = () => {
               size={15}
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={showLogoutPopup}
+          >
             <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
       <BottomNavigation />
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        animationType="fade"
+        onRequestClose={closeLogoutModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Confirm Logout</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to log out?
+            </Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={closeLogoutModal}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.proceedButton}
+                onPress={handleLogout}
+              >
+                <Text style={styles.proceedButtonText}>Proceed</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Info Modal for "About us", "Privacy policy", "Terms and conditions" */}
+      <Modal
+        transparent={true}
+        visible={isInfoModalVisible}
+        animationType="fade"
+        onRequestClose={closeInfoModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>{infoModalTitle}</Text>
+            <Text style={styles.modalMessage}>
+              This section is currently unavailable. Please try again later.
+            </Text>
+            <TouchableOpacity
+              style={styles.infoModalButton}
+              onPress={closeInfoModal}
+            >
+              <Text style={styles.infoModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -154,7 +242,7 @@ const styles = StyleSheet.create({
     paddingRight: width * 0.05,
   },
   switch: {
-    transform: [{ scale: 1.5 }], // Slightly smaller switch for mobile view
+    transform: [{ scale: 1.5 }],
   },
   sectionTitle: {
     fontSize: width * 0.045,
@@ -184,6 +272,70 @@ const styles = StyleSheet.create({
     fontSize: width * 0.045,
     color: "#FF3B30",
     marginLeft: width * 0.02,
+    fontWeight: "bold",
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: width * 0.8,
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: colors.blackColor,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#666666",
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  cancelButton: {
+    backgroundColor: "#ccc",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  proceedButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  proceedButtonText: {
+    fontSize: 16,
+    color: "white",
+  },
+  infoModalButton: {
+    backgroundColor: "#4a90e2",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  infoModalButtonText: {
+    color: "white",
+    fontSize: 16,
     fontWeight: "bold",
   },
 });

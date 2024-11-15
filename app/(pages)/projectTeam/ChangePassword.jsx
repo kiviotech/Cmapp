@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Ionicons } from "@expo/vector-icons";
-import BottomNavigation from "./BottomNavigation";
-import useAuthStore from "../../../useAuthStore";
 import { useNavigation } from "@react-navigation/native";
+import apiClient from "../../../src/api/apiClient"
+import useAuthStore from "../../../useAuthStore";
 
 const ChangePassword = () => {
   const user = useAuthStore((state) => state.user);
@@ -43,7 +43,7 @@ const ChangePassword = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       newPassword === confirmPassword &&
       validation.minLength &&
@@ -51,8 +51,37 @@ const ChangePassword = () => {
       validation.noSpaces &&
       validation.hasUpperLower
     ) {
-      // Implement password change logic here
-      alert("Password updated successfully!");
+      try {
+        const token = user.jwt; // Assuming the JWT token is stored in the user state
+        const response = await apiClient.post(
+          "/auth/change-password",
+          {
+            currentPassword,
+            password: newPassword,
+            passwordConfirmation: confirmPassword,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Use the correct token from the user state
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          alert("Password updated successfully!");
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+
+          // navigation.goBack();
+        } else {
+          alert(response.data?.error?.message || "Failed to update password.");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while updating the password.");
+      }
     } else {
       alert("Please ensure all requirements are met.");
     }
@@ -196,12 +225,14 @@ const ChangePassword = () => {
             <Text style={styles.buttonText}>Update Password</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.cancelButton}>
+          <TouchableOpacity style={styles.cancelButton}
+            onPress={() => navigation.goBack()}
+          >
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <BottomNavigation />
+      {/* <BottomNavigation /> */}
     </SafeAreaView>
   );
 };
@@ -211,7 +242,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 5,
     marginTop: 20,
-    //  backgroundColor: '#fff',
+    backgroundColor: '#fff',
     width: "100%",
   },
   container: {
@@ -281,6 +312,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 30,
     alignItems: "center",
+    marginLeft: 25,
     marginBottom: 10,
     height: 50,
     width: 150,
