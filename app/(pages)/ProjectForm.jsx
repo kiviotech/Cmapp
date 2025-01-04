@@ -61,14 +61,40 @@ const ProjectForm = () => {
 
     loadProjectManagers();
   }, []);
+  const isDateInFuture = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to the start of the day (midnight)
+    return date >= today;
+  };
+
+  
   const validate = () => {
     const newErrors = {};
-    if (!projectName) newErrors.projectName = "Project name is required";
+    const cleanedProjectName = projectName.trim();
+
+  // Validate project name: should only contain alphabetic characters (A-Z, a-z)
+  if (!cleanedProjectName) {
+    newErrors.projectName = "Project name is required";
+  } else if (!/^[A-Za-z]+$/.test(cleanedProjectName)) {  // Only alphabetic characters allowed
+    newErrors.projectName = "Project name can only contain letters (no numbers or special characters)";
+  }
     if (!projectType) newErrors.projectType = "Project type is required";
     if (!projectAddress)
       newErrors.projectAddress = "Project address is required";
-    if (!startDate) newErrors.startDate = "Start date is required";
-    if (!endDate) newErrors.endDate = "End date is required";
+    if (!startDate) {
+      newErrors.startDate = "Start date is required";
+    } else if (!isDateInFuture(startDate)) {
+      newErrors.startDate = "Start date cannot be in the past";
+    }
+
+    // Validate end date: should be today or in the future, and should be after start date
+    if (!endDate) {
+      newErrors.endDate = "End date is required";
+    } else if (!isDateInFuture(endDate)) {
+      newErrors.endDate = "End date cannot be in the past";
+    } else if (endDate <= startDate) {
+      newErrors.endDate = "End date should be after the start date";
+    }
     if (!projectManagerId)
       newErrors.projectManagerId = "Project manager selection is required";
     setErrors(newErrors);
@@ -342,12 +368,13 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
   },
   dateContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-between",
     marginBottom: height * 0.015,
+   
   },
   dateWrapper: {
-    width: "48%",
+    width: "90%",
   },
   dropdownButton: {
     borderWidth: 1,

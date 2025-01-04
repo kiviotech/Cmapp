@@ -10,6 +10,7 @@ import {
   Modal,
   Image,
   Dimensions,
+  Platform
 } from "react-native";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -35,15 +36,28 @@ const RequestDetails = () => {
   const documents = requestData?.attributes?.proofOfWork?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
-    if (Platform.OS === "web") {
-      console.log(imageUrl);
-      // Open the image in a new tab for download on web
-      WebBrowser.openBrowserAsync(imageUrl);
-    } else {
-      // Native download
-      try {
-        const fileUri = FileSystem.documentDirectory + imageFormats?.name;
+    // Log the imageFormats object to ensure you have the expected properties
+    console.log("Image Formats:", imageFormats);
+  
+    // Check if the medium format exists and get its URL
+    const imageUrl = `${URL}${imageFormats?.medium?.url || ''}`;
+    
+    // If the URL is invalid, show an error message
+    if (!imageUrl || imageUrl === `${URL}`) {
+      console.error("Invalid image URL: ", imageUrl);
+      Alert.alert("Error", "The image URL is invalid.");
+      return;
+    }
+  
+    try {
+      console.log("Generated Image URL:", imageUrl);
+  
+      if (Platform.OS === "web") {
+        // Open the image in the browser for web
+        WebBrowser.openBrowserAsync(imageUrl);
+      } else {
+        // Native download logic for other platforms
+        const fileUri = FileSystem.documentDirectory + imageFormats?.medium?.name;
         const downloadResumable = FileSystem.createDownloadResumable(
           imageUrl,
           fileUri
@@ -51,12 +65,13 @@ const RequestDetails = () => {
         const { uri } = await downloadResumable.downloadAsync();
         console.log("Downloaded image:", uri);
         Alert.alert("Download complete!", `File saved to: ${uri}`);
-      } catch (error) {
-        console.error("Error downloading image:", error);
-        Alert.alert("Error", "An error occurred while downloading the image.");
       }
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      Alert.alert("Error", "An error occurred while downloading the image.");
     }
   };
+  
 
   const handleStatusChange = async (newStatus) => {
     try {

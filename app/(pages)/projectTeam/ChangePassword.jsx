@@ -52,23 +52,27 @@ const ChangePassword = () => {
       validation.hasUpperLower
     ) {
       try {
-        const token = user.jwt; // Assuming the JWT token is stored in the user state
-        const response = await apiClient.post(
-          "/auth/change-password",
-          {
+        const token = user?.token; // Ensure token exists
+        if (!token) {
+          alert("Authentication error. Please log in again.");
+          return;
+        }
+        const response = await fetch("http://localhost:1337/api/auth/change-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
             currentPassword,
             password: newPassword,
             passwordConfirmation: confirmPassword,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // Use the correct token from the user state
-            },
-          }
-        );
+          }),
+        });
+        const result = await response.json();
 
-        if (response.status === 200) {
+
+        if (response.ok) {
           alert("Password updated successfully!");
           setCurrentPassword('');
           setNewPassword('');
@@ -316,7 +320,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     height: 50,
     width: 150,
-    left: 95,
+    left: 55,
   },
   buttonText: {
     color: "#fff",

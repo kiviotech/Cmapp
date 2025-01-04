@@ -108,7 +108,7 @@ const profile = () => {
                 </Text>
                 <Text>
                   Comments:{" "}
-                  {data.attributes.comments}
+                  {data.attributes.comment}
                 </Text>
                 {data.attributes.proofOfWork?.map((file, fileIndex) => {
                   <TouchableOpacity

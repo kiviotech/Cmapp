@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
+
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
 import { fetchStandardTasks } from "../../src/services/standardTaskService";
 import { fetchSubContractors } from "../../src/services/subContractorService";
@@ -38,6 +39,7 @@ const AssignContractors = () => {
   const [dueDate, setDueDate] = useState(null);
   const [assignedContractors, setAssignedContractors] = useState([]);
   const [createdTaskIds, setCreatedTaskIds] = useState([]);
+  const [dateError, setDateError] = useState(null); 
 
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
 
@@ -280,8 +282,37 @@ const AssignContractors = () => {
             zIndexInverse={3000}
           />
 
+          <View style={{width:'91%'}}>
           <Text style={styles.label}>Due Date</Text>
-          <CrossPlatformDatePicker value={dueDate} onChange={setDueDate} />
+          <CrossPlatformDatePicker value={dueDate}
+          
+           onChange={(date) => {
+            try {
+              // Ensure the date is in the future or today
+              const today = new Date();
+              const selectedDate = new Date(date);
+  
+              if (selectedDate >= today) {
+                // If the date is valid (today or in the future), update the state
+                setDueDate(date);
+                setDateError(null); // Clear error message if date is valid
+              } else {
+                // If the date is in the past, show an error message
+                setDateError("Please select a future date.");
+                setDueDate(today); // Optionally reset to today's date
+              }
+            } catch (error) {
+              console.error("Error in date selection:", error);
+            }
+          }}
+          
+           />
+          </View>
+              {dateError && (
+        <Text style={{ color: 'red', marginTop: 8, fontSize: 14 }}>
+          {dateError}
+        </Text>
+      )}
 
           <TouchableOpacity
             style={styles.addButton}
