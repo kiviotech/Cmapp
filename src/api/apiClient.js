@@ -12,18 +12,18 @@ import { Platform } from "react-native";
 // });
 // ==================================================
 const BASE_URL = Platform.select({
-  web: "https://cmappapi.kivio.in/api",
+  web: "http://localhost:1337/api",
   android: "https://cmappapi.kivio.in/api",
   // ios: "http://localhost:1337/api", // For iOS simulator
 });
 
 const URL = Platform.select({
-  web: "https://cmappapi.kivio.in",
+  web: "http://localhost:1337/api",
   android: "https://cmappapi.kivio.in",
 });
 
 const MEDIA_BASE_URL = Platform.select({
-  web: "https://cmappapi.kivio.in/api",
+  web: "http://localhost:1337/api",
   android: "https://cmappapi.kivio.in/api",
   // ios: "http://localhost:1337",
 });

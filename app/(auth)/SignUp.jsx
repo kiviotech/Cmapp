@@ -19,6 +19,8 @@ import { useToast } from "../ToastContext";
 import Toast from "../Toast";
 import { getProjects } from "../../src/api/repositories/projectRepository";
 import { fetchSubContractors } from "../../src/services/subContractorService";
+import { getToken } from "../../src/utils/storage";
+
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -37,25 +39,50 @@ const SignUp = () => {
     email: "",
     password: "",
     socialSecurity: "",
+    subContractor:""
+
   });
   const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const handleChangeText = (field, value) => {
     setForm({ ...form, [field]: value });
+
+    // Trigger validation for that specific field when the text changes
+    const newErrors = validate();
+    setErrors(newErrors);
   };
 
-  const handleFileUploadSuccess = (fileIds) => {
+  const handleFileUploadSuccess = async (fileIds) => {
     setUploadedFileIds(fileIds);
     console.log("Uploaded file IDs:", fileIds);
+  
+    const token = await getToken(); // Assume you have a method to get the auth token
+    console.log("the token consoled",token)
+  
+    try {
+      const response = await uploadFile(fileIds, token); // Pass the token here
+      console.log("File uploaded successfully:", response);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
   };
-
+  
   const validate = () => {
     const newErrors = {};
-    if (!form.name) newErrors.name = "Full name is required";
-    if (!form.email) newErrors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+    if (!form.name) {
+      newErrors.name = "Full name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(form.name)) { // Only letters and spaces
+      newErrors.name = "Full name should only contain letters and spaces";
+    }
+  
+    // Validate email with a stricter regular expression
+    if (!form.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[a-zA-Z][a-zA-Z0-9._%+-]*@gmail\.[a-zA-Z]{2,}$/.test(form.email)) {
+      // This regex is stricter and handles more valid email formats
       newErrors.email = "Enter a valid email address";
+    }
     if (!form.password) newErrors.password = "Password is required";
     else if (form.password.length < 6)
       newErrors.password = "Password must be at least 6 characters long";

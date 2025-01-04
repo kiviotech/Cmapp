@@ -500,6 +500,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  Modal
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
@@ -524,6 +525,9 @@ const UploadProof = ({}) => {
   const [taskStatus, setTaskStatus] = useState("Yet to Upload");
   const [uploadedHistory, setUploadedHistory] = useState([]);
   const [rejectionComment, setRejectionComment] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false); // State for showing toast
+  const [toastMessage, setToastMessage] = useState("");
   const videoRef = useRef(null);
   const uploadIntervals = useRef({});
   const [uploadedFileIds, setUploadedFileIds] = useState([]);
@@ -625,12 +629,19 @@ const UploadProof = ({}) => {
 
       const submission = await createSubmission(fileIds, id);
       console.log("Submission created successfully:", submission);
-
+      setToastMessage("Submission created successfully!");
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 3000);
       setUploadedFiles([]);
       setUploadedFileIds([]);
       setComment("");
     } catch (error) {
       console.error("Error during submission:", error);
+      setToastMessage("Error during submission. Please try again.");
+      setToastVisible(true);
+
+      // Hide the toast after 3 seconds
+      setTimeout(() => setToastVisible(false), 3000);
     }
   };
 
@@ -869,6 +880,31 @@ const UploadProof = ({}) => {
             >
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
+            {toastVisible && (
+        <View style={styles.toast}>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </View>
+      )}
+
+      {/* Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>{toastMessage}</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
           </View>
 
           <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
@@ -1055,5 +1091,44 @@ const styles = StyleSheet.create({
   rejectionText: {
     color: "#FC5275",
     // fontFamily: fonts.WorkSans500,
+  },
+  toast: {
+    position: 'absolute',
+    top: 0, 
+    left: 20,
+    right: 20,
+    backgroundColor: '#28a745', 
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  toastText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: 250,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  closeButton: {
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
   },
 });

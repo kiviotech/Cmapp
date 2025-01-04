@@ -494,13 +494,13 @@ const TaskDetails = () => {
 
           {/* Attachments Section */}
           <View style={styles.showAttachmentsContainer}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => setShowModal(true)}
               style={styles.showAttachments}
             >
               <Image source={icons.showAttachments} />
               <Text style={styles.showAttachmentsText}>Show attachments</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {taskData.attributes.task_status !== "completed" && (
               <TouchableOpacity

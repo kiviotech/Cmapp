@@ -96,10 +96,11 @@ const profile = () => {
             </Text>
           </View>
         </View>
+        {/* {console.log("uploaded comments...",uploadedHistory)} */}
 
         {uploadedHistory.map((history, index) =>
           history.slice(2).map((data) => {
-            console.log(data);
+            console.log(data.attributes.comment);
             return (
               <View style={{ margin: 10 }}>
                 <Text>
@@ -107,7 +108,7 @@ const profile = () => {
                 </Text>
                 <Text>
                   Comments:{" "}
-                  {data.attributes.comments ? data.attributes.comments : "NA"}
+                  {data.attributes.comments}
                 </Text>
                 {data.attributes.proofOfWork?.map((file, fileIndex) => {
                   <TouchableOpacity

@@ -54,12 +54,17 @@ const ChangePasswordScreen = () => {
       validation.hasUpperLower
     ) {
       try {
-        const token = user.jwt; // Assuming the JWT token is stored in the user state
-        const response = await apiClient.post("/auth/change-password", {
+        const token = user?.token; // Ensure token exists
+        if (!token) {
+          alert("Authentication error. Please log in again.");
+          return;
+        }
+  
+        const response = await fetch("http://localhost:1337/api/auth/change-password", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`, // Add the JWT token here
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             currentPassword,
@@ -67,17 +72,16 @@ const ChangePasswordScreen = () => {
             passwordConfirmation: confirmPassword,
           }),
         });
-
+  
         const result = await response.json();
-
+  
         if (response.ok) {
           alert("Password updated successfully!");
-          // Optionally, navigate or reset the password fields here
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
         } else {
-          alert(result.error.message || "Failed to update password.");
+          alert(result?.error?.message || "Failed to update password.");
         }
       } catch (error) {
         console.error("Error:", error);
@@ -87,7 +91,7 @@ const ChangePasswordScreen = () => {
       alert("Please ensure all requirements are met.");
     }
   };
-
+  
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
@@ -221,7 +225,9 @@ const ChangePasswordScreen = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        
+       
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Update Password</Text>
           </TouchableOpacity>
 
@@ -230,6 +236,8 @@ const ChangePasswordScreen = () => {
           >
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
+       
+        
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -314,7 +322,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     height: 50,
     width: 150,
-    left: 95,
+    left: 55,
   },
   buttonText: {
     color: "#fff",
@@ -328,6 +336,7 @@ const styles = StyleSheet.create({
     color: "#888",
     fontWeight: "bold",
   },
+
 });
 
 export default ChangePasswordScreen;

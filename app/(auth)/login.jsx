@@ -136,9 +136,13 @@ const Login = () => {
       //   // Navigate to the dashboard using the router
       // }
       router.replace("/dashboard");
-    } catch (error) {
+    }  catch (error) {
       console.error("Error during login:", error.message);
       // Handle the error, such as displaying an error message to the user
+      setErrors({
+        ...errors,
+        login: "Invalid email or password",
+      });
     }
   };
 
@@ -199,6 +203,11 @@ const Login = () => {
               <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>
+          {errors.login ? (
+  <Text style={styles.errorText}>{errors.login}</Text>
+) : null}
+
+
         </View>
 
         <View style={styles.buttonContainer}>
