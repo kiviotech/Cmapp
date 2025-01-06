@@ -249,7 +249,8 @@ const ContractorScreens = () => (
     <Stack.Screen name="(pages)/contractor/profile" />
     <Stack.Screen name="(pages)/contractor/settings" />
     <Stack.Screen name="(pages)/notification" />
-    <Stack.Screen name="(pages)/contractor/ChangePasswordScreen" />
+    <Stack.Screen name="(pages)/ChangePassword" />
+    {/* <Stack.Screen name="(pages)/contractor/ChangePasswordScreen" /> */}
     <Stack.Screen name="(pages)/contractor/PersonalDetailsScreen" />
     <Stack.Screen name="(pages)/notificationDetails" />
     <Stack.Screen name="(pages)/submissionDetails" />
@@ -261,7 +262,8 @@ const ProjectTeamScreens = () => (
   <>
     <Stack.Screen name="(pages)/projectTeam/ProfileScreen" />
     <Stack.Screen name="(pages)/projectTeam/Notification" />
-    <Stack.Screen name="(pages)/projectTeam/ChangePassword" />
+    <Stack.Screen name="(pages)/ChangePassword" />
+    {/* <Stack.Screen name="(pages)/projectTeam/ChangePassword" /> */}
     <Stack.Screen name="(pages)/projectTeam/PersonalDetails" />
     <Stack.Screen name="(pages)/projectTeam/Myactivity" />
     <Stack.Screen name="(pages)/projectTeam/ProjectDetails" />

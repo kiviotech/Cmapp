@@ -18,13 +18,13 @@ const BASE_URL = Platform.select({
 });
 
 const URL = Platform.select({
-  web: "http://localhost:1337/api",
+  web: "http://localhost:1337",
   android: "https://cmappapi.kivio.in",
 });
 
 const MEDIA_BASE_URL = Platform.select({
-  web: "http://localhost:1337/api",
-  android: "https://cmappapi.kivio.in/api",
+  web: "http://localhost:1337",
+  android: "https://cmappapi.kivio.in",
   // ios: "http://localhost:1337",
 });
 // ====================================================

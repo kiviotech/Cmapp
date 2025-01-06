@@ -84,7 +84,7 @@ const Settings = () => {
           <TouchableOpacity
             style={styles.item}
             onPress={() =>
-              navigation.navigate("(pages)/contractor/ChangePasswordScreen")
+              navigation.navigate("(pages)/ChangePassword")
             }
           >
             <Text style={styles.itemText}>Change password</Text>
