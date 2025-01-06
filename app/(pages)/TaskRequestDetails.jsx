@@ -149,10 +149,7 @@ const RequestDetails = () => {
           <Text style={styles.label}>
             Requester Name:{" "}
             <Text style={styles.textBold}>
-              {
-                requestData.attributes.task.data.attributes.contractor.data
-                  .attributes.username
-              }
+              {requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username}
             </Text>
           </Text>
           <Text style={styles.label}>Requester Detail:</Text>
