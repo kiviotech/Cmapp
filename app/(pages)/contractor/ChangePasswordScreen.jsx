@@ -12,7 +12,7 @@ import Icon from "react-native-vector-icons/MaterialIcons"; // Make sure to inst
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
 import useAuthStore from "../../../useAuthStore";
-import apiClient from "../../../src/api/apiClient"
+import apiClient, { BASE_URL } from "../../../src/api/apiClient"
 
 
 const ChangePasswordScreen = () => {
@@ -60,7 +60,7 @@ const ChangePasswordScreen = () => {
           return;
         }
   
-        const response = await fetch("http://localhost:1337/api/auth/change-password", {
+        const response = await fetch(`${BASE_URL}/auth/change-password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

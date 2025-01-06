@@ -178,7 +178,6 @@ const PersonalDetailsScreen = () => {
 
   const navigation = useNavigation();
   const { user } = useAuthStore();
-  console.log(user);
 
   const validateEmail = (text) => {
     // Simple regex for email validation

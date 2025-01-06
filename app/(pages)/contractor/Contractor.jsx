@@ -201,16 +201,17 @@ const Contractor = () => {
           {/* <Text style={styles.taskStatus}>7 Tasks Pending</Text> */}
           {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
         </View>
-
+        
         {/* Milestone Cards */}
-        {tasks.map((task, index) => (
-          <View key={index} style={styles.milestoneCard}>
+        {tasks.map((task) => (
+          <View key={task.id} style={styles.milestoneCard}>
             <View style={styles.milestoneCard}>
               <Text style={styles.milestoneTitle}>
                 {task.attributes.project.data.attributes.name || "Project"}
               </Text>
               {task.attributes.documents.data?.map((taskdoc) => (
                 <Image
+                  key={taskdoc.id} // Use a unique key for each task document
                   source={{
                     uri:
                       `${MEDIA_BASE_URL}${taskdoc.attributes.url}` ||
@@ -223,8 +224,7 @@ const Contractor = () => {
               <View style={styles.milestoneContent}>
                 <View style={styles.milestoneHeaderContainer}>
                   <Text style={styles.milestoneTitle}>
-                    {task.attributes.standard_task.data.attributes.Name ||
-                      "Task"}
+                    {task.attributes.standard_task.data.attributes.Name || "Task"}
                   </Text>
                   <View style={styles.substituteButton}>
                     <Text style={styles.substituteText}>Substructure</Text>
@@ -256,6 +256,7 @@ const Contractor = () => {
             </View>
           </View>
         ))}
+
 
         {/* <View style={styles.milestoneCard}>
             <Image

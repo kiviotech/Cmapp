@@ -9,6 +9,7 @@ const userEndpoints = {
   getAuthenticatedUserWithPopulate: (fields) => `/users/me?populate=${fields}`,
   resetPassword: "/auth/reset-password",
   forgotPassword: "/auth/forgot-password",
+  changePassowrd: "/auth/change-password",
   updateUserRole: (id) => `/users/${id}/roles`,
   getRoles: "/users-permissions/roles",
   getRoleById: (id) => `/users-permissions/roles/${id}`,

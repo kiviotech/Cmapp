@@ -26,7 +26,7 @@ const Dashboard = () => {
   const { user, token, designation, role, projects, tasks, permissions } =
     useAuthStore();
 
-  console.log("token", token);
+  console.log("token", user.token);
 
   return (
     <SafeAreaView style={styles.container}>

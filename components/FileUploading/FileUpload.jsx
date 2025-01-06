@@ -252,7 +252,7 @@ const FileUpload = ({
       const imgblob = await (await fetch(file.uri)).blob(); // Convert URI to blob
       formData.append("files", imgblob, file.name);
 
-      const response = await fetch("http://localhost:1337/api/upload", {
+      const response = await fetch(`${BASE_URL}/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer f925b1799c9c8f1369e9a6dbe55b29a3d44ff4a9b433a5e79b7aadf1793ee126ff54f964d8d13c48ac70669d3b2d28b804495fd5a58e88c7baecbd9f0bf19c748843e410c2aa73b7b06bdcbe107350eeb9d3348c56f16939c5ca24c57d7eadc25bf3fbf1fff6744edc0d281d1af1288fdfa35046ffc8f6a9df778c05c4488c62`,

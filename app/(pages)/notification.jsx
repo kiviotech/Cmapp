@@ -35,7 +35,7 @@ const UploadProof = () => {
   const [submissionDetail, setSubmissionDetail] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadedHistory, setUploadedHistory] = useState([]);
-  const [notifications, setNotifications] = useState([]); 
+  const [notifications, setNotifications] = useState([]);
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
 
@@ -122,49 +122,47 @@ const UploadProof = () => {
         {isLoading ? (
           <Text>Loading...</Text>
         ) : (
-          tasks.map((task, index) => {
-            return (
-              <View style={{ marginBottom: 20 }} >
-                {task.attributes.submissions.data?.map((history) => (
-                  <TouchableOpacity
-                  key={history.id}
+          tasks.map((task, taskIndex) => (
+            <View key={`task-${taskIndex}`} style={{ marginBottom: 20 }}>
+              {task.attributes.submissions.data?.map((history, historyIndex) => (
+                <TouchableOpacity
+                  key={`history-${history.id}-${historyIndex}`} // Ensure a unique key
                   style={styles.notificationContainer}
-                  // onPress={() =>
-                  //   navigation.navigate("(pages)/notificationDetails", {
-                  //     historyId: history.id, // Pass history.id as a parameter
-                  //   })
-                  // }
+                // Uncomment and adjust the navigation logic if needed
+                // onPress={() =>
+                //   navigation.navigate("(pages)/notificationDetails", {
+                //     historyId: history.id, // Pass history.id as a parameter
+                //   })
+                // }
                 >
-                    <View
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <Image source={icons.file}></Image>
-                      <Text style={styles.pagraph}>
-                        {" "}
-                        Your submission for{" "}
-                        {task.attributes.standard_task.data.attributes.Name} has
-                        been: {history.attributes.status}
-                      </Text>
-                    </View>
-                    <Text>
-                      Comments:{" "}
-                      {history.attributes.comment
-                        ? history.attributes.comment
-                        : "No Comments"}
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Image source={icons.file}></Image>
+                    <Text style={styles.pagraph}>
+                      Your submission for{" "}
+                      {task.attributes.standard_task.data.attributes.Name} has been:{" "}
+                      {history.attributes.status}
                     </Text>
-                  </TouchableOpacity>
-                ))}
-                {/* <CustomButton
-                buttonStyle={styles.deleteButton}
-                textStyle={styles.deleteButtonText}
-                text="Delete"
-                handlePress={() => handleDeleteNotification(data.id)}
-              /> */}
-              </View>
-            );
-          })
+                  </View>
+                  <Text>
+                    Comments:{" "}
+                    {history.attributes.comment
+                      ? history.attributes.comment
+                      : "No Comments"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              {/* Uncomment if you need the delete button */}
+              {/* <CustomButton
+          buttonStyle={styles.deleteButton}
+          textStyle={styles.deleteButtonText}
+          text="Delete"
+          handlePress={() => handleDeleteNotification(data.id)}
+        /> */}
+            </View>
+          ))
         )}
       </ScrollView>
+
       <BottomNavigation />
     </SafeAreaView>
   );

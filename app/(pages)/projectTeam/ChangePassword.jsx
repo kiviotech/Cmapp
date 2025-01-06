@@ -11,7 +11,7 @@ import {
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import apiClient from "../../../src/api/apiClient"
+import apiClient, { BASE_URL } from "../../../src/api/apiClient"
 import useAuthStore from "../../../useAuthStore";
 
 const ChangePassword = () => {
@@ -57,7 +57,7 @@ const ChangePassword = () => {
           alert("Authentication error. Please log in again.");
           return;
         }
-        const response = await fetch("http://localhost:1337/api/auth/change-password", {
+        const response = await fetch(`${BASE_URL}/auth/change-password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
