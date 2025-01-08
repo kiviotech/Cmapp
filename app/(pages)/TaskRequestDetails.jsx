@@ -144,7 +144,7 @@ const RequestDetails = () => {
         console.log("Submission updated successfully:", response.data);
   
         // Update task status
-        if (taskData?.id) {
+        if (newStatus === "approved") {
           const updateTaskData = {
             data: {
               task_status: "completed",

@@ -96,16 +96,19 @@ const profile = () => {
             </Text>
           </View>
         </View>
-        {/* {console.log("uploaded comments...",uploadedHistory)} */}
+        {console.log("uploaded comments...",uploadedHistory)}
 
-        {uploadedHistory.map((history, historyIndex) =>
-          history.slice(2).map((data, dataIndex) => (
+        {uploadedHistory.map((history, historyIndex) => 
+          history.map((data, dataIndex) => (
             <View key={`${historyIndex}-${dataIndex}`} style={{ margin: 10 }}>
               <Text>
-                {historyIndex + 1}. Status: {data.attributes.status}
+                Status: {data?.attributes?.status}
               </Text>
               <Text>
-                Comments: {data.attributes.comment}
+                Comments: {data?.attributes?.comment}
+              </Text>
+              <Text>
+                Submitted on: {data?.attributes?.createdAt?.slice(0,10)}
               </Text>
               {data.attributes.proofOfWork?.map((file, fileIndex) => (
                 <TouchableOpacity

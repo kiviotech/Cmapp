@@ -13,8 +13,9 @@ const UploadedFileHistory = ({ historyData }) => {
       ) : (
         historyData.map((submission, index) => (
           <View key={index} style={styles.submissionContainer}>
-            <Text style={styles.commentText}>Comment: {submission.attributes.comment}</Text>
-            <Text style={styles.statusText}>Status: {submission.attributes.status}</Text>
+            <Text style={styles.commentText}>Comment: {submission?.attributes?.comment}</Text>
+            <Text style={styles.statusText}>Status: {submission?.attributes?.status}</Text>
+            <Text style={styles.statusText}>Submmited on: {submission?.attributes?.createdAt?.slice(0,10)}</Text>
             {submission?.files?.map((file, fileIndex) => (
               <TouchableOpacity
                 key={fileIndex}

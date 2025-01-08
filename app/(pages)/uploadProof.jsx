@@ -49,16 +49,16 @@ const UploadProof = ({}) => {
     const fetchTasks = async () => {
       try {
         const taskData = await fetchTaskById(id);
-        const submissions = taskData.data.attributes.submissions.data;
+        const submissions = taskData?.data?.attributes?.submissions?.data;
 
         if (submissions.length > 0) {
           const latestSubmission = submissions[submissions.length - 1];
-          const status = latestSubmission.attributes.status;
+          const status = latestSubmission?.attributes?.status;
           const taskName =
-            taskData.data.attributes.standard_task.data.attributes.Name;
-          setTaskStatus(status === "pending" ? Pending : status);
+            taskData?.data?.attributes?.standard_task?.data?.attributes?.Name;
+          setTaskStatus(status === "pending" ? status : Pending);
           if (status === "rejected") {
-            setRejectionComment(latestSubmission.attributes.rejectionComment);
+            setRejectionComment(latestSubmission?.attributes?.rejectionComment);
           }
           setUploadedHistory(submissions);
         } else {
