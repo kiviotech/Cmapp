@@ -116,6 +116,7 @@ const ProjectTeam = () => {
           const projectResponse = await fetchProjectDetailsByApproverId(
             projectTeamId
           );
+          console.log('projectResponse', projectResponse.data)
           const projects = projectResponse.data;
 
           const projectsWithTasks = await Promise.all(
@@ -313,11 +314,11 @@ const ProjectTeam = () => {
                 <TouchableOpacity
                   key={project.id}
                   style={[
-                    styles.projectCard,
-                    project.attributes.project_status === "ongoing"
-                      ? { backgroundColor: "#e8f5e9" }
-                      : { backgroundColor: "#ffebee" },
-                  ]}
+                      styles.projectCard,
+                      project.attributes.project_status === "pending"
+                        ? { backgroundColor: "#ffebee" }
+                        : { backgroundColor: "#e8f5e9" },
+                    ]}
                   onPress={() =>
                     navigation.navigate("(pages)/projectTeam/ProjectDetails", {
                       projectData: project,
@@ -346,19 +347,19 @@ const ProjectTeam = () => {
                     <View style={styles.projectStatusContainer}>
                       <Icon
                         name={
-                          project.attributes.update_status === "ahead"
+                          project.attributes.project_status === "ahead"
                             ? "check-circle"
                             : "error"
                         }
                         size={16}
                         color={
-                          project.attributes.update_status === "ahead"
+                          project.attributes.project_status === "ahead"
                             ? "green"
                             : "red"
                         }
                       />
                       <Text style={styles.projectStatusText}>
-                        {project.attributes.update_status === "ahead"
+                        {project.attributes.project_status === "ahead"
                           ? "Ahead of Schedule"
                           : "Delayed"}
                       </Text>
@@ -388,10 +389,7 @@ const ProjectTeam = () => {
             <View>
               <Text style={styles.requestTitle}>
                 Submitted{" "}
-                {
-                  request.attributes.task.data.attributes.project.data
-                    .attributes.name
-                }{" "}
+                {request?.attributes?.task?.data?.attributes?.project?.data?.attributes?.name}{" "}
                 Work
               </Text>
               <Text style={styles.requestDescription}>

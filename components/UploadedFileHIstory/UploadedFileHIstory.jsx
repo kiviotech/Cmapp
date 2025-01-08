@@ -13,8 +13,8 @@ const UploadedFileHistory = ({ historyData }) => {
       ) : (
         historyData.map((submission, index) => (
           <View key={index} style={styles.submissionContainer}>
-            <Text style={styles.commentText}>Comment: {submission.comment}</Text>
-            <Text style={styles.statusText}>Status: {submission.status}</Text>
+            <Text style={styles.commentText}>Comment: {submission.attributes.comment}</Text>
+            <Text style={styles.statusText}>Status: {submission.attributes.status}</Text>
             {submission?.files?.map((file, fileIndex) => (
               <TouchableOpacity
                 key={fileIndex}

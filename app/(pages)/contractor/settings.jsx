@@ -15,8 +15,8 @@ import colors from "../../../constants/colors";
 // import BottomNavigation from "./BottomNavigation";
 import BottomNavigation from "./BottomNavigation ";
 import { logout } from "../../../src/utils/auth";
-import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../../useAuthStore";
+import { useNavigation, useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,14 +26,17 @@ const Settings = () => {
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
-  const navigation = useNavigation();
+  const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const navigation = useNavigation();
+  
 
   const handleLogout = () => {
-    logout();
     clearAuth();
-    navigation.navigate("(auth)/login");
+    router.replace("(auth)/login");
     setIsModalVisible(false);
+    logout();
+
   };
 
   const showLogoutPopup = () => {
@@ -58,7 +61,6 @@ const Settings = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView>
         <Text style={styles.title}>Settings</Text>
-
         <View
           style={[
             styles.section,
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.05,
     paddingTop: width * 0.05,
     backgroundColor: colors.background,
-    paddingBottom: height * 0.05,
+    paddingBottom: 10,
   },
   title: {
     fontSize: width * 0.06,

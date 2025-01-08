@@ -178,6 +178,7 @@ const PersonalDetailsScreen = () => {
 
   const navigation = useNavigation();
   const { user } = useAuthStore();
+  console.log(user);
 
   const validateEmail = (text) => {
     // Simple regex for email validation
@@ -286,7 +287,7 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignSelf: "center",
-    position: "relative",
+    // position: "relative",
     marginBottom: 30,
   },
   profileImage: {

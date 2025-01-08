@@ -24,8 +24,8 @@ const ChangePassword = () => {
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
-  const { user } = useAuthStore();
-  console.log('first', user.token)
+  const { user, token } = useAuthStore();
+  console.log('first', token)
 
   const [validation, setValidation] = useState({
     minLength: false,
@@ -65,7 +65,7 @@ const ChangePassword = () => {
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${user.token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );

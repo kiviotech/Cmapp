@@ -25,6 +25,8 @@ import { useNavigation } from "@react-navigation/native";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import { login } from "../../src/utils/auth";
+import { Modal } from "react-native";
+import useAuthStore from "../../useAuthStore";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 
 NativeWindStyleSheet.setOutput({
@@ -47,6 +49,15 @@ const Login = () => {
     }
   }, [fontsLoaded]);
 
+  const token = useAuthStore((state) => state.token);
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (token) {
+      router.replace("/dashboard");
+    }
+  }, [token, router]);
+
   if (!fontsLoaded) {
     return null;
   }
@@ -63,7 +74,8 @@ const Login = () => {
     otp: "",
   });
 
-  const router = useRouter();
+  const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
+
   const navigation = useNavigation();
 
   const validateField = (name, value) => {
@@ -136,14 +148,15 @@ const Login = () => {
       //   // Navigate to the dashboard using the router
       // }
       router.replace("/dashboard");
-    }  catch (error) {
+    } catch (error) {
       console.error("Error during login:", error.message);
       // Handle the error, such as displaying an error message to the user
-      setErrors({
-        ...errors,
-        login: "Invalid email or password",
-      });
+      setIsErrorModalVisible(true);
     }
+  };
+
+  const closeErrorModal = () => {
+    setIsErrorModalVisible(false);
   };
 
   return (
@@ -199,15 +212,13 @@ const Login = () => {
               </View>
             )}
 
-            <TouchableOpacity activeOpacity={0.8}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate("(auth)/ForgotPassword")}
+            >
               <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>
-          {errors.login ? (
-  <Text style={styles.errorText}>{errors.login}</Text>
-) : null}
-
-
         </View>
 
         <View style={styles.buttonContainer}>
@@ -230,6 +241,28 @@ const Login = () => {
           </Text>
         </View>
       </View>
+
+      <Modal
+        transparent={true}
+        visible={isErrorModalVisible}
+        animationType="fade"
+        onRequestClose={closeErrorModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Invalid Credentials</Text>
+            <Text style={styles.modalMessage}>
+              Please check your email and password and try again.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={closeErrorModal}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -269,7 +302,6 @@ const styles = StyleSheet.create({
   labelText: {
     color: colors.loginSignUpLabelColor,
     fontSize: 13,
-    // fontFamily: fonts.WorkSans400,
     paddingBottom: 2,
   },
   forgotPasswordText: {
@@ -309,5 +341,38 @@ const styles = StyleSheet.create({
   },
   loginField: {
     marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: "white",
   },
 });

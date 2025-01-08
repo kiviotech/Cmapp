@@ -15,6 +15,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import useProjectStore from "../../../projectStore";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { icons } from "../../../constants";
+import { fetchProjectById } from "../../../src/services/projectService";
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,7 +24,6 @@ const ProjectDetails = () => {
   const route = useRoute();
   const [tasks, setTasks] = useState([]);
   const { projectId, projectData, contractorId } = route.params || {};
-  console.log(projectData.attributes)
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
 
@@ -33,7 +33,6 @@ const ProjectDetails = () => {
         try {
           const allTasks = [];
           const taskData = await getTaskByContractorId(projectId, contractorId);
-          console.log('taskdata', ...taskData.data.data)
           allTasks.push(...taskData.data.data); // Accumulate tasks for each project
 
           setTasks(allTasks); // Set tasks state with accumulated tasks
@@ -57,12 +56,13 @@ const ProjectDetails = () => {
   }, []);
   
   useEffect(() => {
-    if (route.params?.projectData) {
-      setProjectDetails(route.params.projectDetails);
+    const getProjectDetails = async () => {
+      const response = await fetchProjectById(projectId);
+      console.log('resp', response.data)
+      setProjectDetails(response.data)
     }
-  }, [route.params?.projectData, setProjectDetails]);
-
-  const project = projectDetails?.attributes || {};
+    getProjectDetails();
+  },[])
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -77,7 +77,7 @@ const ProjectDetails = () => {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.projectNameContainer}>
           <Text style={styles.projectName}>
-            {projectData.attributes.name || "Project Name"}
+            {projectDetails?.attributes?.name || "Project Name"}
           </Text>
         </View>
 
@@ -85,20 +85,20 @@ const ProjectDetails = () => {
           <FontAwesome name="calendar" size={24} color="#F5C37F" />
           <View style={styles.dateContainer}>
             <Text style={styles.dueDateText}>Due Date</Text>
-            <Text style={styles.dateText}>{projectData.attributes.end_date || "N/A"}</Text>
+            <Text style={styles.dateText}>{projectDetails?.attributes?.end_date || "N/A"}</Text>
           </View>
         </View>
 
         <Text style={styles.label}>
           Project Manager:{" "}
           <Text style={styles.text}>
-            {project.user?.data?.attributes?.username || "N/A"}
+            {projectDetails.approver?.data?.attributes?.username || "N/A"}
           </Text>
         </Text>
 
         <Text style={styles.label}>Project Details:</Text>
         <Text style={styles.projectDescription}>
-          {projectData.attributes.description || "No project description provided."}
+          {projectDetails.attributes.description || "No project description provided."}
         </Text>
 
         <View style={styles.progressContainer}>

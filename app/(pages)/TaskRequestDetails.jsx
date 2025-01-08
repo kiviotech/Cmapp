@@ -10,7 +10,7 @@ import {
   Modal,
   Image,
   Dimensions,
-  Platform
+  Platform,
 } from "react-native";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -25,7 +25,7 @@ const { width, height } = Dimensions.get("window");
 const RequestDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { requestData } = route.params || {};
+  const { requestData, source } = route.params || {};
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -36,42 +36,91 @@ const RequestDetails = () => {
   const documents = requestData?.attributes?.proofOfWork?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    // Log the imageFormats object to ensure you have the expected properties
-    console.log("Image Formats:", imageFormats);
-  
-    // Check if the medium format exists and get its URL
-    const imageUrl = `${URL}${imageFormats?.medium?.url || ''}`;
-    
-    // If the URL is invalid, show an error message
-    if (!imageUrl || imageUrl === `${URL}`) {
-      console.error("Invalid image URL: ", imageUrl);
-      Alert.alert("Error", "The image URL is invalid.");
-      return;
-    }
-  
-    try {
-      console.log("Generated Image URL:", imageUrl);
-  
-      if (Platform.OS === "web") {
-        // Open the image in the browser for web
-        WebBrowser.openBrowserAsync(imageUrl);
-      } else {
-        // Native download logic for other platforms
-        const fileUri = FileSystem.documentDirectory + imageFormats?.medium?.name;
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const filename = imageFormats?.name || "download.png";
+
+    if (Platform.OS === "web") {
+      try {
+        // Fetch the image first
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        // Create object URL for the blob
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create an anchor element
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+
+        // Programmatically click the link
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error("Error downloading on web:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
+      }
+    } else {
+      // For Android/iOS
+      try {
+        const fileUri = `${FileSystem.documentDirectory}${filename}`;
+
         const downloadResumable = FileSystem.createDownloadResumable(
           imageUrl,
-          fileUri
+          fileUri,
+          {},
+          (downloadProgress) => {
+            const progress =
+              downloadProgress.totalBytesWritten /
+              downloadProgress.totalBytesExpectedToWrite;
+            console.log(`Download progress: ${progress * 100}%`);
+          }
         );
+
         const { uri } = await downloadResumable.downloadAsync();
-        console.log("Downloaded image:", uri);
-        Alert.alert("Download complete!", `File saved to: ${uri}`);
+
+        if (Platform.OS === "android") {
+          // Save to downloads folder on Android
+          const permissions =
+            await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+          if (permissions.granted) {
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              filename,
+              "image/png"
+            ).then(async (createdUri) => {
+              await FileSystem.writeAsStringAsync(createdUri, base64, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              Alert.alert(
+                "Success",
+                "File downloaded successfully to Downloads folder!"
+              );
+            });
+          } else {
+            Alert.alert(
+              "Permission denied",
+              "Unable to save file to Downloads folder"
+            );
+          }
+        } else {
+          // For iOS
+          Alert.alert("Download Complete", File `saved to: ${uri}`);
+        }
+      } catch (error) {
+        console.error("Error downloading image:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
       }
-    } catch (error) {
-      console.error("Error downloading image:", error);
-      Alert.alert("Error", "An error occurred while downloading the image.");
     }
   };
-  
 
   const handleStatusChange = async (newStatus) => {
     try {
@@ -88,7 +137,7 @@ const RequestDetails = () => {
         requestData.id,
         updatedData
       );
-      Alert.alert("Success", `Request ${newStatus} successfully!`);
+      Alert.alert("Success", Request `${newStatus} successfully!`);
       navigation.goBack();
     } catch (error) {
       console.error("Error updating request:", error);
@@ -143,13 +192,20 @@ const RequestDetails = () => {
             color="black"
             onPress={() => navigation.goBack()}
           />
-          <Text style={styles.headerText}>Request Details</Text>
+          <Text style={styles.headerText}>
+            {source === "notification"
+              ? "Notification Details"
+              : "Request Details"}
+          </Text>
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.label}>
             Requester Name:{" "}
             <Text style={styles.textBold}>
-              {requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username}
+              {
+                requestData.attributes.task.data.attributes.contractor.data
+                  .attributes.username
+              }
             </Text>
           </Text>
           <Text style={styles.label}>Requester Detail:</Text>

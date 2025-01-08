@@ -1,92 +1,3 @@
-// import React, { useState } from "react";
-// import {
-//   View,
-//   Text,
-//   TouchableOpacity,
-//   Platform,
-//   StyleSheet,
-// } from "react-native";
-// import DateTimePicker from "@react-native-community/datetimepicker";
-
-// const CrossPlatformDatePicker = ({ label, value, onChange }) => {
-//   const [showPicker, setShowPicker] = useState(false);
-
-//   const handleDateChange = (event, selectedDate) => {
-//     setShowPicker(false);
-//     if (selectedDate) {
-//       onChange(selectedDate);
-//     }
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.label}>{label}</Text>
-//       {Platform.OS === "web" ? (
-//         <input
-//           type="date"
-//           value={value ? value.toISOString().split("T")[0] : ""}
-//           onChange={(e) => onChange(new Date(e.target.value))}
-//           style={styles.webDatePicker}
-//         />
-//       ) : (
-//         <>
-//           <TouchableOpacity
-//             onPress={() => setShowPicker(true)}
-//             style={styles.dateButton}
-//           >
-//             <Text style={styles.dateText}>
-//               {value ? value.toLocaleDateString() : "Select Date"}
-//             </Text>
-//           </TouchableOpacity>
-//           {showPicker && (
-//             <DateTimePicker
-//               value={value || new Date()}
-//               mode="date"
-//               display="default"
-//               onChange={handleDateChange}
-//               minimumDate={new Date(2000, 0, 1)}
-//               maximumDate={new Date(2100, 11, 31)}
-//             />
-//           )}
-//         </>
-//       )}
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     marginBottom: 20,
-//   },
-//   label: {
-//     fontSize: 16,
-//     color: "#333",
-//     marginBottom: 8,
-//   },
-//   dateButton: {
-//     padding: 12,
-//     backgroundColor: "#f0f0f0",
-//     borderColor: "#ccc",
-//     borderWidth: 1,
-//     borderRadius: 4,
-//   },
-//   dateText: {
-//     fontSize: 16,
-//     color: "#333",
-//   },
-//   webDatePicker: {
-//     padding: 12,
-//     fontSize: 16,
-//     borderRadius: 4,
-//     borderColor: "#ccc",
-//     borderWidth: 1,
-//     width: "100%",
-//   },
-// });
-
-// export default CrossPlatformDatePicker;
-
-// CrossPlatformDatePicker.js
 import React, { useState } from "react";
 import {
   View,
@@ -98,8 +9,14 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { MaterialIcons } from "@expo/vector-icons";
 
-const CrossPlatformDatePicker = ({ label, value, onChange }) => {
+const CrossPlatformDatePicker = ({ label, value, onChange, minDate }) => {
   const [showPicker, setShowPicker] = useState(false);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const effectiveMinDate = minDate || today;
+
+  const isValidDate = (date) => date instanceof Date && !isNaN(date.getTime());
 
   const handleDateChange = (event, selectedDate) => {
     setShowPicker(false);
@@ -108,6 +25,9 @@ const CrossPlatformDatePicker = ({ label, value, onChange }) => {
     }
   };
 
+  const formatDateForWeb = (date) =>
+    isValidDate(date) ? date.toISOString().split("T")[0] : "";
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
@@ -115,8 +35,14 @@ const CrossPlatformDatePicker = ({ label, value, onChange }) => {
       {Platform.OS === "web" ? (
         <input
           type="date"
-          value={value ? value.toISOString().split("T")[0] : ""}
-          onChange={(e) => onChange(new Date(e.target.value))}
+          value={formatDateForWeb(value)}
+          onChange={(e) => {
+            const selectedDate = new Date(e.target.value);
+            if (isValidDate(selectedDate)) {
+              onChange(selectedDate);
+            }
+          }}
+          min={formatDateForWeb(effectiveMinDate)}
           style={styles.webDatePicker}
         />
       ) : (
@@ -127,16 +53,18 @@ const CrossPlatformDatePicker = ({ label, value, onChange }) => {
           >
             <MaterialIcons name="calendar-today" size={24} color="#1E88E5" />
             <Text style={styles.dateText}>
-              {value ? value.toLocaleDateString() : "Select Date"}
+              {isValidDate(value)
+                ? value.toLocaleDateString()
+                : "Select Date"}
             </Text>
           </TouchableOpacity>
           {showPicker && (
             <DateTimePicker
-              value={value || new Date()}
+              value={isValidDate(value) ? value : new Date()} // Default to current date
               mode="date"
-              display="calendar" // Calendar display for Android/iOS
+              display="calendar"
               onChange={handleDateChange}
-              minimumDate={new Date(2000, 0, 1)}
+              minimumDate={effectiveMinDate}
               maximumDate={new Date(2100, 11, 31)}
             />
           )}
@@ -181,13 +109,11 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     borderRadius: 8,
-    borderColor: "#1E88E5",
+    borderColor: "#000",
     borderWidth: 1,
     backgroundColor: "#ffffff",
     color: "#333",
     width: "100%",
-    outline: "none",
-    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
   },
 });
 

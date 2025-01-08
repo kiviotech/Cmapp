@@ -123,7 +123,8 @@ const UploadProof = () => {
           <Text>Loading...</Text>
         ) : (
           tasks.map((task, taskIndex) => (
-            <View key={`task-${taskIndex}`} style={{ marginBottom: 20 }}>
+            <View key={`task-${taskIndex}`} style={{ marginHorizontal: 20 }}>
+              <Text style={styles.taskTitle}>{task?.attributes?.standard_task?.data?.attributes?.Name}</Text>
               {task.attributes.submissions.data?.map((history, historyIndex) => (
                 <TouchableOpacity
                   key={`history-${history.id}-${historyIndex}`} // Ensure a unique key
@@ -202,9 +203,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margin: 10,
   },
+  taskTitle: {
+    fontSize: 20,
+    marginVertical: 10
+  },
   notificationContainer: {
-    marginTop: 20,
-    // marginHorizontal: 10,
+    marginVertical: 10,
     borderWidth: 1,
     borderColor: colors.borderColor,
     borderRadius: 10,

@@ -75,10 +75,8 @@ const Myactivity = () => {
   useEffect(() => {
     const fetchProjectTeamId = async () => {
       if (user && user.id) {
-        console.log('user',user.id)
         try {
           const response = await fetchProjectTeamIdByUserId(user.id);
-          console.log('resp', resp)
           const [{ id }] = response.data;
           setProjectTeamId(id);
         } catch (error) {
@@ -272,7 +270,7 @@ const Myactivity = () => {
           <Image style={styles.userImage} source={icons.userProfile} />
         </View>
         <View style={styles.profileDetailSection}>
-          <Text style={styles.userName}>{user.username}</Text>
+          <Text style={styles.userName}>{user?.username}</Text>
           <Text style={[styles.userName, { color: colors.primary }]}>
             {designation}
           </Text>
