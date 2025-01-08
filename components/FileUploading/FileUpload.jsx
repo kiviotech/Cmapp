@@ -14,6 +14,7 @@ const FileUpload = ({
   uploadedFiles,
   setUploadedFiles,
   onFileUploadSuccess,
+  message,
 }) => {
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -244,7 +245,7 @@ const FileUpload = ({
     <View style={styles.container}>
       <View style={styles.uploadContainer}>
         <Text style={styles.uploadText}>
-          Upload your proof of work in .png or .jpeg format
+          {message ? message : 'Upload your proof of work in .png or .jpeg format'}
         </Text>
 
         {/* Browse Files Button */}
