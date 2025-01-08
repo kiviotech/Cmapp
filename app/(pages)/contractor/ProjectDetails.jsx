@@ -92,13 +92,13 @@ const ProjectDetails = () => {
         <Text style={styles.label}>
           Project Manager:{" "}
           <Text style={styles.text}>
-            {projectDetails.approver?.data?.attributes?.username || "N/A"}
+            {projectDetails?.approver?.data?.attributes?.username || "N/A"}
           </Text>
         </Text>
 
         <Text style={styles.label}>Project Details:</Text>
         <Text style={styles.projectDescription}>
-          {projectDetails.attributes.description || "No project description provided."}
+          {projectDetails?.attributes?.description || "No project description provided."}
         </Text>
 
         <View style={styles.progressContainer}>

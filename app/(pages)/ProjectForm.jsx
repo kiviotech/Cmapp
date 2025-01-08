@@ -90,6 +90,13 @@ const ProjectForm = () => {
   const validate = () => {
     const newErrors = {};
     if (!projectName) newErrors.projectName = "Project name is required";
+  else if (/^\d+$/.test(projectName)) {
+    // This condition checks if the projectName is only numbers
+    newErrors.projectName = "Project name cannot be only numbers";
+  } else if (!/^[a-zA-Z0-9\s]*$/.test(projectName)) {
+    // This regex allows letters, numbers, and spaces
+    newErrors.projectName = "Project name must be alphanumeric (letters, numbers, or spaces)";
+  }
     if (!projectType) newErrors.projectType = "Project type is required";
     if (!projectAddress)
       newErrors.projectAddress = "Project address is required";

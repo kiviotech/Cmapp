@@ -89,7 +89,6 @@ const SignUp = () => {
     try {
       const { name, email, password, socialSecurity } = form;
       const users = await fetchUsers(); 
-      console.log("users",users)
 
        // Check if the email already exists in the system
       const emailExists = users.some((user) => user.email === email);
@@ -101,8 +100,6 @@ const SignUp = () => {
         }));
         return;
       }
-      console.log("users in strapi",users)
-
       console.log("Data being sent to signup:", {
         name,
         email,

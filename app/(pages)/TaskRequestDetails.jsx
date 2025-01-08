@@ -19,6 +19,7 @@ import { MEDIA_BASE_URL } from "../../src/api/apiClient";
 import { URL } from "../../src/api/apiClient";
 import * as FileSystem from "expo-file-system";
 import * as WebBrowser from "expo-web-browser";
+import { updateTask } from "../../src/services/taskService";
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,11 +27,13 @@ const RequestDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { requestData, source } = route.params || {};
+  const [taskData, setTaskData] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
-    console.log("Request Details:", requestData);
+    setTaskData(requestData?.attributes?.task?.data)
+    console.log('task Data', requestData.attributes?.task?.data)
   }, [requestData]);
 
   const documents = requestData?.attributes?.proofOfWork?.data || [];
@@ -124,6 +127,7 @@ const RequestDetails = () => {
 
   const handleStatusChange = async (newStatus) => {
     try {
+      // Update submission status
       const updatedData = {
         data: {
           comment: requestData.attributes.comment,
@@ -133,20 +137,44 @@ const RequestDetails = () => {
           task: requestData.attributes.task?.data?.id,
         },
       };
-      const response = await updateExistingSubmission(
-        requestData.id,
-        updatedData
-      );
-      Alert.alert("Success", Request `${newStatus} successfully!`);
-      navigation.goBack();
+  
+      const response = await updateExistingSubmission(requestData.id, updatedData);
+  
+      if (response.data) {
+        console.log("Submission updated successfully:", response.data);
+  
+        // Update task status
+        if (taskData?.id) {
+          const updateTaskData = {
+            data: {
+              task_status: "completed",
+            },
+          };
+  
+          const taskResp = await updateTask(taskData.id, updateTaskData);
+  
+          if (taskResp.data) {
+            console.log("Task status updated successfully:", taskResp.data);
+            Alert.alert("Success", `Request ${newStatus} and task status updated successfully!`);
+          } else {
+            console.error("Failed to update task status:", taskResp);
+            Alert.alert("Warning", "Request updated, but task status update failed.");
+          }
+        } else {
+          console.warn("Task data is missing or invalid.");
+          Alert.alert("Warning", "Request updated, but task data is missing.");
+        }
+  
+        // Navigate back
+        navigation.goBack();
+      }
     } catch (error) {
-      console.error("Error updating request:", error);
-      Alert.alert(
-        "Error",
-        "An error occurred while updating the request status."
-      );
+      console.error("Error updating request or task:", error);
+      Alert.alert("Error", "An error occurred while updating the request or task.");
     }
   };
+
+  
 
   const handleImagePreview = (imageFormats) => {
     const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
@@ -203,8 +231,7 @@ const RequestDetails = () => {
             Requester Name:{" "}
             <Text style={styles.textBold}>
               {
-                requestData.attributes.task.data.attributes.contractor.data
-                  .attributes.username
+                requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username
               }
             </Text>
           </Text>

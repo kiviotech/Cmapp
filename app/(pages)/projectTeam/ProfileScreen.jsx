@@ -89,7 +89,7 @@ const ProfileScreen = () => {
           <ProfileItem
             title="Change password"
             onPress={() =>
-              navigation.navigate("(pages)/projectTeam/ChangePassword")
+              navigation.navigate("(pages)/ChangePassword")
             }
           />
           <ProfileItem

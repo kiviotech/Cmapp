@@ -76,7 +76,7 @@ const CrossPlatformDatePicker = ({ label, value, onChange, minDate }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   label: {
     fontSize: 18,

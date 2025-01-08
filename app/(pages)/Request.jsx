@@ -52,7 +52,7 @@ const RequestsScreen = () => {
     <View style={styles.requestContainer}>
       {item.attributes.email ? (
         <Text style={styles.requestTitle}>
-          New Registration Request from {item.attributes.username}
+          New Registration Request from {item?.attributes?.username}
         </Text>
       ) : (
         <Text style={styles.requestTitle}>
@@ -63,7 +63,7 @@ const RequestsScreen = () => {
         </Text>
       )}
       {item.attributes.comment && (
-        <Text style={styles.requestDescription}>{item.attributes.comment}</Text>
+        <Text style={styles.requestDescription}>{item?.attributes?.comment}</Text>
       )}
       <Text
         style={[
@@ -76,7 +76,7 @@ const RequestsScreen = () => {
           ],
         ]}
       >
-        Status: {item.attributes.status}
+        Status: {item?.attributes?.status}
       </Text>
       <TouchableOpacity
         onPress={() =>

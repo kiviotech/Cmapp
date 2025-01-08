@@ -163,7 +163,7 @@ const AssignContractors = () => {
     }
   }, [projectDataId]);
 
-  
+
   const validateFields = () => {
     let errors = {};
     if (!contractorTypeValue) {
@@ -338,26 +338,26 @@ const AssignContractors = () => {
             zIndex={6000}
             zIndexInverse={1000}
           />
-           {validationErrors.contractorType && (
+          {validationErrors.contractorType && (
             <Text style={styles.errorText}>{validationErrors.contractorType}</Text>
           )}
 
           <Text style={styles.label}>Contractor</Text>
           {/* <TouchableOpacity onPress={handleContractorPress} activeOpacity={1}> */}
-            <DropDownPicker
-              open={contractorOpen}
-              value={contractorValue}
-              items={contractorItems}
-              setOpen={setContractorOpen}
-              setValue={setContractorValue}
-              setItems={setContractorItems}
-              placeholder="Select Contractor"
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownContainer}
-              disabled={!contractorTypeValue}
-              zIndex={4000}
-              zIndexInverse={1000}
-            />
+          <DropDownPicker
+            open={contractorOpen}
+            value={contractorValue}
+            items={contractorItems}
+            setOpen={setContractorOpen}
+            setValue={setContractorValue}
+            setItems={setContractorItems}
+            placeholder="Select Contractor"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+            disabled={!contractorTypeValue}
+            zIndex={4000}
+            zIndexInverse={1000}
+          />
           {/* </TouchableOpacity> */}
           {validationErrors.contractor && (
             <Text style={styles.errorText}>{validationErrors.contractor}</Text>
@@ -377,7 +377,7 @@ const AssignContractors = () => {
             zIndex={2000}
             zIndexInverse={3000}
           />
-            {validationErrors.task && (
+          {validationErrors.task && (
             <Text style={styles.errorText}>{validationErrors.task}</Text>
           )}
 
@@ -392,9 +392,9 @@ const AssignContractors = () => {
           </View>
 
           {validationErrors.dueDate && (
-        <Text style={styles.errorText}>
-          {validationErrors.dueDate}
-        </Text>
+            <Text style={styles.errorText}>
+              {validationErrors.dueDate}
+            </Text>
           )}
 
           <TouchableOpacity
@@ -424,7 +424,7 @@ const AssignContractors = () => {
               </Text>
             </View>
           ))}
-
+          
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   dropdown: {
-    marginBottom: 15,
+    marginBottom: 5,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 5,
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: "flex-end",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   addButtonText: {
     color: "#007BFF",
@@ -540,7 +540,6 @@ const styles = StyleSheet.create({
   },
   datePickerContainer: {
     marginRight: 20,
-    marginBottom: 15,
   },
   finishButtonDisabled: {
     backgroundColor: "#cccccc",
