@@ -10,7 +10,7 @@ import {
   Modal,
   Image,
   Dimensions,
-  Platform
+  Platform,
 } from "react-native";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -19,62 +19,115 @@ import { MEDIA_BASE_URL } from "../../src/api/apiClient";
 import { URL } from "../../src/api/apiClient";
 import * as FileSystem from "expo-file-system";
 import * as WebBrowser from "expo-web-browser";
+import { updateTask } from "../../src/services/taskService";
 
 const { width, height } = Dimensions.get("window");
 
 const RequestDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { requestData } = route.params || {};
+  const { requestData, source } = route.params || {};
+  const [taskData, setTaskData] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
-    console.log("Request Details:", requestData);
+    setTaskData(requestData?.attributes?.task?.data)
+    console.log('task Data', requestData.attributes?.task?.data)
   }, [requestData]);
 
   const documents = requestData?.attributes?.proofOfWork?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    // Log the imageFormats object to ensure you have the expected properties
-    console.log("Image Formats:", imageFormats);
-  
-    // Check if the medium format exists and get its URL
-    const imageUrl = `${URL}${imageFormats?.medium?.url || ''}`;
-    
-    // If the URL is invalid, show an error message
-    if (!imageUrl || imageUrl === `${URL}`) {
-      console.error("Invalid image URL: ", imageUrl);
-      Alert.alert("Error", "The image URL is invalid.");
-      return;
-    }
-  
-    try {
-      console.log("Generated Image URL:", imageUrl);
-  
-      if (Platform.OS === "web") {
-        // Open the image in the browser for web
-        WebBrowser.openBrowserAsync(imageUrl);
-      } else {
-        // Native download logic for other platforms
-        const fileUri = FileSystem.documentDirectory + imageFormats?.medium?.name;
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const filename = imageFormats?.name || "download.png";
+
+    if (Platform.OS === "web") {
+      try {
+        // Fetch the image first
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        // Create object URL for the blob
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create an anchor element
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+
+        // Programmatically click the link
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error("Error downloading on web:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
+      }
+    } else {
+      // For Android/iOS
+      try {
+        const fileUri = `${FileSystem.documentDirectory}${filename}`;
+
         const downloadResumable = FileSystem.createDownloadResumable(
           imageUrl,
-          fileUri
+          fileUri,
+          {},
+          (downloadProgress) => {
+            const progress =
+              downloadProgress.totalBytesWritten /
+              downloadProgress.totalBytesExpectedToWrite;
+            console.log(`Download progress: ${progress * 100}%`);
+          }
         );
+
         const { uri } = await downloadResumable.downloadAsync();
-        console.log("Downloaded image:", uri);
-        Alert.alert("Download complete!", `File saved to: ${uri}`);
+
+        if (Platform.OS === "android") {
+          // Save to downloads folder on Android
+          const permissions =
+            await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+          if (permissions.granted) {
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              filename,
+              "image/png"
+            ).then(async (createdUri) => {
+              await FileSystem.writeAsStringAsync(createdUri, base64, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              Alert.alert(
+                "Success",
+                "File downloaded successfully to Downloads folder!"
+              );
+            });
+          } else {
+            Alert.alert(
+              "Permission denied",
+              "Unable to save file to Downloads folder"
+            );
+          }
+        } else {
+          // For iOS
+          Alert.alert("Download Complete", File `saved to: ${uri}`);
+        }
+      } catch (error) {
+        console.error("Error downloading image:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
       }
-    } catch (error) {
-      console.error("Error downloading image:", error);
-      Alert.alert("Error", "An error occurred while downloading the image.");
     }
   };
-  
 
   const handleStatusChange = async (newStatus) => {
     try {
+      // Update submission status
       const updatedData = {
         data: {
           comment: requestData.attributes.comment,
@@ -84,20 +137,44 @@ const RequestDetails = () => {
           task: requestData.attributes.task?.data?.id,
         },
       };
-      const response = await updateExistingSubmission(
-        requestData.id,
-        updatedData
-      );
-      Alert.alert("Success", `Request ${newStatus} successfully!`);
-      navigation.goBack();
+  
+      const response = await updateExistingSubmission(requestData.id, updatedData);
+  
+      if (response.data) {
+        console.log("Submission updated successfully:", response.data);
+  
+        // Update task status
+        if (newStatus === "approved") {
+          const updateTaskData = {
+            data: {
+              task_status: "completed",
+            },
+          };
+  
+          const taskResp = await updateTask(taskData.id, updateTaskData);
+  
+          if (taskResp.data) {
+            console.log("Task status updated successfully:", taskResp.data);
+            Alert.alert("Success", `Request ${newStatus} and task status updated successfully!`);
+          } else {
+            console.error("Failed to update task status:", taskResp);
+            Alert.alert("Warning", "Request updated, but task status update failed.");
+          }
+        } else {
+          console.warn("Task data is missing or invalid.");
+          Alert.alert("Warning", "Request updated, but task data is missing.");
+        }
+  
+        // Navigate back
+        navigation.goBack();
+      }
     } catch (error) {
-      console.error("Error updating request:", error);
-      Alert.alert(
-        "Error",
-        "An error occurred while updating the request status."
-      );
+      console.error("Error updating request or task:", error);
+      Alert.alert("Error", "An error occurred while updating the request or task.");
     }
   };
+
+  
 
   const handleImagePreview = (imageFormats) => {
     const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
@@ -143,15 +220,18 @@ const RequestDetails = () => {
             color="black"
             onPress={() => navigation.goBack()}
           />
-          <Text style={styles.headerText}>Request Details</Text>
+          <Text style={styles.headerText}>
+            {source === "notification"
+              ? "Notification Details"
+              : "Request Details"}
+          </Text>
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.label}>
             Requester Name:{" "}
             <Text style={styles.textBold}>
               {
-                requestData.attributes.task.data.attributes.contractor.data
-                  .attributes.username
+                requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username
               }
             </Text>
           </Text>

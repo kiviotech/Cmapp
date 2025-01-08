@@ -93,8 +93,6 @@ const Contractor = () => {
     loadContractorData();
   }, []);
 
-  // console.log('tasks', tasks[0].attributes.documents.data[0].attributes)
-
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container}>
@@ -203,59 +201,68 @@ const Contractor = () => {
         </View>
 
         {/* Milestone Cards */}
-        {tasks.map((task, index) => (
-          <View key={index} style={styles.milestoneCard}>
-            <View style={styles.milestoneCard}>
-              <Text style={styles.milestoneTitle}>
-                {task.attributes.project.data.attributes.name || "Project"}
-              </Text>
-              {task.attributes.documents.data?.map((taskdoc) => (
-                <Image
-                  source={{
-                    uri:
-                      `${MEDIA_BASE_URL}${taskdoc.attributes.url}` ||
-                      "https://via.placeholder.com/150",
-                  }}
-                  style={styles.milestoneImage}
-                />
-              ))}
-
-              <View style={styles.milestoneContent}>
-                <View style={styles.milestoneHeaderContainer}>
-                  <Text style={styles.milestoneTitle}>
-                    {task.attributes.standard_task.data.attributes.Name ||
-                      "Task"}
-                  </Text>
-                  <View style={styles.substituteButton}>
-                    <Text style={styles.substituteText}>Substructure</Text>
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <View key={task.id} style={styles.milestoneCard}>
+              <View style={styles.milestoneCard}>
+                <Text style={styles.milestoneTitle}>
+                  {task.attributes.project.data.attributes.name || "Project"}
+                </Text>
+                {task?.attributes?.documents?.data?.map((taskdoc) => {
+                  const taskImageUrl = taskdoc?.attributes?.url
+                                      ? `${MEDIA_BASE_URL}${taskdoc?.attributes?.url}`
+                                      : "https://via.placeholder.com/150";
+                  return (
+                    <Image
+                      key={taskdoc.id} // Use a unique key for each task document
+                      source={{ uri: taskImageUrl }}
+                      style={styles.milestoneImage}
+                    />
+                  )
+                }
+                )}
+                <View style={styles.milestoneContent}>
+                  <View style={styles.milestoneHeaderContainer}>
+                    <Text style={styles.milestoneTitle}>
+                      {task.attributes.standard_task.data.attributes.Name || "Task"}
+                    </Text>
+                    <View style={styles.substituteButton}>
+                      <Text style={styles.substituteText}>Substructure</Text>
+                    </View>
                   </View>
-                </View>
-                <Text style={styles.milestoneDescription}>
-                  {task.attributes.standard_task.data.attributes.Description ||
-                    "No description available for this task."}
-                </Text>
-                <View style={styles.divider} />
-                <Text style={styles.deadlineText}>
-                  <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                  {task.attributes.due_date || "No deadline specified"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.uploadButton}
-                  onPress={() =>
-                    navigation.navigate("(pages)/taskDetails", {
-                      taskData: task,
-                    })
-                  }
-                >
-                  <Icon name="file-upload" size={16} color="#fff" />
-                  <Text style={styles.uploadButtonText}>
-                    Upload your Proof of work
+                  <Text style={styles.milestoneDescription}>
+                    {task.attributes.standard_task.data.attributes.Description ||
+                      "No description available for this task."}
                   </Text>
-                </TouchableOpacity>
+                  <View style={styles.divider} />
+                  <Text style={styles.deadlineText}>
+                    <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                    {task.attributes.due_date || "No deadline specified"}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.uploadButton}
+                    onPress={() =>
+                      navigation.navigate("(pages)/taskDetails", {
+                        taskData: task,
+                      })
+                    }
+                  >
+                    <Icon name="file-upload" size={16} color="#fff" />
+                    <Text style={styles.uploadButtonText}>
+                      Upload your Proof of work
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
+          ))
+        ) : (
+          <View style={styles.noTasksContainer}>
+            <Text style={styles.noTasksText}>No tasks have been assigned.</Text>
           </View>
-        ))}
+        )}
+
+
 
         {/* <View style={styles.milestoneCard}>
             <Image

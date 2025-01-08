@@ -270,7 +270,7 @@ const Myactivity = () => {
           <Image style={styles.userImage} source={icons.userProfile} />
         </View>
         <View style={styles.profileDetailSection}>
-          <Text style={styles.userName}>{user.username}</Text>
+          <Text style={styles.userName}>{user?.username}</Text>
           <Text style={[styles.userName, { color: colors.primary }]}>
             {designation}
           </Text>

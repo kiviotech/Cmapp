@@ -96,39 +96,39 @@ const profile = () => {
             </Text>
           </View>
         </View>
-        {/* {console.log("uploaded comments...",uploadedHistory)} */}
+        {console.log("uploaded comments...",uploadedHistory)}
 
-        {uploadedHistory.map((history, index) =>
-          history.slice(2).map((data) => {
-            console.log(data.attributes.comment);
-            return (
-              <View style={{ margin: 10 }}>
-                <Text>
-                  {index + 1}. Status: {data.attributes.status}
-                </Text>
-                <Text>
-                  Comments:{" "}
-                  {data.attributes.comment}
-                </Text>
-                {data.attributes.proofOfWork?.map((file, fileIndex) => {
-                  <TouchableOpacity
-                    key={fileIndex}
-                    style={styles.fileRow}
-                    onPress={() => Linking.openURL(file.url)}
-                  >
-                    <FontAwesome name="file" size={24} color={colors.primary} />
-                    <Text style={styles.fileName}>{data.fileName}</Text>
-                    <FontAwesome
-                      name="download"
-                      size={15}
-                      color={colors.downloadIconColor}
-                    />
-                  </TouchableOpacity>;
-                })}
-              </View>
-            );
-          })
+        {uploadedHistory.map((history, historyIndex) => 
+          history.map((data, dataIndex) => (
+            <View key={`${historyIndex}-${dataIndex}`} style={{ margin: 10 }}>
+              <Text>
+                Status: {data?.attributes?.status}
+              </Text>
+              <Text>
+                Comments: {data?.attributes?.comment}
+              </Text>
+              <Text>
+                Submitted on: {data?.attributes?.createdAt?.slice(0,10)}
+              </Text>
+              {data.attributes.proofOfWork?.map((file, fileIndex) => (
+                <TouchableOpacity
+                  key={`${historyIndex}-${dataIndex}-${fileIndex}`} // Assign a unique key
+                  style={styles.fileRow}
+                  onPress={() => Linking.openURL(file.url)}
+                >
+                  <FontAwesome name="file" size={24} color={colors.primary} />
+                  <Text style={styles.fileName}>{file.fileName}</Text>
+                  <FontAwesome
+                    name="download"
+                    size={15}
+                    color={colors.downloadIconColor}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))
         )}
+
 
         {/* <UploadedFileHIstory historyData={uploadedHistory} /> */}
 

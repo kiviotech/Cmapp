@@ -419,9 +419,9 @@ const TaskDetails = () => {
 
           {/* Image Placeholder */}
           <View style={styles.imagePlaceholder}>
-            {documents.map((document) => (
-              // console.log()
+            {documents.map((document, index) => (
               <Image
+                key={document.id || index} // Use a unique key, preferably `document.id`, or fallback to `index`
                 source={{ uri: `${MEDIA_BASE_URL}${document.attributes.url}` }}
                 style={styles.taskImage}
               />

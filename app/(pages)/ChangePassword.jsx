@@ -8,16 +8,14 @@ import {
   SafeAreaView,
   ScrollView,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons";
+import Icon from "react-native-vector-icons/MaterialIcons"; // Make sure to install and link react-native-vector-icons
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import apiClient from "../../../src/api/apiClient"
-import useAuthStore from "../../../useAuthStore";
+import { useNavigation } from "expo-router";
+import useAuthStore from "../../useAuthStore";
+import apiClient from "../../src/api/apiClient"
+
 
 const ChangePassword = () => {
-  const user = useAuthStore((state) => state.user);
-  const navigation = useNavigation();
-
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,12 +24,17 @@ const ChangePassword = () => {
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
+  const { user, token } = useAuthStore();
+  console.log('first', token)
+
   const [validation, setValidation] = useState({
     minLength: false,
     hasNumber: false,
     noSpaces: true,
     hasUpperLower: false,
   });
+
+  const navigation = useNavigation();
 
   const handlePasswordChange = (password) => {
     setNewPassword(password);
@@ -52,35 +55,26 @@ const ChangePassword = () => {
       validation.hasUpperLower
     ) {
       try {
-        const token = user?.token; // Ensure token exists
-        if (!token) {
-          alert("Authentication error. Please log in again.");
-          return;
-        }
-        const response = await fetch("http://localhost:1337/api/auth/change-password", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        const response = await apiClient.post(
+          "/auth/change-password",
+          {
             currentPassword,
             password: newPassword,
             passwordConfirmation: confirmPassword,
-          }),
-        });
-        const result = await response.json();
-
-
-        if (response.ok) {
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        if (response.status === 200) {
           alert("Password updated successfully!");
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
-
-          // navigation.goBack();
+          navigation.navigate("(pages)/contractor/settings");
         } else {
-          alert(response.data?.error?.message || "Failed to update password.");
+          alert(response.data.error?.message || "Failed to update password.");
         }
       } catch (error) {
         console.error("Error:", error);
@@ -90,18 +84,18 @@ const ChangePassword = () => {
       alert("Please ensure all requirements are met.");
     }
   };
+  
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color="black"
+            <TouchableOpacity
               onPress={() => navigation.goBack()}
-            />
+            >
+              <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
             <Text style={styles.headerText}>Change Password</Text>
           </View>
           <Text style={styles.subHeader}>
@@ -230,13 +224,12 @@ const ChangePassword = () => {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.cancelButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate("(pages)/contractor/settings")}
           >
             <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-      {/* <BottomNavigation /> */}
     </SafeAreaView>
   );
 };
@@ -244,15 +237,15 @@ const ChangePassword = () => {
 const styles = StyleSheet.create({
   AreaContainer: {
     flex: 1,
-    padding: 5,
-    marginTop: 20,
-    backgroundColor: '#fff',
+    paddingTop: 20,
+    // marginTop: 20,
+    backgroundColor: "#fff",
     width: "100%",
   },
   container: {
     flex: 1,
     padding: 20,
-    // backgroundColor: "#ffffff",
+    backgroundColor: "#ffffff",
   },
   header: {
     flexDirection: "row",
@@ -292,6 +285,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 10,
+    outlineStyle: "none",
+    borderWidth: 0,
   },
   validationContainer: {
     marginVertical: 15,
@@ -315,12 +310,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#1e90ff",
     padding: 15,
     borderRadius: 30,
-    alignItems: "center",
     marginLeft: 25,
     marginBottom: 10,
     height: 50,
     width: 150,
-    left: 55,
+    left: 95,
   },
   buttonText: {
     color: "#fff",

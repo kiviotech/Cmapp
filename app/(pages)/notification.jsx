@@ -35,7 +35,7 @@ const UploadProof = () => {
   const [submissionDetail, setSubmissionDetail] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadedHistory, setUploadedHistory] = useState([]);
-  const [notifications, setNotifications] = useState([]); 
+  const [notifications, setNotifications] = useState([]);
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
 
@@ -118,32 +118,35 @@ const UploadProof = () => {
         <Text style={styles.instructions}>Notifications</Text>
       </View>
 
-      <ScrollView>
+      <ScrollView style={{ marginBottom: 50 }}>
         {isLoading ? (
           <Text>Loading...</Text>
         ) : (
-          tasks.map((task, index) => {
-            return (
-              <View style={{ marginBottom: 20 }} >
-                {task.attributes.submissions.data?.map((history) => (
+          tasks.map((task, taskIndex) => (
+            <View key={`task-${taskIndex}`} style={{ marginHorizontal: 20 }}>
+              {task.attributes.submissions.data?.map((history, historyIndex) => (
+                <View
+                  key={`history-${history.id}-${historyIndex}`} // Ensure unique keys
+                  style={{ marginBottom: 10 }} // Optional: Add some spacing
+                >
+                  <Text style={styles.taskTitle}>
+                    {task?.attributes?.standard_task?.data?.attributes?.Name}
+                  </Text>
                   <TouchableOpacity
-                  key={history.id}
-                  style={styles.notificationContainer}
+                    style={styles.notificationContainer}
+                  // Uncomment and adjust the navigation logic if needed
                   // onPress={() =>
                   //   navigation.navigate("(pages)/notificationDetails", {
                   //     historyId: history.id, // Pass history.id as a parameter
                   //   })
                   // }
-                >
-                    <View
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <Image source={icons.file}></Image>
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <Image source={icons.file} />
                       <Text style={styles.pagraph}>
-                        {" "}
                         Your submission for{" "}
-                        {task.attributes.standard_task.data.attributes.Name} has
-                        been: {history.attributes.status}
+                        {task.attributes.standard_task.data.attributes.Name} has been:{" "}
+                        {history.attributes.status}
                       </Text>
                     </View>
                     <Text>
@@ -153,18 +156,21 @@ const UploadProof = () => {
                         : "No Comments"}
                     </Text>
                   </TouchableOpacity>
-                ))}
-                {/* <CustomButton
-                buttonStyle={styles.deleteButton}
-                textStyle={styles.deleteButtonText}
-                text="Delete"
-                handlePress={() => handleDeleteNotification(data.id)}
-              /> */}
-              </View>
-            );
-          })
+                </View>
+              ))}
+              {/* Uncomment if you need the delete button */}
+              {/* <CustomButton
+          buttonStyle={styles.deleteButton}
+          textStyle={styles.deleteButtonText}
+          text="Delete"
+          handlePress={() => handleDeleteNotification(data.id)}
+        /> */}
+            </View>
+          ))
         )}
       </ScrollView>
+
+
       <BottomNavigation />
     </SafeAreaView>
   );
@@ -204,9 +210,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margin: 10,
   },
+  taskTitle: {
+    fontSize: 20,
+    marginVertical: 10
+  },
   notificationContainer: {
-    marginTop: 20,
-    // marginHorizontal: 10,
+    marginVertical: 10,
     borderWidth: 1,
     borderColor: colors.borderColor,
     borderRadius: 10,

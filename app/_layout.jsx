@@ -230,6 +230,9 @@ const Layout = ({ user, designation }) => {
         <Stack.Screen name="(auth)/login" />
         <Stack.Screen name="(auth)/SignUp" />
         <Stack.Screen name="(auth)/Wait" />
+        <Stack.Screen name="(auth)/ForgotPassword" />
+        <Stack.Screen name="(auth)/ResetPassword" />
+        <Stack.Screen name="(auth)/PasswordChangedScreen" />
         {user && user.token && designation === "Contractor" && (
           <ContractorScreens />
         )}
@@ -249,28 +252,28 @@ const ContractorScreens = () => (
     <Stack.Screen name="(pages)/contractor/profile" />
     <Stack.Screen name="(pages)/contractor/settings" />
     <Stack.Screen name="(pages)/notification" />
-    <Stack.Screen name="(pages)/contractor/ChangePasswordScreen" />
-    <Stack.Screen name="(pages)/contractor/PersonalDetailsScreen" />
+    <Stack.Screen name="(pages)/ChangePassword" />
     <Stack.Screen name="(pages)/notificationDetails" />
     <Stack.Screen name="(pages)/submissionDetails" />
     <Stack.Screen name="(pages)/contractor/ProjectDetails" />
+    <Stack.Screen name="(pages)/contractor/PersonalDetailsScreen" />
   </>
 );
 
 const ProjectTeamScreens = () => (
   <>
-    <Stack.Screen name="(pages)/projectTeam/ProfileScreen" />
-    <Stack.Screen name="(pages)/projectTeam/Notification" />
-    <Stack.Screen name="(pages)/projectTeam/ChangePassword" />
-    <Stack.Screen name="(pages)/projectTeam/PersonalDetails" />
-    <Stack.Screen name="(pages)/projectTeam/Myactivity" />
-    <Stack.Screen name="(pages)/projectTeam/ProjectDetails" />
+    <Stack.Screen name="(pages)/ChangePassword" />
     <Stack.Screen name="(pages)/Request" />
     <Stack.Screen name="(pages)/AssignContractors" />
-    <Stack.Screen name="(pages)/projectTeam/ProjectList" />
     <Stack.Screen name="(pages)/ProjectForm" />
     <Stack.Screen name="(pages)/TaskRequestDetails" />
     <Stack.Screen name="(pages)/EmailRequestDetails" />
+    <Stack.Screen name="(pages)/projectTeam/PersonalDetails" />
+    <Stack.Screen name="(pages)/projectTeam/ProfileScreen" />
+    <Stack.Screen name="(pages)/projectTeam/Notification" />
+    <Stack.Screen name="(pages)/projectTeam/Myactivity" />
+    <Stack.Screen name="(pages)/projectTeam/ProjectDetails" />
+    <Stack.Screen name="(pages)/projectTeam/ProjectList" />
   </>
 );
 

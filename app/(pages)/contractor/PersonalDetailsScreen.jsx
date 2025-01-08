@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignSelf: "center",
-    position: "relative",
+    // position: "relative",
     marginBottom: 30,
   },
   profileImage: {

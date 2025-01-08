@@ -19,8 +19,8 @@ import { useToast } from "../ToastContext";
 import Toast from "../Toast";
 import { getProjects } from "../../src/api/repositories/projectRepository";
 import { fetchSubContractors } from "../../src/services/subContractorService";
-import { getToken } from "../../src/utils/storage";
-
+import useAuthStore from "../../useAuthStore";
+import { fetchUsers } from "../../src/services/userService";
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -40,49 +40,43 @@ const SignUp = () => {
     password: "",
     socialSecurity: "",
     subContractor:""
-
   });
   const [errors, setErrors] = useState({});
   const router = useRouter();
+  const token = useAuthStore((state) => state.token);
+
+  useEffect(() => {
+    if (token) {
+      router.replace("/");
+    }
+  }, [token, router]);
 
   const handleChangeText = (field, value) => {
+    // Clear the specific error message for the field when the user starts typing
+    if (errors[field]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
+    }
     setForm({ ...form, [field]: value });
-
-    // Trigger validation for that specific field when the text changes
-    const newErrors = validate();
-    setErrors(newErrors);
   };
-
-  const handleFileUploadSuccess = async (fileIds) => {
+  const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds(fileIds);
     console.log("Uploaded file IDs:", fileIds);
   
-    const token = await getToken(); // Assume you have a method to get the auth token
-    console.log("the token consoled",token)
-  
-    try {
-      const response = await uploadFile(fileIds, token); // Pass the token here
-      console.log("File uploaded successfully:", response);
-    } catch (error) {
-      console.error("Error uploading file:", error);
+    // Clear the error message for contractorLicense when a file is uploaded
+    if (errors.contractorLicense) {
+      setErrors((prevErrors) => ({ ...prevErrors, contractorLicense: "" }));
     }
   };
   
+
   const validate = () => {
     const newErrors = {};
-    if (!form.name) {
-      newErrors.name = "Full name is required";
-    } else if (!/^[a-zA-Z\s]+$/.test(form.name)) { // Only letters and spaces
-      newErrors.name = "Full name should only contain letters and spaces";
-    }
-  
-    // Validate email with a stricter regular expression
-    if (!form.email) {
-      newErrors.email = "Email is required";
-    } else if (!/^[a-zA-Z][a-zA-Z0-9._%+-]*@gmail\.[a-zA-Z]{2,}$/.test(form.email)) {
-      // This regex is stricter and handles more valid email formats
+    if (!form.name) newErrors.name = "Full name is required";
+    else if (!/^[a-zA-Z]+$/.test(form.email))
+      newErrors.name = "Only alphabets are allowed";
+    if (!form.email) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       newErrors.email = "Enter a valid email address";
-    }
     if (!form.password) newErrors.password = "Password is required";
     else if (form.password.length < 6)
       newErrors.password = "Password must be at least 6 characters long";
@@ -106,6 +100,18 @@ const SignUp = () => {
 
     try {
       const { name, email, password, socialSecurity } = form;
+      const users = await fetchUsers(); 
+
+       // Check if the email already exists in the system
+      const emailExists = users.some((user) => user.email === email);
+  
+      if (emailExists) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          email: "User is already registered with this email", // Set email error in the errors object
+        }));
+        return;
+      }
       console.log("Data being sent to signup:", {
         name,
         email,
@@ -238,10 +244,17 @@ const SignUp = () => {
               value={selectedSubContractor}
               onFocus={() => setIsDropdownFocused(true)}
               onBlur={() => setIsDropdownFocused(false)}
+              
               onChange={(item) => {
                 setSelectedSubContractor(item.value);
                 setIsDropdownFocused(false);
+              
+                // Ensure errors are not null or undefined before updating
+                if (errors && errors.subContractor) {
+                  setErrors((prevErrors) => ({ ...prevErrors, subContractor: "" }));
+                }
               }}
+              
               style={styles.dropdown}
               containerStyle={styles.dropdownContainerStyle}
               searchStyle={styles.searchBox}

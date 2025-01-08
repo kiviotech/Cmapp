@@ -67,77 +67,81 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView>
-        <View style={styles.headerContainer}>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Profile</Text>
-          </View>
-
-          <Text style={styles.sectionHeader}>My Account</Text>
-          <View style={styles.sectionContainer}>
-            <ProfileItem
-              title="Personal details"
-              onPress={() =>
-                navigation.navigate("(pages)/projectTeam/PersonalDetails")
-              }
-            />
-            <ProfileItem
-              title="Change password"
-              onPress={() =>
-                navigation.navigate("(pages)/projectTeam/ChangePassword")
-              }
-            />
-            <ProfileItem
-              title="My Activity"
-              onPress={() => {
-                navigation.navigate("(pages)/projectTeam/Myactivity");
-              }}
-            />
-          </View>
-
-          <Text style={styles.sectionHeader}>Settings</Text>
-          <View style={styles.sectionContainer}>
-            <View style={styles.itemContainer}>
-              <Text style={styles.itemText}>Push notifications</Text>
-              <Switch
-                trackColor={{ false: "#767577", true: "#81b0ff" }}
-                thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-                onValueChange={toggleSwitch}
-                value={isEnabled}
-              />
-            </View>
-          </View>
-
-          <Text style={styles.sectionHeader}>More</Text>
-          <View style={styles.sectionContainer}>
-            <ProfileItem
-              title="About us"
-              // onPress={() => showErrorModal("About us")}
-              onPress={() => showInfoModal("About us")}
-            />
-            <ProfileItem
-              title="Privacy policy"
-              // onPress={() => showErrorModal("Privacy policy")}
-              onPress={() => showInfoModal("Privacy policy")}
-            />
-            <ProfileItem
-              title="Terms and conditions"
-              // onPress={() => showErrorModal("Terms and Conditions")}
-              onPress={() => showInfoModal("Terms and conditions")}
-            />
-          </View>
-
-          {/* Trigger the popup modal instead of directly logging out */}
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={showLogoutPopup}
-          >
-            <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Profile</Text>
         </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.sectionHeader}>My Account</Text>
+        <View style={styles.sectionContainer}>
+          <ProfileItem
+            title="Personal details"
+            onPress={() =>
+              navigation.navigate("(pages)/projectTeam/PersonalDetails")
+            }
+          />
+          <ProfileItem
+            title="Change password"
+            onPress={() =>
+              navigation.navigate("(pages)/ChangePassword")
+            }
+          />
+          <ProfileItem
+            title="My Activity"
+            onPress={() => {
+              navigation.navigate("(pages)/projectTeam/Myactivity");
+            }}
+          />
+        </View>
+
+        <Text style={styles.sectionHeader}>Settings</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.itemContainer}>
+            <Text style={styles.itemText}>Push notifications</Text>
+            <Switch
+              trackColor={{ false: "#767577", true: "#81b0ff" }}
+              thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
+              onValueChange={toggleSwitch}
+              value={isEnabled}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.sectionHeader}>More</Text>
+        <View style={styles.sectionContainer}>
+          <ProfileItem
+            title="About us"
+            // onPress={() => showErrorModal("About us")}
+            onPress={() => showInfoModal("About us")}
+          />
+          <ProfileItem
+            title="Privacy policy"
+            // onPress={() => showErrorModal("Privacy policy")}
+            onPress={() => showInfoModal("Privacy policy")}
+          />
+          <ProfileItem
+            title="Terms and conditions"
+            // onPress={() => showErrorModal("Terms and Conditions")}
+            onPress={() => showInfoModal("Terms and conditions")}
+          />
+        </View>
+
+        {/* Trigger the popup modal instead of directly logging out */}
+        <TouchableOpacity style={styles.logoutButton} onPress={showLogoutPopup}>
+          <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </ScrollView>
-      <BottomNavigation />
+
+      <View style={styles.bottomNavContainer}>
+        <BottomNavigation />
+      </View>
 
       <Modal
         transparent={true}
@@ -204,9 +208,22 @@ const ProfileItem = ({ title, onPress }) => (
 const styles = StyleSheet.create({
   AreaContainer: {
     flex: 1,
-    padding: 5,
-    marginTop: 20,
     width: "100%",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 20,
+    paddingTop: 5,
+    paddingBottom: 100, // Increased padding to account for bottom navigation
+  },
+  bottomNavContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
   },
   container: {
     flex: 1,
@@ -222,11 +239,8 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-    elevation: 3,
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    paddingVertical: 5,
+    paddingTop: 40,
     zIndex: 1,
   },
   headerText: {

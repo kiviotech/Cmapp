@@ -8,10 +8,10 @@ import {
   Alert,
   StyleSheet,
   Dimensions,
+  Platform,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
-
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
 import { fetchStandardTasks } from "../../src/services/standardTaskService";
 import { fetchSubContractors } from "../../src/services/subContractorService";
@@ -39,7 +39,19 @@ const AssignContractors = () => {
   const [dueDate, setDueDate] = useState(null);
   const [assignedContractors, setAssignedContractors] = useState([]);
   const [createdTaskIds, setCreatedTaskIds] = useState([]);
-  const [dateError, setDateError] = useState(null); 
+  const [isFinishButtonEnabled, setIsFinishButtonEnabled] = useState(false);
+  const [projectDates, setProjectDates] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showTypeError, setShowTypeError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({
+    contractorType: "",
+    contractor: "",
+    task: "",
+    dueDate: "",
+  });
 
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
 
@@ -131,8 +143,52 @@ const AssignContractors = () => {
     loadStandardTasks();
   }, []);
 
+  useEffect(() => {
+    const loadProjectDetails = async () => {
+      try {
+        const response = await fetchProjectById(projectDataId);
+        if (response?.data) {
+          setProjectDates({
+            startDate: new Date(response.data.attributes.start_date),
+            endDate: new Date(response.data.attributes.end_date),
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching project details:", error);
+      }
+    };
+
+    if (projectDataId) {
+      loadProjectDetails();
+    }
+  }, [projectDataId]);
+
+
+  const validateFields = () => {
+    let errors = {};
+    if (!contractorTypeValue) {
+      errors.contractorType = "Contractor type is required.";
+    }
+    if (!contractorValue) {
+      errors.contractor = "Contractor is required.";
+    }
+    if (!taskValue) {
+      errors.task = "Task is required.";
+    }
+    if (!dueDate) {
+      errors.dueDate = "Due date is required.";
+    } else {
+      const today = new Date();
+      if (new Date(dueDate) < today) {
+        errors.dueDate = "Please select a future date.";
+      }
+    }
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleAddContractor = () => {
-    if (!contractorTypeValue || !contractorValue || !taskValue || !dueDate) {
+    if (!validateFields()) {
       Alert.alert(
         "Error",
         "Please select all required fields, including Due Date."
@@ -159,6 +215,7 @@ const AssignContractors = () => {
     };
 
     setAssignedContractors([...assignedContractors, newContractor]);
+    setIsFinishButtonEnabled(true);
     setContractorTypeValue(null);
     setContractorValue(null);
     setTaskValue(null);
@@ -222,17 +279,45 @@ const AssignContractors = () => {
     }
   };
 
+  const handleDisabledButtonPress = () => {
+    if (!isFinishButtonEnabled) {
+      if (Platform.OS === "web") {
+        setShowTooltip(true);
+      } else {
+        Alert.alert(
+          "Action Required",
+          "Please add at least one contractor first"
+        );
+      }
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (!isFinishButtonEnabled) {
+      Alert.alert(
+        "Action Required",
+        "Please add at least one contractor first"
+      );
+    }
+  };
+
+  const handleContractorPress = () => {
+    if (!contractorTypeValue) {
+      setShowTypeError(true);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Ionicons
+            {/* <Ionicons
               name="arrow-back"
               size={24}
               color="black"
               onPress={() => navigation.goBack()}
-            />
+            /> */}
             <Text style={styles.headerText}>Assign Contractors</Text>
           </View>
 
@@ -242,16 +327,23 @@ const AssignContractors = () => {
             value={contractorTypeValue}
             items={contractorTypeItems}
             setOpen={setContractorTypeOpen}
-            setValue={setContractorTypeValue}
+            setValue={(value) => {
+              setContractorTypeValue(value);
+              setShowTypeError(false);
+            }}
             setItems={setContractorTypeItems}
             placeholder="Select the contractor type"
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
-            zIndex={3000}
+            zIndex={6000}
             zIndexInverse={1000}
           />
+          {validationErrors.contractorType && (
+            <Text style={styles.errorText}>{validationErrors.contractorType}</Text>
+          )}
 
           <Text style={styles.label}>Contractor</Text>
+          {/* <TouchableOpacity onPress={handleContractorPress} activeOpacity={1}> */}
           <DropDownPicker
             open={contractorOpen}
             value={contractorValue}
@@ -263,9 +355,13 @@ const AssignContractors = () => {
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
             disabled={!contractorTypeValue}
-            zIndex={2000}
-            zIndexInverse={2000}
+            zIndex={4000}
+            zIndexInverse={1000}
           />
+          {/* </TouchableOpacity> */}
+          {validationErrors.contractor && (
+            <Text style={styles.errorText}>{validationErrors.contractor}</Text>
+          )}
 
           <Text style={styles.label}>Assign Task</Text>
           <DropDownPicker
@@ -278,41 +374,28 @@ const AssignContractors = () => {
             placeholder="Select Task"
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
-            zIndex={1000}
+            zIndex={2000}
             zIndexInverse={3000}
           />
+          {validationErrors.task && (
+            <Text style={styles.errorText}>{validationErrors.task}</Text>
+          )}
 
-          <View style={{width:'91%'}}>
           <Text style={styles.label}>Due Date</Text>
-          <CrossPlatformDatePicker value={dueDate}
-          
-           onChange={(date) => {
-            try {
-              // Ensure the date is in the future or today
-              const today = new Date();
-              const selectedDate = new Date(date);
-  
-              if (selectedDate >= today) {
-                // If the date is valid (today or in the future), update the state
-                setDueDate(date);
-                setDateError(null); // Clear error message if date is valid
-              } else {
-                // If the date is in the past, show an error message
-                setDateError("Please select a future date.");
-                setDueDate(today); // Optionally reset to today's date
-              }
-            } catch (error) {
-              console.error("Error in date selection:", error);
-            }
-          }}
-          
-           />
+          <View style={styles.datePickerContainer}>
+            <CrossPlatformDatePicker
+              value={dueDate}
+              onChange={setDueDate}
+              minDate={projectDates.startDate}
+              maxDate={projectDates.endDate}
+            />
           </View>
-              {dateError && (
-        <Text style={{ color: 'red', marginTop: 8, fontSize: 14 }}>
-          {dateError}
-        </Text>
-      )}
+
+          {validationErrors.dueDate && (
+            <Text style={styles.errorText}>
+              {validationErrors.dueDate}
+            </Text>
+          )}
 
           <TouchableOpacity
             style={styles.addButton}
@@ -341,13 +424,33 @@ const AssignContractors = () => {
               </Text>
             </View>
           ))}
-
-          <TouchableOpacity
-            style={styles.finishButton}
-            onPress={handleFinishProjectSetup}
-          >
-            <Text style={styles.finishButtonText}>Finish Project Setup</Text>
-          </TouchableOpacity>
+          
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.finishButton,
+                !isFinishButtonEnabled && styles.finishButtonDisabled,
+              ]}
+              onPress={handleFinishProjectSetup}
+              onPressIn={
+                Platform.OS !== "web" ? handleDisabledButtonPress : undefined
+              }
+              onMouseEnter={() =>
+                !isFinishButtonEnabled && setShowTooltip(true)
+              }
+              onMouseLeave={() => setShowTooltip(false)}
+              disabled={!isFinishButtonEnabled}
+            >
+              <Text style={styles.finishButtonText}>Finish Project Setup</Text>
+            </TouchableOpacity>
+            {showTooltip && !isFinishButtonEnabled && (
+              <View style={styles.tooltip}>
+                <Text style={styles.tooltipText}>
+                  Please add at least one contractor first
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -389,7 +492,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   dropdown: {
-    marginBottom: 15,
+    marginBottom: 5,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 5,
@@ -403,10 +506,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: "60%",
     alignSelf: "center",
-    backgroundColor: "#0000FF",
+    backgroundColor: "#4a90e2",
     padding: 15,
     borderRadius: 15,
     alignItems: "center",
+    cursor: "pointer",
   },
   finishButtonText: {
     color: "#fff",
@@ -415,7 +519,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: "flex-end",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   addButtonText: {
     color: "#007BFF",
@@ -433,6 +537,36 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: "bold",
+  },
+  datePickerContainer: {
+    marginRight: 20,
+  },
+  finishButtonDisabled: {
+    backgroundColor: "#cccccc",
+    opacity: 0.7,
+    cursor: "not-allowed",
+  },
+  buttonContainer: {
+    position: "relative",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  tooltip: {
+    position: "absolute",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    padding: 10,
+    borderRadius: 5,
+    top: -45,
+    zIndex: 1000,
+  },
+  tooltipText: {
+    color: "white",
+    fontSize: 14,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 10,
   },
 });
 

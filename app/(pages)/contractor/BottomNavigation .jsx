@@ -40,14 +40,14 @@ const BottomNavigation = () => {
       >
         <Icon
           name={
-            route.name === "(pages)/profile" ? "bar-chart" : "bar-chart-outline"
+            route.name === "(pages)/contractor/profile" ? "bar-chart" : "bar-chart-outline"
           }
           size={24}
-          color={route.name === "(pages)/profile" ? "#577CFF" : "#A8A8A8"}
+          color={route.name === "(pages)/contractor/profile" ? "#577CFF" : "#A8A8A8"}
         />
         <Text
           style={
-            route.name === "(pages)/profile"
+            route.name === "(pages)/contractor/profile"
               ? styles.navTextActive
               : styles.navText
           }
@@ -63,16 +63,16 @@ const BottomNavigation = () => {
       >
         <Icon
           name={
-            route.name === "(pages)/notifications"
+            route.name === "(pages)/notification"
               ? "notifications"
               : "notifications-outline"
           }
           size={24}
-          color={route.name === "(pages)/notifications" ? "#577CFF" : "#A8A8A8"}
+          color={route.name === "(pages)/notification" ? "#577CFF" : "#A8A8A8"}
         />
         <Text
           style={
-            route.name === "(pages)/notifications"
+            route.name === "(pages)/notification"
               ? styles.navTextActive
               : styles.navText
           }
