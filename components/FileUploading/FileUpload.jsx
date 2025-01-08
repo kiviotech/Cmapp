@@ -252,10 +252,10 @@ const FileUpload = ({
       const imgblob = await (await fetch(file.uri)).blob(); // Convert URI to blob
       formData.append("files", imgblob, file.name);
 
-      const response = await fetch("http://localhost:1337/api/upload", {
+      const response = await fetch("https://cmappapi.kivio.in/api/upload", {
         method: "POST",
         headers: {
-          Authorization: `Bearer f925b1799c9c8f1369e9a6dbe55b29a3d44ff4a9b433a5e79b7aadf1793ee126ff54f964d8d13c48ac70669d3b2d28b804495fd5a58e88c7baecbd9f0bf19c748843e410c2aa73b7b06bdcbe107350eeb9d3348c56f16939c5ca24c57d7eadc25bf3fbf1fff6744edc0d281d1af1288fdfa35046ffc8f6a9df778c05c4488c62`,
+          Authorization: `Bearer a05f3be82c43251ee1d22179dc66d6a9f6b0a1181ea5c431f5e82ae3862544ab34e020c0e2c23801f8fefd6d57ea9c39ccb3899c2e26f0d6b1a8bf88c06692568e9299167587f0f324d8d08e5d4f1d58310151263bdc6e4296adbcb5e2e3e67610a125eb701cb164c8e4d1431c837902615041c7974d5167369e11f2c45f77f6`,
         },
         body: formData,
       });
