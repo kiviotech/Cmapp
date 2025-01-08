@@ -41,7 +41,7 @@ const FileUpload = ({
 
       const newFile = {
         uri: fileUri,
-        name: result.assets[0].fileName || `image.png`,
+        name: result.assets[0].fileName || image.png,
         progress: 0,
         status: "uploading",
       };
@@ -81,53 +81,63 @@ const FileUpload = ({
       setIsCameraActive(true);
       openWebCamera();
     } else {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        alert("Camera permission is required to use this feature.");
-        return;
-      }
+      try {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== "granted") {
+          alert("Camera permission is required to use this feature.");
+          return;
+        }
 
-      let result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
+        let result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+          base64: false,
+        });
 
-      if (!result.canceled && result.uri) {
-        const newFile = {
-          uri: result.uri,
-          name: result.uri.split("/").pop() || "untitled",
-          progress: 0,
-          status: "uploading",
-        };
-        setUploadedFiles([...uploadedFiles, newFile]);
-        setUploading(true);
+        if (!result.canceled) {
+          const fileUri = result.assets[0].uri;
+          const fileName = fileUri.split("/").pop() || "camera_image.jpg";
 
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          setUploadedFiles((prevFiles) =>
-            prevFiles.map((file) =>
-              file.name === newFile.name ? { ...file, progress } : file
-            )
-          );
+          const newFile = {
+            uri: fileUri,
+            name: fileName,
+            progress: 0,
+            status: "uploading",
+          };
 
-          if (progress >= 100) {
-            clearInterval(interval);
+          setUploadedFiles((prevFiles) => [...prevFiles, newFile]);
+          setUploading(true);
+
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 10;
             setUploadedFiles((prevFiles) =>
               prevFiles.map((file) =>
-                file.name === newFile.name
-                  ? { ...file, status: "success", progress: 100 }
-                  : file
+                file.name === newFile.name ? { ...file, progress } : file
               )
             );
-            setUploading(false);
 
-            uploadFileToAPI(newFile);
-          }
-        }, 500);
+            if (progress >= 100) {
+              clearInterval(interval);
+              setUploadedFiles((prevFiles) =>
+                prevFiles.map((file) =>
+                  file.name === newFile.name
+                    ? { ...file, status: "success", progress: 100 }
+                    : file
+                )
+              );
+              setUploading(false);
 
-        uploadIntervals.current[newFile.name] = interval;
+              uploadFileToAPI(newFile);
+            }
+          }, 500);
+
+          uploadIntervals.current[newFile.name] = interval;
+        }
+      } catch (error) {
+        console.error("Error capturing image:", error);
+        alert("Failed to capture image. Please try again.");
       }
     }
   };
@@ -135,27 +145,56 @@ const FileUpload = ({
   const uploadFileToAPI = async (file) => {
     try {
       const formData = new FormData();
-      const imgblob = await (await fetch(file.uri)).blob(); // Convert URI to blob
-      formData.append("files", imgblob, file.name);
 
-      // const response = await fetch("https://cmappapi.kivio.in/api/upload", {
-      const response = await fetch("http://localhost:1337/api/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer e1b533cdcb4d0cbd882a6f3cbf6fe6550f2b8bbce8b3f19ca804198d340317f0b41080ebd09c09177f139c7b20c80610ccdf8c043a76af92d0129617a9f252bdcc738b3a06ff4c358568e9cee1cfab1fefdef83370ce234c4448d2970436d06b30eec8f4e71841ec9601cac88b2f4b6067f373313dc3785bddf54049d3a3ddd9`,
-        },
-        body: formData,
-      });
+      // Handle file differently for mobile platforms
+      if (Platform.OS !== "web") {
+        // Get file extension from URI
+        const fileExtension = file.uri.split(".").pop();
+        const mimeType = fileExtension === "png" ? "image/png" : "image/jpeg";
 
-      if (response.ok) {
-        const responseData = await response.json();
-        const fileIds = responseData.map((item) => item.id);
-        onFileUploadSuccess(fileIds); // Passing only file IDs to the parent component
+        formData.append("files", {
+          uri:
+            Platform.OS === "android"
+              ? file.uri
+              : file.uri.replace("file://", ""),
+          type: mimeType,
+          name: `photo.${fileExtension}`,
+        });
       } else {
-        console.log("Failed to upload file");
+        const imgblob = await (await fetch(file.uri)).blob();
+        formData.append("files", imgblob, file.name);
+      }
+
+      // Use axios instead of fetch for better multipart handling
+      const response = await axios.post(
+        "http://192.168.1.8:1337/api/upload",
+        formData,
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer e1b533cdcb4d0cbd882a6f3cbf6fe6550f2b8bbce8b3f19ca804198d340317f0b41080ebd09c09177f139c7b20c80610ccdf8c043a76af92d0129617a9f252bdcc738b3a06ff4c358568e9cee1cfab1fefdef83370ce234c4448d2970436d06b30eec8f4e71841ec9601cac88b2f4b6067f373313dc3785bddf54049d3a3ddd9`,
+          },
+          transformRequest: (data, headers) => {
+            // Return FormData directly
+            return formData;
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        const responseData = response.data;
+        const fileIds = responseData.map((item) => item.id);
+        onFileUploadSuccess(fileIds);
+        console.log("Upload successful:", responseData);
+      } else {
+        console.log("Failed to upload file:", response.data);
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error(
+        "Error uploading file:",
+        error.response?.data || error.message
+      );
     }
   };
 

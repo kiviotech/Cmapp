@@ -110,6 +110,7 @@ export const signup = async (
         approver: null,
         documents: documents.map((docId) => ({ id: docId })),
         status: "pending",
+        notification_status: "unread",
         sub_contractor: subContractorId,
       },
     };

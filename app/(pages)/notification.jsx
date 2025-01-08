@@ -118,39 +118,45 @@ const UploadProof = () => {
         <Text style={styles.instructions}>Notifications</Text>
       </View>
 
-      <ScrollView>
+      <ScrollView style={{ marginBottom: 50 }}>
         {isLoading ? (
           <Text>Loading...</Text>
         ) : (
           tasks.map((task, taskIndex) => (
             <View key={`task-${taskIndex}`} style={{ marginHorizontal: 20 }}>
-              <Text style={styles.taskTitle}>{task?.attributes?.standard_task?.data?.attributes?.Name}</Text>
               {task.attributes.submissions.data?.map((history, historyIndex) => (
-                <TouchableOpacity
-                  key={`history-${history.id}-${historyIndex}`} // Ensure a unique key
-                  style={styles.notificationContainer}
-                // Uncomment and adjust the navigation logic if needed
-                // onPress={() =>
-                //   navigation.navigate("(pages)/notificationDetails", {
-                //     historyId: history.id, // Pass history.id as a parameter
-                //   })
-                // }
+                <View
+                  key={`history-${history.id}-${historyIndex}`} // Ensure unique keys
+                  style={{ marginBottom: 10 }} // Optional: Add some spacing
                 >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Image source={icons.file}></Image>
-                    <Text style={styles.pagraph}>
-                      Your submission for{" "}
-                      {task.attributes.standard_task.data.attributes.Name} has been:{" "}
-                      {history.attributes.status}
-                    </Text>
-                  </View>
-                  <Text>
-                    Comments:{" "}
-                    {history.attributes.comment
-                      ? history.attributes.comment
-                      : "No Comments"}
+                  <Text style={styles.taskTitle}>
+                    {task?.attributes?.standard_task?.data?.attributes?.Name}
                   </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.notificationContainer}
+                  // Uncomment and adjust the navigation logic if needed
+                  // onPress={() =>
+                  //   navigation.navigate("(pages)/notificationDetails", {
+                  //     historyId: history.id, // Pass history.id as a parameter
+                  //   })
+                  // }
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <Image source={icons.file} />
+                      <Text style={styles.pagraph}>
+                        Your submission for{" "}
+                        {task.attributes.standard_task.data.attributes.Name} has been:{" "}
+                        {history.attributes.status}
+                      </Text>
+                    </View>
+                    <Text>
+                      Comments:{" "}
+                      {history.attributes.comment
+                        ? history.attributes.comment
+                        : "No Comments"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ))}
               {/* Uncomment if you need the delete button */}
               {/* <CustomButton
@@ -163,6 +169,7 @@ const UploadProof = () => {
           ))
         )}
       </ScrollView>
+
 
       <BottomNavigation />
     </SafeAreaView>

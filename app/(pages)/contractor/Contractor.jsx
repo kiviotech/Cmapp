@@ -93,8 +93,6 @@ const Contractor = () => {
     loadContractorData();
   }, []);
 
-  // console.log('tasks', tasks[0].attributes.documents.data[0].attributes)
-
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container}>
@@ -210,18 +208,19 @@ const Contractor = () => {
                 <Text style={styles.milestoneTitle}>
                   {task.attributes.project.data.attributes.name || "Project"}
                 </Text>
-                {task.attributes.documents.data?.map((taskdoc) => (
-                  <Image
-                    key={taskdoc.id} // Use a unique key for each task document
-                    source={{
-                      uri:
-                        `${MEDIA_BASE_URL}${taskdoc.attributes.url}` ||
-                        "https://via.placeholder.com/150",
-                    }}
-                    style={styles.milestoneImage}
-                  />
-                ))}
-
+                {task?.attributes?.documents?.data?.map((taskdoc) => {
+                  const taskImageUrl = taskdoc?.attributes?.url
+                                      ? `${MEDIA_BASE_URL}${taskdoc?.attributes?.url}`
+                                      : "https://via.placeholder.com/150";
+                  return (
+                    <Image
+                      key={taskdoc.id} // Use a unique key for each task document
+                      source={{ uri: taskImageUrl }}
+                      style={styles.milestoneImage}
+                    />
+                  )
+                }
+                )}
                 <View style={styles.milestoneContent}>
                   <View style={styles.milestoneHeaderContainer}>
                     <Text style={styles.milestoneTitle}>

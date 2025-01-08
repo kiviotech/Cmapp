@@ -305,11 +305,11 @@ const ForgotPasswordScreen = () => {
       );
       setIsSuccessModalVisible(true);
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.error?.message ||
-        error.response?.data?.message ||
-        "Failed to send reset instructions. Please try again.";
-      setErrors(errorMessage);
+      // const errorMessage =
+      //   error.response?.data?.error?.message ||
+      //   error.response?.data?.message ||
+      //   "Failed to send reset instructions. Please try again.";
+      setErrors("Couldn't send mail. Please try again after sometime.");
     } finally {
       setIsLoading(false);
     }
