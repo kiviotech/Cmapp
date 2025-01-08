@@ -9,6 +9,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
+import { BASE_URL } from "../../src/api/apiClient";
 
 const FileUpload = ({
   uploadedFiles,
@@ -168,7 +169,7 @@ const FileUpload = ({
 
       // Use axios instead of fetch for better multipart handling
       const response = await axios.post(
-        "http://192.168.1.8:1337/api/upload",
+        `${BASE_URL}/upload`,
         formData,
         {
           headers: {

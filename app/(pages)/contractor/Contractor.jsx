@@ -203,8 +203,14 @@ const Contractor = () => {
         {/* Milestone Cards */}
         {tasks.length > 0 ? (
           tasks.map((task) => (
-            <View key={task.id} style={styles.milestoneCard}>
-              <View style={styles.milestoneCard}>
+            <TouchableOpacity key={task.id} style={styles.milestoneCard} 
+            onPress={() =>
+              navigation.navigate("(pages)/taskDetails", {
+                taskData: task,
+              })
+            }
+            >
+              {/* <View style={styles.milestoneCard}> */}
                 <Text style={styles.milestoneTitle}>
                   {task.attributes.project.data.attributes.name || "Project"}
                 </Text>
@@ -253,8 +259,8 @@ const Contractor = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </View>
+              {/* </View> */}
+            </TouchableOpacity>
           ))
         ) : (
           <View style={styles.noTasksContainer}>
