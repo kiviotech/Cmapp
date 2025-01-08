@@ -85,7 +85,7 @@ const ProjectList = () => {
         </View>
       </View>
       {isLoading ? (
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <ActivityIndicator color="#4A90E2" />
       ) : (
         <FlatList
           data={projectsDetail}

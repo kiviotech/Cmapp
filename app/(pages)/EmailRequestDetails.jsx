@@ -59,7 +59,7 @@ const RequestDetails = () => {
   const documents = requestData?.attributes?.documents?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.medium.url}`;
     if (Platform.OS === "web") {
       console.log(imageUrl);
       // Open the image in a new tab for download on web
@@ -199,7 +199,7 @@ const RequestDetails = () => {
   };
 
   const handleImagePreview = (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.medium?.url || imageFormats?.small?.url}`;
     setSelectedImage(imageUrl);
     setModalVisible(true);
   };
