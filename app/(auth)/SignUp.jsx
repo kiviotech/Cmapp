@@ -72,7 +72,7 @@ const SignUp = () => {
   const validate = () => {
     const newErrors = {};
     if (!form.name) newErrors.name = "Full name is required";
-    else if (!/^[a-zA-Z]+$/.test(form.email))
+    else if (!/^[a-zA-Z]+$/.test(form.name))
       newErrors.name = "Only alphabets are allowed";
     if (!form.email) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
@@ -297,6 +297,7 @@ const SignUp = () => {
               uploadedFiles={uploadedFileIds}
               setUploadedFiles={setUploadedFileIds}
               onFileUploadSuccess={handleFileUploadSuccess}
+              message={"Upload your ID proof here"}
             />
             {errors.contractorLicense && (
               <Text style={styles.errorText}>{errors.contractorLicense}</Text>
