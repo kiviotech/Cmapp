@@ -48,6 +48,30 @@ const ProjectForm = () => {
     const loadProjectManagers = async () => {
       try {
         const response = await fetchProjectTeamManager();
+        console.log("asdfghj consoled",response.data[0].attributes.projects.data[0].attributes.name)
+        console.log("asdfghj consoled",response.data[0].attributes.projects.data[0].attributes.location)
+
+        console.log(
+          "Project Name:",
+          response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.name
+        );
+        console.log(
+          "Project Location:",
+          response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.location
+        );
+
+        const projectsList = response.data.flatMap((team) =>
+          team.attributes.projects.data.map((project) => ({
+            name: project.attributes.name?.toLowerCase(), // Normalize for case-insensitive comparison
+            location: project.attributes.location
+              ? project.attributes.location.toLowerCase() // Normalize only if location exists
+              : null, // Handle null values gracefully
+          }))
+        );
+
+        setProjectData(projectsList);
+        console.log("projectsList is consoled",projectsList)
+
         const managersList = response.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
             id: team.id,
@@ -89,14 +113,24 @@ const ProjectForm = () => {
 
   const validate = () => {
     const newErrors = {};
+    const isDuplicateProject = projectData.some(
+      (project) =>
+        project.name === projectName.toLowerCase() && // Case-insensitive comparison
+        project.location === projectAddress.toLowerCase() // Case-insensitive comparison
+    );
+  
+    if (isDuplicateProject) {
+      newErrors.projectName = "Project with this name  already exists";
+      newErrors.projectAddress = "Project with this location`q  already exists"
+    }
     if (!projectName) newErrors.projectName = "Project name is required";
   else if (/^\d+$/.test(projectName)) {
     // This condition checks if the projectName is only numbers
     newErrors.projectName = "Project name cannot be only numbers";
   } else if (!/^[a-zA-Z0-9\s]*$/.test(projectName)) {
     // This regex allows letters, numbers, and spaces
-    newErrors.projectName = "Project name must be alphanumeric (letters, numbers, or spaces)";
-  }
+    newErrors.projectName = "Project name must be alphanumeric (letters, numbers, or spaces)";
+  }
     if (!projectType) newErrors.projectType = "Project type is required";
     if (!projectAddress)
       newErrors.projectAddress = "Project address is required";

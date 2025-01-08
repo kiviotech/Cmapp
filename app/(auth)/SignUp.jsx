@@ -39,6 +39,7 @@ const SignUp = () => {
     email: "",
     password: "",
     socialSecurity: "",
+    subContractor:""
   });
   const [errors, setErrors] = useState({});
   const router = useRouter();
@@ -51,17 +52,28 @@ const SignUp = () => {
   }, [token, router]);
 
   const handleChangeText = (field, value) => {
+    // Clear the specific error message for the field when the user starts typing
+    if (errors[field]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
+    }
     setForm({ ...form, [field]: value });
   };
-
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds(fileIds);
     console.log("Uploaded file IDs:", fileIds);
+  
+    // Clear the error message for contractorLicense when a file is uploaded
+    if (errors.contractorLicense) {
+      setErrors((prevErrors) => ({ ...prevErrors, contractorLicense: "" }));
+    }
   };
+  
 
   const validate = () => {
     const newErrors = {};
     if (!form.name) newErrors.name = "Full name is required";
+    else if (!/^[a-zA-Z]+$/.test(form.email))
+      newErrors.name = "Only alphabets are allowed";
     if (!form.email) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       newErrors.email = "Enter a valid email address";
@@ -232,10 +244,17 @@ const SignUp = () => {
               value={selectedSubContractor}
               onFocus={() => setIsDropdownFocused(true)}
               onBlur={() => setIsDropdownFocused(false)}
+              
               onChange={(item) => {
                 setSelectedSubContractor(item.value);
                 setIsDropdownFocused(false);
+              
+                // Ensure errors are not null or undefined before updating
+                if (errors && errors.subContractor) {
+                  setErrors((prevErrors) => ({ ...prevErrors, subContractor: "" }));
+                }
               }}
+              
               style={styles.dropdown}
               containerStyle={styles.dropdownContainerStyle}
               searchStyle={styles.searchBox}

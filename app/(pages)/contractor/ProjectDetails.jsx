@@ -63,6 +63,7 @@ const ProjectDetails = () => {
     }
     getProjectDetails();
   },[])
+  // console.log("asha",projectDetails.attributes.name)
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
