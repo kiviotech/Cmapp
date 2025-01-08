@@ -63,6 +63,7 @@ const ProjectDetails = () => {
     }
     getProjectDetails();
   },[])
+  // console.log("asha",projectDetails.attributes.name)
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -98,7 +99,7 @@ const ProjectDetails = () => {
 
         <Text style={styles.label}>Project Details:</Text>
         <Text style={styles.projectDescription}>
-          {projectDetails.attributes.description || "No project description provided."}
+          {projectDetails?.attributes?.description || "No project description provided."}
         </Text>
 
         <View style={styles.progressContainer}>
