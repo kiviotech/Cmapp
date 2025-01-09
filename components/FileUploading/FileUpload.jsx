@@ -11,6 +11,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
+import { BASE_URL } from "../../src/api/apiClient";
 import { getToken } from "../../src/utils/storage";
 
 const FileUpload = ({
@@ -176,7 +177,7 @@ const FileUpload = ({
       }
 
       const response = await axios.post(
-        "https://cmappapi.kivio.in/api/upload",
+        `${BASE_URL}/upload`,
         formData,
         {
           headers,

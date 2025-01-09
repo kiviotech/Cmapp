@@ -13,7 +13,7 @@ import {
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
-import { fetchStandardTasks } from "../../src/services/standardTaskService";
+import { fetchStandardTaskBySubcontractor, fetchStandardTasks } from "../../src/services/standardTaskService";
 import { fetchSubContractors } from "../../src/services/subContractorService";
 import {
   fetchProjectById,
@@ -33,6 +33,7 @@ const AssignContractors = () => {
   const [contractorOpen, setContractorOpen] = useState(false);
   const [contractorValue, setContractorValue] = useState(null);
   const [contractorItems, setContractorItems] = useState([]);
+  const [assignedTask, setAsignedTask] = useState([]);
   const [taskOpen, setTaskOpen] = useState(false);
   const [taskValue, setTaskValue] = useState(null);
   const [taskItems, setTaskItems] = useState([]);
@@ -71,6 +72,7 @@ const AssignContractors = () => {
           label: contractor.attributes.name,
           value: contractor.id,
         }));
+        console.log('types', types)
         setContractorTypeItems(types);
       } catch (error) {
         console.error("Error fetching contractor types:", error);
@@ -78,25 +80,6 @@ const AssignContractors = () => {
     };
     loadContractorTypes();
   }, []);
-
-  // useEffect(() => {
-  //   const loadContractors = async () => {
-  //     try {
-  //       const response = await fetchContractors();
-  //       const contractors = response.data.map((contractor) => ({
-  //         label: contractor.attributes.username,
-  //         value: contractor.id,
-  //         sub_contractor:
-  //           contractor.attributes.sub_contractor?.data?.attributes?.name ||
-  //           "No Sub Contractor",
-  //       }));
-  //       setContractorItems(contractors);
-  //     } catch (error) {
-  //       console.error("Error fetching contractors:", error);
-  //     }
-  //   };
-  //   loadContractors();
-  // }, []);
 
   useEffect(() => {
     const loadContractors = async () => {
@@ -115,6 +98,7 @@ const AssignContractors = () => {
               contractor.attributes.sub_contractor?.data?.attributes?.name ||
               "No Sub Contractor",
           }));
+        console.log('contractors', contractors)
         setContractorItems(contractors);
       } catch (error) {
         console.error("Error fetching contractors:", error);
@@ -128,20 +112,16 @@ const AssignContractors = () => {
   }, [contractorTypeValue]);
 
   useEffect(() => {
-    const loadStandardTasks = async () => {
+    const fetchStandardTasks = async () => {
       try {
-        const response = await fetchStandardTasks();
-        const tasks = response.data.map((task) => ({
-          label: task.attributes.Name,
-          value: task.id,
-        }));
-        setTaskItems(tasks);
+        const response = await fetchStandardTaskBySubcontractor(contractorTypeItems);
+        setAsignedTask(response.data)
       } catch (error) {
         console.error("Error fetching standard tasks:", error);
       }
     };
-    loadStandardTasks();
-  }, []);
+    fetchStandardTasks();
+  }, [contractorTypeItems]);
 
   useEffect(() => {
     const loadProjectDetails = async () => {
@@ -171,9 +151,6 @@ const AssignContractors = () => {
     }
     if (!contractorValue) {
       errors.contractor = "Contractor is required.";
-    }
-    if (!taskValue) {
-      errors.task = "Task is required.";
     }
     if (!dueDate) {
       errors.dueDate = "Due date is required.";
@@ -227,36 +204,44 @@ const AssignContractors = () => {
       Alert.alert("Error", "Please add at least one contractor.");
       return;
     }
-
+  
     try {
       const contractorIds = assignedContractors.map(
         (contractor) => contractor.contractor
       );
-
+  
       // Create tasks and store their IDs
       const taskIds = [];
+  
       for (const contractor of assignedContractors) {
-        const taskData = {
-          data: {
-            project: projectDataId,
-            standard_task: contractor.task,
-            submissions: [],
-            contractor: contractor.contractor,
-            documents: [],
-            task_status: "ongoing",
-            due_date: contractor.dueDate.toISOString().slice(0, 10),
-          },
-        };
-        const taskResponse = await createTask(taskData);
-        if (taskResponse?.data?.id) {
-          taskIds.push(taskResponse.data.id);
+        if (!assignedTask || assignedTask.length === 0) {
+          throw new Error("No assigned tasks available for this contractor.");
+        }
+  
+        for (const task of assignedTask) {
+          const taskData = {
+            data: {
+              project: projectDataId,
+              standard_task: task.id, // Use the task ID from assignedTask
+              submissions: [],
+              contractor: contractor.contractor,
+              documents: [],
+              task_status: "ongoing",
+              due_date: contractor.dueDate.toISOString().slice(0, 10),
+            },
+          };
+  
+          const taskResponse = await createTask(taskData);
+          if (taskResponse?.data?.id) {
+            taskIds.push(taskResponse.data.id);
+          }
         }
       }
-
-      if (taskIds.length !== assignedContractors.length) {
-        throw new Error("Some tasks could not be created.");
+  
+      if (taskIds.length === 0) {
+        throw new Error("No tasks could be created.");
       }
-
+  
       const projectData = {
         data: {
           contractors: contractorIds,
@@ -264,9 +249,9 @@ const AssignContractors = () => {
           project_status: "pending",
         },
       };
-
+  
       await updateExistingProject(projectDataId, projectData);
-
+  
       Alert.alert("Success", "Project setup completed and tasks assigned!");
       clearProjectData();
       navigation.navigate("(pages)/dashboard");
@@ -278,6 +263,7 @@ const AssignContractors = () => {
       );
     }
   };
+  
 
   const handleDisabledButtonPress = () => {
     if (!isFinishButtonEnabled) {
@@ -363,7 +349,7 @@ const AssignContractors = () => {
             <Text style={styles.errorText}>{validationErrors.contractor}</Text>
           )}
 
-          <Text style={styles.label}>Assign Task</Text>
+          {/* <Text style={styles.label}>Assign Task</Text>
           <DropDownPicker
             open={taskOpen}
             value={taskValue}
@@ -379,7 +365,7 @@ const AssignContractors = () => {
           />
           {validationErrors.task && (
             <Text style={styles.errorText}>{validationErrors.task}</Text>
-          )}
+          )} */}
 
           <Text style={styles.label}>Due Date</Text>
           <View style={styles.datePickerContainer}>
@@ -415,16 +401,26 @@ const AssignContractors = () => {
                 {contractor.contractorLabel}
               </Text>
               <Text style={styles.contractorInfo}>
-                <Text style={styles.boldText}>Task:</Text>{" "}
-                {contractor.taskLabel}
+                <Text style={styles.boldText}>Tasks:</Text>{" "}
+                {assignedTask?.map((assigned, idx) => (
+                  <Text
+                    key={idx} // Add a unique key for each task
+                    style={{ marginHorizontal: 5 }}
+                  >
+                    {assigned.attributes.Name}{","}
+                  </Text>
+                ))}
               </Text>
               <Text style={styles.contractorInfo}>
                 <Text style={styles.boldText}>Due Date:</Text>{" "}
-                {contractor.dueDate?.toLocaleDateString()}
+                {contractor.dueDate
+                  ? new Date(contractor.dueDate).toLocaleDateString()
+                  : "N/A"}
               </Text>
             </View>
           ))}
-          
+
+
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
