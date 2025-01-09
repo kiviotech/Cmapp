@@ -39,7 +39,7 @@ const RequestDetails = () => {
   const documents = requestData?.attributes?.proofOfWork?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.medium?.url || imageFormats?.small?.url}`;
     const filename = imageFormats?.name || "download.png";
 
     if (Platform.OS === "web") {
