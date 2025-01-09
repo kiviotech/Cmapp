@@ -96,15 +96,17 @@ const ProjectDetails = () => {
 
         <View style={styles.progressContainer}>
           <Text style={styles.progressLabel}>Project Progress:</Text>
-          <ProgressBar
+         <ProgressBar
             progress={progress}
-            width={200}
+            width={180}
+            height={10}
             color="#66B8FC"
             style={styles.progressBarContainer}
           />
           <Text style={styles.progressPercentage}>
             {Math.round(progress * 100)}%
           </Text>
+         
         </View>
 
         <Text style={styles.label}>All Tasks</Text>
@@ -138,7 +140,7 @@ const ProjectDetails = () => {
                   <Text style={styles.taskName} numberOfLines={1}>
                     {standardTask.Name || "Task Name"}
                   </Text>
-                  <Text style={statusStyle}>{statusText}</Text>
+                  <Text style={styles.statusStyle}>{statusText}</Text>
                 </View>
                 <Text style={styles.taskDescription} numberOfLines={2}>
                   {standardTask.Description || "No description available."}
@@ -170,10 +172,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: width * 0.04,
     backgroundColor: "#FFFFFF",
+   
   },
   container: {
     paddingTop: height * 0.05,
     backgroundColor: "#FFFFFF",
+   
+    
   },
   header: {
     display: "flex",
@@ -181,6 +186,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: height * 0.015,
     color: "#192252",
+   
   },
   headerText: {
     fontSize: width * 0.055,
@@ -189,10 +195,13 @@ const styles = StyleSheet.create({
     color: "#192252",
     marginLeft: 10,
     marginTop: -5,
+   
   },
   projectNameContainer: {
     alignItems: "flex-start",
-    marginBottom: height * 0.015,
+    // marginBottom: height * 0.015,
+    paddingHorizontal:width*0.05,
+  
   },
   projectName: {
     fontSize: width * 0.055,
@@ -203,6 +212,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.015,
+    paddingHorizontal:width*0.10,
+    
   },
   dateContainer: {
     flexDirection: "column",
@@ -217,12 +228,20 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
     color: "#F5C37F",
   },
+  statusStyle:{
+    color: "red",
+
+  },
+  noTasksText:{
+    paddingHorizontal:width*0.05,
+  },
   label: {
     fontSize: width * 0.042,
     fontWeight: "bold",
     color: "#192252",
     marginBottom: height * 0.008,
     marginTop: height * 0.02,
+    paddingHorizontal:width*0.05,
   },
   text: {
     fontSize: width * 0.04,
@@ -232,37 +251,51 @@ const styles = StyleSheet.create({
     fontSize: width * 0.038,
     color: "#6E6E6E",
     marginBottom: height * 0.02,
-    padding: width * 0.035,
-    lineHeight: height * 0.025, // Increased line height for readability
+    paddingHorizontal:width*0.05,
+    lineHeight: height * 0.015, // Increased line height for readability
   },
   progressContainer: {
     flexDirection: "row",
+   
+  
     alignItems: "center",
     marginBottom: height * 0.02,
     paddingVertical: height * 0.01,
+   
   },
   progressBarContainer: {
     marginLeft: width * 0.02,
     marginTop: height * 0.005,
+    border:'1px solid red',
+      
   },
   progressLabel: {
     fontSize: width * 0.04,
     fontWeight: "bold",
     color: "#192252",
+    paddingHorizontal:width*0.05,
+    width:'40%',
+       whiteSpace: 'nowrap'
+ 
+
+   
   },
   progressPercentage: {
     fontSize: width * 0.035,
     color: "#66B8FC",
     position: "absolute",
     right: width * 0.02,
+   
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
     padding: width * 0.04,
     borderRadius: 8,
+    marginLeft:'10px',
     marginBottom: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
+    width:'90%'
   },
   task: {
     flexDirection: "row",

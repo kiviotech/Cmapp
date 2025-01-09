@@ -75,8 +75,8 @@ const SignUp = () => {
     else if (!/^[a-zA-Z]+$/.test(form.name))
       newErrors.name = "Only alphabets are allowed";
     if (!form.email) newErrors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      newErrors.email = "Enter a valid email address";
+    // else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      // newErrors.email = "Enter a valid email address";
     if (!form.password) newErrors.password = "Password is required";
     else if (form.password.length < 6)
       newErrors.password = "Password must be at least 6 characters long";
@@ -297,6 +297,7 @@ const SignUp = () => {
               uploadedFiles={uploadedFileIds}
               setUploadedFiles={setUploadedFileIds}
               onFileUploadSuccess={handleFileUploadSuccess}
+              message={"Upload your ID proof here"}
             />
             {errors.contractorLicense && (
               <Text style={styles.errorText}>{errors.contractorLicense}</Text>

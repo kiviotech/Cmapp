@@ -25,7 +25,7 @@ import {
 } from "@expo/vector-icons";
 import { fetchProjectTeamIdByUserId } from "../../../src/services/projectTeamService";
 import { fetchProjectDetailsByApproverId } from "../../../src/services/projectService";
-import apiClient, { MEDIA_BASE_URL } from "../../../src/api/apiClient";
+import apiClient, { BASE_URL, MEDIA_BASE_URL } from "../../../src/api/apiClient";
 
 const data = [
   {
@@ -116,9 +116,7 @@ const ProjectTeam = () => {
           const projectResponse = await fetchProjectDetailsByApproverId(
             projectTeamId
           );
-          console.log('projectResponse', projectResponse.data)
           const projects = projectResponse.data;
-
           const projectsWithTasks = await Promise.all(
             projects.map(async (project) => {
               const tasks = project.attributes.tasks.data;
@@ -168,7 +166,7 @@ const ProjectTeam = () => {
         for (const task of tasks) {
           try {
             const taskResponse = await apiClient.get(
-              `https://cmappapi.kivio.in/api/tasks/${task.id}?populate=*`
+              `${BASE_URL}/tasks/${task.id}?populate=*`
             );
             allTaskDetails.push(taskResponse.data);
           } catch (error) {
@@ -427,82 +425,6 @@ const ProjectTeam = () => {
           </View> */}
         </View>
 
-        {/* {projectDetails.map((projectItem, projectIndex) => {
-          const project = projectItem.attributes;
-          console.log("project", project);
-          const tasks = projectItem.taskDetails || [];
-
-          return (
-            <View key={projectIndex}>
-              <Text style={styles.projectTitle}>
-                {project.name || "Project"}
-              </Text>
-
-              <View style={styles.headerContainer}>
-                <Text style={styles.taskStatus}>
-                  {tasks.length}{" "}
-                  {tasks.length === 1 ? "Task Pending" : "Tasks Pending"}
-                </Text>
-              </View>
-
-              {tasks.length > 0 ? (
-                tasks.map((taskDetail, taskIndex) => {
-                  const task = taskDetail.data.attributes;
-                  const standardTask =
-                    task.standard_task?.data?.attributes || {};
-                  const statusText = task.task_status || "Pending";
-                  const statusStyle = getStatusStyle(task.task_status);
-
-                  const taskImageUrl = task.documents?.data?.[0]?.attributes
-                    ?.url
-                    ? `${MEDIA_BASE_URL}${task.documents.data[0].attributes.url}`
-                    : "https://via.placeholder.com/150";
-
-                  return (
-                    <View key={taskIndex} style={styles.milestoneCard}>
-                      <View style={styles.milestoneCard}>
-                        <Image
-                          source={{ uri: taskImageUrl }}
-                          style={styles.milestoneImage}
-                        />
-                        <View style={styles.milestoneContent}>
-                          <View style={styles.milestoneHeaderContainer}>
-                            <Text style={styles.milestoneTitle}>
-                              {standardTask.Name || "Task"}
-                            </Text>
-                            <View style={styles.substituteButton}>
-                              <Text style={styles.substituteText}>
-                                Substructure
-                              </Text>
-                            </View>
-                          </View>
-                          <Text style={styles.milestoneDescription}>
-                            {standardTask.Description ||
-                              "No description available."}
-                          </Text>
-                          <View style={styles.divider} />
-                          <Text style={styles.deadlineText}>
-                            <FontAwesome
-                              name="calendar"
-                              size={16}
-                              color="#333"
-                            />{" "}
-                            Deadline: {task.due_date || "No deadline specified"}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })
-              ) : (
-                <View style={styles.noTasksContainer}>
-                  <Text style={styles.noTasksText}>No tasks available</Text>
-                </View>
-              )}
-            </View>
-          );
-        })} */}
-
         {projectDetails.map((projectItem, projectIndex) => {
           const project = projectItem.attributes;
 
@@ -532,20 +454,26 @@ const ProjectTeam = () => {
 
               {tasks.length > 0 ? (
                 tasks.map((taskDetail, taskIndex) => {
-                  const task = taskDetail.data.attributes;
+                  const task = taskDetail.data;
                   const standardTask =
-                    task.standard_task?.data?.attributes || {};
+                    task.attributes.standard_task?.data?.attributes || {};
                   const statusText = task.task_status || "Pending";
                   const statusStyle = getStatusStyle(task.task_status);
 
-                  const taskImageUrl = task.documents?.data?.[0]?.attributes
+                  const taskImageUrl = task.attributes?.documents?.data?.[0]?.attributes
                     ?.url
-                    ? `${MEDIA_BASE_URL}${task.documents.data[0].attributes.url}`
+                    ? `${MEDIA_BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
                     : "https://via.placeholder.com/150";
 
                   return (
                     <View key={taskIndex} style={styles.milestoneCard}>
-                      <View style={styles.milestoneCard}>
+                      <TouchableOpacity style={styles.milestoneCard}
+                      onPress={() =>
+                        navigation.navigate("(pages)/taskDetails", {
+                          taskData: task,
+                        })
+                      }
+                      >
                         <Image
                           source={{ uri: taskImageUrl }}
                           style={styles.milestoneImage}
@@ -572,10 +500,10 @@ const ProjectTeam = () => {
                               size={16}
                               color="#333"
                             />{" "}
-                            Deadline: {task.due_date || "No deadline specified"}
+                            Deadline: {task?.attributes?.due_date || "No deadline specified"}
                           </Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     </View>
                   );
                 })

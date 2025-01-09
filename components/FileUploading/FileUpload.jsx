@@ -11,7 +11,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
-import { getToken } from "../../src/utils/storage";
+import { BASE_URL } from "../../src/api/apiClient";
 
 const FileUpload = ({
   uploadedFiles,
@@ -176,7 +176,7 @@ const FileUpload = ({
       }
 
       const response = await axios.post(
-        "http://localhost:1338/api/upload",
+        `${BASE_URL}/upload`,
         formData,
         {
           headers,

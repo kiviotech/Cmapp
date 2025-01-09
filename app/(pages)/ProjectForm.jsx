@@ -48,23 +48,24 @@ const ProjectForm = () => {
     const loadProjectManagers = async () => {
       try {
         const response = await fetchProjectTeamManager();
-        console.log("asdfghj consoled",response.data[0].attributes.projects.data[0].attributes.name)
-        console.log("asdfghj consoled",response.data[0].attributes.projects.data[0].attributes.location)
+        console.log('responseeeeeeeeee', response.data)
+        // console.log("asdfghj consoled",response.data[0].attributes?.projects?.data[0].attributes?.name)
+        // console.log("asdfghj consoled",response.data[0].attributes?.projects?.data[0].attributes?.location)
 
-        console.log(
-          "Project Name:",
-          response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.name
-        );
-        console.log(
-          "Project Location:",
-          response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.location
-        );
+        // console.log(
+        //   "Project Name:",
+        //   response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.name
+        // );
+        // console.log(
+        //   "Project Location:",
+        //   response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.location
+        // );
 
         const projectsList = response.data.flatMap((team) =>
-          team.attributes.projects.data.map((project) => ({
-            name: project.attributes.name?.toLowerCase(), // Normalize for case-insensitive comparison
-            location: project.attributes.location
-              ? project.attributes.location.toLowerCase() // Normalize only if location exists
+          team.attributes?.projects?.data.map((project) => ({
+            name: project.attributes?.name?.toLowerCase(), // Normalize for case-insensitive comparison
+            location: project.attributes?.location
+              ? project.attributes?.location.toLowerCase() // Normalize only if location exists
               : null, // Handle null values gracefully
           }))
         );
@@ -73,11 +74,14 @@ const ProjectForm = () => {
         console.log("projectsList is consoled",projectsList)
 
         const managersList = response.data.flatMap((team) =>
-          team.attributes.users.data.map((user) => ({
+          team.attributes.users.data.map((user) => (
+            {
             id: team.id,
-            username: user.attributes.username,
-          }))
+            username: user?.attributes?.username,
+          }
+        ))
         );
+        console.log('managers', managersList)
         setProjectManagers(managersList);
       } catch (error) {
         console.error("Error fetching project managers:", error);
