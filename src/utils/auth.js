@@ -127,3 +127,21 @@ export const signup = async (
 export const logout = (jwt) => {
   deleteToken(jwt);
 };
+
+export const debugToken = async () => {
+  const token = await getToken();
+  if (token) {
+    try {
+      const parts = token.split('.');
+      const payload = JSON.parse(atob(parts[1]));
+      console.log('Token payload:', payload);
+      console.log('Token expiration:', new Date(payload.exp * 1000));
+      console.log('Current time:', new Date());
+      console.log('Is token expired:', Date.now() > payload.exp * 1000);
+    } catch (e) {
+      console.error('Error parsing token:', e);
+    }
+  } else {
+    console.log('No token found');
+  }
+};

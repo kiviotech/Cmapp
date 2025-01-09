@@ -10,71 +10,70 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
-import axios from "axios";
-import { BASE_URL } from "../../src/api/apiClient";
-import { getToken } from "../../src/utils/storage";
+import useFileUploadStore from "../../src/stores/fileUploadStore";
 
-const FileUpload = ({
-  uploadedFiles,
-  setUploadedFiles,
-  onFileUploadSuccess,
-  message,
-}) => {
+const FileUpload = ({ onFileUploadSuccess, message }) => {
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const uploadIntervals = useRef({});
-  const uploadedFileIds = useRef([]);
+
+  const {
+    uploadedFiles,
+    addFiles,
+    updateFileProgress,
+    uploadFile,
+    deleteFile,
+    removeFile,
+    getAllFileIds,
+  } = useFileUploadStore();
 
   const handleFileUpload = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      base64: false,
-      allowsMultipleSelection: true,
-    });
-
-    if (!result.canceled) {
-      const newFiles = result.assets.map((asset) => ({
-        uri: asset.uri,
-        name: asset.fileName || "image.png",
-        progress: 0,
-        status: "uploading",
-      }));
-
-      setUploadedFiles([...uploadedFiles, ...newFiles]);
-      setUploading(true);
-
-      newFiles.forEach((newFile) => {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          setUploadedFiles((prevFiles) =>
-            prevFiles.map((file) =>
-              file.name === newFile.name ? { ...file, progress } : file
-            )
-          );
-
-          if (progress >= 100) {
-            clearInterval(interval);
-            setUploadedFiles((prevFiles) =>
-              prevFiles.map((file) =>
-                file.name === newFile.name
-                  ? { ...file, status: "success", progress: 100 }
-                  : file
-              )
-            );
-            setUploading(false);
-
-            if (newFile.status !== "success") {
-              uploadFileToAPI(newFile);
-            }
-          }
-        }, 500);
-
-        uploadIntervals.current[newFile.name] = interval;
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        base64: false,
+        allowsMultipleSelection: true,
       });
+
+      if (!result.canceled) {
+        const newFiles = result.assets.map((asset) => ({
+          uri: asset.uri,
+          name: asset.fileName || `image-${Date.now()}.png`,
+          progress: 0,
+          status: "uploading",
+        }));
+
+        addFiles(newFiles);
+
+        for (const newFile of newFiles) {
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 10;
+            if (progress <= 90) {
+              updateFileProgress(newFile.name, progress);
+            }
+          }, 500);
+
+          uploadIntervals.current[newFile.name] = interval;
+
+          try {
+            await uploadFile(newFile);
+            clearInterval(uploadIntervals.current[newFile.name]);
+            delete uploadIntervals.current[newFile.name];
+            onFileUploadSuccess(getAllFileIds());
+          } catch (error) {
+            console.error("Error uploading file:", error);
+            clearInterval(uploadIntervals.current[newFile.name]);
+            delete uploadIntervals.current[newFile.name];
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error selecting files:", error);
+      alert("Failed to select files. Please try again.");
     }
   };
 
@@ -109,32 +108,22 @@ const FileUpload = ({
             status: "uploading",
           };
 
-          setUploadedFiles((prevFiles) => [...prevFiles, newFile]);
+          addFiles([newFile]);
           setUploading(true);
 
           let progress = 0;
           const interval = setInterval(() => {
             progress += 10;
-            setUploadedFiles((prevFiles) =>
-              prevFiles.map((file) =>
-                file.name === newFile.name ? { ...file, progress } : file
-              )
-            );
+            if (progress <= 90) {
+              updateFileProgress(newFile.name, progress);
+            }
 
-            if (progress >= 100) {
+            if (progress >= 90) {
               clearInterval(interval);
-              setUploadedFiles((prevFiles) =>
-                prevFiles.map((file) =>
-                  file.name === newFile.name
-                    ? { ...file, status: "success", progress: 100 }
-                    : file
-                )
-              );
               setUploading(false);
-
-              if (newFile.status !== "success") {
-                uploadFileToAPI(newFile);
-              }
+              uploadFile(newFile).then(() => {
+                onFileUploadSuccess(getAllFileIds());
+              });
             }
           }, 500);
 
@@ -147,58 +136,15 @@ const FileUpload = ({
     }
   };
 
-  const uploadFileToAPI = async (file) => {
-    try {
-      const formData = new FormData();
-
-      if (Platform.OS !== "web") {
-        const fileExtension = file.uri.split(".").pop();
-        const mimeType = fileExtension === "png" ? "image/png" : "image/jpeg";
-
-        formData.append("files", {
-          uri: Platform.OS === "android" ? file.uri : file.uri.replace("file://", ""),
-          type: mimeType,
-          name: `photo.${fileExtension}`,
-        });
-      } else {
-        const imgblob = await (await fetch(file.uri)).blob();
-        formData.append("files", imgblob, file.name);
-      }
-
-      const token = await getToken();
-
-      const headers = {
-        Accept: "application/json",
-        "Content-Type": "multipart/form-data",
-      };
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await axios.post(
-        `${BASE_URL}/upload`,
-        formData,
-        {
-          headers,
-          transformRequest: (data, headers) => {
-            return formData;
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        const responseData = response.data;
-        const fileIds = responseData.map((item) => item.id);
-        uploadedFileIds.current.push(...fileIds);
-        onFileUploadSuccess(uploadedFileIds.current);
-        console.log("Upload successful:", responseData);
-      } else {
-        console.log("Failed to upload file:", response.data);
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error.response?.data || error.message);
+  const handleRemoveFile = (fileName) => {
+    if (uploadIntervals.current[fileName]) {
+      clearInterval(uploadIntervals.current[fileName]);
+      delete uploadIntervals.current[fileName];
     }
+
+    removeFile(fileName);
+    
+    onFileUploadSuccess(getAllFileIds());
   };
 
   const closeCamera = () => {
@@ -240,25 +186,12 @@ const FileUpload = ({
           progress: 0,
           status: "uploading",
         };
-        setUploadedFiles((prevFiles) => [...prevFiles, newFile]);
-        uploadFileToAPI(newFile);
+        addFiles([newFile]);
+        uploadFile(newFile).then(() => {
+          onFileUploadSuccess(getAllFileIds());
+        });
       }, "image/jpeg");
     }
-  };
-
-  const handleRemoveFile = (fileName) => {
-    if (uploadIntervals.current[fileName]) {
-      clearInterval(uploadIntervals.current[fileName]);
-      delete uploadIntervals.current[fileName];
-    }
-
-    setUploadedFiles((prevFiles) =>
-      prevFiles.filter((file) => file.name !== fileName)
-    );
-
-    uploadedFileIds.current = uploadedFileIds.current.filter(
-      (id) => id !== fileName
-    );
   };
 
   useEffect(() => {
@@ -303,18 +236,20 @@ const FileUpload = ({
           </TouchableOpacity>
         )}
         {uploadedFiles.map((file, index) => (
-          <View key={index} style={styles.fileRow}>
+          <View key={`${file.name}-${index}`} style={styles.fileRow}>
             <FontAwesome name="file" size={24} color="#6B7280" />
             <View style={styles.progressBarContainer}>
               <View style={styles.docNameContainer}>
                 <Text style={styles.fileName}>{file?.name}</Text>
                 {file.status === "success" ? (
                   <FontAwesome name="check-circle" size={15} color="#A3D65C" />
-                ) : file.status === "uploading" ? (
-                  <Text
-                    style={{ color: "#838383", fontSize: 10 }}
-                  >{`${file.progress}%`}</Text>
-                ) : null}
+                ) : file.status === "error" ? (
+                  <FontAwesome name="exclamation-circle" size={15} color="#FC5275" />
+                ) : (
+                  <Text style={{ color: "#838383", fontSize: 10 }}>
+                    {`${file.progress}%`}
+                  </Text>
+                )}
               </View>
               <View style={styles.progressBackground}>
                 <View
@@ -323,24 +258,31 @@ const FileUpload = ({
                     {
                       width: `${file.progress}%`,
                       backgroundColor:
-                        file.status === "success" ? "#A3D65C" : "#FFD439",
+                        file.status === "success" 
+                          ? "#A3D65C" 
+                          : file.status === "error"
+                          ? "#FC5275"
+                          : "#FFD439",
                     },
                   ]}
                 />
               </View>
             </View>
-            <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
+            <TouchableOpacity 
+              onPress={() => handleRemoveFile(file.name)}
+              disabled={file.status === "uploading"}
+            >
               <FontAwesome
                 style={{ marginTop: 15 }}
                 name="trash"
                 size={15}
-                color="#FC5275"
+                color={file.status === "uploading" ? "#CCCCCC" : "#FC5275"}
               />
             </TouchableOpacity>
           </View>
         ))}
 
-        {uploadedFiles.map((file, index) => (
+        {/* {uploadedFiles.map((file, index) => (
           <View key={index} style={styles.thumbnailContainer}>
             <Image source={{ uri: file.uri }} style={styles.thumbnail} />
             <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
@@ -351,7 +293,7 @@ const FileUpload = ({
 
         {uploading && (
           <ActivityIndicator size="large" color="#3B82F6" style={styles.loader} />
-        )}
+        )} */}
       </View>
     </View>
   );
