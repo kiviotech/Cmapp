@@ -20,15 +20,22 @@ import { useNavigation } from "@react-navigation/native";
 import apiClient from "../../src/api/apiClient";
 import { fetchProjectTeamManager } from "../../src/services/projectTeamService";
 import useAuthStore from "../../useAuthStore";
+import DropDownPicker from "react-native-dropdown-picker";
 
 const { width, height } = Dimensions.get("window");
 
 const ProjectForm = () => {
   const { user } = useAuthStore();
   const navigation = useNavigation();
-  const [projectManager, setProjectManager] = useState(
-    "Select Project Manager"
+  const [projectManager, setProjectManager] = useState(null);
+  const [projectSupervisors, setProjectSupervisors] = useState(
+    "Select Project Supervisors"
+  ); const [siteCoordinators, setSiteCoordinators] = useState(
+    "Select Site Coordinators"
   );
+  const [projectManagerOpen, setProjectManagerOpen] = useState(false);
+  const [selectedDropdown, setSelectedDropdown] = useState(null); // To track which dropdown is active
+  const [selectedUser, setSelectedUser] = useState("");
   const [projectManagerId, setProjectManagerId] = useState(null);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -45,51 +52,48 @@ const ProjectForm = () => {
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   useEffect(() => {
-    const loadProjectManagers = async () => {
+    const loadTeamData = async () => {
       try {
-        const response = await fetchProjectTeamManager();
-        console.log('responseeeeeeeeee', response.data)
-        // console.log("asdfghj consoled",response.data[0].attributes?.projects?.data[0].attributes?.name)
-        // console.log("asdfghj consoled",response.data[0].attributes?.projects?.data[0].attributes?.location)
-
-        // console.log(
-        //   "Project Name:",
-        //   response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.name
-        // );
-        // console.log(
-        //   "Project Location:",
-        //   response.data?.[1]?.attributes?.projects?.data?.[0]?.attributes?.location
-        // );
-
-        const projectsList = response.data.flatMap((team) =>
-          team.attributes?.projects?.data.map((project) => ({
-            name: project.attributes?.name?.toLowerCase(), // Normalize for case-insensitive comparison
-            location: project.attributes?.location
-              ? project.attributes?.location.toLowerCase() // Normalize only if location exists
-              : null, // Handle null values gracefully
+        // Fetch Project Managers
+        const managersResponse = await fetchProjectTeamManager("Project Manager");
+        const managersList = managersResponse.data.flatMap((team) =>
+          team.attributes.users.data.map((user) => ({
+            id: user.id,
+            username: user.attributes?.username,
           }))
         );
-
-        setProjectData(projectsList);
-        console.log("projectsList is consoled",projectsList)
-
-        const managersList = response.data.flatMap((team) =>
-          team.attributes.users.data.map((user) => (
-            {
-            id: team.id,
-            username: user?.attributes?.username,
-          }
-        ))
-        );
-        console.log('managers', managersList)
+        console.log('managersList', managersList)
         setProjectManagers(managersList);
+
+        // Fetch Project Supervisors
+        const supervisorsResponse = await fetchProjectTeamManager("Project Supervisor");
+        const supervisorsList = supervisorsResponse.data.flatMap((team) =>
+          team.attributes.users.data.map((user) => ({
+            id: user.id,
+            username: user.attributes?.username,
+          }))
+        );
+        console.log('supervisorsList', supervisorsList)
+        setProjectSupervisors(supervisorsList);
+
+        // Fetch Site Coordinators
+        const coordinatorsResponse = await fetchProjectTeamManager("Site Coordinator");
+        const coordinatorsList = coordinatorsResponse.data.flatMap((team) =>
+          team.attributes.users.data.map((user) => ({
+            id: user.id,
+            username: user.attributes?.username,
+          }))
+        );
+        console.log('coordinatorsList', coordinatorsList)
+        setSiteCoordinators(coordinatorsList);
       } catch (error) {
-        console.error("Error fetching project managers:", error);
+        console.error("Error fetching team data:", error);
       }
     };
-
-    loadProjectManagers();
+    loadTeamData();
   }, []);
+
+
   const isDateInFuture = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set to the start of the day (midnight)
@@ -122,19 +126,19 @@ const ProjectForm = () => {
         project.name === projectName.toLowerCase() && // Case-insensitive comparison
         project.location === projectAddress.toLowerCase() // Case-insensitive comparison
     );
-  
+
     if (isDuplicateProject) {
       newErrors.projectName = "Project with this name  already exists";
       newErrors.projectAddress = "Project with this location`q  already exists"
     }
     if (!projectName) newErrors.projectName = "Project name is required";
-  else if (/^\d+$/.test(projectName)) {
-    // This condition checks if the projectName is only numbers
-    newErrors.projectName = "Project name cannot be only numbers";
-  } else if (!/^[a-zA-Z0-9\s]*$/.test(projectName)) {
-    // This regex allows letters, numbers, and spaces
-    newErrors.projectName = "Project name must be alphanumeric (letters, numbers, or spaces)";
-  }
+    else if (/^\d+$/.test(projectName)) {
+      // This condition checks if the projectName is only numbers
+      newErrors.projectName = "Project name cannot be only numbers";
+    } else if (!/^[a-zA-Z0-9\s]*$/.test(projectName)) {
+      // This regex allows letters, numbers, and spaces
+      newErrors.projectName = "Project name must be alphanumeric (letters, numbers, or spaces)";
+    }
     if (!projectType) newErrors.projectType = "Project type is required";
     if (!projectAddress)
       newErrors.projectAddress = "Project address is required";
@@ -350,23 +354,73 @@ const ProjectForm = () => {
           </View>
 
           <View style={styles.inputContainer}>
+            <Text style={styles.labelText}>Select Project Supervisor</Text>
+            <DropDownPicker
+              // open={supervisorOpen}
+              // value={selectedSupervisor}
+              // items={projectSupervisors?.map((supervisor) => ({
+              //   label: supervisor.username,
+              //   value: supervisor.id,
+              // }))}
+              // setOpen={setSupervisorOpen}
+              // setValue={setSelectedSupervisor}
+              // setItems={(items) => setProjectSupervisors(items)}
+              placeholder="Select Project Supervisor"
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+              zIndex={4000}
+              zIndexInverse={1000}
+            />
+
+            {errors.projectManagerId && (
+              <Text style={styles.errorText}>{errors.projectManagerId}</Text>
+            )}
+          </View>
+
+          {console.log('projectManagerOpen',projectManager)}
+
+          <View style={styles.inputContainer}>
             <Text style={styles.labelText}>Select Project Manager</Text>
-            <TouchableOpacity
-              onPress={() => setDropdownVisible(true)}
-              style={styles.dropdownButton}
-            >
-              <Text
-                style={{
-                  color:
-                    projectManager === "Select Project Manager"
-                      ? "#B0B0B0"
-                      : "#333",
-                }}
-              >
-                {projectManager}
-              </Text>
-              <MaterialIcons name="arrow-drop-down" size={24} color="#B0B0B0" />
-            </TouchableOpacity>
+            {/* Coordinator Dropdown */}
+            <DropDownPicker
+              open={projectManagerOpen}
+              value={projectManagers}
+              items={projectManagers.map((manager) => ({
+                label: manager.username,
+                value: manager.id,
+              }))}
+              setOpen={setProjectManagerOpen}
+              setValue={(value) => setProjectManager(value)}
+              setItems={setProjectManagers}
+              placeholder="Select Project Manager"
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+              zIndex={9000}
+              zIndexInverse={100}
+            />
+            {errors.projectManagerId && (
+              <Text style={styles.errorText}>{errors.projectManagerId}</Text>
+            )}
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.labelText}>Select Site Coordinator</Text>
+            <DropDownPicker
+              // open={coordinatorOpen}
+              // value={selectedCoordinator}
+              // items={siteCoordinators.map((coordinator) => ({
+              //   label: coordinator.username,
+              //   value: coordinator.id,
+              // }))}
+              // setOpen={setCoordinatorOpen}
+              // // setValue={setSelectedCoordinator}
+              // setItems={(items) => setSiteCoordinators(items)}
+              placeholder="Select Site Coordinator"
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+              zIndex={2000}
+              zIndexInverse={3000}
+            />
             {errors.projectManagerId && (
               <Text style={styles.errorText}>{errors.projectManagerId}</Text>
             )}
@@ -379,15 +433,29 @@ const ProjectForm = () => {
           >
             <View style={styles.modalBackground}>
               <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Select Project Manager</Text>
+                <Text style={styles.modalTitle}>
+                  {selectedDropdown === "manager"
+                    ? "Select Project Manager"
+                    : selectedDropdown === "supervisor"
+                      ? "Select Project Supervisor"
+                      : "Select Site Coordinator"}
+                </Text>
                 <FlatList
-                  data={projectManagers}
-                  keyExtractor={(item) => item.id.toString()}
+                  data={
+                    selectedDropdown === "manager"
+                      ? projectManagers
+                      : selectedDropdown === "supervisor"
+                        ? projectSupervisors
+                        : siteCoordinators
+                  }
+                  keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       onPress={() => {
-                        setProjectManager(item.username);
-                        handleProjectManagerSelection(item.username, item.id);
+                        setSelectedUser(item.username);
+                        setDropdownVisible(false);
+                        // Handle specific selection if needed
+                        console.log(`Selected ${selectedDropdown}:`, item.username);
                       }}
                       style={styles.modalItem}
                     >
@@ -414,8 +482,8 @@ const ProjectForm = () => {
             />
           </View>
           {errors.uploadedFiles && (
-              <Text style={styles.errorText}>{errors.uploadedFiles}</Text>
-            )}
+            <Text style={styles.errorText}>{errors.uploadedFiles}</Text>
+          )}
 
           <TextInput
             placeholder="Project description..."
@@ -433,28 +501,58 @@ const ProjectForm = () => {
             <Text style={styles.createButtonText}>Create Project</Text>
           </TouchableOpacity>
           <Modal
-            transparent={true}
-            visible={isSuccessModalVisible}
-            animationType="fade"
-            onRequestClose={closeModal}
+            visible={dropdownVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setDropdownVisible(false)}
           >
-            <View style={styles.modalOverlay}>
+            <View style={styles.modalBackground}>
               <View style={styles.modalContainer}>
                 <Text style={styles.modalTitle}>
-                  Project Created Successfully!
+                  {selectedDropdown === "manager"
+                    ? "Select Project Manager"
+                    : selectedDropdown === "supervisor"
+                      ? "Select Project Supervisor"
+                      : "Select Site Coordinator"}
                 </Text>
-                <Text style={styles.modalMessage}>
-                  Your project has been created successfully.
-                </Text>
+                <FlatList
+                  data={
+                    selectedDropdown === "manager"
+                      ? projectManagers
+                      : selectedDropdown === "supervisor"
+                        ? projectSupervisors
+                        : siteCoordinators
+                  }
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (selectedDropdown === "manager") {
+                          setProjectManager(item.username);
+                        } else if (selectedDropdown === "supervisor") {
+                          setProjectSupervisors(item.username);
+                        } else if (selectedDropdown === "coordinator") {
+                          setSiteCoordinators(item.username);
+                        }
+                        setDropdownVisible(false);
+                        console.log(`Selected ${selectedDropdown}:`, item.username);
+                      }}
+                      style={styles.modalItem}
+                    >
+                      <Text style={{ color: "#333333" }}>{item.username}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
                 <TouchableOpacity
-                  style={styles.proceedButton}
-                  onPress={closeModal}
+                  onPress={() => setDropdownVisible(false)}
+                  style={styles.modalCancel}
                 >
-                  <Text style={styles.proceedButtonText}>Continue</Text>
+                  <Text style={{ color: "#4a90e2" }}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </Modal>
+
         </View>
       </ScrollView>
     </View>
@@ -510,6 +608,17 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: 17,
     paddingBottom: 10,
+  },
+  dropdown: {
+    marginBottom: 5,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    height: 50,
+  },
+  dropdownContainer: {
+    borderColor: "#ccc",
   },
   input: {
     borderWidth: 1,

@@ -219,9 +219,11 @@ const ChangePassword = () => {
             </View>
           </View>
 
+          <View style>
           <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             <Text style={styles.buttonText}>Update Password</Text>
           </TouchableOpacity>
+          </View>
 
           <TouchableOpacity style={styles.cancelButton}
             onPress={() => navigation.navigate("(pages)/contractor/settings")}
@@ -307,10 +309,11 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   button: {
-    backgroundColor: "#1e90ff",
+    // backgroundColor: "#1e90ff",
+    backgroundColor: 'lightgreen', 
     padding: 15,
     borderRadius: 30,
-    marginLeft: 25,
+    marginHorizontal: 'auto',
     marginBottom: 10,
     height: 50,
     width: 150,
