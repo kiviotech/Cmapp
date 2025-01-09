@@ -12,6 +12,7 @@ import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
 import { BASE_URL } from "../../src/api/apiClient";
+import { getToken } from "../../src/utils/storage";
 
 const FileUpload = ({
   uploadedFiles,
@@ -301,7 +302,6 @@ const FileUpload = ({
             <Text style={styles.buttonText}>Use Camera</Text>
           </TouchableOpacity>
         )}
-
         {uploadedFiles.map((file, index) => (
           <View key={index} style={styles.fileRow}>
             <FontAwesome name="file" size={24} color="#6B7280" />

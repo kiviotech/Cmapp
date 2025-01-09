@@ -410,6 +410,7 @@ const ProjectForm = () => {
               uploadedFiles={uploadedFiles}
               setUploadedFiles={setUploadedFiles}
               onFileUploadSuccess={handleFileUploadSuccess}
+              message="Upload Project Documents in .png or .jpeg format"
             />
           </View>
           {errors.uploadedFiles && (

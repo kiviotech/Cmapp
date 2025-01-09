@@ -89,7 +89,7 @@ const profile = () => {
           </View>
           <View style={styles.profileDetailSection}>
             <Text style={styles.userName}>
-              {user.username ? user.username : "Guest"}
+              {user?.username ? user?.username : "Guest"}
             </Text>
             <Text style={[styles.userName, { color: colors.primary }]}>
               {designation ? designation : ""}

@@ -297,7 +297,7 @@ const SignUp = () => {
               uploadedFiles={uploadedFileIds}
               setUploadedFiles={setUploadedFileIds}
               onFileUploadSuccess={handleFileUploadSuccess}
-              message={"Upload your ID proof here"}
+              message={"Upload your ID proof here in .png or .jpeg format"}
             />
             {errors.contractorLicense && (
               <Text style={styles.errorText}>{errors.contractorLicense}</Text>
