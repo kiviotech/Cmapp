@@ -21,6 +21,7 @@ import { getProjects } from "../../src/api/repositories/projectRepository";
 import { fetchSubContractors } from "../../src/services/subContractorService";
 import useAuthStore from "../../useAuthStore";
 import { fetchUsers } from "../../src/services/userService";
+import useFileUploadStore from '../../src/stores/fileUploadStore';
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -44,6 +45,7 @@ const SignUp = () => {
   const [errors, setErrors] = useState({});
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
+  const resetFileUploadStore = useFileUploadStore(state => state.reset);
 
   useEffect(() => {
     if (token) {
@@ -133,6 +135,7 @@ const SignUp = () => {
       );
 
       if (res) {
+        resetFileUploadStore();
         showToast("Request for new account sent", "success");
         router.replace("/Wait");
       }
