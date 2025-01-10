@@ -28,8 +28,8 @@ const TaskDetails = () => {
     const fetchStandardTaskDetails = async () => {
       try {
         const standardTaskId = taskData?.attributes?.standard_task?.data?.id
-      const response = await fetchStandardTaskById(standardTaskId);
-      setStandardTaskDetails(response.data)
+        const response = await fetchStandardTaskById(standardTaskId);
+        setStandardTaskDetails(response.data)
       } catch (error) {
         console.error("Error fetching contractor data:", error);
       }
@@ -57,6 +57,18 @@ const TaskDetails = () => {
       }
     } catch (error) {
       console.error("Failed to open URL: ", error);
+    }
+  };
+
+  const openLink = () => {
+    const link = taskData?.attributes?.standard_task?.data?.attributes?.Links;
+
+    if (link) {
+      Linking.openURL(link).catch((err) =>
+        console.error('Failed to open link:', err)
+      );
+    } else {
+      console.warn('No link provided');
     }
   };
 
@@ -127,6 +139,15 @@ const TaskDetails = () => {
                 "No description available for this task."}
             </Text>
           </View>
+          {console.log('taskdata', taskData)}
+
+          <View>
+            <TouchableOpacity style={{ margin: 20 }}
+            onPress={openLink}
+            >
+              <Text style={{fontSize: 18}}>Click here to open link</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Table Section */}
           <View style={styles.tableContainer}>
@@ -136,7 +157,7 @@ const TaskDetails = () => {
               </Text>
               <Text style={styles.tableContent}>
                 {standardTaskDetails?.attributes?.consultant?.data?.attributes?.name || ""}
-                </Text>
+              </Text>
             </View>
             <View style={styles.tableRow}>
               <Text style={styles.tableHeader}>
