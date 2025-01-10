@@ -10,7 +10,7 @@ import {
   Image,
 } from "react-native";
 import ProgressBar from "react-native-progress/Bar";
-import { FontAwesome ,Ionicons} from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import useProjectStore from "../../../projectStore";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
@@ -27,7 +27,7 @@ const ProjectDetails = () => {
   const { projectId, projectData, contractorId } = route.params || {};
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
-  const [projectMangerName,setProjectManagerName] = useState("")
+  const [projectMangerName, setProjectManagerName] = useState("")
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
@@ -60,11 +60,11 @@ const ProjectDetails = () => {
   useEffect(() => {
     const getProjectDetails = async () => {
       const response = await fetchProjectById(projectId);
-      const userId = response.data.attributes.approver.data.id;
-      console.log("user id",userId)
-      const data =  await getProjectTeamById(userId)
-      const userName = data.data.data.attributes.users.data[0].attributes.username
- setProjectManagerName(userName)
+      const userId = response?.data?.attributes?.approver?.data?.id;
+      console.log("user id", userId)
+      const data = await getProjectTeamById(userId)
+      const userName = data?.data?.data?.attributes?.users?.data[0]?.attributes?.username
+      setProjectManagerName(userName)
       setProjectDetails(response.data)
     }
     getProjectDetails();
@@ -81,7 +81,7 @@ const ProjectDetails = () => {
             name="arrow-back"
             size={24}
             color="black"
-           
+
           />
 
         </TouchableOpacity>
@@ -176,30 +176,30 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: width * 0.04,
     backgroundColor: "#FFFFFF",
-   
+
   },
   container: {
     paddingTop: height * 0.05,
     backgroundColor: "#FFFFFF",
-  
-   
-    
+
+
+
   },
-  container1:{
+  container1: {
     paddingTop: height * 0.05,
-    display:'flex',
-    flexDirection:'row',
-    gap:'10px'
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '10px'
 
   },
   header: {
-   
+
     display: "flex",
     fontSize: width * 0.055,
     fontWeight: "bold",
     marginBottom: height * 0.015,
     color: "#192252",
-   
+
   },
   headerText: {
     fontSize: width * 0.055,
@@ -208,28 +208,28 @@ const styles = StyleSheet.create({
     color: "#192252",
     marginLeft: 10,
     marginTop: -5,
-       border:'1px solid red'
-   
+    border: '1px solid red'
+
   },
   projectNameContainer: {
-    
+
     alignItems: "flex-start",
     // marginBottom: height * 0.015,
-    paddingHorizontal:width*0.05,
-  
+    paddingHorizontal: width * 0.05,
+
   },
   projectName: {
     fontSize: width * 0.055,
     fontWeight: "bold",
     color: "#192252",
- 
+
   },
   calendarContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.015,
-    paddingHorizontal:width*0.10,
-    
+    paddingHorizontal: width * 0.10,
+
   },
   dateContainer: {
     flexDirection: "column",
@@ -244,12 +244,12 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
     color: "#F5C37F",
   },
-  statusStyle:{
+  statusStyle: {
     color: "red",
 
   },
-  noTasksText:{
-    paddingHorizontal:width*0.05,
+  noTasksText: {
+    paddingHorizontal: width * 0.05,
   },
   label: {
     fontSize: width * 0.042,
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     color: "#192252",
     marginBottom: height * 0.008,
     marginTop: height * 0.02,
-    paddingHorizontal:width*0.05,
+    paddingHorizontal: width * 0.05,
   },
   text: {
     fontSize: width * 0.04,
@@ -267,51 +267,51 @@ const styles = StyleSheet.create({
     fontSize: width * 0.038,
     color: "#6E6E6E",
     marginBottom: height * 0.02,
-    paddingHorizontal:width*0.05,
+    paddingHorizontal: width * 0.05,
     lineHeight: height * 0.015, // Increased line height for readability
   },
   progressContainer: {
     flexDirection: "row",
-   
-  
+
+
     alignItems: "center",
     marginBottom: height * 0.02,
     paddingVertical: height * 0.01,
-   
+
   },
   progressBarContainer: {
     marginLeft: width * 0.02,
     marginTop: height * 0.005,
-    border:'1px solid red',
-      
+    border: '1px solid red',
+
   },
   progressLabel: {
     fontSize: width * 0.04,
     fontWeight: "bold",
     color: "#192252",
-    paddingHorizontal:width*0.05,
-    width:'40%',
-       whiteSpace: 'nowrap'
- 
+    paddingHorizontal: width * 0.05,
+    width: '40%',
+    whiteSpace: 'nowrap'
 
-   
+
+
   },
   progressPercentage: {
     fontSize: width * 0.035,
     color: "#66B8FC",
     position: "absolute",
     right: width * 0.02,
-   
+
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
     padding: width * 0.04,
     borderRadius: 8,
-    marginLeft:'10px',
+    marginLeft: '10px',
     marginBottom: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    width:'90%'
+    width: '90%'
   },
   task: {
     flexDirection: "row",
@@ -364,6 +364,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
- });
+});
 
 export default ProjectDetails;
