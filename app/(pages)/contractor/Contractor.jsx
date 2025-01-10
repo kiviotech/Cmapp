@@ -65,9 +65,9 @@ const Contractor = () => {
           var filteredData = [];
           if (data.data.length > 0) {
             const contractorId = data.data[0].id; // Assuming one contractor per user
-            const projectData = data.data.map(
-              (project) => (filteredData = project.attributes.projects.data)
-            );
+            // const projectData = data.data.map(
+            //   (project) => (filteredData = project.attributes.projects.data)
+            // );
 
             // Fetch tasks for each project ID in selectedProjectId
             const allTasks = [];
@@ -76,6 +76,7 @@ const Contractor = () => {
                 projectId.id,
                 contractorId
               );
+              console.log('taskData',taskData)
               const ongoingTasks = taskData.data.data.filter(
                 (task) => task.attributes.task_status === "ongoing"
               );
