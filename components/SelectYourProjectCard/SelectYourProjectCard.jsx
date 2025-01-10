@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View, StyleSheet, Image } from "react-native";
+import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { icons } from "../../constants";
 
 const SelectYourProjectCard = ({ cardValue }) => {
@@ -16,11 +16,16 @@ const SelectYourProjectCard = ({ cardValue }) => {
     name = "Untitled Project",
     desc = "No description available",
     update = "Status unavailable",
-    deadline = "No deadline set"
+    deadline = "No deadline set",
+    id = "1"
   } = cardValue;
 
   return (
-    <View style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}>
+    <TouchableOpacity style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}
+    // onPress={() => navigation.navigate("(pages)/contractor/ProjectDetails", {
+    //   projectId: cardValue.id,
+    // })}
+    >
       <Text style={styles.projectName}>{name}</Text>
       <Text style={styles.projectDescription}>{desc}</Text>
       <View>
@@ -38,15 +43,15 @@ const SelectYourProjectCard = ({ cardValue }) => {
           <Text style={styles.deadlineText}>{deadline}</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   cardContainer: {
     padding: 20,
-    height: "auto",
-    marginVertical: 10,
+    height: 200,
+    margin: 10,
     width: 200,
   },
   ongoing: {

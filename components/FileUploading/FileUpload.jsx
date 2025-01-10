@@ -235,7 +235,6 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
             <Text style={styles.buttonText}>Use Camera</Text>
           </TouchableOpacity>
         )}
-
         {uploadedFiles.map((file, index) => (
           <View key={`${file.name}-${index}`} style={styles.fileRow}>
             <FontAwesome name="file" size={24} color="#6B7280" />

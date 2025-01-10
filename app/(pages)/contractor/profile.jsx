@@ -39,25 +39,23 @@ const profile = () => {
       if (user && user.id) {
         try {
           const data = await fetchContractorsByUserId(user.id);
-          // setContractorsData(data.data); // Set entire array of contractors
+
           var filteredData = [];
           if (data.data.length > 0) {
             const contractorId = data.data[0].id; // Assuming one contractor per user
             const projectData = data.data.map(
               (project) => (filteredData = project.attributes.projects.data)
             );
-
+            console.log('data', filteredData);
             setProjectsDetail(filteredData);
 
             // Fetch tasks for each project ID in selectedProjectId
             const allTasks = [];
-            const submissionData = [];
             for (const projectId of filteredData) {
               const taskData = await getTaskByContractorId(
                 projectId.id,
                 contractorId
               );
-              // console.log('task data',taskData.data.data)
               const ongoingTasks = taskData.data.data.filter(
                 (task) => task.attributes.task_status === "ongoing"
               );
@@ -65,10 +63,15 @@ const profile = () => {
             }
             setTasks(allTasks); // Update tasks state with all fetched tasks
 
-            for (const submission of allTasks) {
-              submissionData.push(submission.attributes.submissions.data);
-            }
-            setUploadedHistory(submissionData);
+            // Filter tasks with submissions.data > 0
+            const tasksWithSubmissions = allTasks.filter(
+              (task) => task.attributes.submissions.data.length > 0
+            );
+            const submissionData = tasksWithSubmissions.map(
+              (task) => task.attributes.submissions.data
+            );
+
+            setUploadedHistory(tasksWithSubmissions); // Store submission data
           }
         } catch (error) {
           console.error("Error fetching contractor data:", error);
@@ -82,60 +85,66 @@ const profile = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={{ padding: 10 }}>
+      <ScrollView style={{ padding: 10, marginBottom: 30 }}>
         <View>
           <View style={styles.profileImageContiner}>
             <Image style={styles.userImage} source={icons.userProfile}></Image>
           </View>
           <View style={styles.profileDetailSection}>
             <Text style={styles.userName}>
-              {user.username ? user.username : "Guest"}
+              {user?.username ? user?.username : "Guest"}
             </Text>
             <Text style={[styles.userName, { color: colors.primary }]}>
               {designation ? designation : ""}
             </Text>
           </View>
         </View>
-        {console.log("uploaded comments...",uploadedHistory)}
 
-        {uploadedHistory.map((history, historyIndex) => 
-          history.map((data, dataIndex) => (
-            <View key={`${historyIndex}-${dataIndex}`} style={{ margin: 10 }}>
-              <Text>
-                Status: {data?.attributes?.status}
-              </Text>
-              <Text>
-                Comments: {data?.attributes?.comment}
-              </Text>
-              <Text>
-                Submitted on: {data?.attributes?.createdAt?.slice(0,10)}
-              </Text>
-              {data.attributes.proofOfWork?.map((file, fileIndex) => (
-                <TouchableOpacity
-                  key={`${historyIndex}-${dataIndex}-${fileIndex}`} // Assign a unique key
-                  style={styles.fileRow}
-                  onPress={() => Linking.openURL(file.url)}
-                >
-                  <FontAwesome name="file" size={24} color={colors.primary} />
-                  <Text style={styles.fileName}>{file.fileName}</Text>
-                  <FontAwesome
-                    name="download"
-                    size={15}
-                    color={colors.downloadIconColor}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          ))
-        )}
+        {uploadedHistory?.map((history, historyIndex) => (
+          <View key={historyIndex} style={{ margin: 10 }}>
+            <Text style={styles.subTitle}>
+              Submissions for{" "}
+              {history?.attributes?.standard_task?.data?.attributes?.Name || "N/A"} for{" "}
+              {history?.attributes?.project?.data?.attributes?.name || "N/A"}
+            </Text>
 
+            {history?.attributes?.submissions?.data?.map((data, dataIndex) => (
+              <View key={`${historyIndex}-${dataIndex}`} style={{ marginVertical: 5 }}>
+                <Text>
+                  {dataIndex+1}. Status: {data?.attributes?.status || "N/A"}
+                </Text>
+                <Text>
+                  Comments: {data?.attributes?.comment || "No comments"}
+                </Text>
+                <Text>
+                  Submitted on: {data?.attributes?.createdAt?.slice(0, 10) || "N/A"}
+                </Text>
 
+                {data?.attributes?.proofOfWork?.map((file, fileIndex) => (
+                  <TouchableOpacity
+                    key={`${historyIndex}-${dataIndex}-${fileIndex}`}
+                    style={styles.fileRow}
+                    onPress={() => Linking.openURL(file?.url || "#")}
+                  >
+                    <FontAwesome name="file" size={24} color={colors.primary} />
+                    <Text style={styles.fileName}>{file?.fileName || "File"}</Text>
+                    <FontAwesome
+                      name="download"
+                      size={15}
+                      color={colors.downloadIconColor}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ))}
+          </View>
+        ))}
         {/* <UploadedFileHIstory historyData={uploadedHistory} /> */}
 
-        <View style={{ marginTop: 20 }}>
+        <View style={{ marginTop: 20,  }}>
           <Text
             style={{
-              fontSize: 16,
+              fontSize: 20,
               letterSpacing: 0.8,
               color: colors.blackColor,
               paddingLeft: 10,
@@ -153,6 +162,7 @@ const profile = () => {
               <View key={index} style={styles.cardWrapper}>
                 <SelectYourProjectCard
                   cardValue={{
+                    id: project.id,
                     name: project.attributes.name,
                     desc: project.attributes.description,
                     update: project.attributes.project_status,
@@ -200,6 +210,9 @@ const styles = StyleSheet.create({
     fontSize: 26,
     letterSpacing: 0.13,
     paddingBottom: 10,
+  },
+  subTitle: {
+    fontSize: 18,
   },
   fileRow: {
     flexDirection: "row",

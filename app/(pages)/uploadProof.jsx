@@ -26,7 +26,7 @@ import FileUpload from "../../components/FileUploading/FileUpload";
 import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
 
-const UploadProof = ({}) => {
+const UploadProof = ({ }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -36,6 +36,7 @@ const UploadProof = ({}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [toastVisible, setToastVisible] = useState(false); // State for showing toast
   const [toastMessage, setToastMessage] = useState("");
+  const [errors, setErrors] = useState("");
   const videoRef = useRef(null);
   const uploadIntervals = useRef({});
   const [uploadedFileIds, setUploadedFileIds] = useState([]);
@@ -60,7 +61,7 @@ const UploadProof = ({}) => {
           if (status === "rejected") {
             setRejectionComment(latestSubmission?.attributes?.rejectionComment);
           }
-          setUploadedHistory(submissions);
+          setUploadedHistory(taskData?.data);
         } else {
           setTaskStatus("Yet to Upload");
         }
@@ -120,6 +121,7 @@ const UploadProof = ({}) => {
           comment: comment,
           status: "pending",
           task: taskId,
+          notification_status: "unread",
           proofOfWork: fileIds && fileIds.length > 0 ? fileIds : [],
         },
       });
@@ -132,23 +134,41 @@ const UploadProof = ({}) => {
   };
 
   const handleSubmit = async () => {
+    const hasError = uploadedFileIds.length === 0 || !comment;
+
+    if (uploadedFileIds.length === 0 || !comment) {
+      console.log('uploadedFileIds', uploadedFileIds)
+      setErrors("Images and comments are required")
+    }
+
+    // If there are errors, do not proceed
+    if (hasError) {
+      setToastMessage("Please fix the errors before submitting.");
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 3000);
+      return;
+    }
+
+    // Proceed with submission if no errors
     try {
       const fileIds = uploadedFileIds.filter((id) => typeof id === "number");
 
       const submission = await createSubmission(fileIds, id);
       console.log("Submission created successfully:", submission);
+
       setToastMessage("Submission created successfully!");
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 3000);
+
+      // Clear form
       setUploadedFiles([]);
       setUploadedFileIds([]);
       setComment("");
     } catch (error) {
       console.error("Error during submission:", error);
+
       setToastMessage("Error during submission. Please try again.");
       setToastVisible(true);
-
-      // Hide the toast after 3 seconds
       setTimeout(() => setToastVisible(false), 3000);
     }
   };
@@ -171,10 +191,10 @@ const UploadProof = ({}) => {
         prevFiles.map((f) =>
           f.name === file.name
             ? {
-                ...f,
-                progress,
-                status: progress < 100 ? "uploading" : "success",
-              }
+              ...f,
+              progress,
+              status: progress < 100 ? "uploading" : "success",
+            }
             : f
         )
       );
@@ -319,6 +339,9 @@ const UploadProof = ({}) => {
         </TouchableOpacity>
         <Text style={styles.instructions}>1. Upload your proof of work</Text>
       </View>
+      <View>
+        <Text>{errors ? <Text style={styles.errorText}>{errors}</Text> : null}</Text>
+      </View>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.mainContainer}>
           <View style={styles.uploadContainer}>
@@ -384,35 +407,35 @@ const UploadProof = ({}) => {
             <TouchableOpacity
               style={[styles.uploadButton, styles.submitButton]}
               onPress={handleSubmit}
-              disabled={uploading || !comment}
+              disabled={errors}
             >
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
             {toastVisible && (
-        <View style={styles.toast}>
-          <Text style={styles.toastText}>{toastMessage}</Text>
-        </View>
-      )}
+              <View style={styles.toast}>
+                <Text style={styles.toastText}>{toastMessage}</Text>
+              </View>
+            )}
 
-      {/* Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>{toastMessage}</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
+            {/* Modal */}
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={modalVisible}
+              onRequestClose={() => setModalVisible(false)}
             >
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalText}>{toastMessage}</Text>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.buttonText}>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
           </View>
 
           <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
@@ -424,8 +447,8 @@ const UploadProof = ({}) => {
                   taskStatus === "approved"
                     ? "#D4EDDA"
                     : taskStatus === "declined"
-                    ? "#ffebee" // light red
-                    : "rgba(251, 188, 85, 0.3)", // light green for approved
+                      ? "#ffebee" // light red
+                      : "rgba(251, 188, 85, 0.3)", // light green for approved
               },
             ]}
           >
@@ -434,8 +457,8 @@ const UploadProof = ({}) => {
                 taskStatus === "approved"
                   ? icons.approved // Pending icon
                   : taskStatus === "declined"
-                  ? icons.reject // Declined icon
-                  : icons.uploadApproval // Approved icon
+                    ? icons.reject // Declined icon
+                    : icons.uploadApproval // Approved icon
               }
             />
             <Text
@@ -444,8 +467,8 @@ const UploadProof = ({}) => {
                   taskStatus === "approved"
                     ? "#28A745"
                     : taskStatus === "declined"
-                    ? "#DC3545" // red
-                    : "#FBBC55", // green for approved
+                      ? "#DC3545" // red
+                      : "#FBBC55", // green for approved
               }}
             >
               {taskStatus}
@@ -482,6 +505,12 @@ const styles = StyleSheet.create({
     // fontFamily: fonts.WorkSans600,
     paddingBottom: 10,
     paddingLeft: 20,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 20
   },
   commentInput: {
     borderWidth: 1,
@@ -602,10 +631,10 @@ const styles = StyleSheet.create({
   },
   toast: {
     position: 'absolute',
-    top: 0, 
+    top: 0,
     left: 20,
     right: 20,
-    backgroundColor: '#28a745', 
+    backgroundColor: '#28a745',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',

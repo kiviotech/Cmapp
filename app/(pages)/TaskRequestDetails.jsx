@@ -11,6 +11,7 @@ import {
   Image,
   Dimensions,
   Platform,
+  TextInput,
 } from "react-native";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -20,6 +21,7 @@ import { URL } from "../../src/api/apiClient";
 import * as FileSystem from "expo-file-system";
 import * as WebBrowser from "expo-web-browser";
 import { updateTask } from "../../src/services/taskService";
+import useAuthStore from "../../useAuthStore";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,10 +32,17 @@ const RequestDetails = () => {
   const [taskData, setTaskData] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [declineModalVisible, setDeclineModalVisible] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
+  const [requesterName, setRequesterName] = useState("");
+
+  const { user } = useAuthStore()
+  console.log('user', user)
 
   useEffect(() => {
     setTaskData(requestData?.attributes?.task?.data)
-    console.log('task Data', requestData.attributes?.task?.data)
+    setRequesterName(requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username)
+    console.log('task Data', requestData)
   }, [requestData]);
 
   const documents = requestData?.attributes?.proofOfWork?.data || [];
@@ -116,7 +125,7 @@ const RequestDetails = () => {
           }
         } else {
           // For iOS
-          Alert.alert("Download Complete", File `saved to: ${uri}`);
+          Alert.alert("Download Complete", File`saved to: ${uri}`);
         }
       } catch (error) {
         console.error("Error downloading image:", error);
@@ -126,55 +135,63 @@ const RequestDetails = () => {
   };
 
   const handleStatusChange = async (newStatus) => {
-    try {
-      // Update submission status
-      const updatedData = {
-        data: {
-          comment: requestData.attributes.comment,
-          proofOfWork: documents.map((doc) => doc.id),
-          count: requestData.attributes.count,
-          status: newStatus,
-          task: requestData.attributes.task?.data?.id,
-        },
-      };
+    if (newStatus === "declined" && !declineReason) {
+      Alert.alert("Error", "Please provide a reason for declining the request.");
+      return;
+    } else if (requesterName.toLowerCase() === user.username.toLowerCase()){
+      Alert.alert("Error", "Cannot approve or reject your own submissions");
+      return;
+    } else {
+      try {
+        // Update submission status
+        const updatedData = {
+          data: {
+            comment: requestData.attributes.comment,
+            proofOfWork: documents.map((doc) => doc.id),
+            count: requestData.attributes.count,
+            status: newStatus,
+            rejection_reason: newStatus === "declined"? declineReason : "",
+            task: requestData.attributes.task?.data?.id,
+          },
+        };
   
-      const response = await updateExistingSubmission(requestData.id, updatedData);
+        const response = await updateExistingSubmission(requestData.id, updatedData);
   
-      if (response.data) {
-        console.log("Submission updated successfully:", response.data);
+        if (response.data) {
+          console.log("Submission updated successfully:", response.data);
   
-        // Update task status
-        if (newStatus === "approved") {
-          const updateTaskData = {
-            data: {
-              task_status: "completed",
-            },
-          };
+          // Update task status
+          if (newStatus === "approved") {
+            const updateTaskData = {
+              data: {
+                task_status: "completed",
+                approver: user.id,
+              },
+            };
   
-          const taskResp = await updateTask(taskData.id, updateTaskData);
+            const taskResp = await updateTask(taskData.id, updateTaskData);
   
-          if (taskResp.data) {
-            console.log("Task status updated successfully:", taskResp.data);
-            Alert.alert("Success", `Request ${newStatus} and task status updated successfully!`);
+            if (taskResp.data) {
+              console.log("Task status updated successfully:", taskResp.data);
+              Alert.alert("Success", `Request ${newStatus} and task status updated successfully!`);
+            } else {
+              console.error("Failed to update task status:", taskResp);
+              Alert.alert("Warning", "Request updated, but task status update failed.");
+            }
           } else {
-            console.error("Failed to update task status:", taskResp);
-            Alert.alert("Warning", "Request updated, but task status update failed.");
+            console.warn("Task data is missing or invalid.");
+            Alert.alert("Warning", "Request updated, but task data is missing.");
           }
-        } else {
-          console.warn("Task data is missing or invalid.");
-          Alert.alert("Warning", "Request updated, but task data is missing.");
-        }
   
-        // Navigate back
-        navigation.goBack();
+          // Navigate back
+          navigation.goBack();
+        }
+      } catch (error) {
+        console.error("Error updating request or task:", error);
+        Alert.alert("Error", "An error occurred while updating the request or task.");
       }
-    } catch (error) {
-      console.error("Error updating request or task:", error);
-      Alert.alert("Error", "An error occurred while updating the request or task.");
     }
   };
-
-  
 
   const handleImagePreview = (imageFormats) => {
     const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
@@ -230,9 +247,7 @@ const RequestDetails = () => {
           <Text style={styles.label}>
             Requester Name:{" "}
             <Text style={styles.textBold}>
-              {
-                requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username
-              }
+              {requesterName}
             </Text>
           </Text>
           <Text style={styles.label}>Requester Detail:</Text>
@@ -257,14 +272,18 @@ const RequestDetails = () => {
             <Text style={styles.buttonText}>Approve Request</Text>
           </TouchableOpacity>
         </View> */}
+
         {requestData?.attributes?.status === "pending" && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.rejectButton}
-              onPress={() => handleStatusChange("rejected")}
+              onPress={() => setDeclineModalVisible(true)
+                // handleStatusChange("declined")
+                }
             >
               <Text style={styles.buttonText}>Reject Request</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.approveButton}
               onPress={() => handleStatusChange("approved")}
@@ -296,6 +315,44 @@ const RequestDetails = () => {
             </View>
           </View>
         </Modal>
+
+        {/* Decline Reason Modal */}
+        <Modal
+          visible={declineModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setDeclineModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Reason for Declining</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter reason for Declining"
+                value={declineReason}
+                onChangeText={setDeclineReason}
+                multiline={true}
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.rejectButton}
+                  onPress={() => setDeclineModalVisible(false)}
+                >
+                  <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.approveButton}
+                  onPress={() => {
+                    handleStatusChange("declined");
+                  }}
+                >
+                  <Text style={styles.buttonText}>Submit</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -408,6 +465,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: width * 0.04,
   },
+  input: {
+    width: '90%',
+    borderWidth: 1,
+    borderColor: '#000'
+  },
   // Modal styles
   modalOverlay: {
     flex: 1,
@@ -421,6 +483,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: width * 0.04,
     alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 22,
+    padding: 20
+  },
+  modalButtons: {
+    width: '80%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 20,
+    padding: 10,
   },
   previewImage: {
     width: "100%",

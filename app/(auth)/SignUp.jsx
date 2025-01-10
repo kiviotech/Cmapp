@@ -21,6 +21,7 @@ import { getProjects } from "../../src/api/repositories/projectRepository";
 import { fetchSubContractors } from "../../src/services/subContractorService";
 import useAuthStore from "../../useAuthStore";
 import { fetchUsers } from "../../src/services/userService";
+import useFileUploadStore from '../../src/stores/fileUploadStore';
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -44,6 +45,7 @@ const SignUp = () => {
   const [errors, setErrors] = useState({});
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
+  const resetFileUploadStore = useFileUploadStore(state => state.reset);
 
   useEffect(() => {
     if (token) {
@@ -75,11 +77,11 @@ const SignUp = () => {
     else if (!/^[a-zA-Z]+$/.test(form.name))
       newErrors.name = "Only alphabets are allowed";
     if (!form.email) newErrors.email = "Email is required";
-    // else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      // newErrors.email = "Enter a valid email address";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      newErrors.email = "Enter a valid email address";
     if (!form.password) newErrors.password = "Password is required";
     else if (form.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters long";
+      newErrors.password = "Password must be at least 8 characters long";
     if (!form.socialSecurity)
       newErrors.socialSecurity = "Social Security Number is required";
     else if (form.socialSecurity.length < 6)
@@ -133,6 +135,7 @@ const SignUp = () => {
       );
 
       if (res) {
+        resetFileUploadStore();
         showToast("Request for new account sent", "success");
         router.replace("/Wait");
       }
@@ -297,7 +300,7 @@ const SignUp = () => {
               uploadedFiles={uploadedFileIds}
               setUploadedFiles={setUploadedFileIds}
               onFileUploadSuccess={handleFileUploadSuccess}
-              message={"Upload your ID proof here"}
+              message={"Upload your ID proof here in .png or .jpeg format"}
             />
             {errors.contractorLicense && (
               <Text style={styles.errorText}>{errors.contractorLicense}</Text>
