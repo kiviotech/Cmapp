@@ -30,7 +30,8 @@ const ProjectForm = () => {
   const [projectManager, setProjectManager] = useState(null);
   const [projectSupervisors, setProjectSupervisors] = useState(
     "Select Project Supervisors"
-  ); const [siteCoordinators, setSiteCoordinators] = useState(
+  );
+  const [siteCoordinators, setSiteCoordinators] = useState(
     "Select Site Coordinators"
   );
   const [projectManagerOpen, setProjectManagerOpen] = useState(false);
@@ -50,49 +51,60 @@ const ProjectForm = () => {
   const [errors, setErrors] = useState({});
   const [projectData, setProjectData] = useState([]);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [projectManagerItems, setProjectManagerItems] = useState([]);
+
+  const [supervisor, setSupervisor] = useState(null);
+  const [supervisorOpen, setSupervisorOpen] = useState(false);
+  const [supervisorItems, setSupervisorItems] = useState([]);
+
+  const [coordinator, setCoordinator] = useState(null);
+  const [coordinatorOpen, setCoordinatorOpen] = useState(false);
+  const [coordinatorItems, setCoordinatorItems] = useState([]);
 
   useEffect(() => {
     const loadTeamData = async () => {
       try {
         // Fetch Project Managers
-        const managersResponse = await fetchProjectTeamManager("Project Manager");
+        const managersResponse = await fetchProjectTeamManager(
+          "Project Manager"
+        );
         const managersList = managersResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
-            id: user.id,
-            username: user.attributes?.username,
+            label: user.attributes?.username,
+            value: user.id,
           }))
         );
-        console.log('managersList', managersList)
-        setProjectManagers(managersList);
+        setProjectManagerItems(managersList);
 
         // Fetch Project Supervisors
-        const supervisorsResponse = await fetchProjectTeamManager("Project Supervisor");
+        const supervisorsResponse = await fetchProjectTeamManager(
+          "Project Supervisor"
+        );
         const supervisorsList = supervisorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
-            id: user.id,
-            username: user.attributes?.username,
+            label: user.attributes?.username,
+            value: user.id,
           }))
         );
-        console.log('supervisorsList', supervisorsList)
-        setProjectSupervisors(supervisorsList);
+        setSupervisorItems(supervisorsList);
 
         // Fetch Site Coordinators
-        const coordinatorsResponse = await fetchProjectTeamManager("Site Coordinator");
+        const coordinatorsResponse = await fetchProjectTeamManager(
+          "Site Coordinator"
+        );
         const coordinatorsList = coordinatorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
-            id: user.id,
-            username: user.attributes?.username,
+            label: user.attributes?.username,
+            value: user.id,
           }))
         );
-        console.log('coordinatorsList', coordinatorsList)
-        setSiteCoordinators(coordinatorsList);
+        setCoordinatorItems(coordinatorsList);
       } catch (error) {
         console.error("Error fetching team data:", error);
       }
     };
     loadTeamData();
   }, []);
-
 
   const isDateInFuture = (date) => {
     const today = new Date();
@@ -104,12 +116,13 @@ const ProjectForm = () => {
     if (!value) {
       setErrors((prev) => ({
         ...prev,
-        [fieldName]: `${fieldName.charAt(0).toUpperCase() +
+        [fieldName]: `${
+          fieldName.charAt(0).toUpperCase() +
           fieldName
             .slice(1)
             .replace(/([A-Z])/g, " $1")
             .trim()
-          } is required`,
+        } is required`,
       }));
     } else {
       setErrors((prev) => ({
@@ -123,13 +136,13 @@ const ProjectForm = () => {
     const newErrors = {};
     const isDuplicateProject = projectData.some(
       (project) =>
-        project.name === projectName.toLowerCase() && // Case-insensitive comparison
-        project.location === projectAddress.toLowerCase() // Case-insensitive comparison
+        project.name === projectName.toLowerCase() &&
+        project.location === projectAddress.toLowerCase()
     );
 
     if (isDuplicateProject) {
-      newErrors.projectName = "Project with this name  already exists";
-      newErrors.projectAddress = "Project with this location`q  already exists"
+      newErrors.projectName = "Project with this name already exists";
+      newErrors.projectAddress = "Project with this location already exists";
     }
     if (!projectName) newErrors.projectName = "Project name is required";
     else if (/^\d+$/.test(projectName)) {
@@ -137,7 +150,8 @@ const ProjectForm = () => {
       newErrors.projectName = "Project name cannot be only numbers";
     } else if (!/^[a-zA-Z0-9\s]*$/.test(projectName)) {
       // This regex allows letters, numbers, and spaces
-      newErrors.projectName = "Project name must be alphanumeric (letters, numbers, or spaces)";
+      newErrors.projectName =
+        "Project name must be alphanumeric (letters, numbers, or spaces)";
     }
     if (!projectType) newErrors.projectType = "Project type is required";
     if (!projectAddress)
@@ -145,8 +159,13 @@ const ProjectForm = () => {
     if (!startDate) newErrors.startDate = "Start date is required";
     if (!endDate) newErrors.endDate = "End date is required";
     if (!uploadedFiles) newErrors.uploadedFiles = "Document is required";
-    if (!projectManagerId)
-      newErrors.projectManagerId = "Project manager selection is required";
+    if (!projectManager)
+      newErrors.projectManager = "Project manager selection is required";
+    if (!supervisor)
+      newErrors.supervisor = "Project supervisor selection is required";
+    if (!coordinator)
+      newErrors.coordinator = "Site coordinator selection is required";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -171,7 +190,10 @@ const ProjectForm = () => {
           start_date: formattedStartDate,
           project_type: projectType,
           location: projectAddress,
-          approver: projectManagerId,
+          approver: projectManager,
+          project_manager: projectManager,
+          project_supervisor: supervisor,
+          site_coordinator: coordinator,
           project_status: "ongoing",
           documents: documentIds.flat(),
         },
@@ -196,6 +218,9 @@ const ProjectForm = () => {
         resetForm();
         navigation.navigate("(pages)/AssignContractors", {
           projectId: response.data.id, // Pass only the id
+          project_manager: projectManager,
+          project_supervisor: supervisor,
+          site_coordinator: coordinator,
         });
       } else {
         console.error("Error details:", response.error);
@@ -313,8 +338,7 @@ const ProjectForm = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.labelText}>Enter project location
-            </Text>
+            <Text style={styles.labelText}>Enter project location</Text>
             <TextInput
               placeholder="Ex: 1234 Riverside Avenue, Springfield"
               placeholderTextColor="#B0B0B0"
@@ -353,76 +377,65 @@ const ProjectForm = () => {
             </View>
           </View>
 
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, { zIndex: 3000 }]}>
             <Text style={styles.labelText}>Select Project Supervisor</Text>
             <DropDownPicker
-              // open={supervisorOpen}
-              // value={selectedSupervisor}
-              // items={projectSupervisors?.map((supervisor) => ({
-              //   label: supervisor.username,
-              //   value: supervisor.id,
-              // }))}
-              // setOpen={setSupervisorOpen}
-              // setValue={setSelectedSupervisor}
-              // setItems={(items) => setProjectSupervisors(items)}
+              open={supervisorOpen}
+              value={supervisor}
+              items={supervisorItems}
+              setOpen={setSupervisorOpen}
+              setValue={setSupervisor}
+              setItems={setSupervisorItems}
               placeholder="Select Project Supervisor"
               style={styles.dropdown}
               dropDownContainerStyle={styles.dropdownContainer}
-              zIndex={4000}
+              zIndex={3000}
               zIndexInverse={1000}
             />
-
-            {errors.projectManagerId && (
-              <Text style={styles.errorText}>{errors.projectManagerId}</Text>
+            {errors.supervisor && (
+              <Text style={styles.errorText}>{errors.supervisor}</Text>
             )}
           </View>
 
-          {console.log('projectManagerOpen',projectManager)}
+          {console.log("projectManagerOpen", projectManager)}
 
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, { zIndex: 2000 }]}>
             <Text style={styles.labelText}>Select Project Manager</Text>
-            {/* Coordinator Dropdown */}
             <DropDownPicker
               open={projectManagerOpen}
-              value={projectManagers}
-              items={projectManagers.map((manager) => ({
-                label: manager.username,
-                value: manager.id,
-              }))}
+              value={projectManager}
+              items={projectManagerItems}
               setOpen={setProjectManagerOpen}
-              setValue={(value) => setProjectManager(value)}
-              setItems={setProjectManagers}
+              setValue={setProjectManager}
+              setItems={setProjectManagerItems}
               placeholder="Select Project Manager"
               style={styles.dropdown}
               dropDownContainerStyle={styles.dropdownContainer}
-              zIndex={9000}
-              zIndexInverse={100}
+              zIndex={2000}
+              zIndexInverse={2000}
             />
-            {errors.projectManagerId && (
-              <Text style={styles.errorText}>{errors.projectManagerId}</Text>
+            {errors.projectManager && (
+              <Text style={styles.errorText}>{errors.projectManager}</Text>
             )}
           </View>
 
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, { zIndex: 1000 }]}>
             <Text style={styles.labelText}>Select Site Coordinator</Text>
             <DropDownPicker
-              // open={coordinatorOpen}
-              // value={selectedCoordinator}
-              // items={siteCoordinators.map((coordinator) => ({
-              //   label: coordinator.username,
-              //   value: coordinator.id,
-              // }))}
-              // setOpen={setCoordinatorOpen}
-              // // setValue={setSelectedCoordinator}
-              // setItems={(items) => setSiteCoordinators(items)}
+              open={coordinatorOpen}
+              value={coordinator}
+              items={coordinatorItems}
+              setOpen={setCoordinatorOpen}
+              setValue={setCoordinator}
+              setItems={setCoordinatorItems}
               placeholder="Select Site Coordinator"
               style={styles.dropdown}
               dropDownContainerStyle={styles.dropdownContainer}
-              zIndex={2000}
+              zIndex={1000}
               zIndexInverse={3000}
             />
-            {errors.projectManagerId && (
-              <Text style={styles.errorText}>{errors.projectManagerId}</Text>
+            {errors.coordinator && (
+              <Text style={styles.errorText}>{errors.coordinator}</Text>
             )}
           </View>
           <Modal
@@ -437,16 +450,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                      ? "Select Project Supervisor"
-                      : "Select Site Coordinator"}
+                    ? "Select Project Supervisor"
+                    : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                        ? projectSupervisors
-                        : siteCoordinators
+                      ? projectSupervisors
+                      : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
@@ -455,7 +468,10 @@ const ProjectForm = () => {
                         setSelectedUser(item.username);
                         setDropdownVisible(false);
                         // Handle specific selection if needed
-                        console.log(`Selected ${selectedDropdown}:`, item.username);
+                        console.log(
+                          `Selected ${selectedDropdown}:`,
+                          item.username
+                        );
                       }}
                       style={styles.modalItem}
                     >
@@ -512,16 +528,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                      ? "Select Project Supervisor"
-                      : "Select Site Coordinator"}
+                    ? "Select Project Supervisor"
+                    : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                        ? projectSupervisors
-                        : siteCoordinators
+                      ? projectSupervisors
+                      : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
@@ -535,7 +551,10 @@ const ProjectForm = () => {
                           setSiteCoordinators(item.username);
                         }
                         setDropdownVisible(false);
-                        console.log(`Selected ${selectedDropdown}:`, item.username);
+                        console.log(
+                          `Selected ${selectedDropdown}:`,
+                          item.username
+                        );
                       }}
                       style={styles.modalItem}
                     >
@@ -552,7 +571,6 @@ const ProjectForm = () => {
               </View>
             </View>
           </Modal>
-
         </View>
       </ScrollView>
     </View>
@@ -603,7 +621,7 @@ const styles = StyleSheet.create({
     marginTop: -5,
   },
   inputContainer: {
-    marginBottom: 10,
+    marginBottom: 20,
   },
   labelText: {
     fontSize: 17,
@@ -616,9 +634,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     height: 50,
+    backgroundColor: "#fff",
   },
   dropdownContainer: {
     borderColor: "#ccc",
+    backgroundColor: "#fff",
   },
   input: {
     borderWidth: 1,

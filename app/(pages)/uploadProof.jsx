@@ -141,13 +141,13 @@ const UploadProof = ({ }) => {
       setErrors("Images and comments are required")
     }
 
-    // If there are errors, do not proceed
-    if (hasError) {
-      setToastMessage("Please fix the errors before submitting.");
-      setToastVisible(true);
-      setTimeout(() => setToastVisible(false), 3000);
-      return;
-    }
+    // // If there are errors, do not proceed
+    // if (hasError) {
+    //   setToastMessage("Please fix the errors before submitting.");
+    //   setToastVisible(true);
+    //   setTimeout(() => setToastVisible(false), 3000);
+    //   return;
+    // }
 
     // Proceed with submission if no errors
     try {

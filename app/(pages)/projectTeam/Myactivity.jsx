@@ -414,7 +414,6 @@ const styles = StyleSheet.create({
     padding: 5,
     marginTop: 20,
     width: "100%",
-    paddingBottom: 80,
   },
   container: {
     flex: 1,

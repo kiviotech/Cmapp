@@ -75,7 +75,7 @@ const Settings = () => {
               navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
             }
           >
-            <Text style={styles.itemText}>Edit profile</Text>
+            <Text style={styles.itemText}>Personal Details</Text>
             <FontAwesome
               style={{ color: colors.blackColor }}
               name="chevron-right"

@@ -53,16 +53,22 @@ const AssignContractors = () => {
     task: "",
     dueDate: "",
   });
+  
+  const [jobRole, setJobRole] = useState([]);
 
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
 
   const route = useRoute();
   const navigation = useNavigation();
-  const projectDataId = route.params?.projectId;
+  const { projectId, project_manager, project_supervisor, site_coordinator } = route.params;
+  
 
   useEffect(() => {
-    console.log("Received project ID:", projectDataId);
-  }, [projectDataId]);
+    console.log("Received project ID:", projectId);
+    console.log("Received project_manager:", project_manager);
+    console.log("Received project_supervisor:", project_supervisor);
+    console.log("Received site_coordinator:", site_coordinator);
+  }, [projectId]);
 
   useEffect(() => {
     const loadContractorTypes = async () => {
@@ -116,6 +122,13 @@ const AssignContractors = () => {
       try {
         const response = await fetchStandardTaskBySubcontractor(contractorTypeItems);
         setAsignedTask(response.data)
+
+        const roles = response?.data
+          .map((task) => task.attributes?.project_team?.data?.attributes?.job_role)
+          .filter((role) => role !== undefined); // Filter out undefined values
+
+        setJobRole(roles);
+
       } catch (error) {
         console.error("Error fetching standard tasks:", error);
       }
@@ -126,7 +139,7 @@ const AssignContractors = () => {
   useEffect(() => {
     const loadProjectDetails = async () => {
       try {
-        const response = await fetchProjectById(projectDataId);
+        const response = await fetchProjectById(projectId);
         if (response?.data) {
           setProjectDates({
             startDate: new Date(response.data.attributes.start_date),
@@ -138,10 +151,10 @@ const AssignContractors = () => {
       }
     };
 
-    if (projectDataId) {
+    if (projectId) {
       loadProjectDetails();
     }
-  }, [projectDataId]);
+  }, [projectId]);
 
 
   const validateFields = () => {
@@ -221,7 +234,7 @@ const AssignContractors = () => {
         for (const task of assignedTask) {
           const taskData = {
             data: {
-              project: projectDataId,
+              project: projectId,
               standard_task: task.id, // Use the task ID from assignedTask
               submissions: [],
               contractor: contractor.contractor,
@@ -250,7 +263,7 @@ const AssignContractors = () => {
         },
       };
   
-      await updateExistingProject(projectDataId, projectData);
+      await updateExistingProject(projectId, projectData);
   
       Alert.alert("Success", "Project setup completed and tasks assigned!");
       clearProjectData();
