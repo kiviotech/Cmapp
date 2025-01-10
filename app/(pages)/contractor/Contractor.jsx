@@ -65,9 +65,9 @@ const Contractor = () => {
           var filteredData = [];
           if (data.data.length > 0) {
             const contractorId = data.data[0].id; // Assuming one contractor per user
-            const projectData = data.data.map(
-              (project) => (filteredData = project.attributes.projects.data)
-            );
+            // const projectData = data.data.map(
+            //   (project) => (filteredData = project.attributes.projects.data)
+            // );
 
             // Fetch tasks for each project ID in selectedProjectId
             const allTasks = [];
@@ -195,7 +195,7 @@ const Contractor = () => {
         )}
 
         <View style={styles.headerContainer}>
-          <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
+          <Text style={styles.milestoneHeader}>Upcomming Milestones</Text>
           {/* <Text style={styles.taskStatus}>7 Tasks Pending</Text> */}
           {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
         </View>
