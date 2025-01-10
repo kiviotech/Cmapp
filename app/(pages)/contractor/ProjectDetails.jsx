@@ -27,7 +27,7 @@ const ProjectDetails = () => {
   const { projectId, projectData, contractorId } = route.params || {};
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
-  const [projectMangerName, setProjectManagerName] = useState("")
+  const [projectMangerName, setProjectManagerName] = useState("");
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
@@ -47,7 +47,6 @@ const ProjectDetails = () => {
             ? completedTasks / allTasks.length
             : 0;
           setProgress(progressPercentage); // Set progress percentage
-
         } catch (error) {
           console.error("Error fetching tasks:", error);
         }
@@ -60,30 +59,42 @@ const ProjectDetails = () => {
   useEffect(() => {
     const getProjectDetails = async () => {
       const response = await fetchProjectById(projectId);
-      const userId = response?.data?.attributes?.approver?.data?.id;
-      console.log("user id", userId)
-      const data = await getProjectTeamById(userId)
-      const userName = data?.data?.data?.attributes?.users?.data[0]?.attributes?.username
-      setProjectManagerName(userName)
-      setProjectDetails(response.data)
-    }
+      const userId = response?.data?.id;
+      console.log("user id", response.data.id);
+      const data = await fetchProjectById(userId);
+
+      // Find Project Manager ID
+      const projectManager = data?.data?.attributes?.approvers?.data.find(
+        (approver) => approver.attributes.job_role === "Project Manager"
+      );
+      console.log("Project Manager ID:", projectManager?.id);
+
+      // Add this new code to fetch project team data
+      if (projectManager?.id) {
+        try {
+          const teamData = await getProjectTeamById(projectManager.id);
+          const managerName =
+            teamData?.data?.data?.attributes?.users?.data[0]?.attributes
+              ?.username;
+          setProjectManagerName(managerName || "N/A");
+        } catch (error) {
+          console.error("Error fetching project team:", error);
+        }
+      }
+
+      setProjectDetails(response.data);
+    };
     getProjectDetails();
-  }, [])
+  }, []);
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <View style={styles.container1}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('(pages)/dashboard')}
+          onPress={() => navigation.navigate("(pages)/dashboard")}
         >
           {/* <Image source={icons.backarrow}></Image> */}
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color="black"
-
-          />
-
+          <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.header}>Project Details</Text>
       </View>
@@ -98,20 +109,21 @@ const ProjectDetails = () => {
           <FontAwesome name="calendar" size={24} color="#F5C37F" />
           <View style={styles.dateContainer}>
             <Text style={styles.dueDateText}>Due Date</Text>
-            <Text style={styles.dateText}>{projectDetails?.attributes?.end_date || "N/A"}</Text>
+            <Text style={styles.dateText}>
+              {projectDetails?.attributes?.end_date || "N/A"}
+            </Text>
           </View>
         </View>
 
         <Text style={styles.label}>
           Project Manager:{" "}
-          <Text style={styles.text}>
-            {projectMangerName || "N/A"}
-          </Text>
+          <Text style={styles.text}>{projectMangerName || "N/A"}</Text>
         </Text>
 
         <Text style={styles.label}>Project Details:</Text>
         <Text style={styles.projectDescription}>
-          {projectDetails?.attributes?.description || "No project description provided."}
+          {projectDetails?.attributes?.description ||
+            "No project description provided."}
         </Text>
 
         <View style={styles.progressContainer}>
@@ -123,11 +135,12 @@ const ProjectDetails = () => {
             color="#66B8FC"
             style={styles.progressBarContainer}
           />
-          <Text style={styles.progressPercentage}>{Math.round(progress * 100)}%</Text>
+          <Text style={styles.progressPercentage}>
+            {Math.round(progress * 100)}%
+          </Text>
         </View>
 
         <Text style={styles.label}>All Tasks</Text>
-
 
         {tasks.map((task) => (
           <View key={task.id} style={styles.taskContainer}>
@@ -148,7 +161,8 @@ const ProjectDetails = () => {
               </Text>
             </View>
             <Text style={styles.taskDescription} numberOfLines={2}>
-              {task.attributes.standard_task.data.attributes.Description || "No description available."}
+              {task.attributes.standard_task.data.attributes.Description ||
+                "No description available."}
             </Text>
             <View style={styles.assign}>
               {/* <Text style={styles.assignedInfo}>Assigned Contractor Name</Text> */}
@@ -176,30 +190,23 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: width * 0.04,
     backgroundColor: "#FFFFFF",
-
   },
   container: {
     paddingTop: height * 0.05,
     backgroundColor: "#FFFFFF",
-
-
-
   },
   container1: {
     paddingTop: height * 0.05,
-    display: 'flex',
-    flexDirection: 'row',
-    gap: '10px'
-
+    display: "flex",
+    flexDirection: "row",
+    gap: "10px",
   },
   header: {
-
     display: "flex",
     fontSize: width * 0.055,
     fontWeight: "bold",
     marginBottom: height * 0.015,
     color: "#192252",
-
   },
   headerText: {
     fontSize: width * 0.055,
@@ -208,28 +215,23 @@ const styles = StyleSheet.create({
     color: "#192252",
     marginLeft: 10,
     marginTop: -5,
-    border: '1px solid red'
-
+    border: "1px solid red",
   },
   projectNameContainer: {
-
     alignItems: "flex-start",
     // marginBottom: height * 0.015,
     paddingHorizontal: width * 0.05,
-
   },
   projectName: {
     fontSize: width * 0.055,
     fontWeight: "bold",
     color: "#192252",
-
   },
   calendarContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.015,
-    paddingHorizontal: width * 0.10,
-
+    paddingHorizontal: width * 0.1,
   },
   dateContainer: {
     flexDirection: "column",
@@ -246,7 +248,6 @@ const styles = StyleSheet.create({
   },
   statusStyle: {
     color: "red",
-
   },
   noTasksText: {
     paddingHorizontal: width * 0.05,
@@ -273,45 +274,38 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
 
-
     alignItems: "center",
     marginBottom: height * 0.02,
     paddingVertical: height * 0.01,
-
   },
   progressBarContainer: {
     marginLeft: width * 0.02,
     marginTop: height * 0.005,
-    border: '1px solid red',
-
+    border: "1px solid red",
   },
   progressLabel: {
     fontSize: width * 0.04,
     fontWeight: "bold",
     color: "#192252",
     paddingHorizontal: width * 0.05,
-    width: '40%',
-    whiteSpace: 'nowrap'
-
-
-
+    width: "40%",
+    whiteSpace: "nowrap",
   },
   progressPercentage: {
     fontSize: width * 0.035,
     color: "#66B8FC",
     position: "absolute",
     right: width * 0.02,
-
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
     padding: width * 0.04,
     borderRadius: 8,
-    marginLeft: '10px',
+    marginLeft: "10px",
     marginBottom: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    width: '90%'
+    width: "90%",
   },
   task: {
     flexDirection: "row",
@@ -363,7 +357,6 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
     color: "#FFFFFF",
   },
-
 });
 
 export default ProjectDetails;
