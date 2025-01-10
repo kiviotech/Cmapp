@@ -69,9 +69,19 @@ const ProjectDetails = () => {
       );
       console.log("Project Manager ID:", projectManager?.id);
 
-      const userName =
-        data?.data?.data?.attributes?.users?.data[0]?.attributes?.username;
-      setProjectManagerName(userName);
+      // Add this new code to fetch project team data
+      if (projectManager?.id) {
+        try {
+          const teamData = await getProjectTeamById(projectManager.id);
+          const managerName =
+            teamData?.data?.data?.attributes?.users?.data[0]?.attributes
+              ?.username;
+          setProjectManagerName(managerName || "N/A");
+        } catch (error) {
+          console.error("Error fetching project team:", error);
+        }
+      }
+
       setProjectDetails(response.data);
     };
     getProjectDetails();
