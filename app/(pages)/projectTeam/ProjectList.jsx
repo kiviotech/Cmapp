@@ -56,7 +56,13 @@ const ProjectList = () => {
   }, []);
 
   const renderProject = ({ item }) => (
-    <View style={styles.projectContainer}>
+    <TouchableOpacity style={styles.projectContainer}
+    onPress={() =>
+      navigation.navigate("(pages)/projectTeam/ProjectDetails", {
+        projectData: item,
+      })
+    }
+    >
       <View
         style={[styles.colorBar, { backgroundColor: item.color || "#4A90E2" }]}
       />
@@ -74,7 +80,7 @@ const ProjectList = () => {
           Due {new Date(item.attributes.end_date).toLocaleDateString()}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

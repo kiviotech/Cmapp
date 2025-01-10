@@ -35,9 +35,9 @@ export const fetchProjectTeamIdByUserId = async (userId) => {
   }
 };
 
-export const fetchProjectTeamManager = async () => {
+export const fetchProjectTeamManager = async (designation) => {
   try {
-    const response = await getProjectTeamManager();
+    const response = await getProjectTeamManager(designation);
     return response.data;
   } catch (error) {
     throw error;

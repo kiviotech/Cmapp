@@ -58,7 +58,6 @@ const ProjectDetails = () => {
   useEffect(() => {
     const getProjectDetails = async () => {
       const response = await fetchProjectById(projectId);
-      console.log('resp', response.data)
       setProjectDetails(response.data)
     }
     getProjectDetails();
@@ -110,7 +109,7 @@ const ProjectDetails = () => {
         </Text>
 
         <View style={styles.progressContainer}>
-          <Text style={styles.progressLabel}>Project Progress:</Text>
+          <Text style={styles.progressLabel}>Your Progress:</Text>
           <ProgressBar
             progress={progress}
             width={180}

@@ -306,7 +306,7 @@ const AssignContractors = () => {
             /> */}
             <Text style={styles.headerText}>Assign Contractors</Text>
           </View>
-
+          
           <Text style={styles.label}>Contractor Type</Text>
           <DropDownPicker
             open={contractorTypeOpen}

@@ -6,8 +6,8 @@ const projectTeamEndpoints = {
   getProjectTeamIdByUserId: (userId) =>
     `/project-teams?filters[users][id][$eq]=${userId}&fields[0]=id`,
 
-  getProjectTeamManager:
-    "/project-teams?populate[users][populate][user_group][populate][designation]=*&populate[projects][populate]=*&filters[users][user_group][designation][Name][$eq]=Project Manager",
+  getProjectTeamManager: (designation) =>
+    `/project-teams?populate[users][populate][user_group][populate][designation]=*&populate[projects][populate]=*&filters[users][user_group][designation][Name][$eq]=${designation}`,
 
   createProjectTeam: "/project-teams",
 

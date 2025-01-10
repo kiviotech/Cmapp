@@ -10,8 +10,8 @@ export const getProjectTeamById = (id) =>
 export const getProjectTeamIdByUserId = (userId) =>
   apiClient.get(projectTeamEndpoints.getProjectTeamIdByUserId(userId));
 
-export const getProjectTeamManager = () =>
-  apiClient.get(projectTeamEndpoints.getProjectTeamManager);
+export const getProjectTeamManager = (designation) =>
+  apiClient.get(projectTeamEndpoints.getProjectTeamManager(designation));
 
 export const createProjectTeam = (data) =>
   apiClient.post(projectTeamEndpoints.createProjectTeam, data);
