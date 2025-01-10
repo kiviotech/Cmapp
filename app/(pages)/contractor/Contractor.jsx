@@ -10,6 +10,7 @@ import {
   Dimensions,
   FlatList,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -60,9 +61,12 @@ const Contractor = () => {
     const loadContractorData = async () => {
       if (user && user.id) {
         try {
+          setIsLoading(true); // Start loading
+
+          // Fetch contractor data by user ID
           const data = await fetchContractorsByUserId(user.id);
           setContractorsData(data.data); // Set entire array of contractors
-          var filteredData = [];
+
           if (data.data.length > 0) {
             const contractorId = data.data[0].id; // Assuming one contractor per user
             // const projectData = data.data.map(
@@ -87,12 +91,13 @@ const Contractor = () => {
         } catch (error) {
           console.error("Error fetching contractor data:", error);
         } finally {
-          setIsLoading(false);
+          setIsLoading(false); // End loading
         }
       }
     };
+
     loadContractorData();
-  }, []);
+  }, [user]); // Dependency array includes `user`
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -202,74 +207,86 @@ const Contractor = () => {
         </View>
 
         {/* Milestone Cards */}
-        {tasks.length > 0 ? (
-          tasks.map((task) => (
-            <TouchableOpacity key={task.id} style={styles.milestoneCard} 
-            onPress={() =>
-              navigation.navigate("(pages)/taskDetails", {
-                taskData: task,
-              })
-            }
-            >
-              {/* <View style={styles.milestoneCard}> */}
-                <Text style={styles.milestoneTitle}>
-                  {task.attributes.project.data.attributes.name || "Project"}
-                </Text>
-                {task?.attributes?.documents?.data?.map((taskdoc) => {
-                  const taskImageUrl = taskdoc?.attributes?.url
-                                      ? `${MEDIA_BASE_URL}${taskdoc?.attributes?.url}`
-                                      : "https://via.placeholder.com/150";
-                  return (
-                    <Image
-                      key={taskdoc.id} // Use a unique key for each task document
-                      source={{ uri: taskImageUrl }}
-                      style={styles.milestoneImage}
-                    />
-                  )
-                }
-                )}
-                <View style={styles.milestoneContent}>
-                  <View style={styles.milestoneHeaderContainer}>
-                    <Text style={styles.milestoneTitle}>
-                      {task.attributes.standard_task.data.attributes.Name || "Task"}
-                    </Text>
-                    <View style={styles.substituteButton}>
-                      <Text style={styles.substituteText}>Substructure</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.milestoneDescription}>
-                    {task.attributes.standard_task.data.attributes.Description ||
-                      "No description available for this task."}
-                  </Text>
-                  <View style={styles.divider} />
-                  <Text style={styles.deadlineText}>
-                    <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                    {task.attributes.due_date || "No deadline specified"}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.uploadButton}
-                    onPress={() =>
-                      navigation.navigate("(pages)/taskDetails", {
-                        taskData: task,
-                      })
-                    }
-                  >
-                    <Icon name="file-upload" size={16} color="#fff" />
-                    <Text style={styles.uploadButtonText}>
-                      Upload your Proof of work
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              {/* </View> */}
-            </TouchableOpacity>
-          ))
-        ) : (
-          <View style={styles.noTasksContainer}>
-            <Text style={styles.noTasksText}>No tasks have been assigned.</Text>
+        {isLoading ? (
+          // Loader
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#007bff" />
           </View>
+        ) : (
+          <>
+            {tasks.length > 0 ? (
+              tasks.map((task) => (
+                <TouchableOpacity
+                  key={task.id}
+                  style={styles.milestoneCard}
+                  onPress={() =>
+                    navigation.navigate("(pages)/taskDetails", {
+                      taskData: task,
+                    })
+                  }
+                >
+                  {/* <View style={styles.milestoneCard}> */}
+                  <Text style={styles.milestoneTitle}>
+                    {task.attributes.project.data.attributes.name || "Project"}
+                  </Text>
+                  {task?.attributes?.documents?.data?.map((taskdoc) => {
+                    const taskImageUrl = taskdoc?.attributes?.url
+                      ? `${MEDIA_BASE_URL}${taskdoc?.attributes?.url}`
+                      : "https://via.placeholder.com/150";
+                    return (
+                      <Image
+                        key={taskdoc.id} // Use a unique key for each task document
+                        source={{ uri: taskImageUrl }}
+                        style={styles.milestoneImage}
+                      />
+                    );
+                  })}
+                  <View style={styles.milestoneContent}>
+                    <View style={styles.milestoneHeaderContainer}>
+                      <Text style={styles.milestoneTitle}>
+                        {task.attributes.standard_task.data.attributes.Name ||
+                          "Task"}
+                      </Text>
+                      <View style={styles.substituteButton}>
+                        <Text style={styles.substituteText}>Substructure</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.milestoneDescription}>
+                      {task.attributes.standard_task.data.attributes
+                        .Description ||
+                        "No description available for this task."}
+                    </Text>
+                    <View style={styles.divider} />
+                    <Text style={styles.deadlineText}>
+                      <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                      {task.attributes.due_date || "No deadline specified"}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={() =>
+                        navigation.navigate("(pages)/taskDetails", {
+                          taskData: task,
+                        })
+                      }
+                    >
+                      <Icon name="file-upload" size={16} color="#fff" />
+                      <Text style={styles.uploadButtonText}>
+                        Upload your Proof of work
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* </View> */}
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.noTasksContainer}>
+                <Text style={styles.noTasksText}>
+                  No tasks have been assigned.
+                </Text>
+              </View>
+            )}
+          </>
         )}
-
-
 
         {/* <View style={styles.milestoneCard}>
             <Image
@@ -596,6 +613,9 @@ const styles = StyleSheet.create({
 
   //   ~==================================================================================
 
+  loaderContainer: {
+    paddingTop: 30,
+  },
   heading: {
     fontSize: 20,
     fontWeight: "bold",
