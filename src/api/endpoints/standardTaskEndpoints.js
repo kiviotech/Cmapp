@@ -1,6 +1,6 @@
 const standardTaskEndpoints = {
   getStandardTasks: `/standard-tasks?populate=*`,
-  getStandardTasksBySubcontractor: (subcontractor) => `/standard-tasks?populate=*&filters[sub_contractor][$ne]=${subcontractor}`,
+  getStandardTasksBySubcontractor: (subcontractor) => `/standard-tasks?populate=*&filters[sub_contractor][name]=${subcontractor}`,
   getStandardTaskById: (id) => `/standard-tasks/${id}?populate=*`,
   createStandardTask: "/standard-tasks",
   updateStandardTask: (id) => `/standard-tasks/${id}`,

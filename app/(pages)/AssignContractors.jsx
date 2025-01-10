@@ -119,8 +119,12 @@ const AssignContractors = () => {
 
   // useEffect(() => {
   const fetchStandardTasks = async (value) => {
+    console.log(value);
+    const contractorLabel = contractorTypeItems.find(
+      (item) => item.value === value
+    )?.label;
     try {
-      const response = await fetchStandardTaskBySubcontractor(value);
+      const response = await fetchStandardTaskBySubcontractor(contractorLabel);
       console.log('tasks resp', response)
       setAsignedTask(response.data)
 
@@ -203,14 +207,14 @@ const AssignContractors = () => {
       contractorLabel,
       taskLabel,
     };
-    await fetchStandardTasks(newContractor.contractorTypeLabel);
+   //(newContractor.contractorTypeLabel);
 
     setAssignedContractors([...assignedContractors, newContractor]);
     setIsFinishButtonEnabled(true);
-    setContractorTypeValue(null);
-    setContractorValue(null);
-    setTaskValue(null);
-    setDueDate(null);
+    // setContractorTypeValue(null);
+    // setContractorValue(null);
+    // setTaskValue(null);
+    // setDueDate(null);
   };
 
   const handleFinishProjectSetup = async () => {
@@ -268,7 +272,7 @@ const AssignContractors = () => {
 
       Alert.alert("Success", "Project setup completed and tasks assigned!");
       clearProjectData();
-      navigation.navigate("(pages)/dashboard");
+      navigation.navigate("(pages)/AssignContractors?projectId="+projectId);
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);
       Alert.alert(
@@ -332,6 +336,7 @@ const AssignContractors = () => {
               setShowTypeError(false);
               // fetchStandardTasks(contractorTypeValue);
             }}
+            onChangeValue={fetchStandardTasks} // Trigger the function on selection
             setItems={setContractorTypeItems}
             placeholder="Select the contractor type"
             style={styles.dropdown}

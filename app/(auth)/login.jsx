@@ -6,7 +6,10 @@ import {
   Alert,
   Image,
   StyleSheet,
+  Dimensions
 } from "react-native";
+
+const { width } = Dimensions.get('window');
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -162,6 +165,13 @@ const Login = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+      <View style={styles.container}>
+      <Image
+        source={{ uri: 'https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png' }}
+        style={styles.image}
+        resizeMode="contain" // Adjusts the image to fit within the specified dimensions
+      />
+    </View>
         <View>
           <View style={styles.header}>
             <Text style={styles.headerText}>Login</Text>
@@ -375,4 +385,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "white",
   },
+  container: {
+    flex: 1,
+    alignItems: 'center', // Centers the image horizontally
+    justifyContent: 'center', // Centers the image vertically
+  },
+  image: {
+    width: width * 0.8, // Sets the image width to 80% of the screen width
+    height: width * 0.8, // Sets the image height to maintain aspect ratio
+  }
 });
