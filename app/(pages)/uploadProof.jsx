@@ -25,6 +25,7 @@ import BottomNavigation from "./contractor/BottomNavigation ";
 import FileUpload from "../../components/FileUploading/FileUpload";
 import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
+import useFileUploadStore from "../../src/stores/fileUploadStore"
 
 const UploadProof = ({ }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -45,6 +46,7 @@ const UploadProof = ({ }) => {
   const navigation = useNavigation();
   const route = useRoute();
   const { id } = route?.params;
+  const resetFileUploadStore = useFileUploadStore(state => state.reset);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -159,8 +161,9 @@ const UploadProof = ({ }) => {
       setToastMessage("Submission created successfully!");
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 3000);
-
+      
       // Clear form
+      resetFileUploadStore();
       setUploadedFiles([]);
       setUploadedFileIds([]);
       setComment("");
