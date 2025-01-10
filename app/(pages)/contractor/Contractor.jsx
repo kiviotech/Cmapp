@@ -9,8 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   FlatList,
-  TextInput,
-  ActivityIndicator,
+  TextInput, ActivityIndicator
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -23,25 +22,6 @@ import { fetchContractorsByUserId } from "../../../src/services/contractorServic
 // import { fetchTasksByContractorId } from "../../../src/services/taskService";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { MEDIA_BASE_URL } from "../../../src/api/apiClient";
-
-// const renderCard = ({ item }) => (
-//   <View style={styles.card}>
-//     <View style={styles.cardHeader}>
-//       <Text style={styles.title}>{item.title}</Text>
-//       <Icon name="bell-outline" size={20} color="green" />
-//     </View>
-//     <Text style={styles.projectName}>{item.projectName}</Text>
-//     <View style={styles.divider} />
-//     <View style={styles.infoRow}>
-//       <Icon name="calendar" size={20} color="black" />
-//       <Text style={styles.infoText}>{item.date}</Text>
-//     </View>
-//     <View style={styles.infoRow}>
-//       <Icon name="clock-outline" size={20} color="black" />
-//       <Text style={styles.infoText}>{item.time}</Text>
-//     </View>
-//   </View>
-// );
 
 const Contractor = () => {
   const [contractorsData, setContractorsData] = useState([]);
@@ -68,25 +48,36 @@ const Contractor = () => {
           setContractorsData(data.data); // Set entire array of contractors
 
           if (data.data.length > 0) {
-            const contractorId = data.data[0].id; // Assuming one contractor per user
-            // const projectData = data.data.map(
-            //   (project) => (filteredData = project.attributes.projects.data)
-            // );
+            const contractorId = data.data[0].id;
+            const projectData = data.data.flatMap(
+              (contractor) => contractor.attributes.projects.data
+            );
 
-            // Fetch tasks for each project ID in selectedProjectId
-            const allTasks = [];
-            for (const projectId of filteredData) {
-              const taskData = await getTaskByContractorId(
-                projectId.id,
-                contractorId
+            if (projectData.length > 0) {
+              // Fetch all tasks in a single batch using Promise.all
+              const allTasks = await Promise.all(
+                projectData.map(async (project) => {
+                  try {
+                    const taskData = await getTaskByContractorId(
+                      project.id,
+                      contractorId
+                    );
+                    // Filter ongoing tasks
+                    return taskData.data.data.filter(
+                      (task) => task.attributes.task_status === "ongoing"
+                    );
+                  } catch (taskError) {
+                    console.error(`Error fetching tasks for project ${project.id}:`, taskError);
+                    return []; // Return an empty array if task fetch fails
+                  }
+                })
               );
-              console.log('taskData',taskData)
-              const ongoingTasks = taskData.data.data.filter(
-                (task) => task.attributes.task_status === "ongoing"
-              );
-              allTasks.push(...ongoingTasks); // Accumulate tasks for each project
+
+              // Flatten the tasks array and update state
+              setTasks(allTasks.flat());
+            } else {
+              setTasks([]); // No projects, set tasks to an empty array
             }
-            setTasks(allTasks); // Update tasks state with all fetched tasks
           }
         } catch (error) {
           console.error("Error fetching contractor data:", error);
@@ -206,19 +197,20 @@ const Contractor = () => {
           {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
         </View>
 
+
+
         {/* Milestone Cards */}
         {isLoading ? (
           // Loader
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#007bff" />
+
           </View>
         ) : (
           <>
             {tasks.length > 0 ? (
               tasks.map((task) => (
-                <TouchableOpacity
-                  key={task.id}
-                  style={styles.milestoneCard}
+                <TouchableOpacity key={task.id} style={styles.milestoneCard}
                   onPress={() =>
                     navigation.navigate("(pages)/taskDetails", {
                       taskData: task,
@@ -239,21 +231,20 @@ const Contractor = () => {
                         source={{ uri: taskImageUrl }}
                         style={styles.milestoneImage}
                       />
-                    );
-                  })}
+                    )
+                  }
+                  )}
                   <View style={styles.milestoneContent}>
                     <View style={styles.milestoneHeaderContainer}>
                       <Text style={styles.milestoneTitle}>
-                        {task.attributes.standard_task.data.attributes.Name ||
-                          "Task"}
+                        {task.attributes.standard_task.data.attributes.Name || "Task"}
                       </Text>
                       <View style={styles.substituteButton}>
                         <Text style={styles.substituteText}>Substructure</Text>
                       </View>
                     </View>
                     <Text style={styles.milestoneDescription}>
-                      {task.attributes.standard_task.data.attributes
-                        .Description ||
+                      {task.attributes.standard_task.data.attributes.Description ||
                         "No description available for this task."}
                     </Text>
                     <View style={styles.divider} />
@@ -280,13 +271,13 @@ const Contractor = () => {
               ))
             ) : (
               <View style={styles.noTasksContainer}>
-                <Text style={styles.noTasksText}>
-                  No tasks have been assigned.
-                </Text>
+                <Text style={styles.noTasksText}>No tasks have been assigned.</Text>
               </View>
             )}
           </>
         )}
+
+
 
         {/* <View style={styles.milestoneCard}>
             <Image
@@ -439,10 +430,6 @@ const styles = StyleSheet.create({
     // elevation: 3,
     marginRight: 15,
   },
-  projectTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   projectDescription: {
     fontSize: 14,
     color: "#666",
@@ -500,9 +487,6 @@ const styles = StyleSheet.create({
   viewLink: {
     color: "#1e90ff",
   },
-
-  //   !-----------===============================================
-
   projectTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -614,7 +598,7 @@ const styles = StyleSheet.create({
   //   ~==================================================================================
 
   loaderContainer: {
-    paddingTop: 30,
+    paddingTop: 30
   },
   heading: {
     fontSize: 20,
