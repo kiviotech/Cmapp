@@ -143,7 +143,7 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
     }
 
     removeFile(fileName);
-    
+
     onFileUploadSuccess(getAllFileIds());
   };
 
@@ -207,12 +207,17 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
     <View style={styles.container}>
       <View style={styles.uploadContainer}>
         <Text style={styles.uploadText}>
-          {message ? message : 'Upload your proof of work in .png or .jpeg format'}
+          {message
+            ? message
+            : "Upload your proof of work in .png or .jpeg format"}
         </Text>
 
         {!cameraActive && (
           <>
-            <TouchableOpacity style={styles.uploadButton} onPress={handleFileUpload}>
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={handleFileUpload}
+            >
               <Text style={styles.buttonText}>Browse files</Text>
             </TouchableOpacity>
 
@@ -223,7 +228,10 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
         {cameraActive ? (
           <View style={styles.cameraContainer}>
             <video ref={videoRef} style={styles.videoPreview} autoPlay muted />
-            <TouchableOpacity style={styles.captureButton} onPress={captureImage}>
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={captureImage}
+            >
               <Text style={styles.buttonText}>Capture</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.closeButton} onPress={closeCamera}>
@@ -231,7 +239,10 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.uploadButton} onPress={handleCameraUpload}>
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={handleCameraUpload}
+          >
             <Text style={styles.buttonText}>Use Camera</Text>
           </TouchableOpacity>
         )}
@@ -244,7 +255,11 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
                 {file.status === "success" ? (
                   <FontAwesome name="check-circle" size={15} color="#A3D65C" />
                 ) : file.status === "error" ? (
-                  <FontAwesome name="exclamation-circle" size={15} color="#FC5275" />
+                  <FontAwesome
+                    name="exclamation-circle"
+                    size={15}
+                    color="#FC5275"
+                  />
                 ) : (
                   <Text style={{ color: "#838383", fontSize: 10 }}>
                     {`${file.progress}%`}
@@ -258,8 +273,8 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
                     {
                       width: `${file.progress}%`,
                       backgroundColor:
-                        file.status === "success" 
-                          ? "#A3D65C" 
+                        file.status === "success"
+                          ? "#A3D65C"
                           : file.status === "error"
                           ? "#FC5275"
                           : "#FFD439",
@@ -268,7 +283,7 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
                 />
               </View>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => handleRemoveFile(file.name)}
               disabled={file.status === "uploading"}
             >
