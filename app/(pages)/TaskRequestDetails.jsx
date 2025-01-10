@@ -135,10 +135,10 @@ const RequestDetails = () => {
   };
 
   const handleStatusChange = async (newStatus) => {
-    if (newStatus === "declined" && !declineReason) {
+    if (newStatus === "rejected" && !declineReason) {
       Alert.alert("Error", "Please provide a reason for declining the request.");
       return;
-    } else if (requesterName.toLowerCase() === user.username.toLowerCase()){
+    } else if (requesterName === user.username){
       Alert.alert("Error", "Cannot approve or reject your own submissions");
       return;
     } else {
@@ -150,7 +150,7 @@ const RequestDetails = () => {
             proofOfWork: documents.map((doc) => doc.id),
             count: requestData.attributes.count,
             status: newStatus,
-            rejection_reason: newStatus === "declined"? declineReason : "",
+            rejection_reason: newStatus === "rejected"? declineReason : "",
             task: requestData.attributes.task?.data?.id,
           },
         };
@@ -273,12 +273,13 @@ const RequestDetails = () => {
           </TouchableOpacity>
         </View> */}
 
+        {/* {requesterName != user.username } */}
         {requestData?.attributes?.status === "pending" && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.rejectButton}
               onPress={() => setDeclineModalVisible(true)
-                // handleStatusChange("declined")
+                // handleStatusChange("rejected")
                 }
             >
               <Text style={styles.buttonText}>Reject Request</Text>
@@ -343,7 +344,7 @@ const RequestDetails = () => {
                 <TouchableOpacity
                   style={styles.approveButton}
                   onPress={() => {
-                    handleStatusChange("declined");
+                    handleStatusChange("rejected");
                   }}
                 >
                   <Text style={styles.buttonText}>Submit</Text>

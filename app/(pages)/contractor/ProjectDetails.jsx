@@ -16,6 +16,7 @@ import useProjectStore from "../../../projectStore";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { icons } from "../../../constants";
 import { fetchProjectById } from "../../../src/services/projectService";
+import { getProjectTeamById } from "../../../src/api/repositories/projectTeamRepository";
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,6 +27,7 @@ const ProjectDetails = () => {
   const { projectId, projectData, contractorId } = route.params || {};
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
+  const [projectMangerName,setProjectManagerName] = useState("")
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
@@ -58,11 +60,15 @@ const ProjectDetails = () => {
   useEffect(() => {
     const getProjectDetails = async () => {
       const response = await fetchProjectById(projectId);
+      const userId = response.data.attributes.approver.data.id;
+      console.log("user id",userId)
+      const data =  await getProjectTeamById(userId)
+      const userName = data.data.data.attributes.users.data[0].attributes.username
+ setProjectManagerName(userName)
       setProjectDetails(response.data)
     }
     getProjectDetails();
   }, [])
-  // console.log("asha",projectDetails.attributes.name)
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -99,7 +105,7 @@ const ProjectDetails = () => {
         <Text style={styles.label}>
           Project Manager:{" "}
           <Text style={styles.text}>
-            {projectDetails?.approver?.data?.attributes?.username || "N/A"}
+            {projectMangerName || "N/A"}
           </Text>
         </Text>
 
