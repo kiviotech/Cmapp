@@ -12,8 +12,7 @@ import Icon from "react-native-vector-icons/MaterialIcons"; // Make sure to inst
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
 import useAuthStore from "../../useAuthStore";
-import apiClient from "../../src/api/apiClient"
-
+import apiClient from "../../src/api/apiClient";
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -25,7 +24,7 @@ const ChangePassword = () => {
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
   const { user, token } = useAuthStore();
-  console.log('first', token)
+  console.log("first", token);
 
   const [validation, setValidation] = useState({
     minLength: false,
@@ -69,7 +68,7 @@ const ChangePassword = () => {
             },
           }
         );
-  
+
         if (response.status === 200) {
           alert("Password updated successfully!");
           navigation.navigate("(pages)/contractor/settings");
@@ -84,16 +83,13 @@ const ChangePassword = () => {
       alert("Please ensure all requirements are met.");
     }
   };
-  
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
         <View style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-            >
+            <TouchableOpacity onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={24} color="black" />
             </TouchableOpacity>
             <Text style={styles.headerText}>Change Password</Text>
@@ -220,12 +216,13 @@ const ChangePassword = () => {
           </View>
 
           <View style>
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-            <Text style={styles.buttonText}>Update Password</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+              <Text style={styles.buttonText}>Update Password</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.cancelButton}
+          <TouchableOpacity
+            style={styles.cancelButton}
             onPress={() => navigation.navigate("(pages)/contractor/settings")}
           >
             <Text style={styles.cancelText}>Cancel</Text>
@@ -310,10 +307,10 @@ const styles = StyleSheet.create({
   },
   button: {
     // backgroundColor: "#1e90ff",
-    backgroundColor: 'lightgreen', 
+    backgroundColor: "lightgreen",
     padding: 15,
     borderRadius: 30,
-    marginHorizontal: 'auto',
+    marginHorizontal: "auto",
     marginBottom: 10,
     height: 50,
     width: 150,

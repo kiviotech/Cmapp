@@ -55,9 +55,7 @@ const AssignContractors = () => {
   });
 
   const [jobRole, setJobRole] = useState([]);
-
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
-
   const route = useRoute();
   const navigation = useNavigation();
   const { projectId, project_manager, project_supervisor, site_coordinator } = route.params;
@@ -267,11 +265,10 @@ const AssignContractors = () => {
           project_status: "pending",
         },
       };
-
       await updateExistingProject(projectId, projectData);
-
       Alert.alert("Success", "Project setup completed and tasks assigned!");
       clearProjectData();
+      setAssignedContractors([]);
       navigation.navigate("(pages)/AssignContractors?projectId="+projectId);
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);

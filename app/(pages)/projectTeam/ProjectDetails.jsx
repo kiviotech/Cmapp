@@ -122,7 +122,6 @@ const ProjectDetails = () => {
           <Text style={styles.progressPercentage}>
             {Math.round(progress * 100)}%
           </Text>
-
         </View>
 
         <Text style={styles.label}>All Tasks</Text>
