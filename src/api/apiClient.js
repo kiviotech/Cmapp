@@ -6,21 +6,21 @@ import useAuthStore from "../../useAuthStore";
 // Configure base URLs based on platform
 
 const BASE_URL = Platform.select({
-  web: "http://localhost:1337/api",
-// web: "https://cmappapi.kivio.in/api",
+ // web: "http://localhost:1337/api",
+ web: "https://cmappapi.kivio.in/api",
   android: "https://cmappapi.kivio.in/api",
   // ios: "http://localhost:1337/api", // For iOS simulator
 });
 
 const URL = Platform.select({
-  web: "http://localhost:1337.in",
-// web: "https://cmappapi.kivio.in/api",
+ // web: "http://localhost:1337.in",
+ web: "https://cmappapi.kivio.in/api",
   android: "https://cmappapi.kivio.in",
 });
 
 const MEDIA_BASE_URL = Platform.select({
-  web: "http://localhost:1337/api",
-// web: "https://cmappapi.kivio.in/api",
+ // web: "http://localhost:1337/api",
+ web: "https://cmappapi.kivio.in/api",
   android: "https://cmappapi.kivio.in/api",
   // ios: "http://localhost:1337",
 });
