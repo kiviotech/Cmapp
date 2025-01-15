@@ -24,9 +24,7 @@ const ProjectDetails = () => {
 
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
-
-  console.log('projectData', projectData)
-
+  
   useEffect(() => {
     if (routeProjectData) {
       setProjectData(routeProjectData);
