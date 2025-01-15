@@ -36,19 +36,26 @@ const RequestDetails = () => {
   const [declineReason, setDeclineReason] = useState("");
   const [requesterName, setRequesterName] = useState("");
 
-  const { user } = useAuthStore()
-  console.log('user', user)
+  const { user } = useAuthStore();
+  console.log("user", user);
 
   useEffect(() => {
-    setTaskData(requestData?.attributes?.task?.data)
-    setRequesterName(requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username)
-    console.log('task Data', requestData)
+    setTaskData(requestData?.attributes?.task?.data);
+    setRequesterName(
+      requestData?.attributes?.task?.data?.attributes?.contractor?.data
+        ?.attributes?.username
+    );
+    console.log("task Data", requestData);
   }, [requestData]);
 
   const documents = requestData?.attributes?.proofOfWork?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.medium?.url || imageFormats?.small?.url}`;
+    const imageUrl = `${URL}${
+      imageFormats?.large?.url ||
+      imageFormats?.medium?.url ||
+      imageFormats?.small?.url
+    }`;
     const filename = imageFormats?.name || "download.png";
 
     if (Platform.OS === "web") {
@@ -136,9 +143,12 @@ const RequestDetails = () => {
 
   const handleStatusChange = async (newStatus) => {
     if (newStatus === "rejected" && !declineReason) {
-      Alert.alert("Error", "Please provide a reason for declining the request.");
+      Alert.alert(
+        "Error",
+        "Please provide a reason for declining the request."
+      );
       return;
-    } else if (requesterName === user.username){
+    } else if (requesterName === user.username) {
       Alert.alert("Error", "Cannot approve or reject your own submissions");
       return;
     } else {
@@ -150,16 +160,19 @@ const RequestDetails = () => {
             proofOfWork: documents.map((doc) => doc.id),
             count: requestData.attributes.count,
             status: newStatus,
-            rejection_reason: newStatus === "rejected"? declineReason : "",
+            rejection_reason: newStatus === "rejected" ? declineReason : "",
             task: requestData.attributes.task?.data?.id,
           },
         };
-  
-        const response = await updateExistingSubmission(requestData.id, updatedData);
-  
+
+        const response = await updateExistingSubmission(
+          requestData.id,
+          updatedData
+        );
+
         if (response.data) {
           console.log("Submission updated successfully:", response.data);
-  
+
           // Update task status
           if (newStatus === "approved") {
             const updateTaskData = {
@@ -168,33 +181,46 @@ const RequestDetails = () => {
                 approver: user.id,
               },
             };
-  
+
             const taskResp = await updateTask(taskData.id, updateTaskData);
-  
+
             if (taskResp.data) {
               console.log("Task status updated successfully:", taskResp.data);
-              Alert.alert("Success", `Request ${newStatus} and task status updated successfully!`);
+              Alert.alert(
+                "Success",
+                `Request ${newStatus} and task status updated successfully!`
+              );
             } else {
               console.error("Failed to update task status:", taskResp);
-              Alert.alert("Warning", "Request updated, but task status update failed.");
+              Alert.alert(
+                "Warning",
+                "Request updated, but task status update failed."
+              );
             }
           } else {
             console.warn("Task data is missing or invalid.");
-            Alert.alert("Warning", "Request updated, but task data is missing.");
+            Alert.alert(
+              "Warning",
+              "Request updated, but task data is missing."
+            );
           }
-  
+
           // Navigate back
           navigation.goBack();
         }
       } catch (error) {
         console.error("Error updating request or task:", error);
-        Alert.alert("Error", "An error occurred while updating the request or task.");
+        Alert.alert(
+          "Error",
+          "An error occurred while updating the request or task."
+        );
       }
     }
   };
 
   const handleImagePreview = (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const imageUrl = `${URL}${imageFormats?.small?.url}`;
+    console.log("Preview Image URL:", imageUrl);
     setSelectedImage(imageUrl);
     setModalVisible(true);
   };
@@ -245,10 +271,7 @@ const RequestDetails = () => {
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.label}>
-            Requester Name:{" "}
-            <Text style={styles.textBold}>
-              {requesterName}
-            </Text>
+            Requester Name: <Text style={styles.textBold}>{requesterName}</Text>
           </Text>
           <Text style={styles.label}>Requester Detail:</Text>
           <Text style={styles.requesterDetail}>
@@ -278,9 +301,10 @@ const RequestDetails = () => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.rejectButton}
-              onPress={() => setDeclineModalVisible(true)
+              onPress={
+                () => setDeclineModalVisible(true)
                 // handleStatusChange("rejected")
-                }
+              }
             >
               <Text style={styles.buttonText}>Reject Request</Text>
             </TouchableOpacity>
@@ -353,7 +377,6 @@ const RequestDetails = () => {
             </View>
           </View>
         </Modal>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -467,9 +490,9 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
   },
   input: {
-    width: '90%',
+    width: "90%",
     borderWidth: 1,
-    borderColor: '#000'
+    borderColor: "#000",
   },
   // Modal styles
   modalOverlay: {
@@ -487,12 +510,12 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    padding: 20
+    padding: 20,
   },
   modalButtons: {
-    width: '80%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    width: "80%",
+    flexDirection: "row",
+    justifyContent: "space-between",
     margin: 20,
     padding: 10,
   },

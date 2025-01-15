@@ -33,7 +33,7 @@ const ProjectList = () => {
               projectData.data.data.map((item) => [item.id, item])
             ).values()
           );
-          console.log('unique', uniqueProjects)
+          console.log("unique", uniqueProjects);
           setProjectsDetail(uniqueProjects);
         }
       } catch (error) {
@@ -56,12 +56,15 @@ const ProjectList = () => {
   }, []);
 
   const renderProject = ({ item }) => (
-    <TouchableOpacity style={styles.projectContainer}
-    onPress={() =>
-      navigation.navigate("(pages)/projectTeam/ProjectDetails", {
-        projectData: item,
-      })
-    }
+    <TouchableOpacity
+      style={styles.projectContainer}
+      onPress={() =>
+        navigation.navigate("(pages)/projectTeam/ProjectDetails", {
+          projectId: item.id,
+          projectData: item,
+          contractorId: item.attributes.contractors?.data?.[0]?.id,
+        })
+      }
     >
       <View
         style={[styles.colorBar, { backgroundColor: item.color || "#4A90E2" }]}

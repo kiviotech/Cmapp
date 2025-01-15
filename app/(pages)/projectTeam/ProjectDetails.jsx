@@ -14,20 +14,23 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import BottomNavigation from "./BottomNavigation";
 import useProjectStore from "../../../projectStore";
 import { fetchProjectTeamById } from "../../../src/services/projectTeamService";
+import { fetchTaskById } from "../../../src/services/taskService";
 
 const { width, height } = Dimensions.get("window");
 
 const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { projectData: routeProjectData } = route.params || {};
+  const { projectId, projectData: routeProjectData } = route.params || {};
 
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
-  
+  const [tasks, setTasks] = useState([]);
+
   useEffect(() => {
     if (routeProjectData) {
       setProjectData(routeProjectData);
+      fetchProjectTasks();
     }
 
     const approverId = routeProjectData?.attributes?.approver?.data?.id;
@@ -48,6 +51,22 @@ const ProjectDetails = () => {
 
     fetchManagerDetails();
   }, [routeProjectData, setProjectData]);
+
+  const fetchProjectTasks = async () => {
+    try {
+      const taskIds =
+        routeProjectData?.attributes?.tasks?.data?.map((task) => task.id) || [];
+      const taskPromises = taskIds.map(async (taskId) => {
+        const response = await fetchTaskById(taskId);
+        return response;
+      });
+
+      const taskResults = await Promise.all(taskPromises);
+      setTasks(taskResults);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
 
   const project = projectData?.attributes || {};
 
@@ -86,12 +105,13 @@ const ProjectDetails = () => {
             </View>
           </View>
           <View>
-            <TouchableOpacity style={styles.assignBtn}
-            onPress={() => {
-              navigation.navigate("(pages)/AssignContractors", {
-                projectId: projectData.id,
-              });
-            }}
+            <TouchableOpacity
+              style={styles.assignBtn}
+              onPress={() => {
+                navigation.navigate("(pages)/AssignContractors", {
+                  projectId: projectData.id,
+                });
+              }}
             >
               <Text style={styles.assignText}>Assign Tasks</Text>
             </TouchableOpacity>
@@ -124,28 +144,12 @@ const ProjectDetails = () => {
 
         <Text style={styles.label}>All Tasks</Text>
 
-        {projectData?.taskDetails?.length > 0 ? (
-          projectData.taskDetails.map((taskDetail, index) => {
-            const task = taskDetail.data.attributes;
-            const standardTask = task.standard_task?.data?.attributes || {};
-            const status = task.task_status;
-
-            let statusText = "Pending...";
-            let statusStyle = styles.pendingStatus;
-
-            if (status === "completed") {
-              statusText = "Completed";
-              statusStyle = styles.completedStatus;
-            } else if (status === "ongoing") {
-              statusText = "Ongoing";
-              statusStyle = styles.ongoingStatus;
-            } else if (status === "ahead") {
-              statusText = "Ahead of Schedule";
-              statusStyle = styles.aheadStatus;
-            } else if (status === "delayed") {
-              statusText = "Delayed";
-              statusStyle = styles.delayedStatus;
-            }
+        {tasks.length > 0 ? (
+          tasks.map((task, index) => {
+            const taskData = task?.data?.attributes || {};
+            const standardTask =
+              taskData?.standard_task?.data?.attributes || {};
+            const status = taskData.task_status;
 
             return (
               <View key={index} style={styles.taskContainer}>
@@ -153,18 +157,30 @@ const ProjectDetails = () => {
                   <Text style={styles.taskName} numberOfLines={1}>
                     {standardTask.Name || "Task Name"}
                   </Text>
-                  <Text style={styles.statusStyle}>{statusText}</Text>
+                  <Text
+                    style={[
+                      styles.statusStyle,
+                      status === "completed"
+                        ? styles.completedStatus
+                        : status === "ongoing"
+                        ? styles.ongoingStatus
+                        : styles.pendingStatus,
+                    ]}
+                  >
+                    {status === "completed"
+                      ? "Completed"
+                      : status === "ongoing"
+                      ? "Ongoing"
+                      : "Pending"}
+                  </Text>
                 </View>
                 <Text style={styles.taskDescription} numberOfLines={2}>
                   {standardTask.Description || "No description available."}
                 </Text>
                 <View style={styles.assign}>
-                  {/* <Text style={styles.dueDate}>
-                        {status === "completed"
-                          ? `Completed on ${task.updatedAt}`
-                          : `Updated on ${task.updatedAt}`}
-                      </Text> 
-                  */}
+                  <Text style={styles.dueDate}>
+                    Due: {taskData.due_date || "N/A"}
+                  </Text>
                 </View>
               </View>
             );
@@ -185,7 +201,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: width * 0.04,
     backgroundColor: "#FFFFFF",
-
   },
   container: {
     paddingTop: height * 0.05,
@@ -197,7 +212,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: height * 0.015,
     color: "#192252",
-    marginHorizontal: 20
+    marginHorizontal: 20,
   },
   headerText: {
     fontSize: width * 0.055,
@@ -206,13 +221,11 @@ const styles = StyleSheet.create({
     color: "#192252",
     marginLeft: 10,
     marginTop: -5,
-
   },
   projectNameContainer: {
     alignItems: "flex-start",
     // marginBottom: height * 0.015,
     paddingHorizontal: width * 0.05,
-
   },
   projectName: {
     fontSize: width * 0.055,
@@ -224,7 +237,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: height * 0.015,
-    paddingHorizontal: width * 0.10,
+    paddingHorizontal: width * 0.1,
   },
   dueDateContainer: {
     flexDirection: "row",
@@ -250,7 +263,7 @@ const styles = StyleSheet.create({
     // borderColor: '#000'
   },
   assignText: {
-    fontSize: 18
+    fontSize: 18,
   },
   statusStyle: {
     color: "red",
@@ -280,45 +293,38 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
 
-
     alignItems: "center",
     marginBottom: height * 0.02,
     paddingVertical: height * 0.01,
-
   },
   progressBarContainer: {
     marginLeft: width * 0.02,
     marginTop: height * 0.005,
-    border: '1px solid red',
-
+    border: "1px solid red",
   },
   progressLabel: {
     fontSize: width * 0.04,
     fontWeight: "bold",
     color: "#192252",
     paddingHorizontal: width * 0.05,
-    width: '40%',
-    whiteSpace: 'nowrap'
-
-
-
+    width: "40%",
+    whiteSpace: "nowrap",
   },
   progressPercentage: {
     fontSize: width * 0.035,
     color: "#66B8FC",
     position: "absolute",
     right: width * 0.02,
-
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
     padding: width * 0.04,
     borderRadius: 8,
-    marginLeft: '10px',
+    marginLeft: "10px",
     marginBottom: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    width: '90%'
+    width: "90%",
   },
   task: {
     flexDirection: "row",

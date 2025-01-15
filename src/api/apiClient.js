@@ -6,21 +6,21 @@ import useAuthStore from "../../useAuthStore";
 // Configure base URLs based on platform
 
 const BASE_URL = Platform.select({
-  web: "http://localhost:1337/api",
-// web: "https://cmappapi.kivio.in/api",
+  // web: "http://localhost:1337/api",
+  web: "https://cmappapi.kivio.in/api",
   android: "https://cmappapi.kivio.in/api",
   // ios: "http://localhost:1337/api", // For iOS simulator
 });
 
 const URL = Platform.select({
-  web: "http://localhost:1337.in",
-// web: "https://cmappapi.kivio.in/api",
+  // web: "http://localhost:1337.in",
+  web: "https://cmappapi.kivio.in",
   android: "https://cmappapi.kivio.in",
 });
 
 const MEDIA_BASE_URL = Platform.select({
-  web: "http://localhost:1337/api",
-// web: "https://cmappapi.kivio.in/api",
+  // web: "http://localhost:1337/api",
+  web: "https://cmappapi.kivio.in/api",
   android: "https://cmappapi.kivio.in/api",
   // ios: "http://localhost:1337",
 });
@@ -41,13 +41,11 @@ const apiClient = axios.create({
 //     if (token) {
 //       config.headers.Authorization = `Bearer ${token}`;
 //     }
-    
+
 //     return config;
 //   },
 //   (error) => Promise.reject(error)
 // );
-
-
 
 apiClient.interceptors.request.use(
   async (config) => {
@@ -56,7 +54,7 @@ apiClient.interceptors.request.use(
       // console.log('Fetched token:', token); // Debugging log
 
       if (token) {
-        config.headers.Authorization = Bearer `${token}`;
+        config.headers.Authorization = Bearer`${token}`;
         //console.log("Token set in headers"); // Debugging log
       } else {
         //console.warn("No token available"); // Warn if no token is found
