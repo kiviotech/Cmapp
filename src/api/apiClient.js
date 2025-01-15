@@ -41,13 +41,11 @@ const apiClient = axios.create({
 //     if (token) {
 //       config.headers.Authorization = `Bearer ${token}`;
 //     }
-    
+
 //     return config;
 //   },
 //   (error) => Promise.reject(error)
 // );
-
-
 
 apiClient.interceptors.request.use(
   async (config) => {
@@ -56,7 +54,7 @@ apiClient.interceptors.request.use(
       // console.log('Fetched token:', token); // Debugging log
 
       if (token) {
-        config.headers.Authorization = Bearer `${token}`;
+        config.headers.Authorization = Bearer`${token}`;
         //console.log("Token set in headers"); // Debugging log
       } else {
         //console.warn("No token available"); // Warn if no token is found
