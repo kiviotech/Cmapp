@@ -4,6 +4,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { fetchStandardTaskByProjectTeam } from '../../src/services/standardTaskService';
 import { fetchUserById } from '../../src/services/userService';
 import { createTask } from '../../src/services/taskService';
+import { fetchProjectTeamIdByUserId } from '../../src/services/projectTeamService';
 
 const { width, height } = Dimensions.get("window");
 
@@ -19,6 +20,9 @@ const AssignProjectTeam = () => {
     const [projectManagerTasks, setProjectManagerTasks] = useState([]);
     const [projectSupervisorTasks, setProjectSupervisorTasks] = useState([]);
     const [siteCoordinatorTasks, setSiteCoordinatorTasks] = useState([]);
+    const [projectManagerTeamId, setProjectManagerTeamId] = useState('');
+    const [projectSupervisorTeamId, setProjectSupervisorTeamId] = useState('');
+    const [siteCoordTeamId, setsiteCoordTeamId] = useState('');
 
     useEffect(() => {
         const fetchProjectTeamDetails = async () => {
@@ -28,11 +32,11 @@ const AssignProjectTeam = () => {
                 setProjectManager(managerResp);
 
                 const supervisorResp = await fetchUserById(project_supervisor);
-                console.log('project_supervisor user details', supervisorResp);
+                // console.log('project_supervisor user details', supervisorResp);
                 setProjectSupervisor(supervisorResp);
 
                 const coordinatorResp = await fetchUserById(site_coordinator);
-                console.log('site_coordinator user details', coordinatorResp);
+                // console.log('site_coordinator user details', coordinatorResp);
                 setSiteCoordinator(coordinatorResp);
             } catch (error) {
                 console.log('Cannot fetch project team details', error)
@@ -55,6 +59,20 @@ const AssignProjectTeam = () => {
                 console.error("Error fetching standard tasks:", error);
             }
         };
+        const fetchProjectTeamId = async () => {
+            const projectManagerResp = await fetchProjectTeamIdByUserId(project_manager);
+            // console.log('projectManagerResp', projectManagerResp.data[0].id)
+            setProjectManagerTeamId(projectManagerResp?.data[0]?.id)
+
+            const projectSupervisorResp = await fetchProjectTeamIdByUserId(project_supervisor);
+            console.log('projectSupervisorResp', projectSupervisorResp.data[0].id)
+            setProjectManagerTeamId(projectSupervisorResp?.data[0]?.id)
+
+            const siteCordResp = await fetchProjectTeamIdByUserId(site_coordinator);
+            // console.log('siteCordResp', siteCordResp.data[0].id)
+            setProjectManagerTeamId(siteCordResp?.data[0]?.id)
+        }
+        fetchProjectTeamId()
         fetchProjectTeamDetails();
         fetchStandardTasks();
     }, [])
@@ -68,46 +86,47 @@ const AssignProjectTeam = () => {
                         tasks.map(async (task) => {
                             const payload = {
                                 data: {
-                                    project_team: userId,
+                                    approver: userId,
                                     project: projectId,
                                     standard_task: task.id,
                                     submissions: [],
                                     documents: [],
                                     task_status: "ongoing",
-                                    approver: approvers,
+                                    // project_team: approvers,
                                 }
                             };
                             console.log('Payload:', payload);
                             await createTask(payload);
                         })
                     );
-                    navigation.navigate("(pages)/AssignContractors", {
-                        projectId: projectId, 
-                      });
                 }
             } catch (error) {
                 console.error(`Error assigning tasks for user ${userId}:`, error);
                 throw error;
             }
         };
-    
+
         try {
             // Assign tasks to Project Manager
-            await assignTasks(projectManagerTasks, project_manager, [project_supervisor, site_coordinator]);
-    
+            await assignTasks(projectManagerTasks, project_manager, projectSupervisorTeamId);
+
             // Assign tasks to Project Supervisor
-            await assignTasks(projectSupervisorTasks, project_supervisor, [project_manager, site_coordinator]);
-    
+            await assignTasks(projectSupervisorTasks, project_supervisor, projectSupervisorTeamId);
+
             // Assign tasks to Site Coordinator
-            await assignTasks(siteCoordinatorTasks, site_coordinator, [project_manager, project_supervisor]);
-    
+            await assignTasks(siteCoordinatorTasks, site_coordinator, projectSupervisorTeamId);
+
             alert("Tasks have been successfully assigned to the project team!");
+
+            navigation.navigate("(pages)/AssignContractors", {
+                projectId: projectId,
+            });
         } catch (error) {
             console.error("Error assigning tasks:", error);
             alert("Failed to assign tasks. Please try again.");
         }
     };
-    
+
     return (
         <SafeAreaView style={styles.AreaContainer}>
             <ScrollView>
@@ -120,7 +139,7 @@ const AssignProjectTeam = () => {
                         <View style={styles.section}>
                             {projectManager ? (
                                 <Text style={styles.detailText}>
-                                    Project Manager: {projectManager.username} 
+                                    Project Manager: {projectManager.username}
                                     {/* ({projectManager.email}) */}
                                 </Text>
                             ) : (
@@ -145,7 +164,7 @@ const AssignProjectTeam = () => {
                         <View style={styles.section}>
                             {projectSupervisor ? (
                                 <Text style={styles.detailText}>
-                                    Project Supervisor: {projectSupervisor.username} 
+                                    Project Supervisor: {projectSupervisor.username}
                                     {/* ({projectSupervisor.email}) */}
                                 </Text>
                             ) : (
@@ -170,7 +189,7 @@ const AssignProjectTeam = () => {
                         <View style={styles.section}>
                             {siteCoordinator ? (
                                 <Text style={styles.detailText}>
-                                    Site Coordinator: {siteCoordinator.username} 
+                                    Site Coordinator: {siteCoordinator.username}
                                     {/* ({siteCoordinator.email}) */}
                                 </Text>
                             ) : (

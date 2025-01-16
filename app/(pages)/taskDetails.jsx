@@ -61,7 +61,7 @@ const TaskDetails = () => {
   };
 
   const openLink = () => {
-    const link = taskData?.attributes?.standard_task?.data?.attributes?.Links;
+    const link = taskData?.attributes?.Urls;
 
     if (link) {
       Linking.openURL(link).catch((err) =>

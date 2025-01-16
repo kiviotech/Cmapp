@@ -72,10 +72,10 @@ const RequestsScreen = () => {
         </Text>
       ) : (
         <Text style={styles.requestTitle}>
-          Submitted{" "}
+          Submission for {" "}
           {item.attributes.task?.data?.attributes?.project?.data?.attributes
-            .name || "Project"}{" "}
-          Work
+            .name || "Project"}{" - "}
+            {item?.attributes?.task?.data?.attributes?.standard_task?.data?.attributes?.Name || "Work"}
         </Text>
       )}
       {item.attributes.comment && (
