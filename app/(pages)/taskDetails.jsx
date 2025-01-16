@@ -23,19 +23,19 @@ const TaskDetails = () => {
   const navigation = useNavigation();
   const { taskData } = route.params || {};
   const [showModal, setShowModal] = useState(false);
-  const [standardTaskDetails, setStandardTaskDetails] = useState([])
+  const [standardTaskDetails, setStandardTaskDetails] = useState([]);
   useEffect(() => {
     const fetchStandardTaskDetails = async () => {
       try {
-        const standardTaskId = taskData?.attributes?.standard_task?.data?.id
+        const standardTaskId = taskData?.attributes?.standard_task?.data?.id;
         const response = await fetchStandardTaskById(standardTaskId);
-        setStandardTaskDetails(response.data)
+        setStandardTaskDetails(response.data);
       } catch (error) {
         console.error("Error fetching contractor data:", error);
       }
-    }
+    };
     fetchStandardTaskDetails();
-  }, [])
+  }, []);
 
   // Optionally add a check to handle missing taskData gracefully
   if (!taskData) {
@@ -65,50 +65,49 @@ const TaskDetails = () => {
 
     if (link) {
       Linking.openURL(link).catch((err) =>
-        console.error('Failed to open link:', err)
+        console.error("Failed to open link:", err)
       );
     } else {
-      console.warn('No link provided');
+      console.warn("No link provided");
     }
   };
 
   return (
     <View style={styles.rootContainer}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      {/* Fixed Header Section */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("(pages)/dashboard")}
+          >
+            <Image source={icons.backarrow}></Image>
+          </TouchableOpacity>
+          <Text style={styles.detailsText}>Details</Text>
+        </View>
+
+        <View style={styles.deadlineContainer}>
+          <Image source={icons.calendar} />
+          <Text style={styles.deadlineText}>
+            Deadline:{" "}
+            {taskData?.attributes?.due_date || "No deadline specified"}
+          </Text>
+        </View>
+      </View>
+
+      {/* Scrollable Content */}
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
         <SafeAreaView style={styles.safeAreaView}>
-          {/* Header Section */}
-          <View style={styles.header}>
-            <View
-              style={{
-                flexDirection: "row",
-                flex: 1,
-                paddingHorizontal: 10,
-                alignItems: "center",
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => navigation.navigate("(pages)/dashboard")}
-              >
-                <Image source={icons.backarrow}></Image>
-              </TouchableOpacity>
-              <Text style={styles.detailsText}>Details</Text>
-            </View>
-
-            <View style={styles.deadlineContainer}>
-              <Image source={icons.calendar} />
-              <Text style={styles.deadlineText}>
-                Deadline:{" "}
-                {taskData?.attributes?.due_date || "No deadline specified"}
-              </Text>
-            </View>
-          </View>
-
           {/* Image Placeholder */}
           <View style={styles.imagePlaceholder}>
             {documents.map((document, index) => (
               <Image
                 key={document.id || index} // Use a unique key, preferably `document.id`, or fallback to `index`
-                source={{ uri: `${MEDIA_BASE_URL}${document?.attributes?.url}` }}
+                source={{
+                  uri: `${MEDIA_BASE_URL}${document?.attributes?.url}`,
+                }}
                 style={styles.taskImage}
               />
             ))}
@@ -135,17 +134,15 @@ const TaskDetails = () => {
               />
             </View>
             <Text style={styles.projectDescription}>
-              {taskData?.attributes?.standard_task?.data?.attributes?.Description ||
-                "No description available for this task."}
+              {taskData?.attributes?.standard_task?.data?.attributes
+                ?.Description || "No description available for this task."}
             </Text>
           </View>
-          {console.log('taskdata', taskData)}
+          {console.log("taskdata", taskData)}
 
           <View>
-            <TouchableOpacity style={{ margin: 20 }}
-            onPress={openLink}
-            >
-              <Text style={{fontSize: 18}}>Click here to open link</Text>
+            <TouchableOpacity style={{ margin: 20 }} onPress={openLink}>
+              <Text style={{ fontSize: 18 }}>Click here to open link</Text>
             </TouchableOpacity>
           </View>
 
@@ -156,7 +153,8 @@ const TaskDetails = () => {
                 Consultant / Third Party / Inspector
               </Text>
               <Text style={styles.tableContent}>
-                {standardTaskDetails?.attributes?.consultant?.data?.attributes?.name || ""}
+                {standardTaskDetails?.attributes?.consultant?.data?.attributes
+                  ?.name || ""}
               </Text>
             </View>
             <View style={styles.tableRow}>
@@ -164,19 +162,22 @@ const TaskDetails = () => {
                 Required Drawings / Documents
               </Text>
               <Text style={styles.tableContent}>
-                {standardTaskDetails?.attributes?.RequiredDocuments || "No documents"}
+                {standardTaskDetails?.attributes?.RequiredDocuments ||
+                  "No documents"}
               </Text>
             </View>
             <View style={styles.tableRow}>
               <Text style={styles.tableHeader}>QA Team Process</Text>
               <Text style={styles.tableContent}>
-                {standardTaskDetails?.attributes?.QATeamProcess || "No QA process"}
+                {standardTaskDetails?.attributes?.QATeamProcess ||
+                  "No QA process"}
               </Text>
             </View>
             <View style={styles.tableRow}>
               <Text style={styles.tableHeader}>QC Team Process</Text>
               <Text style={styles.tableContent}>
-                {standardTaskDetails?.attributes?.QCTeamProcess || "No QC process"}
+                {standardTaskDetails?.attributes?.QCTeamProcess ||
+                  "No QC process"}
               </Text>
             </View>
             {taskData.rejection_comment && (
@@ -255,17 +256,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.whiteColor,
     padding: 15,
   },
-  safeAreaView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    paddingBottom: 16,
-  },
   header: {
-    marginBottom: 16,
     paddingTop: 25,
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: colors.whiteColor,
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    flex: 1,
+    paddingHorizontal: 10,
     alignItems: "center",
   },
   detailsText: {
@@ -391,6 +393,12 @@ const styles = StyleSheet.create({
   downloadText: {
     color: colors.primary,
     fontSize: 14,
+  },
+  scrollViewContent: {
+    paddingBottom: 16,
+  },
+  safeAreaView: {
+    flex: 1,
   },
 });
 

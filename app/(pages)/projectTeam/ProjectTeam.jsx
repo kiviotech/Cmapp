@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   FlatList,
+  TextInput,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -25,7 +26,10 @@ import {
 } from "@expo/vector-icons";
 import { fetchProjectTeamIdByUserId } from "../../../src/services/projectTeamService";
 import { fetchProjectDetailsByApproverId } from "../../../src/services/projectService";
-import apiClient, { BASE_URL, MEDIA_BASE_URL } from "../../../src/api/apiClient";
+import apiClient, {
+  BASE_URL,
+  MEDIA_BASE_URL,
+} from "../../../src/api/apiClient";
 
 const data = [
   {
@@ -85,6 +89,7 @@ const ProjectTeam = () => {
   const [taskDetails, setTaskDetails] = useState([]);
   const { user, designation, role, projects, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const ongoingProjectsCount = projectDetails.filter(
     (item) => item.attributes.project_status === "ongoing"
@@ -261,9 +266,17 @@ const ProjectTeam = () => {
     }, [])
   );
 
+  const filteredTasks = (tasks) => {
+    return tasks.filter((taskDetail) =>
+      taskDetail.data.attributes.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
+        searchQuery.toLowerCase()
+      )
+    );
+  };
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.userInfoContainer}>
           <Image
             source={{
@@ -312,11 +325,11 @@ const ProjectTeam = () => {
                 <TouchableOpacity
                   key={project.id}
                   style={[
-                      styles.projectCard,
-                      project.attributes.project_status === "pending"
-                        ? { backgroundColor: "#ffebee" }
-                        : { backgroundColor: "#e8f5e9" },
-                    ]}
+                    styles.projectCard,
+                    project.attributes.project_status === "pending"
+                      ? { backgroundColor: "#ffebee" }
+                      : { backgroundColor: "#e8f5e9" },
+                  ]}
                   onPress={() =>
                     navigation.navigate("(pages)/projectTeam/ProjectDetails", {
                       projectData: project,
@@ -387,7 +400,10 @@ const ProjectTeam = () => {
             <View>
               <Text style={styles.requestTitle}>
                 Submitted{" "}
-                {request?.attributes?.task?.data?.attributes?.project?.data?.attributes?.name}{" "}
+                {
+                  request?.attributes?.task?.data?.attributes?.project?.data
+                    ?.attributes?.name
+                }{" "}
                 Work
               </Text>
               <Text style={styles.requestDescription}>
@@ -415,29 +431,35 @@ const ProjectTeam = () => {
           <View style={styles.milestoneContainer}>
             <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
           </View>
-          {/* <View style={styles.iconContainer}>
-            <Icon
-              name="tune"
-              size={24}
-              color="#333"
-              style={styles.filterIcon}
-            />
-          </View> */}
+        </View>
+
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
 
         {projectDetails.map((projectItem, projectIndex) => {
           const project = projectItem.attributes;
-
-          // Filter tasks that are not completed
           const tasks = (projectItem.taskDetails || []).filter(
             (taskDetail) =>
               taskDetail.data.attributes.task_status !== "completed"
           );
 
-          // Only display project if it has non-completed tasks and is not completed itself
           if (tasks.length === 0 || project.project_status === "completed") {
             return null;
           }
+
+          const filteredTasksList = filteredTasks(tasks);
 
           return (
             <View key={projectIndex}>
@@ -447,32 +469,35 @@ const ProjectTeam = () => {
 
               <View style={styles.headerContainer}>
                 <Text style={styles.taskStatus}>
-                  {tasks.length}{" "}
-                  {tasks.length === 1 ? "Task Pending" : "Tasks Pending"}
+                  {filteredTasksList.length}{" "}
+                  {filteredTasksList.length === 1
+                    ? "Task Pending"
+                    : "Tasks Pending"}
                 </Text>
               </View>
 
-              {tasks.length > 0 ? (
-                tasks.map((taskDetail, taskIndex) => {
+              {filteredTasksList.length > 0 ? (
+                filteredTasksList.map((taskDetail, taskIndex) => {
                   const task = taskDetail.data;
                   const standardTask =
                     task.attributes.standard_task?.data?.attributes || {};
                   const statusText = task.task_status || "Pending";
                   const statusStyle = getStatusStyle(task.task_status);
 
-                  const taskImageUrl = task.attributes?.documents?.data?.[0]?.attributes
-                    ?.url
-                    ? `${MEDIA_BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
+                  const taskImageUrl = task.attributes?.documents?.data?.[0]
+                    ?.attributes?.url
+                    ? `${BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
                     : "https://via.placeholder.com/150";
 
                   return (
                     <View key={taskIndex} style={styles.milestoneCard}>
-                      <TouchableOpacity style={styles.milestoneCard}
-                      onPress={() =>
-                        navigation.navigate("(pages)/taskDetails", {
-                          taskData: task,
-                        })
-                      }
+                      <TouchableOpacity
+                        style={styles.milestoneCard}
+                        onPress={() =>
+                          navigation.navigate("(pages)/taskDetails", {
+                            taskData: task,
+                          })
+                        }
                       >
                         <Image
                           source={{ uri: taskImageUrl }}
@@ -500,7 +525,9 @@ const ProjectTeam = () => {
                               size={16}
                               color="#333"
                             />{" "}
-                            Deadline: {task?.attributes?.due_date || "No deadline specified"}
+                            Deadline:{" "}
+                            {task?.attributes?.due_date ||
+                              "No deadline specified"}
                           </Text>
                         </View>
                       </TouchableOpacity>
@@ -559,6 +586,7 @@ const styles = StyleSheet.create({
   userInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 20,
   },
   profileImage: {
@@ -570,10 +598,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
   },
   userRole: {
     fontSize: 14,
     color: "#888",
+    textAlign: "center",
   },
   searchIcon: {
     marginLeft: "auto",
@@ -869,6 +899,24 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     marginLeft: 8,
+    color: "#333",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 45,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
     color: "#333",
   },
 });

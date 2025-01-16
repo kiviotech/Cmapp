@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -20,6 +21,7 @@ const RequestsScreen = () => {
   const [activeTab, setActiveTab] = useState("Pending");
   const [activeCategory, setActiveCategory] = useState("Submission");
   const [requests, setRequests] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigation = useNavigation();
 
   useFocusEffect(
@@ -45,7 +47,21 @@ const RequestsScreen = () => {
     const isCategoryMatch =
       (activeCategory === "Registration" && request.attributes.email) ||
       (activeCategory === "Submission" && request.attributes.comment);
-    return isStatusMatch && isCategoryMatch;
+
+    const searchText = searchQuery.toLowerCase();
+    const username = request.attributes.username?.toLowerCase() || "";
+    const comment = request.attributes.comment?.toLowerCase() || "";
+    const projectName =
+      request.attributes.task?.data?.attributes?.project?.data?.attributes.name?.toLowerCase() ||
+      "";
+
+    const matchesSearch =
+      searchQuery === "" ||
+      username.includes(searchText) ||
+      comment.includes(searchText) ||
+      projectName.includes(searchText);
+
+    return isStatusMatch && isCategoryMatch && matchesSearch;
   });
 
   const renderRequestItem = ({ item }) => (
@@ -63,7 +79,9 @@ const RequestsScreen = () => {
         </Text>
       )}
       {item.attributes.comment && (
-        <Text style={styles.requestDescription}>{item?.attributes?.comment}</Text>
+        <Text style={styles.requestDescription}>
+          {item?.attributes?.comment}
+        </Text>
       )}
       <Text
         style={[
@@ -95,66 +113,85 @@ const RequestsScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color="black"
-              onPress={() => navigation.goBack()}
-            />
-            <Text style={styles.headerText}>Requests</Text>
-          </View>
-          {/* Category Tabs */}
-          <View style={styles.categoryTabsContainer}>
-            {["Submission", "Registration"].map((category) => (
-              <TouchableOpacity
-                key={category}
+      <View style={styles.fixedHeader}>
+        <View style={styles.header}>
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color="black"
+            onPress={() => navigation.goBack()}
+          />
+          <Text style={styles.headerText}>Requests</Text>
+        </View>
+
+        {/* Category Tabs */}
+        <View style={styles.categoryTabsContainer}>
+          {["Submission", "Registration"].map((category) => (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryTab,
+                activeCategory === category && styles.activeCategoryTab,
+              ]}
+              onPress={() => setActiveCategory(category)}
+            >
+              <Text
                 style={[
-                  styles.categoryTab,
-                  activeCategory === category && styles.activeCategoryTab,
+                  styles.tabText,
+                  activeCategory === category && styles.activeCategoryText,
                 ]}
-                onPress={() => setActiveCategory(category)}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeCategory === category && styles.activeCategoryText,
-                  ]}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          {/* Status Tabs */}
-          <View style={styles.tabsContainer}>
-            {["Approved", "Pending", "Rejected"].map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tab, activeTab === tab && styles.activeTab]}
-                onPress={() => setActiveTab(tab)}
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Status Tabs */}
+        <View style={styles.tabsContainer}>
+          {["Approved", "Pending", "Rejected"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, activeTab === tab && styles.activeTab]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab && styles.activeTabText,
+                ]}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab && styles.activeTabText,
-                  ]}
-                >
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <FlatList
-            data={filteredRequests}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderRequestItem}
-            contentContainerStyle={styles.listContent}
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search requests..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
         </View>
-      </ScrollView>
+      </View>
+
+      {/* Scrollable Content */}
+      <FlatList
+        data={[...filteredRequests].reverse()}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderRequestItem}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 };
@@ -164,15 +201,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFF",
   },
-  scrollViewContent: {
-    flexGrow: 1,
+  fixedHeader: {
     backgroundColor: "#FFF",
-  },
-  container: {
-    flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
     paddingTop: 35,
-    backgroundColor: "#FFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
   },
   header: {
     flexDirection: "row",
@@ -230,7 +264,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   listContent: {
-    paddingBottom: 16,
+    padding: 16,
+    paddingTop: 8,
   },
   requestContainer: {
     padding: 16,
@@ -266,6 +301,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     marginTop: 8,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F8F8",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    height: 40,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
   },
 });
 
