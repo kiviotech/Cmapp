@@ -269,7 +269,7 @@ const AssignContractors = () => {
       Alert.alert("Success", "Project setup completed and tasks assigned!");
       clearProjectData();
       setAssignedContractors([]);
-      navigation.navigate("(pages)/AssignContractors?projectId="+projectId);
+      navigation.navigate("(pages)/dashboard");
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);
       Alert.alert(

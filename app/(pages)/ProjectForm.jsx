@@ -216,7 +216,7 @@ const ProjectForm = () => {
         setProjectData(response.data);
         Alert.alert("Success", "Project created successfully!");
         resetForm();
-        navigation.navigate("(pages)/AssignContractors", {
+        navigation.navigate("(pages)/AssignProjectTeam", {
           projectId: response.data.id, // Pass only the id
           project_manager: projectManager,
           project_supervisor: supervisor,

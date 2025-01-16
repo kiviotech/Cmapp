@@ -356,23 +356,38 @@ const Myactivity = () => {
         <View style={styles.requestsHeader}>
           <Text style={styles.sectionHeader}>Requests Activity</Text>
         </View>
-
+        
         {requests.map((request) => (
-          <View key={request?.id} style={styles.requestItem}>
+          <TouchableOpacity key={request?.id} style={styles.requestItem}
+            onPress={() => {
+              navigation.navigate("(pages)/TaskRequestDetails", {
+                requestData: request,
+              });
+            }}
+          >
             <View>
               <Text style={styles.requestTitle}>
-                Submitted{" "}
+                Submission for {request?.attributes?.task?.data?.attributes?.standard_task?.data?.attributes?.Name || "task"}{" "}in{" "}
                 {request?.attributes?.task?.data?.attributes?.project?.data
                   ?.attributes?.name || "Project"}{" "}
-                Work
               </Text>
               <Text style={styles.requestDescription}>
-                {request?.attributes?.description ||
-                  "No description available."}
+                {request?.attributes?.comment ||
+                  "No comments available."}
               </Text>
+
               <View style={styles.requestStatusContainer}>
-                <Text style={styles.requestStatusPending}>
-                  {request?.attributes?.status || "Pending"}
+                <Text style={[
+
+                  request?.attributes?.status === 'approved'
+                    ? styles.requestStatusApproved
+                    : request?.attributes?.status === 'rejected'
+                      ? styles.requestStatusRejected
+                      : request?.attributes?.status === 'pending'
+                        ? styles.requestStatusPendingText
+                        : {}
+                ]}>
+                  {request?.attributes?.status.charAt(0).toUpperCase() + request?.attributes?.status?.slice(1).toLowerCase()}
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -385,7 +400,7 @@ const Myactivity = () => {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
       <BottomNavigation />
@@ -505,6 +520,16 @@ const styles = StyleSheet.create({
   },
   viewLink: {
     color: "#1e90ff",
+  },
+  //  i have done changed here
+  requestStatusApproved: {
+    color: "#38A169",
+  },
+  requestStatusRejected: {
+    color: "#E53E3E",
+  },
+  requestStatusPendingText: {
+    color: "red",
   },
 });
 

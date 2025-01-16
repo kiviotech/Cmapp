@@ -5,6 +5,7 @@ import {
   updateStandardTask,
   deleteStandardTask,
   getStandardTaskBySubcontractor,
+  getStandardTaskByProjectTeam,
 } from "../api/repositories/standardTaskRepository";
 
 export const fetchStandardTasks = async () => {
@@ -28,6 +29,15 @@ export const fetchStandardTaskById = async (id) => {
 export const fetchStandardTaskBySubcontractor = async (subcontractor) => {
   try {
     const response = await getStandardTaskBySubcontractor(subcontractor);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchStandardTaskByProjectTeam = async (projectTeam) => {
+  try {
+    const response = await getStandardTaskByProjectTeam(projectTeam);
     return response.data;
   } catch (error) {
     throw error;

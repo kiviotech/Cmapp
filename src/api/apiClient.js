@@ -13,7 +13,7 @@ const BASE_URL = Platform.select({
 });
 
 const URL = Platform.select({
-  web: "http://localhost:1337.in",
+  web: "http://localhost:1337",
 // web: "https://cmappapi.kivio.in/api",
   android: "https://cmappapi.kivio.in",
 });

@@ -265,6 +265,7 @@ const ProjectTeamScreens = () => (
     <Stack.Screen name="(pages)/ChangePassword" />
     <Stack.Screen name="(pages)/Request" />
     <Stack.Screen name="(pages)/AssignContractors" />
+    <Stack.Screen name="(pages)/AssignProjectTeam" />
     <Stack.Screen name="(pages)/ProjectForm" />
     <Stack.Screen name="(pages)/TaskRequestDetails" />
     <Stack.Screen name="(pages)/EmailRequestDetails" />

@@ -76,12 +76,13 @@ const ChangePassword = () => {
           alert(response.data.error?.message || "Failed to update password.");
         }
       } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred while updating the password.");
+        if (error.response && error.response.status === 400) {
+          alert("Check the current password.");
+        } else {
+          alert("Please ensure all requirements are met.");
+        }
       }
-    } else {
-      alert("Please ensure all requirements are met.");
-    }
+    };
   };
 
   return (
@@ -306,8 +307,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   button: {
-    // backgroundColor: "#1e90ff",
-    backgroundColor: "lightgreen",
+    backgroundColor: "#1e90ff",
     padding: 15,
     borderRadius: 30,
     marginHorizontal: "auto",

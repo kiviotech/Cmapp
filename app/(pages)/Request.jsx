@@ -9,7 +9,7 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { fetchRegistrations } from "../../src/services/registrationService";
 import { fetchSubmissions } from "../../src/services/submissionService";
@@ -76,7 +76,7 @@ const RequestsScreen = () => {
           ],
         ]}
       >
-        Status: {item?.attributes?.status}
+        Status: {item?.attributes?.status.charAt(0).toUpperCase() + item?.attributes?.status.slice(1).toLowerCase()}
       </Text>
       <TouchableOpacity
         onPress={() =>
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   statusApproved: {
     color: "#38A169",
   },
-  statusDeclined: {
+  statusRejected: {
     color: "#E53E3E",
   },
   viewButton: {
