@@ -168,10 +168,10 @@ const Login = () => {
       <View style={styles.content}>
         <View style={styles.container}>
           <Image
-            // source={{
-            //   uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
-            // }}
-            source={icons.loginLogo}
+            source={{
+              uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
+            }}
+            // source={icons.logo}
             style={styles.image}
             resizeMode="contain" // Adjusts the image to fit within the specified dimensions
           />

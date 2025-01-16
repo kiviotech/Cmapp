@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Modal,
   Linking,
+  Alert,
 } from "react-native";
 import CustomButton from "../../components/CustomButton";
 import { icons } from "../../constants";
@@ -165,11 +166,14 @@ const TaskDetails = () => {
 
   const openLink = () => {
     const link = taskData?.attributes?.Urls;
-    console.log("link", link);
     if (link) {
       setLinkModalVisible(true);
     } else {
-      console.warn("No link provided");
+      Alert.alert(
+        "No Link Available",
+        "No link has been provided for this task.",
+        [{ text: "OK" }]
+      );
     }
   };
 
@@ -281,7 +285,9 @@ const TaskDetails = () => {
 
           <View>
             <TouchableOpacity style={styles.linkButton} onPress={openLink}>
-              <Text style={styles.linkButtonText}>Click here to open link</Text>
+              <Text style={styles.linkButtonText}>
+                Click here to open Documents
+              </Text>
             </TouchableOpacity>
           </View>
 

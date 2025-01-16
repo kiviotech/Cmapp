@@ -237,7 +237,7 @@ const checkFields = () => {
 
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => navigation.navigate("(pages)/contractor/settings")}
+              onPress={() => navigation.goBack()}
             >
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>

@@ -66,23 +66,23 @@ const ProjectDetails = () => {
       );
       console.log("Project Manager ID:", projectManager?.id);
 
-      // Add this new code to fetch project team data
-      if (projectManager?.id) {
-        try {
-          const teamData = await getProjectTeamById(projectManager.id);
-          const managerName =
-            teamData?.data?.data?.attributes?.users?.data[0]?.attributes
-              ?.username;
-          setProjectManagerName(managerName || "N/A");
-        } catch (error) {
-          console.error("Error fetching project team:", error);
+        // Fetch project team data if project manager exists
+        if (projectManager) {
+          try {
+            const teamData = await getProjectTeamById(projectManager.id);
+            const managerName =
+              teamData?.data?.data?.attributes?.users?.data[0]?.attributes
+                ?.username;
+            setProjectManagerName(managerName || "N/A");
+          } catch (error) {
+            console.error("Error fetching project team:", error);
+            setProjectManagerName("N/A");
+          }
         }
+        setProjectDetails(response.data);
       }
-
-      setProjectDetails(response.data);
-    };
     getProjectDetails();
-  }, []);
+  }, [projectId]); // Add projectId as dependency
 
   return (
     <SafeAreaView style={styles.AreaContainer}>

@@ -100,8 +100,20 @@ const Contractor = () => {
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView style={styles.container}>
-        {/* User Info */}
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Add User Info Section */}
+        <View style={styles.userInfoContainer}>
+          <Image
+            source={{
+              uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+            }}
+            style={styles.profileImage}
+          />
+          <View>
+            <Text style={styles.userName}>{user.username}</Text>
+            <Text style={styles.userRole}>{designation}</Text>
+          </View>
+        </View>
 
         {/* Select Your Project */}
         <Text style={styles.sectionHeader}>Select Your Project</Text>
@@ -188,6 +200,22 @@ const Contractor = () => {
           {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
         </View>
 
+        {/* Add Search Bar */}
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
         {/* Milestone Cards */}
         {isLoading ? (
           // Loader
@@ -197,27 +225,22 @@ const Contractor = () => {
         ) : (
           <>
             {tasks.length > 0 ? (
-              tasks.map((task) => (
-                <TouchableOpacity
-                  key={task.id}
-                  style={styles.milestoneCard}
-                  onPress={() =>
-                    navigation.navigate("(pages)/taskDetails", {
-                      taskData: task,
-                    })
-                  }
-                >
-                  {/* <View style={styles.milestoneCard}> */}
-                  <Text style={styles.milestoneTitle}>
-                    {task.attributes.project.data.attributes.name || "Project"}
-                  </Text>
-                  {task?.attributes?.documents?.data?.map((taskdoc) => {
-                    const taskImageUrl = taskdoc?.attributes?.url
-                      ? `${MEDIA_BASE_URL}${taskdoc?.attributes?.url}`
-                      : "https://via.placeholder.com/150";
-                    return (
+              tasks
+                .filter((task) =>
+                  task.attributes.project.data.attributes.name
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())
+                )
+                .map((task) => {
+                  console.log("Task data:", task);
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                    ?.attributes?.url
+                    ? `${URL}${task.attributes.documents.data[0].attributes.url}`
+                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+
+                  return (
+                    <View key={task.id} style={styles.milestoneCard}>
                       <Image
-                        key={taskdoc.id} // Use a unique key for each task document
                         source={{ uri: taskImageUrl }}
                         style={styles.milestoneImage}
                       />
@@ -260,6 +283,45 @@ const Contractor = () => {
                   {/* </View> */}
                 </TouchableOpacity>
               ))
+                      <View style={styles.milestoneContent}>
+                        <View style={styles.milestoneHeaderContainer}>
+                          <Text style={styles.milestoneTitle}>
+                            {task.attributes.project.data.attributes.name ||
+                              "Project"}
+                          </Text>
+                          <View style={styles.substituteButton}>
+                            <Text style={styles.substituteText}>
+                              Substructure
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.milestoneDescription}>
+                          {task.attributes.standard_task.data.attributes
+                            .Description ||
+                            "No description available for this task."}
+                        </Text>
+                        <View style={styles.divider} />
+                        <Text style={styles.deadlineText}>
+                          <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                          {task.attributes.due_date || "No deadline specified"}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.uploadButton}
+                          onPress={() =>
+                            navigation.navigate("(pages)/taskDetails", {
+                              taskData: task,
+                            })
+                          }
+                        >
+                          <Icon name="file-upload" size={16} color="#fff" />
+                          <Text style={styles.uploadButtonText}>
+                            Upload your Proof of work
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
             ) : (
               <View style={styles.noTasksContainer}>
                 <Text style={styles.noTasksText}>
@@ -327,6 +389,7 @@ const styles = StyleSheet.create({
   userInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 20,
   },
   profileImage: {
@@ -338,27 +401,30 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
   },
   userRole: {
     fontSize: 14,
     color: "#888",
+    textAlign: "center",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
-    marginLeft: 55,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 45,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: "#fff",
-  },
-  searchIcon: {
-    marginLeft: "auto",
+    fontSize: 16,
+    color: "#333",
   },
   sectionHeader: {
     fontSize: 18,
