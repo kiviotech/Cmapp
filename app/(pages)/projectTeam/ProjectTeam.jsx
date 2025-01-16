@@ -29,6 +29,7 @@ import { fetchProjectDetailsByApproverId } from "../../../src/services/projectSe
 import apiClient, {
   BASE_URL,
   MEDIA_BASE_URL,
+  URL,
 } from "../../../src/api/apiClient";
 
 const data = [
@@ -480,15 +481,23 @@ const ProjectTeam = () => {
               {filteredTasksList.length > 0 ? (
                 filteredTasksList.map((taskDetail, taskIndex) => {
                   const task = taskDetail.data;
+                  console.log("Task:", task);
                   const standardTask =
                     task.attributes.standard_task?.data?.attributes || {};
                   const statusText = task.task_status || "Pending";
                   const statusStyle = getStatusStyle(task.task_status);
 
-                  const taskImageUrl = task.attributes?.documents?.data?.[0]
+                  // const taskImageUrl = task.attributes?.documents?.data?.[0]
+                  //   ?.attributes?.url
+                  //   ? `${BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
+                  //   : "https://via.placeholder.com/150";
+
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
                     ?.attributes?.url
-                    ? `${BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
-                    : "https://via.placeholder.com/150";
+                    ? `${URL}${task.attributes.documents.data[0].attributes.url}`
+                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+
+                  console.log("taskimageurl", taskImageUrl);
 
                   return (
                     <View key={taskIndex} style={styles.milestoneCard}>
@@ -527,8 +536,15 @@ const ProjectTeam = () => {
                               color="#333"
                             />{" "}
                             Deadline:{" "}
-                            {task?.attributes?.due_date ||
-                              "No deadline specified"}
+                            {task?.attributes?.due_date
+                              ? new Date(task.attributes.due_date)
+                                  .toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                  })
+                                  .replace(/\//g, "-")
+                              : "No deadline specified"}
                           </Text>
                         </View>
                       </TouchableOpacity>

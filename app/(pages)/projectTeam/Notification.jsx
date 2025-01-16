@@ -138,9 +138,9 @@ const Notification = () => {
       </View>
       <FlatList
         data={[...unreadNotifications].reverse()}
-        keyExtractor={(item) => {
-          const prefix = item.attributes.email ? "reg-" : "sub-";
-          return `${prefix}${item.id}`;
+        keyExtractor={(item, index) => {
+          const prefix = item.attributes.email ? "reg" : "sub";
+          return `unread-${prefix}-${item.id}-${index}`;
         }}
         renderItem={renderNotificationItem}
         contentContainerStyle={styles.listContent}
@@ -156,9 +156,9 @@ const Notification = () => {
       </View>
       <FlatList
         data={[...readNotifications].reverse()}
-        keyExtractor={(item) => {
-          const prefix = item.attributes.email ? "reg-" : "sub-";
-          return `${prefix}${item.id}`;
+        keyExtractor={(item, index) => {
+          const prefix = item.attributes.email ? "reg" : "sub";
+          return `read-${prefix}-${item.id}-${index}`;
         }}
         renderItem={renderNotificationItem}
         contentContainerStyle={styles.listContent}

@@ -51,11 +51,7 @@ const RequestDetails = () => {
   const documents = requestData?.attributes?.proofOfWork?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    const imageUrl = `${URL}${
-      imageFormats?.large?.url ||
-      imageFormats?.medium?.url ||
-      imageFormats?.small?.url
-    }`;
+    const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
     const filename = imageFormats?.name || "download.png";
 
     if (Platform.OS === "web") {
@@ -219,7 +215,7 @@ const RequestDetails = () => {
   };
 
   const handleImagePreview = (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.small?.url}`;
+    const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
     console.log("Preview Image URL:", imageUrl);
     setSelectedImage(imageUrl);
     setModalVisible(true);

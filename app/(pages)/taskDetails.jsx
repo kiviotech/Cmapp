@@ -15,15 +15,74 @@ import { icons } from "../../constants";
 import colors from "../../constants/colors";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
-import { MEDIA_BASE_URL } from "../../src/api/apiClient";
+import { MEDIA_BASE_URL, URL } from "../../src/api/apiClient";
 import { fetchStandardTaskById } from "../../src/services/standardTaskService";
+import { fetchSubmissionById } from "../../src/services/submissionService";
+import { fetchTaskById } from "../../src/services/taskService";
+
+const getGoogleDriveFileId = (url) => {
+  const match = url.match(/[-\w]{25,}/);
+  return match ? match[0] : null;
+};
+
+const getFileTypeFromUrl = (url) => {
+  // You can expand this list based on your needs
+  const fileTypes = {
+    document: ["doc", "docx", "txt", "pdf"],
+    spreadsheet: ["xls", "xlsx", "csv"],
+    presentation: ["ppt", "pptx"],
+    image: ["jpg", "jpeg", "png", "gif"],
+  };
+
+  // Default to document type if we can't determine
+  return "document";
+};
+
+const GoogleDrivePreview = ({ url }) => {
+  const fileId = getGoogleDriveFileId(url);
+  const fileType = getFileTypeFromUrl(url);
+
+  if (!fileId) {
+    return (
+      <View style={styles.previewContainer}>
+        <Text style={styles.previewTitle}>Invalid Google Drive URL</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.previewContainer}>
+      <View style={styles.previewContent}>
+        <Image source={icons.document} style={styles.fileTypeIcon} />
+        <Text style={styles.previewTitle}>Google Drive Document</Text>
+        {/* Add iframe for preview */}
+        <View style={styles.iframeContainer}>
+          <iframe
+            src={`https://drive.google.com/file/d/${fileId}/preview`}
+            style={{
+              width: "100%",
+              height: 400,
+              border: "none",
+            }}
+            allow="autoplay"
+          />
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const TaskDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { taskData } = route.params || {};
+  const { taskData, refresh } = route.params || {};
   const [showModal, setShowModal] = useState(false);
   const [standardTaskDetails, setStandardTaskDetails] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
+
   useEffect(() => {
     const fetchStandardTaskDetails = async () => {
       try {
@@ -36,6 +95,50 @@ const TaskDetails = () => {
     };
     fetchStandardTaskDetails();
   }, []);
+
+  useEffect(() => {
+    const fetchSubmissionDetails = async () => {
+      try {
+        const submissionIds = taskData?.attributes?.submissions?.data?.map(
+          (item) => item.id
+        );
+        console.log("taskId", submissionIds);
+        if (submissionIds && submissionIds.length > 0) {
+          const submissionPromises = submissionIds.map((id) =>
+            fetchSubmissionById(id)
+          );
+          const responses = await Promise.all(submissionPromises);
+          const submissionData = responses.map((response) => response.data);
+          setSubmissions(submissionData);
+        }
+      } catch (error) {
+        console.error("Error fetching submission data:", error);
+      }
+    };
+
+    fetchSubmissionDetails();
+  }, [taskData]);
+
+  useEffect(() => {
+    const fetchTaskDetails = async () => {
+      try {
+        if (taskData?.id) {
+          const updatedTaskData = await fetchTaskById(taskData.id);
+          route.params = {
+            ...route.params,
+            taskData: updatedTaskData.data,
+            refresh: false,
+          };
+        }
+      } catch (error) {
+        console.error("Error fetching updated task data:", error);
+      }
+    };
+
+    if (refresh) {
+      fetchTaskDetails();
+    }
+  }, [refresh, taskData?.id]);
 
   // Optionally add a check to handle missing taskData gracefully
   if (!taskData) {
@@ -62,14 +165,27 @@ const TaskDetails = () => {
 
   const openLink = () => {
     const link = taskData?.attributes?.Urls;
+    console.log("link", link);
+    if (link) {
+      setLinkModalVisible(true);
+    } else {
+      console.warn("No link provided");
+    }
+  };
 
+  const handleLinkOpen = () => {
+    const link = taskData?.attributes?.Urls;
     if (link) {
       Linking.openURL(link).catch((err) =>
         console.error("Failed to open link:", err)
       );
-    } else {
-      console.warn("No link provided");
+      setLinkModalVisible(false);
     }
+  };
+
+  const handleImagePress = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setImageModalVisible(true);
   };
 
   return (
@@ -89,7 +205,15 @@ const TaskDetails = () => {
           <Image source={icons.calendar} />
           <Text style={styles.deadlineText}>
             Deadline:{" "}
-            {taskData?.attributes?.due_date || "N/A"}
+            {taskData?.attributes?.due_date
+              ? new Date(taskData.attributes.due_date)
+                  .toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })
+                  .replace(/\//g, "-")
+              : "No deadline specified"}
           </Text>
         </View>
       </View>
@@ -102,15 +226,31 @@ const TaskDetails = () => {
         <SafeAreaView style={styles.safeAreaView}>
           {/* Image Placeholder */}
           <View style={styles.imagePlaceholder}>
-            {documents.map((document, index) => (
+            {documents.map((document, index) => {
+              const taskImageUrl = document?.attributes?.url
+                ? `${URL}${document.attributes.url}`
+                : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+
+              return (
+                <Image
+                  key={document.id || index}
+                  source={{
+                    uri: taskImageUrl,
+                  }}
+                  style={styles.taskImage}
+                />
+              );
+            })}
+
+            {/* Show default image if no documents */}
+            {documents.length === 0 && (
               <Image
-                key={document.id || index} // Use a unique key, preferably `document.id`, or fallback to `index`
                 source={{
-                  uri: `${MEDIA_BASE_URL}${document?.attributes?.url}`,
+                  uri: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop",
                 }}
                 style={styles.taskImage}
               />
-            ))}
+            )}
           </View>
 
           {/* Project Info Section */}
@@ -140,8 +280,8 @@ const TaskDetails = () => {
           </View>
 
           <View>
-            <TouchableOpacity style={{ margin: 20 }} onPress={openLink}>
-              <Text style={{ fontSize: 18 }}>Click here to open link</Text>
+            <TouchableOpacity style={styles.linkButton} onPress={openLink}>
+              <Text style={styles.linkButtonText}>Click here to open link</Text>
             </TouchableOpacity>
           </View>
 
@@ -204,15 +344,106 @@ const TaskDetails = () => {
                 style={[styles.showAttachments, styles.uploadProof]}
                 onPress={() =>
                   navigation.navigate("(pages)/uploadProof", {
-                    id: taskData.id, // Ensure task ID is passed correctly here
+                    id: taskData.id,
                   })
                 }
               >
                 <Image source={icons.upload} />
-                <Text style={styles.uploadProofText}>
+                <Text
+                  style={[styles.uploadProofText, { color: colors.whiteColor }]}
+                >
                   Upload your Proof of work
                 </Text>
               </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Add this before the Modal section */}
+          <View style={styles.approvalSection}>
+            <Text style={styles.sectionTitle}>Supervisor's Approval</Text>
+            <View
+              style={[
+                styles.notificationApproval,
+                {
+                  backgroundColor:
+                    taskData?.attributes?.task_status === "approved"
+                      ? "#D4EDDA"
+                      : taskData?.attributes?.task_status === "declined"
+                      ? "#ffebee"
+                      : "rgba(251, 188, 85, 0.3)",
+                },
+              ]}
+            >
+              <Image
+                source={
+                  taskData?.attributes?.task_status === "approved"
+                    ? icons.approved
+                    : taskData?.attributes?.task_status === "declined"
+                    ? icons.reject
+                    : icons.uploadApproval
+                }
+              />
+              <Text
+                style={{
+                  color:
+                    taskData?.attributes?.task_status === "approved"
+                      ? "#28A745"
+                      : taskData?.attributes?.task_status === "declined"
+                      ? "#DC3545"
+                      : "#FBBC55",
+                }}
+              >
+                {taskData?.attributes?.task_status || "Yet to Upload"}
+              </Text>
+            </View>
+
+            {/* Previous Submissions Section */}
+            <Text style={styles.sectionTitle}>Previous Submissions</Text>
+            {submissions?.length > 0 ? (
+              submissions.map((submission, index) => (
+                <View key={index} style={styles.submissionItem}>
+                  <Text style={styles.submissionStatus}>
+                    Status: {submission.attributes.status}
+                  </Text>
+                  <Text style={styles.submissionComment}>
+                    Comment: {submission.attributes.comment || "No comment"}
+                  </Text>
+
+                  {/* Submission Images */}
+                  <View style={styles.submissionImages}>
+                    {submission.attributes.proofOfWork?.data?.map(
+                      (image, imgIndex) => {
+                        return (
+                          <TouchableOpacity
+                            key={imgIndex}
+                            onPress={() =>
+                              handleImagePress(`${URL}${image.attributes.url}`)
+                            }
+                          >
+                            <Image
+                              source={{
+                                uri: `${URL}${image.attributes.url}`,
+                              }}
+                              style={styles.submissionThumbnail}
+                            />
+                          </TouchableOpacity>
+                        );
+                      }
+                    )}
+                  </View>
+
+                  {submission.attributes.rejectionComment && (
+                    <Text style={styles.rejectionText}>
+                      Rejection Comment:{" "}
+                      {submission.attributes.rejectionComment}
+                    </Text>
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noSubmissionsText}>
+                No previous submissions found.
+              </Text>
             )}
           </View>
 
@@ -243,6 +474,59 @@ const TaskDetails = () => {
               </View>
             </View>
           </Modal>
+
+          {/* Add Image Preview Modal */}
+          <Modal
+            visible={imageModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setImageModalVisible(false)}
+          >
+            <View style={styles.imageModalContainer}>
+              <TouchableOpacity
+                style={styles.closeImageButton}
+                onPress={() => setImageModalVisible(false)}
+              >
+                <AntDesign name="close" size={24} color="white" />
+              </TouchableOpacity>
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.fullScreenImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </Modal>
+
+          {/* Add Link Preview Modal */}
+          <Modal
+            visible={linkModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setLinkModalVisible(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setLinkModalVisible(false)}
+                >
+                  <AntDesign name="close" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Google Drive Preview</Text>
+
+                <GoogleDrivePreview url={taskData?.attributes?.Urls} />
+
+                <TouchableOpacity
+                  style={styles.openLinkButton}
+                  onPress={handleLinkOpen}
+                >
+                  <Text style={styles.openLinkButtonText}>Open in Browser</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </SafeAreaView>
       </ScrollView>
     </View>
@@ -256,7 +540,7 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   header: {
-    paddingTop: 25,
+    paddingTop: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -398,6 +682,145 @@ const styles = StyleSheet.create({
   },
   safeAreaView: {
     flex: 1,
+  },
+  approvalSection: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 10,
+  },
+  notificationApproval: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 16,
+    height: 50,
+    marginTop: 5,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    gap: 10,
+  },
+  submissionItem: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: colors.borderColor,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  rejectionText: {
+    color: "#FC5275",
+    marginTop: 5,
+  },
+  noSubmissionsText: {
+    color: colors.textGray,
+    fontStyle: "italic",
+  },
+  submissionImages: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 10,
+  },
+  submissionThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  imageModalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullScreenImage: {
+    width: "100%",
+    height: "80%",
+  },
+  closeImageButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+    padding: 10,
+  },
+  submissionStatus: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 5,
+  },
+  submissionComment: {
+    fontSize: 14,
+    color: colors.textGray,
+    marginBottom: 5,
+  },
+  linkText: {
+    fontSize: 16,
+    color: colors.primary,
+    marginBottom: 20,
+    textDecorationLine: "underline",
+    cursor: "pointer",
+  },
+  openLinkButton: {
+    backgroundColor: colors.primary,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  openLinkButtonText: {
+    color: colors.whiteColor,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  linkButton: {
+    backgroundColor: colors.primary,
+    padding: 15,
+    borderRadius: 10,
+    margin: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  linkButtonText: {
+    color: colors.whiteColor,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  previewContainer: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    padding: 20,
+    marginBottom: 20,
+  },
+  previewContent: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fileTypeIcon: {
+    width: 64,
+    height: 64,
+    marginBottom: 12,
+  },
+  previewTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+    color: colors.blackColor,
+  },
+  previewId: {
+    fontSize: 12,
+    color: colors.textGray,
+    marginBottom: 8,
+  },
+  iframeContainer: {
+    width: "100%",
+    height: 400,
+    marginTop: 12,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    overflow: "hidden",
   },
 });
 
