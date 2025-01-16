@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Modal
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
@@ -26,7 +26,7 @@ import FileUpload from "../../components/FileUploading/FileUpload";
 import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
 
-const UploadProof = ({ }) => {
+const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -45,6 +45,7 @@ const UploadProof = ({ }) => {
   const navigation = useNavigation();
   const route = useRoute();
   const { id } = route?.params;
+  const fileUploadRef = useRef(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -133,40 +134,45 @@ const UploadProof = ({ }) => {
     }
   };
 
-  const handleSubmit = async () => {
-    const hasError = uploadedFileIds.length === 0 || !comment;
-
-    if (uploadedFileIds.length === 0 || !comment) {
-      console.log('uploadedFileIds', uploadedFileIds)
-      setErrors("Images and comments are required")
+  useEffect(() => {
+    if (uploadedFileIds.length === 0 && comment.length === 0) {
+      setErrors("Images and comments are required");
+    } else if (uploadedFileIds.length === 0) {
+      setErrors("Images are required");
+    } else if (comment.length === 0) {
+      setErrors("Comment is required");
+    } else {
+      setErrors("");
     }
+  }, [uploadedFileIds, comment]);
 
-    // If there are errors, do not proceed
-    if (hasError) {
-      setToastMessage("Please fix the errors before submitting.");
+  const handleSubmit = async () => {
+    if (errors) {
+      setToastMessage(errors);
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 3000);
-      return; 
+      return;
     }
 
-    // Proceed with submission if no errors
     try {
       const fileIds = uploadedFileIds.filter((id) => typeof id === "number");
-
       const submission = await createSubmission(fileIds, id);
       console.log("Submission created successfully:", submission);
+
+      // Clear all uploaded files and reset the FileUpload component
+      setUploadedFiles([]);
+      setUploadedFileIds([]);
+      setComment("");
+
+      if (fileUploadRef.current) {
+        fileUploadRef.current.clearFiles();
+      }
 
       setToastMessage("Submission created successfully!");
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 3000);
-
-      // Clear form
-      setUploadedFiles([]);
-      setUploadedFileIds([]);
-      setComment("");
     } catch (error) {
       console.error("Error during submission:", error);
-
       setToastMessage("Error during submission. Please try again.");
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 3000);
@@ -191,10 +197,10 @@ const UploadProof = ({ }) => {
         prevFiles.map((f) =>
           f.name === file.name
             ? {
-              ...f,
-              progress,
-              status: progress < 100 ? "uploading" : "success",
-            }
+                ...f,
+                progress,
+                status: progress < 100 ? "uploading" : "success",
+              }
             : f
         )
       );
@@ -340,12 +346,18 @@ const UploadProof = ({ }) => {
         <Text style={styles.instructions}>1. Upload your proof of work</Text>
       </View>
       <View>
-        <Text>{errors ? <Text style={styles.errorText}>{errors}</Text> : null}</Text>
+        <Text>
+          {errors ? <Text style={styles.errorText}>{errors}</Text> : null}
+        </Text>
       </View>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.mainContainer}>
           <View style={styles.uploadContainer}>
             <FileUpload
+              ref={fileUploadRef}
               uploadedFiles={uploadedFileIds}
               setUploadedFiles={setUploadedFileIds}
               onFileUploadSuccess={handleFileUploadSuccess}
@@ -366,9 +378,9 @@ const UploadProof = ({ }) => {
                           color="#A3D65C"
                         />
                       ) : file.status === "uploading" ? (
-                        <Text
-                          style={{ color: "#838383", fontSize: 10 }}
-                        >${file.progress}%</Text>
+                        <Text style={{ color: "#838383", fontSize: 10 }}>
+                          ${file.progress}%
+                        </Text>
                       ) : null}
                     </View>
                     <View style={styles.progressBackground}>
@@ -447,8 +459,8 @@ const UploadProof = ({ }) => {
                   taskStatus === "approved"
                     ? "#D4EDDA"
                     : taskStatus === "declined"
-                      ? "#ffebee" // light red
-                      : "rgba(251, 188, 85, 0.3)", // light green for approved
+                    ? "#ffebee" // light red
+                    : "rgba(251, 188, 85, 0.3)", // light green for approved
               },
             ]}
           >
@@ -457,8 +469,8 @@ const UploadProof = ({ }) => {
                 taskStatus === "approved"
                   ? icons.approved // Pending icon
                   : taskStatus === "declined"
-                    ? icons.reject // Declined icon
-                    : icons.uploadApproval // Approved icon
+                  ? icons.reject // Declined icon
+                  : icons.uploadApproval // Approved icon
               }
             />
             <Text
@@ -467,8 +479,8 @@ const UploadProof = ({ }) => {
                   taskStatus === "approved"
                     ? "#28A745"
                     : taskStatus === "declined"
-                      ? "#DC3545" // red
-                      : "#FBBC55", // green for approved
+                    ? "#DC3545" // red
+                    : "#FBBC55", // green for approved
               }}
             >
               {taskStatus}
@@ -510,7 +522,7 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 12,
     marginTop: 4,
-    marginLeft: 20
+    marginLeft: 20,
   },
   commentInput: {
     borderWidth: 1,
@@ -630,33 +642,33 @@ const styles = StyleSheet.create({
     // fontFamily: fonts.WorkSans500,
   },
   toast: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 20,
     right: 20,
-    backgroundColor: '#28a745',
+    backgroundColor: "#28a745",
     padding: 15,
     borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 1000,
   },
   toastText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalBackground: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // semi-transparent background
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     width: 250,
   },
   modalText: {
@@ -664,7 +676,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   closeButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: "#007BFF",
     padding: 10,
     borderRadius: 5,
   },

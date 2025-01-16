@@ -9,7 +9,8 @@ import {
   SafeAreaView,
   Dimensions,
   FlatList,
-  TextInput, ActivityIndicator
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -22,6 +23,10 @@ import { fetchContractorsByUserId } from "../../../src/services/contractorServic
 // import { fetchTasksByContractorId } from "../../../src/services/taskService";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { MEDIA_BASE_URL } from "../../../src/api/apiClient";
+
+const validateImageURL = (url) => {
+  return url && (url.startsWith("http://") || url.startsWith("https://"));
+};
 
 const Contractor = () => {
   const [contractorsData, setContractorsData] = useState([]);
@@ -67,7 +72,10 @@ const Contractor = () => {
                       (task) => task.attributes.task_status === "ongoing"
                     );
                   } catch (taskError) {
-                    console.error(`Error fetching tasks for project ${project.id}:`, taskError);
+                    console.error(
+                      `Error fetching tasks for project ${project.id}:`,
+                      taskError
+                    );
                     return []; // Return an empty array if task fetch fails
                   }
                 })
@@ -94,28 +102,6 @@ const Contractor = () => {
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container}>
         {/* User Info */}
-        <View style={styles.userInfoContainer}>
-          <Image
-            source={{
-              uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
-            }}
-            style={styles.profileImage}
-          />
-          <View>
-            {/* <Text style={styles.userName}>{user.username}</Text> */}
-            <Text style={styles.userName}>
-              {user ? user.username : "Guest"}
-            </Text>
-            <Text style={styles.userRole}>
-              {designation || "No designation"}
-            </Text>
-          </View>
-          <View style={styles.searchContainer}>
-            {/* <TouchableOpacity style={styles.searchIcon}>
-                <Icon name="search" size={24} color="#333" />
-              </TouchableOpacity> */}
-          </View>
-        </View>
 
         {/* Select Your Project */}
         <Text style={styles.sectionHeader}>Select Your Project</Text>
@@ -197,20 +183,19 @@ const Contractor = () => {
           {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
         </View>
 
-
-
         {/* Milestone Cards */}
         {isLoading ? (
           // Loader
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#007bff" />
-
           </View>
         ) : (
           <>
             {tasks.length > 0 ? (
               tasks.map((task) => (
-                <TouchableOpacity key={task.id} style={styles.milestoneCard}
+                <TouchableOpacity
+                  key={task.id}
+                  style={styles.milestoneCard}
                   onPress={() =>
                     navigation.navigate("(pages)/taskDetails", {
                       taskData: task,
@@ -231,20 +216,21 @@ const Contractor = () => {
                         source={{ uri: taskImageUrl }}
                         style={styles.milestoneImage}
                       />
-                    )
-                  }
-                  )}
+                    );
+                  })}
                   <View style={styles.milestoneContent}>
                     <View style={styles.milestoneHeaderContainer}>
                       <Text style={styles.milestoneTitle}>
-                        {task.attributes.standard_task.data.attributes.Name || "Task"}
+                        {task.attributes.standard_task.data.attributes.Name ||
+                          "Task"}
                       </Text>
                       <View style={styles.substituteButton}>
                         <Text style={styles.substituteText}>Substructure</Text>
                       </View>
                     </View>
                     <Text style={styles.milestoneDescription}>
-                      {task.attributes.standard_task.data.attributes.Description ||
+                      {task.attributes.standard_task.data.attributes
+                        .Description ||
                         "No description available for this task."}
                     </Text>
                     <View style={styles.divider} />
@@ -271,13 +257,13 @@ const Contractor = () => {
               ))
             ) : (
               <View style={styles.noTasksContainer}>
-                <Text style={styles.noTasksText}>No tasks have been assigned.</Text>
+                <Text style={styles.noTasksText}>
+                  No tasks have been assigned.
+                </Text>
               </View>
             )}
           </>
         )}
-
-
 
         {/* <View style={styles.milestoneCard}>
             <Image
@@ -598,7 +584,7 @@ const styles = StyleSheet.create({
   //   ~==================================================================================
 
   loaderContainer: {
-    paddingTop: 30
+    paddingTop: 30,
   },
   heading: {
     fontSize: 20,

@@ -63,6 +63,9 @@ const ProjectDetails = () => {
       console.log("user id", response.data.id);
       const data = await fetchProjectById(userId);
 
+      // Add console log for projectDetails
+      console.log("Project Details:", response.data);
+
       // Find Project Manager ID
       const projectManager = data?.data?.attributes?.approvers?.data.find(
         (approver) => approver.attributes.job_role === "Project Manager"
