@@ -59,24 +59,85 @@ const RequestDetails = () => {
   const documents = requestData?.attributes?.documents?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    const imageUrl = `${URL}${
-      imageFormats?.large?.url || imageFormats?.medium.url
-    }`;
+    const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
+    const filename = imageFormats?.name || "download.png";
+
     if (Platform.OS === "web") {
-      console.log(imageUrl);
-      // Open the image in a new tab for download on web
-      WebBrowser.openBrowserAsync(imageUrl);
-    } else {
-      // Native download
       try {
-        const fileUri = FileSystem.documentDirectory + imageFormats?.name;
+        // Fetch the image first
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        // Create object URL for the blob
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create an anchor element
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+
+        // Programmatically click the link
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error("Error downloading on web:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
+      }
+    } else {
+      // For Android/iOS
+      try {
+        const fileUri = `${FileSystem.documentDirectory}${filename}`;
+
         const downloadResumable = FileSystem.createDownloadResumable(
           imageUrl,
-          fileUri
+          fileUri,
+          {},
+          (downloadProgress) => {
+            const progress =
+              downloadProgress.totalBytesWritten /
+              downloadProgress.totalBytesExpectedToWrite;
+            console.log(`Download progress: ${progress * 100}%`);
+          }
         );
+
         const { uri } = await downloadResumable.downloadAsync();
-        console.log("Downloaded image:", uri);
-        Alert.alert("Download complete!", `File saved to: ${uri}`);
+
+        if (Platform.OS === "android") {
+          // Save to downloads folder on Android
+          const permissions =
+            await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+          if (permissions.granted) {
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              filename,
+              "image/png"
+            ).then(async (createdUri) => {
+              await FileSystem.writeAsStringAsync(createdUri, base64, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              Alert.alert(
+                "Success",
+                "File downloaded successfully to Downloads folder!"
+              );
+            });
+          } else {
+            Alert.alert(
+              "Permission denied",
+              "Unable to save file to Downloads folder"
+            );
+          }
+        } else {
+          // For iOS
+          Alert.alert("Download Complete", `File saved to: ${uri}`);
+        }
       } catch (error) {
         console.error("Error downloading image:", error);
         Alert.alert("Error", "An error occurred while downloading the image.");
@@ -211,7 +272,7 @@ const RequestDetails = () => {
   };
 
   const renderDocument = (docs) => (
-    <View key={docs.id} style={styles.documentContainer}>
+    <View key={`doc-${docs.id}`} style={styles.documentContainer}>
       <View style={styles.documentInfo}>
         <FontAwesome5
           name={docs.attributes.ext === ".png" ? "file-image" : "file-alt"}
@@ -272,7 +333,13 @@ const RequestDetails = () => {
             </Text>
           </Text>
           <Text style={styles.label}>Documents:</Text>
-          <View>{documents.map(renderDocument)}</View>
+          <View>
+            {documents.map((doc, index) => (
+              <View key={`document-${doc.id}-${index}`}>
+                {renderDocument(doc)}
+              </View>
+            ))}
+          </View>
         </View>
         {requestData?.attributes?.status === "pending" && (
           <View style={styles.buttonContainer}>

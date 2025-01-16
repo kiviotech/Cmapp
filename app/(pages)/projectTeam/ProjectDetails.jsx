@@ -183,7 +183,16 @@ const ProjectDetails = () => {
                 </Text>
                 <View style={styles.assign}>
                   <Text style={styles.dueDate}>
-                    Due: {taskData.due_date || "N/A"}
+                    Due:{" "}
+                    {taskData.due_date
+                      ? new Date(taskData.due_date)
+                          .toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })
+                          .replace(/\//g, "-")
+                      : "N/A"}
                   </Text>
                 </View>
               </View>

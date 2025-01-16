@@ -25,6 +25,7 @@ import BottomNavigation from "./contractor/BottomNavigation ";
 import FileUpload from "../../components/FileUploading/FileUpload";
 import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
+import colors from "../../constants/colors";
 
 const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -58,7 +59,7 @@ const UploadProof = ({}) => {
           const status = latestSubmission?.attributes?.status;
           const taskName =
             taskData?.data?.attributes?.standard_task?.data?.attributes?.Name;
-          setTaskStatus(status === "ongoing" ? status : Pending);
+          setTaskStatus(status === "ongoing" ? status : "pending");
           if (status === "rejected") {
             setRejectionComment(latestSubmission?.attributes?.rejectionComment);
           }
@@ -170,7 +171,12 @@ const UploadProof = ({}) => {
 
       setToastMessage("Submission created successfully!");
       setToastVisible(true);
-      setTimeout(() => setToastVisible(false), 3000);
+
+      // // Navigate back to task details with a refresh flag
+      // navigation.navigate("(pages)/taskDetails", {
+      //   taskId: id,
+      //   refresh: true,
+      // });
     } catch (error) {
       console.error("Error during submission:", error);
       setToastMessage("Error during submission. Please try again.");
@@ -330,26 +336,28 @@ const UploadProof = ({}) => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          paddingVertical: 20,
-          alignItems: "center",
-          paddingLeft: 10,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.navigate("(pages)/dashboard")}
-        >
-          <Image source={icons.backarrow}></Image>
-        </TouchableOpacity>
-        <Text style={styles.instructions}>1. Upload your proof of work</Text>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("(pages)/taskDetails", {
+                taskData: { id },
+                refresh: true,
+              })
+            }
+          >
+            <Image source={icons.backarrow}></Image>
+          </TouchableOpacity>
+          <Text style={styles.detailsText}>Upload your proof of work</Text>
+        </View>
       </View>
+
       <View>
         <Text>
           {errors ? <Text style={styles.errorText}>{errors}</Text> : null}
         </Text>
       </View>
+
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
@@ -449,53 +457,6 @@ const UploadProof = ({}) => {
               </View>
             </Modal>
           </View>
-
-          <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
-          <View
-            style={[
-              styles.notificationApproval,
-              {
-                backgroundColor:
-                  taskStatus === "approved"
-                    ? "#D4EDDA"
-                    : taskStatus === "declined"
-                    ? "#ffebee" // light red
-                    : "rgba(251, 188, 85, 0.3)", // light green for approved
-              },
-            ]}
-          >
-            <Image
-              source={
-                taskStatus === "approved"
-                  ? icons.approved // Pending icon
-                  : taskStatus === "declined"
-                  ? icons.reject // Declined icon
-                  : icons.uploadApproval // Approved icon
-              }
-            />
-            <Text
-              style={{
-                color:
-                  taskStatus === "approved"
-                    ? "#28A745"
-                    : taskStatus === "declined"
-                    ? "#DC3545" // red
-                    : "#FBBC55", // green for approved
-              }}
-            >
-              {taskStatus}
-            </Text>
-          </View>
-
-          {taskStatus.includes("Rejected") && (
-            <View style={styles.rejectionContainer}>
-              <Text style={styles.rejectionText}>
-                Rejection Comment: {rejectionComment}
-              </Text>
-            </View>
-          )}
-
-          <UploadedFileHIstory historyData={uploadedHistory} />
         </View>
       </ScrollView>
       <BottomNavigation />
@@ -512,11 +473,22 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     marginBottom: 50,
   },
-  instructions: {
-    fontSize: 18,
-    // fontFamily: fonts.WorkSans600,
-    paddingBottom: 10,
-    paddingLeft: 20,
+  header: {
+    paddingTop: 25,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    flex: 1,
+    paddingHorizontal: 25,
+    alignItems: "center",
+  },
+  detailsText: {
+    fontSize: 24,
+    paddingLeft: 15,
   },
   errorText: {
     color: "red",
@@ -617,29 +589,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 10,
-  },
-  notificationApproval: {
-    backgroundColor: "rgba(251, 188, 85, 0.30)",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 16,
-    height: 50,
-    marginTop: 5,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    gap: 10,
-  },
-  rejectionContainer: {
-    backgroundColor: "#FED5DD",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 16,
-  },
-  rejectionText: {
-    color: "#FC5275",
-    // fontFamily: fonts.WorkSans500,
   },
   toast: {
     position: "absolute",

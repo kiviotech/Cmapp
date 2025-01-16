@@ -86,33 +86,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
         });
 
         if (!result.canceled) {
-          const newFile = {
-            uri: result.assets[0].uri,
-            name: result.assets[0].uri.split("/").pop() || "camera_image.jpg",
-            progress: 0,
-            status: "uploading",
-          };
-
-          addFiles([newFile]);
-          setUploading(true);
-
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 10;
-            if (progress <= 90) {
-              updateFileProgress(newFile.name, progress);
-            }
-
-            if (progress >= 90) {
-              clearInterval(interval);
-              setUploading(false);
-              uploadFile(newFile).then(() => {
-                onFileUploadSuccess(getAllFileIds());
-              });
-            }
-          }, 500);
-
-          uploadIntervals.current[newFile.name] = interval;
+          handleImageSelected(result.assets[0].uri);
         }
       } catch (error) {
         console.error("Error capturing image:", error);
@@ -162,19 +136,9 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
       const context = canvas.getContext("2d");
       context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
-        const file = new File([blob], "web_camera_image.jpg", {
-          type: "image/jpeg",
-        });
-        const newFile = {
-          uri: URL.createObjectURL(blob),
-          name: file.name,
-          progress: 0,
-          status: "uploading",
-        };
-        addFiles([newFile]);
-        uploadFile(newFile).then(() => {
-          onFileUploadSuccess(getAllFileIds());
-        });
+        const imageUrl = URL.createObjectURL(blob);
+        handleImageSelected(imageUrl);
+        closeCamera();
       }, "image/jpeg");
     }
   };
