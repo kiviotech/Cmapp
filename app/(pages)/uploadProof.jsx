@@ -58,7 +58,7 @@ const UploadProof = ({}) => {
           const status = latestSubmission?.attributes?.status;
           const taskName =
             taskData?.data?.attributes?.standard_task?.data?.attributes?.Name;
-          setTaskStatus(status === "ongoing" ? status : Pending);
+          setTaskStatus(status === "ongoing" ? status : "Pending");
           if (status === "rejected") {
             setRejectionComment(latestSubmission?.attributes?.rejectionComment);
           }

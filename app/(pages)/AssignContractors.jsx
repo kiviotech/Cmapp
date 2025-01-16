@@ -478,8 +478,7 @@ const AssignContractors = () => {
             )}
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.finishbtn} onPress={handleSkip}>
-
-                <Text style={styles.finishButtonText}>Skip for Now</Text>
+                <Text style={styles.finishbtn}>Skip for Now</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -89,7 +89,7 @@ const TaskDetails = () => {
           <Image source={icons.calendar} />
           <Text style={styles.deadlineText}>
             Deadline:{" "}
-            {taskData?.attributes?.due_date || "No deadline specified"}
+            {taskData?.attributes?.due_date || "N/A"}
           </Text>
         </View>
       </View>
@@ -138,7 +138,6 @@ const TaskDetails = () => {
                 ?.Description || "No description available for this task."}
             </Text>
           </View>
-          {console.log("taskdata", taskData)}
 
           <View>
             <TouchableOpacity style={{ margin: 20 }} onPress={openLink}>
@@ -154,7 +153,7 @@ const TaskDetails = () => {
               </Text>
               <Text style={styles.tableContent}>
                 {standardTaskDetails?.attributes?.consultant?.data?.attributes
-                  ?.name || ""}
+                  ?.name || "N/A"}
               </Text>
             </View>
             <View style={styles.tableRow}>
@@ -303,7 +302,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   projectTitle: {
-    fontSize: 18,
+    fontSize: 22,
   },
   projectDescription: {
     color: colors.blackColor,

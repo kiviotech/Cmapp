@@ -158,6 +158,11 @@ const Contractor = () => {
                               ? "green"
                               : "red"
                           }
+                          backgroundColor={
+                            project.attributes.project_status === "ahead"
+                            ? "e8f5e9"
+                            : "#ffebee"
+                          }
                         />
                         <Text style={styles.projectStatusText}>
                           {project.attributes.project_status === "ahead"
@@ -236,7 +241,7 @@ const Contractor = () => {
                     <View style={styles.divider} />
                     <Text style={styles.deadlineText}>
                       <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                      {task.attributes.due_date || "No deadline specified"}
+                      {task.attributes.due_date || "N/A"}
                     </Text>
                     <TouchableOpacity
                       style={styles.uploadButton}
@@ -410,10 +415,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   projectCard: {
-    width: 250,
+    width: 220,
     padding: 15,
     borderRadius: 10,
-    // elevation: 3,
     marginRight: 15,
   },
   projectDescription: {
@@ -549,7 +553,10 @@ const styles = StyleSheet.create({
   deadlineText: {
     fontSize: 14,
     color: "#333",
+    padding: 5,
     marginBottom: 15,
+    display: 'flex',
+    alignItems: 'center',
   },
   uploadButton: {
     backgroundColor: "#1e90ff",
