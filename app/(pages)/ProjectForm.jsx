@@ -190,7 +190,7 @@ const ProjectForm = () => {
           start_date: formattedStartDate,
           project_type: projectType,
           location: projectAddress,
-          approver: projectManager,
+          // approvers: ["Project Manager", "Project Supervisor", "Site Coordinator"],
           project_manager: projectManager,
           project_supervisor: supervisor,
           site_coordinator: coordinator,

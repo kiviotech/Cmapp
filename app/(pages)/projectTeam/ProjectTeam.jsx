@@ -105,7 +105,8 @@ const ProjectTeam = () => {
       if (user && user.id) {
         try {
           const response = await fetchProjectTeamIdByUserId(user.id);
-          const [{ id }] = response.data;
+          // console.log('resp', response)
+          const [{ id }] = response?.data;
           setProjectTeamId(id);
         } catch (error) {
           console.error("Error fetching project team ID:", error);
