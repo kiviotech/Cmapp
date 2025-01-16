@@ -28,6 +28,7 @@ const ProjectDetails = () => {
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
   const [projectMangerName, setProjectManagerName] = useState("");
+  const [jobRole, setJobRole] = useState('')
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
@@ -59,16 +60,9 @@ const ProjectDetails = () => {
   useEffect(() => {
     const getProjectDetails = async () => {
       const response = await fetchProjectById(projectId);
-      const userId = response?.data?.id;
-      console.log("user id", response.data.id);
-      const data = await fetchProjectById(userId);
-
-      // Add console log for projectDetails
-      console.log("Project Details:", response.data);
-
       // Find Project Manager ID
-      const projectManager = data?.data?.attributes?.approvers?.data.find(
-        (approver) => approver.attributes.job_role === "Project Manager"
+      const projectManager = response?.data?.attributes?.approvers?.data.find(
+        (approver) => approver?.attributes?.job_role === "Project Manager"
       );
       console.log("Project Manager ID:", projectManager?.id);
 
@@ -101,6 +95,7 @@ const ProjectDetails = () => {
         </TouchableOpacity>
         <Text style={styles.header}>Project Details</Text>
       </View>
+
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.projectNameContainer}>
           <Text style={styles.projectName}>
@@ -109,7 +104,7 @@ const ProjectDetails = () => {
         </View>
 
         <View style={styles.calendarContainer}>
-          <FontAwesome name="calendar" size={24} color="#F5C37F" />
+          <FontAwesome name="calendar" size={26} color="#F5C37F" />
           <View style={styles.dateContainer}>
             <Text style={styles.dueDateText}>Due Date</Text>
             <Text style={styles.dateText}>
@@ -202,7 +197,8 @@ const styles = StyleSheet.create({
     paddingTop: height * 0.05,
     display: "flex",
     flexDirection: "row",
-    gap: "10px",
+    gap: 10,
+    marginHorizontal: 20
   },
   header: {
     display: "flex",
@@ -234,12 +230,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.015,
-    paddingHorizontal: width * 0.1,
+    paddingHorizontal: 20
   },
   dateContainer: {
     flexDirection: "column",
     alignItems: "flex-start",
     marginLeft: width * 0.03,
+    gap: 5,
   },
   dueDateText: {
     fontSize: width * 0.04,
@@ -276,7 +273,6 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     flexDirection: "row",
-
     alignItems: "center",
     marginBottom: height * 0.02,
     paddingVertical: height * 0.01,
@@ -302,10 +298,10 @@ const styles = StyleSheet.create({
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
-    padding: width * 0.04,
+    padding: width * 0.02,
     borderRadius: 8,
-    marginLeft: "10px",
-    marginBottom: height * 0.015,
+    marginHorizontal: 'auto',
+    marginVertical: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
     width: "90%",

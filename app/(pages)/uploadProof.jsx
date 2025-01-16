@@ -47,6 +47,7 @@ const UploadProof = ({}) => {
   const route = useRoute();
   const { id } = route?.params;
   const fileUploadRef = useRef(null);
+  console.log('id', id)
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -173,10 +174,10 @@ const UploadProof = ({}) => {
       setToastVisible(true);
 
       // // Navigate back to task details with a refresh flag
-      // navigation.navigate("(pages)/taskDetails", {
-      //   taskId: id,
-      //   refresh: true,
-      // });
+      navigation.navigate("(pages)/taskDetails", {
+        taskData: id,
+        refresh: true,
+      });
     } catch (error) {
       console.error("Error during submission:", error);
       setToastMessage("Error during submission. Please try again.");

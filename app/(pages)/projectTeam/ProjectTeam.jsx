@@ -344,7 +344,10 @@ const ProjectTeam = () => {
                       {project.attributes.name}
                     </Text>
                     <Text style={styles.projectDescription}>
-                      {project.attributes.description}
+                      {project.attributes.description.length > 50
+                        ? `${project.attributes.description.slice(0, 50)}...`
+                        : project.attributes.description}
+
                     </Text>
 
                     {/* Project Status */}
@@ -396,25 +399,43 @@ const ProjectTeam = () => {
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
-
+        {console.log(requests[0])}
         {requests.map((request) => (
           <View key={request.id} style={styles.requestItem}>
             <View>
               <Text style={styles.requestTitle}>
-                Submitted{" "}
+                Submission for{" "}
                 {
                   request?.attributes?.task?.data?.attributes?.project?.data
-                    ?.attributes?.name
-                }{" "}
-                Work
+                    ?.attributes?.name || "Project"
+                }{" - "} {request?.attributes?.task?.data?.attributes?.standard_task?.data?.attributes?.Name || "Work"}
               </Text>
               <Text style={styles.requestDescription}>
-                {request.attributes.description || "No description available."}
+                {request.attributes.comment || "No description available."}
               </Text>
               <View style={styles.requestStatusContainer}>
-                <Text style={styles.requestStatusPending}>
-                  {request.attributes.status || "Pending"}
+                <Text
+                  style={[
+                    styles.requestStatus,
+                    {
+                      color:
+                        request.attributes.status === "approved"
+                          ? "green"
+                          : request.attributes.status === "pending"
+                            ? "orange"
+                            : request.attributes.status === "declined"
+                              ? "red"
+                              : "black", // Default color
+                    },
+                  ]}
+                >
+                  {request.attributes.status
+                    ? request.attributes.status.charAt(0).toUpperCase() +
+                    request.attributes.status.slice(1).toLowerCase()
+                    : "Pending"}
                 </Text>
+
+
                 <TouchableOpacity
                   onPress={() => {
                     navigation.navigate("(pages)/TaskRequestDetails", {
@@ -481,7 +502,6 @@ const ProjectTeam = () => {
               {filteredTasksList.length > 0 ? (
                 filteredTasksList.map((taskDetail, taskIndex) => {
                   const task = taskDetail.data;
-                  console.log("Task:", task);
                   const standardTask =
                     task.attributes.standard_task?.data?.attributes || {};
                   const statusText = task.task_status || "Pending";
@@ -496,8 +516,6 @@ const ProjectTeam = () => {
                     ?.attributes?.url
                     ? `${URL}${task.attributes.documents.data[0].attributes.url}`
                     : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
-
-                  console.log("taskimageurl", taskImageUrl);
 
                   return (
                     <View key={taskIndex} style={styles.milestoneCard}>
@@ -538,12 +556,12 @@ const ProjectTeam = () => {
                             Deadline:{" "}
                             {task?.attributes?.due_date
                               ? new Date(task.attributes.due_date)
-                                  .toLocaleDateString("en-GB", {
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                    year: "numeric",
-                                  })
-                                  .replace(/\//g, "-")
+                                .toLocaleDateString("en-GB", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })
+                                .replace(/\//g, "-")
                               : "No deadline specified"}
                           </Text>
                         </View>
@@ -680,10 +698,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   projectCard: {
-    width: 250,
+    width: 210,
     padding: 15,
     borderRadius: 10,
-    // elevation: 3,
     marginRight: 15,
   },
   projectTitle: {
@@ -740,16 +757,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 10,
   },
-  requestStatusPending: {
+  requestStatus: {
     color: "#ff5252",
     fontWeight: "bold",
   },
   viewLink: {
     color: "#1e90ff",
   },
-
-  //   !-----------===============================================
-
   projectTitle: {
     fontSize: 18,
     fontWeight: "bold",

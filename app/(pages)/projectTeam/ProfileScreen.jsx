@@ -201,7 +201,7 @@ const ProfileScreen = () => {
 const ProfileItem = ({ title, onPress }) => (
   <TouchableOpacity style={styles.itemContainer} onPress={onPress}>
     <Text style={styles.itemText}>{title}</Text>
-    <Ionicons name="chevron-forward-outline" size={20} color="#C7C7CC" />
+    <Ionicons name="chevron-forward-outline" size={20} color="#000" />
   </TouchableOpacity>
 );
 
@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    // borderBottomWidth: 1,
+    // borderBottomColor: "#E0E0E0",
   },
   itemText: {
     fontSize: 16,

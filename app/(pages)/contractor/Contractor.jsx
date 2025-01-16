@@ -96,7 +96,7 @@ const Contractor = () => {
     };
 
     loadContractorData();
-  }, [user]); // Dependency array includes `user`
+  }, [user]);
 
   return (
     <SafeAreaView style={styles.AreaContainer}>

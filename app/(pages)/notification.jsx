@@ -72,7 +72,7 @@ const UploadProof = () => {
               );
               allTasks.push(...ongoingTasks); // Accumulate tasks for each project
             }
-            setTasks(allTasks); // Update tasks state with all fetched tasks
+            // setTasks(allTasks); // Update tasks state with all fetched tasks
 
             for (const item of allTasks) {
               submission = item.attributes.submissions.data
@@ -83,8 +83,9 @@ const UploadProof = () => {
               read = read.concat(
                 submission?.filter((elem) => elem.attributes.notification_status === 'read')
               );
-            }
-            setSubmissionDetail(submissionData);
+            };
+            setTasks(allTasks);
+            setSubmissionDetail(submissionData.flat());
             setUnreadNotifications(unread);
             setReadNotifications(read);
           }
@@ -96,8 +97,7 @@ const UploadProof = () => {
       }
     };
     SubmissionData();
-  }, []);
-
+  }, [user]);
 
   const handleDeleteNotification = (id) => {
     const updatedDetails = submissionDetail.map((history) =>
@@ -122,13 +122,11 @@ const UploadProof = () => {
         {isLoading ? (
           <Text>Loading...</Text>
         ) : (
-          tasks.map((task, taskIndex) => {
+          tasks?.map((task, taskIndex) => {
             // Check if submissions data exists
             const hasSubmissions =
               task?.attributes?.submissions?.data &&
               task.attributes.submissions.data.length > 0;
-
-            // Render only if submissions exist
             return (
               hasSubmissions && (
                 <View key={taskIndex}>
@@ -136,8 +134,11 @@ const UploadProof = () => {
                     {task?.attributes?.project?.data?.attributes?.name}
                   </Text>
                   <View key={`task-${taskIndex}`} style={{ marginHorizontal: 20 }}>
-                    {task?.attributes?.submissions?.data?.map(
-                      (history, historyIndex) => (
+                  {task?.attributes?.submissions?.data
+                    // Reverse submissions to display the latest on top
+                    .slice()
+                    .reverse()
+                    .map((history, historyIndex) => (  
                         <View
                           key={`history-${history.id}-${historyIndex}`} // Ensure unique keys
                           style={{ marginBottom: 10 }} // Optional: Add some spacing
@@ -185,8 +186,6 @@ const UploadProof = () => {
           })
         )}
       </ScrollView>
-
-
       <BottomNavigation />
     </SafeAreaView>
   );
@@ -228,7 +227,8 @@ const styles = StyleSheet.create({
   },
   taskTitle: {
     fontSize: 20,
-    marginVertical: 10
+    marginVertical: 10,
+    marginHorizontal: 20,
   },
   notificationContainer: {
     marginVertical: 10,

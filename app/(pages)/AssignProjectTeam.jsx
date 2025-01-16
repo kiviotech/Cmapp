@@ -28,7 +28,7 @@ const AssignProjectTeam = () => {
         const fetchProjectTeamDetails = async () => {
             try {
                 const managerResp = await fetchUserById(project_manager);
-                console.log('manager user details', managerResp);
+                // console.log('manager user details', managerResp);
                 setProjectManager(managerResp);
 
                 const supervisorResp = await fetchUserById(project_supervisor);
@@ -65,12 +65,12 @@ const AssignProjectTeam = () => {
             setProjectManagerTeamId(projectManagerResp?.data[0]?.id)
 
             const projectSupervisorResp = await fetchProjectTeamIdByUserId(project_supervisor);
-            console.log('projectSupervisorResp', projectSupervisorResp.data[0].id)
-            setProjectManagerTeamId(projectSupervisorResp?.data[0]?.id)
+            console.log('projectSupervisorResp', projectSupervisorResp.data)
+            setProjectSupervisorTeamId(projectSupervisorResp?.data[0]?.id)
 
             const siteCordResp = await fetchProjectTeamIdByUserId(site_coordinator);
             // console.log('siteCordResp', siteCordResp.data[0].id)
-            setProjectManagerTeamId(siteCordResp?.data[0]?.id)
+            setsiteCoordTeamId(siteCordResp?.data[0]?.id)
         }
         fetchProjectTeamId()
         fetchProjectTeamDetails();
@@ -79,20 +79,20 @@ const AssignProjectTeam = () => {
 
     const handleAssignTasks = async () => {
         // Helper function to assign tasks to a specific team member
-        const assignTasks = async (tasks, userId, approvers) => {
+        const assignTasks = async (tasks, userId, approver) => {
             try {
                 if (tasks.length > 0 && userId) {
                     await Promise.all(
                         tasks.map(async (task) => {
                             const payload = {
                                 data: {
-                                    approver: userId,
+                                    project_team_member: userId,
                                     project: projectId,
                                     standard_task: task.id,
                                     submissions: [],
                                     documents: [],
                                     task_status: "ongoing",
-                                    // project_team: approvers,
+                                    approver: projectSupervisorTeamId,
                                 }
                             };
                             console.log('Payload:', payload);

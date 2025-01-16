@@ -29,7 +29,7 @@ const Settings = () => {
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const navigation = useNavigation();
-  
+
 
   const handleLogout = () => {
     clearAuth();
@@ -60,53 +60,59 @@ const Settings = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>Profile</Text>
         <View
           style={[
             styles.section,
             { borderBottomWidth: 1, borderBottomColor: "#CACACA" },
           ]}
         >
-          <Text style={styles.sectionTitle}>Account Settings</Text>
+          <Text style={styles.sectionTitle}>My Account</Text>
 
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
-            }
-          >
-            <Text style={styles.itemText}>Personal Details</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate("(pages)/ChangePassword")
-            }
-          >
-            <Text style={styles.itemText}>Change password</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
-
-          <View style={styles.item}>
-            <Text style={styles.itemText}>Push notifications</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                trackColor={{ false: "#767577", true: colors.primary }}
-                thumbColor={isEnabled ? colors.whiteColor : colors.whiteColor}
-                onValueChange={toggleSwitch}
-                value={isEnabled}
-                style={styles.switch}
+          <View style={styles.innerContainer}>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() =>
+                navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
+              }
+            >
+              <Text style={styles.itemText}>Personal Details</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
               />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() =>
+                navigation.navigate("(pages)/ChangePassword")
+              }
+            >
+              <Text style={styles.itemText}>Change password</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.sectionTitle}>Settings</Text>
+
+          <View style={styles.innerContainer}>
+            <View style={styles.item}>
+              <Text style={styles.itemText}>Push notifications</Text>
+              <View style={styles.switchContainer}>
+                <Switch
+                  trackColor={{ false: "#767577", true: colors.primary }}
+                  thumbColor={isEnabled ? colors.whiteColor : colors.whiteColor}
+                  onValueChange={toggleSwitch}
+                  value={isEnabled}
+                  style={styles.switch}
+                />
+              </View>
             </View>
           </View>
         </View>
@@ -114,41 +120,43 @@ const Settings = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>More</Text>
 
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => showInfoModal("About us")}
-          >
-            <Text style={styles.itemText}>About us</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
+          <View style={styles.innerContainer}>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => showInfoModal("About us")}
+            >
+              <Text style={styles.itemText}>About us</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => showInfoModal("Privacy policy")}
-          >
-            <Text style={styles.itemText}>Privacy policy</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => showInfoModal("Privacy policy")}
+            >
+              <Text style={styles.itemText}>Privacy policy</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => showInfoModal("Terms and conditions")}
-          >
-            <Text style={styles.itemText}>Terms and conditions</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => showInfoModal("Terms and conditions")}
+            >
+              <Text style={styles.itemText}>Terms and conditions</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             style={styles.logoutButton}
@@ -249,13 +257,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: width * 0.045,
     marginBottom: height * 0.01,
-    color: "#ADADAD",
+    fontWeight: "bold",
+  },
+  innerContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    marginVertical: 10
   },
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: height * 0.018,
+    paddingVertical: height * 0.015,
   },
   itemText: {
     fontSize: width * 0.045,

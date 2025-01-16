@@ -23,6 +23,7 @@ const ChangePassword = () => {
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
+    const [errors, setErrors] = useState('')
   const { user, token } = useAuthStore();
   console.log("first", token);
 
@@ -35,6 +36,15 @@ const ChangePassword = () => {
 
   const navigation = useNavigation();
 
+  // Function to check if all fields are filled
+const checkFields = () => {
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    setErrors("Please fill in all the fields.");
+  } else {
+    setErrors(""); // Clear error if all fields are filled
+  }
+};
+
   const handlePasswordChange = (password) => {
     setNewPassword(password);
     setValidation({
@@ -46,6 +56,7 @@ const ChangePassword = () => {
   };
 
   const handleSubmit = async () => {
+    checkFields();
     if (
       newPassword === confirmPassword &&
       validation.minLength &&
@@ -77,6 +88,7 @@ const ChangePassword = () => {
         }
       } catch (error) {
         if (error.response && error.response.status === 400) {
+          setErrors("The current password is invalid.")
           alert("Check the current password.");
         } else {
           alert("Please ensure all requirements are met.");
@@ -98,6 +110,8 @@ const ChangePassword = () => {
           <Text style={styles.subHeader}>
             The new password must be different from current password
           </Text>
+
+          {errors && <Text style={styles.errorText}>{errors}</Text>}
 
           <Text style={styles.label}>Current Password</Text>
           <View style={styles.passwordContainer}>
@@ -287,6 +301,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     outlineStyle: "none",
     borderWidth: 0,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 14,
+    marginBottom: 10
   },
   validationContainer: {
     marginVertical: 15,

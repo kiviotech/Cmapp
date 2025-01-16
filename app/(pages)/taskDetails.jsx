@@ -213,7 +213,7 @@ const TaskDetails = () => {
                     year: "numeric",
                   })
                   .replace(/\//g, "-")
-              : "No deadline specified"}
+              : "N/A"}
           </Text>
         </View>
       </View>
@@ -252,7 +252,7 @@ const TaskDetails = () => {
               />
             )}
           </View>
-
+          
           {/* Project Info Section */}
           <View style={styles.projectInfo}>
             <View style={styles.projectTitleContainer}>
@@ -366,9 +366,9 @@ const TaskDetails = () => {
                 styles.notificationApproval,
                 {
                   backgroundColor:
-                    taskData?.attributes?.task_status === "approved"
+                  taskData?.attributes?.submission?.data?.attributes?.status === "approved"
                       ? "#D4EDDA"
-                      : taskData?.attributes?.task_status === "declined"
+                      : taskData?.attributes?.submission?.data?.attributes?.status === "declined"
                       ? "#ffebee"
                       : "rgba(251, 188, 85, 0.3)",
                 },
@@ -376,9 +376,9 @@ const TaskDetails = () => {
             >
               <Image
                 source={
-                  taskData?.attributes?.task_status === "approved"
+                  taskData?.attributes?.submission?.data?.attributes?.status === "approved"
                     ? icons.approved
-                    : taskData?.attributes?.task_status === "declined"
+                    : taskData?.attributes?.submission?.data?.attributes?.status === "declined"
                     ? icons.reject
                     : icons.uploadApproval
                 }
@@ -386,14 +386,14 @@ const TaskDetails = () => {
               <Text
                 style={{
                   color:
-                    taskData?.attributes?.task_status === "approved"
+                    taskData?.attributes?.submission?.data?.attributes?.status === "approved"
                       ? "#28A745"
-                      : taskData?.attributes?.task_status === "declined"
+                      : taskData?.attributes?.submission?.data?.attributes?.status === "declined"
                       ? "#DC3545"
                       : "#FBBC55",
                 }}
               >
-                {taskData?.attributes?.task_status || "Yet to Upload"}
+                {taskData?.attributes?.submission?.data?.attributes?.status || "Yet to Upload"}
               </Text>
             </View>
 
@@ -565,6 +565,8 @@ const styles = StyleSheet.create({
   deadlineText: {
     color: colors.radiusColor,
     marginLeft: 8,
+    flexDirection: "row",
+    alignItems: "center",
   },
   imagePlaceholder: {
     height: 150,
