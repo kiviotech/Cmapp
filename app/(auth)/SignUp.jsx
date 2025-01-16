@@ -21,7 +21,7 @@ import { getProjects } from "../../src/api/repositories/projectRepository";
 import { fetchSubContractors } from "../../src/services/subContractorService";
 import useAuthStore from "../../useAuthStore";
 import { fetchUsers } from "../../src/services/userService";
-import useFileUploadStore from '../../src/stores/fileUploadStore';
+import useFileUploadStore from "../../src/stores/fileUploadStore";
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -40,12 +40,12 @@ const SignUp = () => {
     email: "",
     password: "",
     socialSecurity: "",
-    subContractor:""
+    subContractor: "",
   });
   const [errors, setErrors] = useState({});
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
-  const resetFileUploadStore = useFileUploadStore(state => state.reset);
+  const resetFileUploadStore = useFileUploadStore((state) => state.reset);
 
   useEffect(() => {
     if (token) {
@@ -59,17 +59,25 @@ const SignUp = () => {
       setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
     }
     setForm({ ...form, [field]: value });
+
+    // Add immediate password validation
+    if (field === "password" && value.length > 0 && value.length < 8) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 8 characters long",
+      }));
+    }
   };
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds(fileIds);
     console.log("Uploaded file IDs:", fileIds);
-  
+
     // Clear the error message for contractorLicense when a file is uploaded
     if (errors.contractorLicense) {
       setErrors((prevErrors) => ({ ...prevErrors, contractorLicense: "" }));
     }
   };
-  
+
   const validate = () => {
     const newErrors = {};
     if (!form.name.trim()) newErrors.name = "Full name is required";
@@ -79,7 +87,7 @@ const SignUp = () => {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       newErrors.email = "Enter a valid email address";
     if (!form.password) newErrors.password = "Password is required";
-    else if (form.password.length < 6)
+    else if (form.password.length < 8)
       newErrors.password = "Password must be at least 8 characters long";
     if (!form.socialSecurity)
       newErrors.socialSecurity = "Social Security Number is required";
@@ -101,11 +109,11 @@ const SignUp = () => {
 
     try {
       const { name, email, password, socialSecurity } = form;
-      const users = await fetchUsers(); 
+      const users = await fetchUsers();
 
-       // Check if the email already exists in the system
+      // Check if the email already exists in the system
       const emailExists = users.some((user) => user.email === email);
-  
+
       if (emailExists) {
         setErrors((prevErrors) => ({
           ...prevErrors,
@@ -246,17 +254,18 @@ const SignUp = () => {
               value={selectedSubContractor}
               onFocus={() => setIsDropdownFocused(true)}
               onBlur={() => setIsDropdownFocused(false)}
-              
               onChange={(item) => {
                 setSelectedSubContractor(item.value);
                 setIsDropdownFocused(false);
-              
+
                 // Ensure errors are not null or undefined before updating
                 if (errors && errors.subContractor) {
-                  setErrors((prevErrors) => ({ ...prevErrors, subContractor: "" }));
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    subContractor: "",
+                  }));
                 }
               }}
-              
               style={styles.dropdown}
               containerStyle={styles.dropdownContainerStyle}
               searchStyle={styles.searchBox}

@@ -26,6 +26,7 @@ import FileUpload from "../../components/FileUploading/FileUpload";
 import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
 import colors from "../../constants/colors";
+import useFileUploadStore from "../../src/stores/fileUploadStore";
 
 const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -47,6 +48,7 @@ const UploadProof = ({}) => {
   const route = useRoute();
   const { id } = route?.params;
   const fileUploadRef = useRef(null);
+  const clearFiles = useFileUploadStore((state) => state.clearFiles);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -135,23 +137,45 @@ const UploadProof = ({}) => {
     }
   };
 
-  useEffect(() => {
-    if (uploadedFileIds.length === 0 && comment.length === 0) {
+  const handleCommentChange = (text) => {
+    setComment(text);
+    const hasAlphabet = /[a-zA-Z]/.test(text);
+
+    if (uploadedFileIds.length === 0 && text.length === 0) {
       setErrors("Images and comments are required");
     } else if (uploadedFileIds.length === 0) {
       setErrors("Images are required");
-    } else if (comment.length === 0) {
+    } else if (text.length === 0) {
       setErrors("Comment is required");
+    } else if (!hasAlphabet) {
+      setErrors("Comment must contain at least one letter");
     } else {
       setErrors("");
     }
-  }, [uploadedFileIds, comment]);
+  };
+
+  const validateSubmission = () => {
+    const hasAlphabet = /[a-zA-Z]/.test(comment);
+    let errorMessage = "";
+
+    if (uploadedFileIds.length === 0 && !comment) {
+      errorMessage = "Images and comment are required";
+    } else if (uploadedFileIds.length === 0) {
+      errorMessage = "Images are required";
+    } else if (!comment) {
+      errorMessage = "Comment is required";
+    } else if (!hasAlphabet) {
+      errorMessage = "Comment must contain at least one letter";
+    }
+
+    return errorMessage;
+  };
 
   const handleSubmit = async () => {
-    if (errors) {
-      setToastMessage(errors);
-      setToastVisible(true);
-      setTimeout(() => setToastVisible(false), 3000);
+    const validationError = validateSubmission();
+
+    if (validationError) {
+      setErrors(validationError);
       return;
     }
 
@@ -160,28 +184,19 @@ const UploadProof = ({}) => {
       const submission = await createSubmission(fileIds, id);
       console.log("Submission created successfully:", submission);
 
-      // Clear all uploaded files and reset the FileUpload component
+      // Clear all uploaded files and reset states
       setUploadedFiles([]);
       setUploadedFileIds([]);
       setComment("");
+      clearFiles();
+      setErrors(""); // Clear any existing errors
 
       if (fileUploadRef.current) {
         fileUploadRef.current.clearFiles();
       }
-
-      setToastMessage("Submission created successfully!");
-      setToastVisible(true);
-
-      // // Navigate back to task details with a refresh flag
-      // navigation.navigate("(pages)/taskDetails", {
-      //   taskId: id,
-      //   refresh: true,
-      // });
     } catch (error) {
       console.error("Error during submission:", error);
-      setToastMessage("Error during submission. Please try again.");
-      setToastVisible(true);
-      setTimeout(() => setToastVisible(false), 3000);
+      setErrors("Error during submission. Please try again.");
     }
   };
 
@@ -334,18 +349,35 @@ const UploadProof = ({}) => {
     console.log("Uploaded file IDs:", uploadedFileIds);
   };
 
+  const handleBackNavigation = () => {
+    clearFiles();
+    setUploadedFiles([]);
+    setUploadedFileIds([]);
+    if (fileUploadRef.current) {
+      fileUploadRef.current.clearFiles();
+    }
+    navigation.navigate("(pages)/taskDetails", {
+      taskData: { id },
+      refresh: true,
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      clearFiles();
+      setUploadedFiles([]);
+      setUploadedFileIds([]);
+      if (fileUploadRef.current) {
+        fileUploadRef.current.clearFiles();
+      }
+    };
+  }, []);
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("(pages)/taskDetails", {
-                taskData: { id },
-                refresh: true,
-              })
-            }
-          >
+          <TouchableOpacity onPress={handleBackNavigation}>
             <Image source={icons.backarrow}></Image>
           </TouchableOpacity>
           <Text style={styles.detailsText}>Upload your proof of work</Text>
@@ -419,7 +451,7 @@ const UploadProof = ({}) => {
               style={styles.commentInput}
               placeholder="Add your comment..."
               value={comment}
-              onChangeText={setComment}
+              onChangeText={handleCommentChange}
               multiline={true}
               numberOfLines={5}
             />
@@ -427,7 +459,6 @@ const UploadProof = ({}) => {
             <TouchableOpacity
               style={[styles.uploadButton, styles.submitButton]}
               onPress={handleSubmit}
-              disabled={errors}
             >
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
@@ -628,5 +659,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#007BFF",
     padding: 10,
     borderRadius: 5,
+  },
+  errorContainer: {
+    marginVertical: 10,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    color: "#FC5275",
+    fontSize: 14,
+    textAlign: "center",
   },
 });

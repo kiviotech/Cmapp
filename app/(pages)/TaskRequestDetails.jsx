@@ -13,7 +13,12 @@ import {
   Platform,
   TextInput,
 } from "react-native";
-import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import {
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+  AntDesign,
+} from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { updateExistingSubmission } from "../../src/services/submissionService";
 import { MEDIA_BASE_URL } from "../../src/api/apiClient";
@@ -22,6 +27,8 @@ import * as FileSystem from "expo-file-system";
 import * as WebBrowser from "expo-web-browser";
 import { updateTask } from "../../src/services/taskService";
 import useAuthStore from "../../useAuthStore";
+import ImageEditor from "../../components/FileUploading/ImageEditor";
+import apiClient from "../../src/api/apiClient";
 
 const { width, height } = Dimensions.get("window");
 
@@ -35,6 +42,9 @@ const RequestDetails = () => {
   const [declineModalVisible, setDeclineModalVisible] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [requesterName, setRequesterName] = useState("");
+  const [editingImage, setEditingImage] = useState(null);
+  const [showImageEditor, setShowImageEditor] = useState(false);
+  const [documents, setDocuments] = useState([]);
 
   const { user } = useAuthStore();
   console.log("user", user);
@@ -45,10 +55,10 @@ const RequestDetails = () => {
       requestData?.attributes?.task?.data?.attributes?.contractor?.data
         ?.attributes?.username
     );
+    setDocuments(requestData?.attributes?.proofOfWork?.data || []);
+    console.log("Documents:", requestData?.attributes?.proofOfWork?.data);
     console.log("task Data", requestData);
   }, [requestData]);
-
-  const documents = requestData?.attributes?.proofOfWork?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
     const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
@@ -221,159 +231,270 @@ const RequestDetails = () => {
     setModalVisible(true);
   };
 
-  const renderDocument = (doc) => (
-    <View key={doc.id} style={styles.documentContainer}>
-      <View style={styles.documentInfo}>
-        <FontAwesome5
-          name={doc.attributes.ext === ".png" ? "file-image" : "file-alt"}
-          size={24}
-          color="#333"
-        />
-        <View style={styles.documentText}>
-          <Text style={styles.documentName}>{doc.attributes.name}</Text>
-          <Text style={styles.documentSize}>{`${doc.attributes.size} kb`}</Text>
+  const handleEditImage = (imageFormats) => {
+    const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
+    setEditingImage({
+      id: imageFormats.id,
+      url: imageUrl,
+      formats: imageFormats,
+    });
+    setShowImageEditor(true);
+  };
+
+  const handleSaveEditedImage = async (editedImageBlob) => {
+    try {
+      // Convert blob URL to actual blob
+      const response = await fetch(editedImageBlob);
+      const blob = await response.blob();
+
+      // Generate a unique filename with timestamp
+      const timestamp = new Date().getTime();
+      const filename = `edited_${timestamp}.jpg`;
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append(
+        "files",
+        new File([blob], filename, { type: "image/jpeg" })
+      );
+
+      // Upload the edited image
+      const uploadResponse = await apiClient.post("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (uploadResponse.status === 200) {
+        const newImageId = uploadResponse.data[0].id;
+
+        // Update the submission with the new image ID
+        const updatedData = {
+          data: {
+            ...requestData.attributes,
+            proofOfWork: [newImageId], // Replace with new image ID
+            status: requestData.attributes.status,
+            task: requestData.attributes.task?.data?.id,
+          },
+        };
+
+        const submissionResponse = await updateExistingSubmission(
+          requestData.id,
+          updatedData
+        );
+
+        if (submissionResponse.data) {
+          // Immediately update local state with new image data
+          const newDocument = {
+            id: uploadResponse.data[0].id,
+            attributes: {
+              ...uploadResponse.data[0],
+              formats: {
+                thumbnail: {
+                  url: uploadResponse.data[0].url,
+                },
+              },
+            },
+          };
+
+          setDocuments([newDocument]);
+          setShowImageEditor(false);
+          setEditingImage(null);
+          Alert.alert("Success", "Image updated successfully!");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating image:", error);
+      Alert.alert("Error", "Failed to update image. Please try again.");
+    }
+  };
+
+  const renderDocument = (doc) => {
+    if (!doc || !doc.attributes) {
+      console.log("Invalid document:", doc);
+      return null;
+    }
+
+    return (
+      <View key={doc.id} style={styles.documentContainer}>
+        <View style={styles.documentInfo}>
+          <FontAwesome5
+            name={
+              doc.attributes?.ext?.includes(".png") ? "file-image" : "file-alt"
+            }
+            size={24}
+            color="#333"
+          />
+          <View style={styles.documentText}>
+            <Text style={styles.documentName}>
+              {doc.attributes?.name || "Unnamed document"}
+            </Text>
+            <Text style={styles.documentSize}>
+              {`${(doc.attributes?.size / 1024).toFixed(2)} kb`}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.documentActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleImagePreview(doc.attributes?.formats)}
+          >
+            <MaterialIcons name="visibility" size={20} color="#577CFF" />
+            <Text style={styles.actionButtonText}>View</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleEditImage(doc.attributes?.formats)}
+          >
+            <MaterialIcons name="edit" size={20} color="#577CFF" />
+            <Text style={styles.actionButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.downloadButton}
+            onPress={() => handleDownloadImage(doc.attributes?.formats)}
+          >
+            <MaterialIcons name="download" size={20} color="#FFF" />
+            <Text style={styles.downloadButtonText}>Download</Text>
+          </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.documentActions}>
-        <TouchableOpacity
-          onPress={() => handleImagePreview(doc.attributes.formats)}
-        >
-          <MaterialIcons name="visibility" size={20} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => handleDownloadImage(doc.attributes.formats)}
-        >
-          <Text style={styles.downloadButton}>Download</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color="black"
-            onPress={() => navigation.goBack()}
-          />
-          <Text style={styles.headerText}>
-            {source === "notification"
-              ? "Notification Details"
-              : "Request Details"}
-          </Text>
-        </View>
-        <View style={styles.detailsContainer}>
-          <Text style={styles.label}>
-            Requester Name: <Text style={styles.textBold}>{requesterName}</Text>
-          </Text>
-          <Text style={styles.label}>Requester Detail:</Text>
-          <Text style={styles.requesterDetail}>
-            {requestData?.attributes?.comment ||
-              "No additional details provided."}
-          </Text>
-          <Text style={styles.label}>Documents:</Text>
-          <View>{documents.map(renderDocument)}</View>
-        </View>
-        {/* <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.rejectButton}
-            onPress={() => handleStatusChange("rejected")}
-          >
-            <Text style={styles.buttonText}>Reject Request</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.approveButton}
-            onPress={() => handleStatusChange("approved")}
-          >
-            <Text style={styles.buttonText}>Approve Request</Text>
-          </TouchableOpacity>
-        </View> */}
-
-        {/* {requesterName != user.username } */}
-        {requestData?.attributes?.status === "pending" && (
-          <View style={styles.buttonContainer}>
+      {showImageEditor ? (
+        <ImageEditor
+          imageUri={editingImage?.url}
+          onSave={handleSaveEditedImage}
+          onCancel={() => setShowImageEditor(false)}
+        />
+      ) : (
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.header}>
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color="black"
+              onPress={() => navigation.goBack()}
+            />
+            <Text style={styles.headerText}>
+              {source === "notification"
+                ? "Notification Details"
+                : "Request Details"}
+            </Text>
+          </View>
+          <View style={styles.detailsContainer}>
+            <Text style={styles.label}>
+              Requester Name:{" "}
+              <Text style={styles.textBold}>{requesterName}</Text>
+            </Text>
+            <Text style={styles.label}>Requester Detail:</Text>
+            <Text style={styles.requesterDetail}>
+              {requestData?.attributes?.comment ||
+                "No additional details provided."}
+            </Text>
+            <Text style={styles.label}>Documents:</Text>
+            <View>{documents.map(renderDocument)}</View>
+          </View>
+          {/* <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.rejectButton}
-              onPress={
-                () => setDeclineModalVisible(true)
-                // handleStatusChange("rejected")
-              }
+              onPress={() => handleStatusChange("rejected")}
             >
               <Text style={styles.buttonText}>Reject Request</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.approveButton}
               onPress={() => handleStatusChange("approved")}
             >
               <Text style={styles.buttonText}>Approve Request</Text>
             </TouchableOpacity>
-          </View>
-        )}
+          </View> */}
 
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Image
-                source={{ uri: selectedImage }}
-                style={styles.previewImage}
-                resizeMode="contain"
-              />
+          {/* {requesterName != user.username } */}
+          {requestData?.attributes?.status === "pending" && (
+            <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setModalVisible(false)}
+                style={styles.rejectButton}
+                onPress={
+                  () => setDeclineModalVisible(true)
+                  // handleStatusChange("rejected")
+                }
               >
-                <Text style={styles.closeButtonText}>Close</Text>
+                <Text style={styles.buttonText}>Reject Request</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.approveButton}
+                onPress={() => handleStatusChange("approved")}
+              >
+                <Text style={styles.buttonText}>Approve Request</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </Modal>
+          )}
 
-        {/* Decline Reason Modal */}
-        <Modal
-          visible={declineModalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setDeclineModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Reason for Declining</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter reason for Declining"
-                value={declineReason}
-                onChangeText={setDeclineReason}
-                multiline={true}
-              />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.rejectButton}
-                  onPress={() => setDeclineModalVisible(false)}
-                >
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.approveButton}
-                  onPress={() => {
-                    handleStatusChange("rejected");
-                  }}
-                >
-                  <Text style={styles.buttonText}>Submit</Text>
-                </TouchableOpacity>
+          <Modal
+            visible={modalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.imageModalContainer}>
+              <TouchableOpacity
+                style={styles.closeImageButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <AntDesign name="close" size={24} color="white" />
+              </TouchableOpacity>
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.fullScreenImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </Modal>
+
+          {/* Decline Reason Modal */}
+          <Modal
+            visible={declineModalVisible}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setDeclineModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Reason for Declining</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter reason for Declining"
+                  value={declineReason}
+                  onChangeText={setDeclineReason}
+                  multiline={true}
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.rejectButton}
+                    onPress={() => setDeclineModalVisible(false)}
+                  >
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.approveButton}
+                    onPress={() => {
+                      handleStatusChange("rejected");
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Submit</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        </Modal>
-      </ScrollView>
+          </Modal>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -422,44 +543,76 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
   },
   documentContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: height * 0.015,
-    backgroundColor: "#F7F7F7",
-    borderRadius: 8,
-    marginBottom: height * 0.01,
-    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
-    flexWrap: "wrap",
+    borderColor: "#E5E7EB",
   },
   documentInfo: {
     flexDirection: "row",
     alignItems: "center",
-    maxWidth: "70%",
+    marginBottom: 12,
   },
   documentText: {
-    marginLeft: width * 0.03,
+    marginLeft: 12,
+    flex: 1,
   },
   documentName: {
-    fontSize: width * 0.04,
-    fontWeight: "500",
-    flexShrink: 1,
-    color: "#333",
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
+    marginBottom: 4,
   },
   documentSize: {
-    fontSize: width * 0.035,
-    color: "#888",
+    fontSize: 14,
+    color: "#6B7280",
   },
   documentActions: {
     flexDirection: "row",
+    justifyContent: "flex-end",
     alignItems: "center",
+    gap: 12,
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+  },
+  actionButtonText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: "#577CFF",
+    fontWeight: "500",
   },
   downloadButton: {
-    color: "#3182CE",
-    marginLeft: width * 0.03,
-    fontSize: width * 0.04,
-    fontWeight: "600",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#577CFF",
+    padding: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  downloadButtonText: {
+    color: "#FFFFFF",
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: "500",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -531,6 +684,23 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: width * 0.045,
     fontWeight: "600",
+  },
+  imageModalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullScreenImage: {
+    width: "100%",
+    height: "80%",
+  },
+  closeImageButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+    padding: 10,
   },
 });
 
