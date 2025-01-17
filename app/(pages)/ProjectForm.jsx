@@ -165,6 +165,9 @@ const ProjectForm = () => {
       newErrors.projectAddress = "Project address is required";
     if (!startDate) newErrors.startDate = "Start date is required";
     if (!endDate) newErrors.endDate = "End date is required";
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      newErrors.endDate = "End date must be after start date";
+    }
     if (!uploadedFiles) newErrors.uploadedFiles = "Document is required";
     if (!projectManager)
       newErrors.projectManager = "Project manager selection is required";
@@ -177,6 +180,11 @@ const ProjectForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleFileUploadSuccess = (fileIds) => {
+    // Ensure fileIds is a flat array of unique IDs
+    setDocumentIds([...new Set(fileIds)]);
+  };
+
   const handleProjectCreation = async () => {
     if (!validate()) return;
 
@@ -187,7 +195,6 @@ const ProjectForm = () => {
       const formattedEndDate = endDate
         ? endDate.toISOString().slice(0, 10)
         : null;
-      console.log(documentIds.flat());
 
       const projectData = {
         data: {
@@ -206,7 +213,7 @@ const ProjectForm = () => {
           project_supervisor: supervisor,
           site_coordinator: coordinator,
           project_status: "ongoing",
-          documents: documentIds,
+          documents: documentIds, // This will now be a flat array of unique IDs
         },
       };
 
@@ -257,23 +264,6 @@ const ProjectForm = () => {
     setProjectDescription("");
     setUploadedFiles([]);
     setDocumentIds([]);
-  };
-
-  const handleFileUploadSuccess = (id) => {
-    console.log("File uploaded with ID:", id);
-    setDocumentIds((prevIds) => {
-      if (!prevIds.includes(id)) {
-        return [...prevIds, id];
-      }
-      return prevIds;
-    });
-  };
-
-  const closeModal = () => {
-    setIsSuccessModalVisible(false);
-    navigation.navigate("(pages)/AssignContractors", {
-      projectId: projectData.id,
-    });
   };
 
   const handleProjectNameChange = (text) => {
@@ -400,7 +390,15 @@ const ProjectForm = () => {
               value={supervisor}
               items={supervisorItems}
               setOpen={setSupervisorOpen}
-              setValue={setSupervisor}
+              setValue={(value) => {
+                setSupervisor(value);
+                if (value) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    supervisor: null,
+                  }));
+                }
+              }}
               setItems={setSupervisorItems}
               placeholder="Select Project Supervisor"
               style={styles.dropdown}
@@ -420,7 +418,15 @@ const ProjectForm = () => {
               value={projectManager}
               items={projectManagerItems}
               setOpen={setProjectManagerOpen}
-              setValue={setProjectManager}
+              setValue={(value) => {
+                setProjectManager(value);
+                if (value) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    projectManager: null,
+                  }));
+                }
+              }}
               setItems={setProjectManagerItems}
               placeholder="Select Project Manager"
               style={styles.dropdown}
@@ -440,7 +446,15 @@ const ProjectForm = () => {
               value={coordinator}
               items={coordinatorItems}
               setOpen={setCoordinatorOpen}
-              setValue={setCoordinator}
+              setValue={(value) => {
+                setCoordinator(value);
+                if (value) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    coordinator: null,
+                  }));
+                }
+              }}
               setItems={setCoordinatorItems}
               placeholder="Select Site Coordinator"
               style={styles.dropdown}

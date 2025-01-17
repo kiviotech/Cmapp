@@ -25,60 +25,126 @@ const Notification = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (user && user.id) {
+  //       try {
+  //         setIsLoading(true);
+  //         const data = await fetchContractorsByUserId(user.id);
+  //         console.log('data', data.data)
+  //         var filteredData = [];
+  //         if (data.data.length > 0) {
+  //           const contractorId = data.data[0].id;
+  //           const projectData = data.data.map(
+  //             (project) => (filteredData = project.attributes.projects.data)
+  //           );
+
+  //           const allTasks = [];
+  //           let unread = [];
+  //           let read = [];
+
+  //           for (const projectId of filteredData) {
+  //             const taskData = await getTaskByContractorId(
+  //               projectId.id,
+  //               contractorId
+  //             );
+  //             console.log('tasks data', taskData.data.data)
+  //             const ongoingTasks = taskData.data.data.filter(
+  //               (task) => task.attributes.task_status === "ongoing"
+  //             );
+  //             console.log('ongoing', on)
+  //             allTasks.push(...ongoingTasks);
+  //           }
+
+  //           for (const task of allTasks) {
+  //             const submissions = task.attributes.submissions.data;
+  //             unread = unread.concat(
+  //               submissions?.filter(
+  //                 (sub) => sub.attributes.notification_status === "unread"
+  //               )
+  //             );
+  //             read = read.concat(
+  //               submissions?.filter(
+  //                 (sub) => sub.attributes.notification_status === "read"
+  //               )
+  //             );
+  //           }
+
+  //           setTasks(allTasks);
+  //           setUnreadNotifications(unread);
+  //           setReadNotifications(read);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error fetching notifications:", error);
+  //       } finally {
+  //         setIsLoading(false);
+  //       }
+  //     }
+  //   };
+  //   fetchData();
+  // }, [user]);
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (user && user.id) {
-        try {
-          const data = await fetchContractorsByUserId(user.id);
-          var filteredData = [];
-          if (data.data.length > 0) {
-            const contractorId = data.data[0].id;
-            const projectData = data.data.map(
-              (project) => (filteredData = project.attributes.projects.data)
+  const fetchData = async () => {
+    if (user && user.id) {
+      try {
+        setIsLoading(true);
+
+        // Fetch contractor data by user ID
+        const data = await fetchContractorsByUserId(user.id);
+
+        if (data.data.length > 0) {
+          const contractorId = data.data[0].id;
+
+          // Extract and flatten project IDs
+          const projectIds = data.data.flatMap(
+            (contractor) => contractor.attributes.projects.data || []
+          );
+
+          // Fetch tasks for all projects in parallel using Promise.all
+          const taskPromises = projectIds.map((project) =>
+            getTaskByContractorId(project.id, contractorId)
+          );
+
+          const taskResults = await Promise.all(taskPromises);
+
+          // Collect all ongoing tasks
+          const allTasks = taskResults.flatMap((taskResult) =>
+            taskResult?.data?.data
+          );
+
+          // Process notifications
+          const unread = [];
+          const read = [];
+          allTasks.forEach((task) => {
+            const submissions = task.attributes.submissions.data || [];
+            unread.push(
+              ...submissions.filter(
+                (sub) => sub.attributes.notification_status === "unread"
+              )
             );
+            read.push(
+              ...submissions.filter(
+                (sub) => sub.attributes.notification_status === "read"
+              )
+            );
+          });
 
-            const allTasks = [];
-            let unread = [];
-            let read = [];
-
-            for (const projectId of filteredData) {
-              const taskData = await getTaskByContractorId(
-                projectId.id,
-                contractorId
-              );
-              const ongoingTasks = taskData.data.data.filter(
-                (task) => task.attributes.task_status === "ongoing"
-              );
-              allTasks.push(...ongoingTasks);
-            }
-
-            for (const task of allTasks) {
-              const submissions = task.attributes.submissions.data;
-              unread = unread.concat(
-                submissions?.filter(
-                  (sub) => sub.attributes.notification_status === "unread"
-                )
-              );
-              read = read.concat(
-                submissions?.filter(
-                  (sub) => sub.attributes.notification_status === "read"
-                )
-              );
-            }
-
-            setTasks(allTasks);
-            setUnreadNotifications(unread);
-            setReadNotifications(read);
-          }
-        } catch (error) {
-          console.error("Error fetching notifications:", error);
-        } finally {
-          setIsLoading(false);
+          // Update state with tasks and notifications
+          setTasks(allTasks);
+          setUnreadNotifications(unread);
+          setReadNotifications(read);
         }
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      } finally {
+        setIsLoading(false);
       }
-    };
-    fetchData();
-  }, [user]);
+    }
+  };
+
+  fetchData();
+}, [user]);
 
   const markAsRead = async (item) => {
     try {

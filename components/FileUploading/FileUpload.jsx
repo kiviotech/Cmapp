@@ -1,9 +1,9 @@
 import React, {
   useState,
   useRef,
-  useEffect,
   forwardRef,
   useImperativeHandle,
+  useEffect,
 } from "react";
 import {
   View,
@@ -11,84 +11,202 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  Image,
-  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
-import useFileUploadStore from "../../src/stores/fileUploadStore";
+import apiClient from "../../src/api/apiClient";
 
 const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const uploadIntervals = useRef({});
-
-  const {
-    uploadedFiles,
-    addFiles,
-    updateFileProgress,
-    uploadFile,
-    deleteFile,
-    removeFile,
-    getAllFileIds,
-    updateFileStatus,
-  } = useFileUploadStore();
+  const fileIdsRef = useRef([]);
 
   useImperativeHandle(ref, () => ({
     clearFiles: () => {
-      useFileUploadStore.getState().clearFiles();
+      setUploadedFiles([]);
+      fileIdsRef.current = [];
+      if (onFileUploadSuccess) {
+        onFileUploadSuccess([]);
+      }
     },
   }));
 
-  const handleImageSelected = (imageUris) => {
-    // Ensure imageUris is always treated as an array
-    const files = (Array.isArray(imageUris) ? imageUris : [imageUris]).map(
-      (imageUri) => ({
-        uri: imageUri,
-        name: `image-${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)}.jpg`, // Unique name
-        progress: 0,
-        status: "uploading",
+  const addFiles = (files) => {
+    setUploadedFiles((prev) => [...prev, ...files]);
+  };
+
+  const updateFileProgress = (fileName, progress) => {
+    console.log(`Updating progress for ${fileName}: ${progress}%`);
+    setUploadedFiles((prev) =>
+      prev.map((file) =>
+        file.name === fileName ? { ...file, progress } : file
+      )
+    );
+  };
+
+  const updateFileStatus = (fileName, status, fileId) => {
+    console.log(`Updating status for ${fileName}: ${status}`);
+    setUploadedFiles((prev) =>
+      prev.map((file) => {
+        if (file.name === fileName) {
+          const updatedFile = { ...file, status };
+          if (status === "success" && fileId) {
+            updatedFile.fileId = fileId;
+            if (!fileIdsRef.current.includes(fileId)) {
+              fileIdsRef.current.push(fileId);
+            }
+          }
+          return updatedFile;
+        }
+        return file;
       })
     );
+  };
 
-    // Add all files to state
-    addFiles(files);
+  const uploadFileToAPI = async (file) => {
+    try {
+      const formData = new FormData();
 
-    files.forEach((newFile) => {
-      let currentProgress = 0;
+      // Handle base64 images
+      if (typeof file.uri === "string" && file.uri.startsWith("data:image")) {
+        // Convert base64 to blob
+        const response = await fetch(file.uri);
+        const blob = await response.blob();
 
-      // Create an interval for this specific file
-      const interval = setInterval(() => {
-        currentProgress += 10;
-        updateFileProgress(newFile.name, currentProgress);
+        // Use original filename if available, otherwise generate one
+        const fileName =
+          file.fileName ||
+          `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${
+            file.type?.split("/")[1] || "png"
+          }`;
 
-        if (currentProgress >= 60) {
-          clearInterval(interval);
+        formData.append("file", blob, fileName);
+
+        try {
+          const uploadResponse = await apiClient.post("/upload", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              updateFileProgress(fileName, percentCompleted);
+            },
+          });
+
+          if (uploadResponse.status === 200) {
+            updateFileStatus(fileName, "success");
+            if (onFileUploadSuccess) {
+              onFileUploadSuccess(uploadResponse.data);
+            }
+          }
+        } catch (error) {
+          console.error(`Upload failed for ${fileName}:`, error);
+          updateFileStatus(fileName, "error");
+          throw error;
         }
-      }, 500);
+      }
+    } catch (error) {
+      console.error("Error in uploadFileToAPI:", error);
+      throw error;
+    }
+  };
 
-      uploadIntervals.current[newFile.name] = interval;
+  const handleImageSelected = async (result) => {
+    try {
+      if (!result.canceled && result.assets?.length > 0) {
+        const files = result.assets.map((asset) => ({
+          uri: asset.uri,
+          fileName:
+            asset.fileName ||
+            `image-${Date.now()}-${Math.random()
+              .toString(36)
+              .substr(2, 9)}.png`,
+          type: asset.mimeType || "image/png",
+        }));
 
-      // Start the upload
-      uploadFile(newFile)
-        .then(() => {
-          clearInterval(uploadIntervals.current[newFile.name]);
-          delete uploadIntervals.current[newFile.name];
-          updateFileProgress(newFile.name, 100);
-          updateFileStatus(newFile.name, "success");
-          onFileUploadSuccess(getAllFileIds());
-        })
-        .catch((error) => {
-          console.error("Error uploading file:", error);
-          clearInterval(uploadIntervals.current[newFile.name]);
-          delete uploadIntervals.current[newFile.name];
-          updateFileStatus(newFile.name, "error");
-        });
-    });
+        // Add files to store before starting upload
+        const fileObjects = files.map((file) => ({
+          name: file.fileName,
+          progress: 0,
+          status: "uploading",
+        }));
+        addFiles(fileObjects);
+
+        // Create a single FormData instance for all files
+        const formData = new FormData();
+
+        for (const file of files) {
+          if (file.uri.startsWith("data:image")) {
+            const response = await fetch(file.uri);
+            const blob = await response.blob();
+            formData.append(
+              "files",
+              new File([blob], file.fileName, { type: file.type })
+            );
+          } else {
+            formData.append("files", {
+              uri: file.uri,
+              type: file.type,
+              name: file.fileName,
+            });
+          }
+        }
+
+        try {
+          const uploadResponse = await apiClient.post("/upload", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Accept: "application/json",
+            },
+            transformRequest: [
+              function (data) {
+                return data;
+              },
+            ],
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              files.forEach((file) => {
+                updateFileProgress(file.fileName, percentCompleted);
+              });
+            },
+          });
+
+          if (uploadResponse.status === 200) {
+            const uploadedFileData = Array.isArray(uploadResponse.data)
+              ? uploadResponse.data
+              : [uploadResponse.data];
+
+            // Update status and store file IDs
+            files.forEach((file, index) => {
+              const fileData = uploadedFileData[index];
+              if (fileData && fileData.id) {
+                updateFileStatus(file.fileName, "success", fileData.id);
+              }
+            });
+
+            if (onFileUploadSuccess) {
+              onFileUploadSuccess(fileIdsRef.current);
+            }
+          }
+        } catch (error) {
+          console.error("Upload failed:", error);
+          console.error("Error details:", error.response?.data);
+          files.forEach((file) => {
+            updateFileStatus(file.fileName, "error");
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleImageSelected:", error);
+    }
   };
 
   const handleFileUpload = async () => {
@@ -96,66 +214,121 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
+        allowsMultipleSelection: true,
+        quality: 1,
         base64: false,
-        allowsMultipleSelection: true, // Ensure your version supports this
       });
 
-      // Check if the user canceled the picker
+      console.log("ImagePicker result:", result);
+
       if (!result.canceled && result.assets?.length > 0) {
-        // Extract all selected URIs
         const imageUris = result.assets.map((asset) => asset.uri);
-        handleImageSelected(imageUris); // Pass an array of URIs
-      } else if (result.canceled) {
-        console.log("Image selection was canceled.");
-      } else {
-        alert("No images selected.");
+        console.log("Selected image URIs:", imageUris);
+        await handleImageSelected(result);
       }
     } catch (error) {
-      console.error("Error selecting files:", error);
+      console.error("Error in handleFileUpload:", error);
       alert("Failed to select files. Please try again.");
     }
   };
 
   const handleCameraUpload = async () => {
-    if (Platform.OS === "web") {
-      setIsCameraActive(true);
-      openWebCamera();
-    } else {
-      try {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== "granted") {
-          alert("Camera permission is required to use this feature.");
-          return;
-        }
-
-        let result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 1,
-          base64: false,
-          cameraType: ImagePicker.CameraType.Back,
-        });
-
-        if (!result.canceled) {
-          handleImageSelected(result.assets[0].uri);
-        }
-      } catch (error) {
-        console.error("Error capturing image:", error);
-        alert("Failed to capture image. Please try again.");
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        alert("Camera permission is required to use this feature.");
+        return;
       }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      console.log("Camera result:", result);
+
+      if (!result.canceled && result.assets?.length > 0) {
+        const asset = result.assets[0];
+        const fileName = `camera-${Date.now()}.jpg`;
+
+        // Add file to state to show progress
+        setUploadedFiles((prev) => [
+          ...prev,
+          {
+            name: fileName,
+            progress: 0,
+            status: "uploading",
+          },
+        ]);
+
+        // Create FormData with the correct file structure
+        const formData = new FormData();
+
+        // Handle different platform file structures
+        if (Platform.OS === "web") {
+          // For web, fetch the blob first
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          formData.append(
+            "files",
+            new File([blob], fileName, { type: "image/jpeg" })
+          );
+        } else {
+          // For native platforms
+          formData.append("files", {
+            uri: asset.uri,
+            type: asset.mimeType || "image/jpeg",
+            name: fileName,
+          });
+        }
+
+        try {
+          console.log("Uploading file:", fileName);
+          const uploadResponse = await apiClient.post("/upload", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Accept: "application/json",
+            },
+            transformRequest: [
+              function (data) {
+                return data;
+              },
+            ],
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              updateFileProgress(fileName, percentCompleted);
+            },
+          });
+
+          console.log("Upload response:", uploadResponse);
+
+          if (uploadResponse.status === 200) {
+            const fileData = Array.isArray(uploadResponse.data)
+              ? uploadResponse.data[0]
+              : uploadResponse.data;
+
+            if (fileData && fileData.id) {
+              updateFileStatus(fileName, "success", fileData.id);
+              if (onFileUploadSuccess) {
+                onFileUploadSuccess(fileIdsRef.current);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Upload failed:", error);
+          console.error("Error response:", error.response?.data);
+          updateFileStatus(fileName, "error");
+          alert("Failed to upload image. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleCameraUpload:", error);
+      alert("Failed to capture image. Please try again.");
     }
-  };
-
-  const handleRemoveFile = (fileName) => {
-    if (uploadIntervals.current[fileName]) {
-      clearInterval(uploadIntervals.current[fileName]);
-      delete uploadIntervals.current[fileName];
-    }
-
-    removeFile(fileName);
-
-    const remainingFileIds = getAllFileIds();
-    onFileUploadSuccess(remainingFileIds);
   };
 
   const closeCamera = () => {
@@ -187,9 +360,57 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
       canvas.height = videoRef.current.videoHeight;
       const context = canvas.getContext("2d");
       context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => {
-        const imageUrl = URL.createObjectURL(blob);
-        handleImageSelected(imageUrl);
+
+      const fileName = `camera-${Date.now()}.jpg`;
+
+      // Add file to uploadedFiles first to show progress
+      setUploadedFiles((prev) => [
+        ...prev,
+        {
+          name: fileName,
+          progress: 0,
+          status: "uploading",
+        },
+      ]);
+
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append(
+          "files",
+          new File([blob], fileName, { type: "image/jpeg" })
+        );
+
+        try {
+          const uploadResponse = await apiClient.post("/upload", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Accept: "application/json",
+            },
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              updateFileProgress(fileName, percentCompleted);
+            },
+          });
+
+          if (uploadResponse.status === 200) {
+            const fileData = Array.isArray(uploadResponse.data)
+              ? uploadResponse.data[0]
+              : uploadResponse.data;
+
+            if (fileData && fileData.id) {
+              updateFileStatus(fileName, "success", fileData.id);
+              if (onFileUploadSuccess) {
+                onFileUploadSuccess(fileIdsRef.current);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Upload failed:", error);
+          updateFileStatus(fileName, "error");
+        }
+
         closeCamera();
       }, "image/jpeg");
     }
@@ -204,13 +425,38 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
     };
   }, [stream]);
 
+  const handleRemoveFile = (fileName) => {
+    if (uploadIntervals.current[fileName]) {
+      clearInterval(uploadIntervals.current[fileName]);
+      delete uploadIntervals.current[fileName];
+    }
+
+    setUploadedFiles((prev) => {
+      const removedFile = prev.find((file) => file.name === fileName);
+
+      const updatedFiles = prev.filter((file) => file.name !== fileName);
+
+      fileIdsRef.current = updatedFiles
+        .filter((file) => file.fileId && file.status === "success")
+        .map((file) => file.fileId);
+
+      if (onFileUploadSuccess) {
+        onFileUploadSuccess(fileIdsRef.current);
+      }
+
+      return updatedFiles;
+    });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.uploadContainer}>
+        <View style={styles.folderIconContainer}>
+          <FontAwesome name="folder" size={50} color="#FFB02E" />
+        </View>
+
         <Text style={styles.uploadText}>
-          {message
-            ? message
-            : "Upload your proof of work in .png or .jpeg format"}
+          {message || "Upload your file in .png or .jpeg format"}
         </Text>
 
         {!cameraActive && (
@@ -241,12 +487,13 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
           </View>
         ) : (
           <TouchableOpacity
-            style={styles.uploadButton}
+            style={styles.cameraButton}
             onPress={handleCameraUpload}
           >
             <Text style={styles.buttonText}>Use Camera</Text>
           </TouchableOpacity>
         )}
+
         {uploadedFiles.map((file, index) => (
           <View key={`${file.name}-${index}`} style={styles.fileRow}>
             <FontAwesome name="file" size={24} color="#6B7280" />
@@ -262,12 +509,8 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
                     color="#FC5275"
                   />
                 ) : (
-                  <Text style={{ color: "#838383", fontSize: 10 }}>
-                    {`${
-                      typeof file.progress === "number"
-                        ? Math.round(file.progress)
-                        : 0
-                    }%`}
+                  <Text style={styles.progressText}>
+                    {`${Math.round(file.progress)}%`}
                   </Text>
                 )}
               </View>
@@ -276,11 +519,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
                   style={[
                     styles.progressBar,
                     {
-                      width: `${
-                        typeof file.progress === "number"
-                          ? Math.round(file.progress)
-                          : 0
-                      }%`,
+                      width: `${Math.round(file.progress)}%`,
                       backgroundColor:
                         file.status === "success"
                           ? "#A3D65C"
@@ -297,7 +536,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
               disabled={file.status === "uploading"}
             >
               <FontAwesome
-                style={{ marginTop: 15 }}
+                style={styles.trashIcon}
                 name="trash"
                 size={15}
                 color={file.status === "uploading" ? "#CCCCCC" : "#FC5275"}
@@ -305,19 +544,6 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
             </TouchableOpacity>
           </View>
         ))}
-
-        {/* {uploadedFiles.map((file, index) => (
-          <View key={index} style={styles.thumbnailContainer}>
-            <Image source={{ uri: file.uri }} style={styles.thumbnail} />
-            <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
-              <FontAwesome name="trash" size={20} color="#FC5275" />
-            </TouchableOpacity>
-          </View>
-        ))}
-
-        {uploading && (
-          <ActivityIndicator size="large" color="#3B82F6" style={styles.loader} />
-        )} */}
       </View>
     </View>
   );
@@ -326,8 +552,9 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 16,
-    backgroundColor: "#F1F1F1",
+    backgroundColor: "#FFFFFF",
+    marginTop: 20,
+    width: "100%",
   },
   uploadContainer: {
     borderStyle: "dashed",
@@ -339,6 +566,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     height: "auto",
     paddingBottom: 40,
+    backgroundColor: "#FFFFFF",
+    marginTop: 20,
+    width: "100%",
   },
   uploadText: {
     textAlign: "center",
@@ -347,20 +577,93 @@ const styles = StyleSheet.create({
     color: "#4B5563",
   },
   uploadButton: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#577CFF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginBottom: 8,
+    height: 39,
+    minWidth: 150,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  buttonText: {
+    color: "#FFF",
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  fileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+    width: "100%",
+    marginTop: 20,
+    backgroundColor: "#FFFFFF",
+    padding: 10,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  docNameContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  fileName: {
+    color: "#4B5563",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  progressText: {
+    color: "#838383",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  progressBarContainer: {
+    flex: 1,
+    borderRadius: 4,
+    overflow: "hidden",
+    marginRight: 10,
+  },
+  progressBackground: {
+    height: 6,
+    backgroundColor: "#EAEAEA",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  progressBar: {
+    height: "100%",
+    borderRadius: 10,
+  },
+  trashIcon: {
+    marginTop: 0,
+    padding: 5,
+  },
+  folderIconContainer: {
+    marginBottom: 16,
+    marginTop: 30,
+  },
+  orText: {
+    color: "#6B7280",
+    marginVertical: 12,
+    fontSize: 16,
+    fontWeight: "500",
+    marginTop: 10,
+  },
+  cameraButton: {
+    backgroundColor: "#577CFF",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
     marginBottom: 16,
     height: 39,
-  },
-  buttonText: {
-    color: "#FFF",
-    fontWeight: "600",
-  },
-  orText: {
-    color: "#6B7280",
-    marginBottom: 16,
+    minWidth: 150,
+    alignItems: "center",
+    marginTop: 10,
   },
   cameraContainer: {
     width: "100%",
@@ -374,11 +677,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   captureButton: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#577CFF",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
     marginTop: 10,
+    height: 39,
+    minWidth: 150,
+    alignItems: "center",
   },
   closeButton: {
     backgroundColor: "#FF3B30",
@@ -386,51 +692,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     marginTop: 10,
-  },
-  fileRow: {
-    flexDirection: "row",
+    height: 39,
+    minWidth: 150,
     alignItems: "center",
-    gap: 10,
-    marginBottom: 10,
-    width: "100%",
-    marginTop: 20,
-  },
-  docNameContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  fileName: {
-    color: "#4B5563",
-  },
-  progressBarContainer: {
-    flex: 1,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressBackground: {
-    height: 8,
-    backgroundColor: "#DADADA",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressBar: {
-    height: "100%",
-    borderRadius: 4,
-  },
-  thumbnailContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  thumbnail: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  loader: {
-    marginTop: 20,
   },
 });
 
