@@ -48,16 +48,13 @@ const Contractor = () => {
         try {
           setIsLoading(true); // Start loading
 
-          // Fetch contractor data by user ID
           const data = await fetchContractorsByUserId(user.id);
-          setContractorsData(data.data); // Set entire array of contractors
 
           if (data.data.length > 0) {
             const contractorId = data.data[0].id;
             const projectData = data.data.flatMap(
-              (contractor) => contractor.attributes.projects.data
+              (contractor) => contractor?.attributes?.projects?.data
             );
-
             if (projectData.length > 0) {
               // Fetch all tasks in a single batch using Promise.all
               const allTasks = await Promise.all(
@@ -67,7 +64,6 @@ const Contractor = () => {
                       project.id,
                       contractorId
                     );
-                    // Filter ongoing tasks
                     return taskData.data.data.filter(
                       (task) => task.attributes.task_status === "ongoing"
                     );
@@ -80,8 +76,8 @@ const Contractor = () => {
                   }
                 })
               );
-
               // Flatten the tasks array and update state
+              setContractorsData(data.data);
               setTasks(allTasks.flat());
             } else {
               setTasks([]); // No projects, set tasks to an empty array
@@ -94,7 +90,6 @@ const Contractor = () => {
         }
       }
     };
-
     loadContractorData();
   }, [user]);
 
@@ -164,16 +159,23 @@ const Contractor = () => {
 
                   return (
                     <View key={task.id} style={styles.milestoneCard}>
+                      <Text style={styles.milestoneTitle}>
+                        {task.attributes.project.data.attributes.name ||
+                          "Project"}
+                      </Text>
                       <Image
                         source={{ uri: taskImageUrl }}
                         style={styles.milestoneImage}
                       />
                       <View style={styles.milestoneContent}>
                         <View style={styles.milestoneHeaderContainer}>
-                          <Text style={styles.milestoneTitle}>
-                            {task.attributes.project.data.attributes.name ||
-                              "Project"}
-                          </Text>
+                          <View style={styles.projectTaskName}>
+
+                            <Text style={styles.milestoneTitle}>
+                              {task.attributes.standard_task.data.attributes.Name ||
+                                "Task"}
+                            </Text>
+                          </View>
                           <View style={styles.substituteButton}>
                             <Text style={styles.substituteText}>
                               Substructure
@@ -475,6 +477,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 5,
+  },
+  projectTaskName: {
+    display: 'flex',
   },
   milestoneTitle: {
     fontSize: 16,

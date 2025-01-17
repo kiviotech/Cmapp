@@ -105,7 +105,6 @@ const ProjectTeam = () => {
       if (user && user.id) {
         try {
           const response = await fetchProjectTeamIdByUserId(user.id);
-          // console.log('resp', response)
           const [{ id }] = response?.data;
           setProjectTeamId(id);
         } catch (error) {
@@ -398,7 +397,6 @@ const ProjectTeam = () => {
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
-        {console.log(requests[0])}
         {requests.map((request) => (
           <View key={request.id} style={styles.requestItem}>
             <View>

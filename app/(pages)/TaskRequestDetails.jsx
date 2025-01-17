@@ -234,7 +234,14 @@ const RequestDetails = () => {
   };
 
   const handleEditImage = (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
+    // Ensure imageFormats is defined before proceeding
+    if (!imageFormats || !imageFormats.thumbnail?.url) {
+      console.error("Invalid image format data.");
+      Alert.alert("Error", "Invalid image format data.");
+      return;
+    }
+    
+    const imageUrl = `${URL}${imageFormats.thumbnail.url}`;
     setEditingImage({
       id: imageFormats.id,
       url: imageUrl,
@@ -242,6 +249,7 @@ const RequestDetails = () => {
     });
     setShowImageEditor(true);
   };
+  
 
   const handleSaveEditedImage = async (editedImageBlob) => {
     try {
@@ -312,56 +320,57 @@ const RequestDetails = () => {
   };
 
   const renderDocument = (doc) => {
+    // Ensure doc and doc.attributes are defined before accessing
     if (!doc || !doc.attributes) {
       console.log("Invalid document:", doc);
-      return null;
+      return null; // Return nothing if document is invalid
     }
+  
+    const { name, ext, size, formats } = doc.attributes;
 
     return (
       <View key={doc.id} style={styles.documentContainer}>
-        <View style={styles.documentInfo}>
-          <FontAwesome5
-            name={
-              doc.attributes?.ext?.includes(".png") ? "file-image" : "file-alt"
-            }
-            size={24}
-            color="#333"
-          />
-          <View style={styles.documentText}>
-            <Text style={styles.documentName}>
-              {doc.attributes?.name || "Unnamed document"}
-            </Text>
-            <Text style={styles.documentSize}>
-              {`${(doc.attributes?.size / 1024).toFixed(2)} kb`}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.documentActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleImagePreview(doc.attributes?.formats)}
-          >
-            <MaterialIcons name="visibility" size={20} color="#577CFF" />
-            <Text style={styles.actionButtonText}>View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleEditImage(doc.attributes?.formats)}
-          >
-            <MaterialIcons name="edit" size={20} color="#577CFF" />
-            <Text style={styles.actionButtonText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.downloadButton}
-            onPress={() => handleDownloadImage(doc.attributes?.formats)}
-          >
-            <MaterialIcons name="download" size={20} color="#FFF" />
-            <Text style={styles.downloadButtonText}>Download</Text>
-          </TouchableOpacity>
+      <View style={styles.documentInfo}>
+        <FontAwesome5
+          name={ext?.includes(".png") ? "file-image" : "file-alt"}
+          size={24}
+          color="#333"
+        />
+        <View style={styles.documentText}>
+          <Text style={styles.documentName}>
+            {name || "Unnamed document"}
+          </Text>
+          <Text style={styles.documentSize}>
+            {`${(size / 1024).toFixed(2)} kb`}
+          </Text>
         </View>
       </View>
-    );
-  };
+      <View style={styles.documentActions}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleImagePreview(formats)}
+        >
+          <MaterialIcons name="visibility" size={20} color="#577CFF" />
+          <Text style={styles.actionButtonText}>View</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleEditImage(formats)}
+        >
+          <MaterialIcons name="edit" size={20} color="#577CFF" />
+          <Text style={styles.actionButtonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.downloadButton}
+          onPress={() => handleDownloadImage(formats)}
+        >
+          <MaterialIcons name="download" size={20} color="#FFF" />
+          <Text style={styles.downloadButtonText}>Download</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
