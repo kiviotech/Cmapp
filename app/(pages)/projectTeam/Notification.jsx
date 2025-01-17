@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -20,6 +21,8 @@ import {
 } from "../../../src/services/submissionService";
 
 const Notification = () => {
+  const [activeTab, setActiveTab] = useState("Unread");
+  const [searchQuery, setSearchQuery] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
   const navigation = useNavigation();
@@ -88,10 +91,27 @@ const Notification = () => {
             ?.name || "Project"
         }`;
 
+    const createdAt = new Date(item.attributes.createdAt);
+    const formattedTime = createdAt.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Add status display
+    const status = item.attributes.status || "pending";
+    const statusColor =
+      {
+        approved: "#4CAF50",
+        rejected: "#FF4444",
+        pending: "#FFA500",
+      }[status.toLowerCase()] || "#6C757D";
+
     return (
       <TouchableOpacity
         onPress={() => {
-          markAsRead(item); // Mark the notification as read on click
+          markAsRead(item);
           navigation.navigate(
             isRegistration
               ? "(pages)/EmailRequestDetails"
@@ -111,15 +131,41 @@ const Notification = () => {
             style={styles.icon}
           />
           <View style={styles.textContainer}>
-            <Text style={styles.title}>{notificationTitle}</Text>
-            <Text style={styles.message}>
-              {item.attributes.comment || "No additional information"}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>{notificationTitle}</Text>
+              <Text style={styles.time}>{formattedTime}</Text>
+            </View>
+            <View style={styles.bottomRow}>
+              <Text style={styles.message}>
+                {item.attributes.comment || "No additional information"}
+              </Text>
+              <Text style={[styles.status, { color: statusColor }]}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.time}>Status: {item.attributes.status}</Text>
         </View>
       </TouchableOpacity>
     );
+  };
+
+  // Add filtered notifications logic
+  const filteredNotifications = (notifications) => {
+    const searchText = searchQuery.toLowerCase();
+    return notifications.filter((item) => {
+      const username = item.attributes.username?.toLowerCase() || "";
+      const comment = item.attributes.comment?.toLowerCase() || "";
+      const projectName =
+        item.attributes.task?.data?.attributes?.project?.data?.attributes?.name?.toLowerCase() ||
+        "";
+
+      return (
+        searchText === "" ||
+        username.includes(searchText) ||
+        comment.includes(searchText) ||
+        projectName.includes(searchText)
+      );
+    });
   };
 
   return (
@@ -128,37 +174,59 @@ const Notification = () => {
         <View style={styles.header}>
           <Text style={styles.headerText}>Notifications</Text>
         </View>
-      </View>
 
-      <View style={styles.sectionHeaderContainer}>
-        <Text style={styles.sectionHeader}>Unread</Text>
-        <View style={styles.countBubble}>
-          <Text style={styles.countText}>{unreadNotifications.length}</Text>
+        {/* Tabs First */}
+        <View style={styles.categoryTabsContainer}>
+          {["Unread", "Read"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.categoryTab,
+                activeTab === tab && styles.activeCategoryTab,
+              ]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text
+                style={[
+                  styles.categoryTabText,
+                  activeTab === tab && styles.activeCategoryText,
+                ]}
+              >
+                {tab} (
+                {tab === "Unread"
+                  ? unreadNotifications.length
+                  : readNotifications.length}
+                )
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Search Bar After Tabs */}
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search notifications..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
       </View>
-      <FlatList
-        data={[...unreadNotifications].reverse()}
-        keyExtractor={(item, index) => {
-          const prefix = item.attributes.email ? "reg" : "sub";
-          return `unread-${prefix}-${item.id}-${index}`;
-        }}
-        renderItem={renderNotificationItem}
-        contentContainerStyle={styles.listContent}
-        style={styles.flatList}
-        showsVerticalScrollIndicator={false}
-      />
 
-      <View style={styles.sectionHeaderContainer}>
-        <Text style={styles.sectionHeader}>Read</Text>
-        <View style={styles.countBubble}>
-          <Text style={styles.countText}>{readNotifications.length}</Text>
-        </View>
-      </View>
+      {/* Single FlatList based on active tab */}
       <FlatList
-        data={[...readNotifications].reverse()}
+        data={filteredNotifications(
+          activeTab === "Unread" ? unreadNotifications : readNotifications
+        ).reverse()}
         keyExtractor={(item, index) => {
           const prefix = item.attributes.email ? "reg" : "sub";
-          return `read-${prefix}-${item.id}-${index}`;
+          return `${activeTab.toLowerCase()}-${prefix}-${item.id}-${index}`;
         }}
         renderItem={renderNotificationItem}
         contentContainerStyle={styles.listContent}
@@ -241,22 +309,80 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   title: {
     fontSize: 16,
     fontWeight: "600",
     color: "#1C1C1E",
-  },
-  message: {
-    fontSize: 14,
-    color: "#6C757D",
-    marginTop: 2,
+    flex: 1,
+    marginRight: 8,
   },
   time: {
     fontSize: 12,
     color: "#A0A0A0",
   },
+  message: {
+    fontSize: 14,
+    color: "#6C757D",
+    flex: 1,
+    marginRight: 8,
+  },
+  status: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
   listContent: {
     paddingBottom: 80,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    height: 40,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
+  categoryTabsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16,
+  },
+  categoryTab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    width: "50%",
+  },
+  activeCategoryTab: {
+    borderColor: "#577CFF",
+    borderBottomWidth: 6,
+    borderBottomColor: "#577CFF",
+  },
+  categoryTabText: {
+    color: "#1C1C1E",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  activeCategoryText: {
+    color: "#577CFF",
+  },
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 2,
   },
 });
 

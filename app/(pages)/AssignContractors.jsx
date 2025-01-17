@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -34,7 +35,7 @@ const AssignContractors = () => {
   const [contractorValue, setContractorValue] = useState(null);
   const [contractorItems, setContractorItems] = useState([]);
   const [assignedTask, setAsignedTask] = useState([]);
-  const [taskOpen, setTaskOpen] = useState(false);
+  // const [taskOpen, setTaskOpen] = useState(false);
   const [taskValue, setTaskValue] = useState(null);
   const [taskItems, setTaskItems] = useState([]);
   const [dueDate, setDueDate] = useState(null);
@@ -53,8 +54,8 @@ const AssignContractors = () => {
     task: "",
     dueDate: "",
   });
-  const [toastVisible, setToastVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [popupVisible, setPopupVisible] = useState(false);
 
   const [jobRole, setJobRole] = useState([]);
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
@@ -218,14 +219,12 @@ const AssignContractors = () => {
   };
 
   const handleFinishProjectSetup = async () => {
-    setToastMessage("Project Setup successfully!");
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
+    // setTimeout(() => setToastVisible(false), 3000);
     if (assignedContractors.length === 0) {
       Alert.alert("Error", "Please add at least one contractor.");
       return;
     }
-
+    setIsLoading(true);
     try {
       const contractorIds = assignedContractors.map(
         (contractor) => contractor.contractor
@@ -272,9 +271,12 @@ const AssignContractors = () => {
       };
       await updateExistingProject(projectId, projectData);
       Alert.alert("Success", "Project setup completed and tasks assigned!");
+      setPopupVisible(true);
+      setTimeout(() => setPopupVisible(false), 3000);
+      setIsLoading(false);
       clearProjectData();
       setAssignedContractors([]);
-      navigation.navigate("(pages)/dashboard");
+      // navigation.navigate("(pages)/dashboard");
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);
       Alert.alert(
@@ -284,7 +286,7 @@ const AssignContractors = () => {
     }
   };
 
-  const handleSkip =  () => {
+  const handleSkip = () => {
     navigation.navigate('(pages)/dashboard')
   }
 
@@ -319,9 +321,15 @@ const AssignContractors = () => {
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
-        {toastVisible && (
-          <View style={styles.toast}>
-            <Text style={styles.toastText}>{toastMessage}</Text>
+        {isLoading && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+            <Text>Creating tasks, please wait...</Text>
+          </View>
+        )}
+        {popupVisible && (
+          <View style={styles.popup}>
+            <Text style={styles.popupText}>Tasks successfully created!</Text>
           </View>
         )}
         <View style={styles.container}>
@@ -478,8 +486,7 @@ const AssignContractors = () => {
             )}
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.finishbtn} onPress={handleSkip}>
-
-                <Text style={styles.finishButtonText}>Skip for Now</Text>
+                <Text style={styles.finishbtn}>Skip for Now</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -495,6 +502,25 @@ const styles = StyleSheet.create({
     padding: 5,
     marginTop: 20,
     width: "100%",
+  },
+  loaderContainer: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  popup: {
+    backgroundColor: "#4caf50",
+    padding: 15,
+    borderRadius: 10,
+    zIndex: 9999,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  popupText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "bold"
   },
   container: {
     flex: 1,

@@ -12,6 +12,8 @@ const taskEndpoints = {
   getTasksByUser: (userId, projectId) => `/tasks?populate=*`,
   getTaskByContractorId: (projectId, id) =>
     `/tasks?filters[project][id][$eq]=${projectId}&filters[contractor][id][$eq]=${id}&populate=*`,
+  getTasksBySubmissionId: (id) =>
+    `/tasks?populate=*&filters[submissions][id][$eq]=${id}`,
 };
 
 export default taskEndpoints;

@@ -26,6 +26,7 @@ const ProjectDetails = () => {
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [jobRole, setJobRole] = useState('')
 
   useEffect(() => {
     if (routeProjectData) {
@@ -38,11 +39,12 @@ const ProjectDetails = () => {
     const fetchManagerDetails = async () => {
       if (approverId) {
         try {
-          const response = await fetchProjectTeamById(approverId);
-          const names = response.data.attributes.users.data.map(
-            (item) => item.attributes.username
+          const response = await fetchProjectTeamById(approverId);         
+          const names = response?.data?.attributes?.users?.data.map(
+            (item) => item?.attributes?.username
           );
           setManagerNames(names); // Store manager names in state
+          setJobRole(response?.data?.attributes?.job_role)
         } catch (error) {
           console.error("Error fetching manager details:", error);
         }
@@ -102,7 +104,7 @@ const ProjectDetails = () => {
 
         <View style={styles.calendarContainer}>
           <View style={styles.dueDateContainer}>
-            <FontAwesome name="calendar" size={24} color="#F5C37F" />
+            <FontAwesome name="calendar" size={26} color="#F5C37F" />
             <View style={styles.dateContainer}>
               <Text style={styles.dueDateText}>Due Date</Text>
               <Text style={styles.dateText}>{project.end_date || "N/A"}</Text>
@@ -123,7 +125,7 @@ const ProjectDetails = () => {
         </View>
 
         <Text style={styles.label}>
-          Project Manager:{" "}
+          {jobRole || "Project Manager"}:{" "}
           <Text style={styles.text}>{managerNames || "N/A"}</Text>
         </Text>
 
@@ -248,7 +250,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 16,
-    paddingHorizontal: 8,
   },
   dueDateContainer: {
     flexDirection: "row",
@@ -256,6 +257,7 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     marginLeft: 12,
+    gap: 5
   },
   dueDateText: {
     fontSize: 14,
@@ -297,8 +299,9 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 16,
-    paddingHorizontal: 8,
+    justifyContent: 'space-between',
+    marginVertical: 10,
+    paddingVertical: 5,
   },
   progressLabel: {
     fontSize: 15,

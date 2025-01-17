@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // import BottomNavigation from "./BottomNavigation";
@@ -24,9 +25,14 @@ import {
 } from "../../../src/api/repositories/taskRepository";
 import useAuthStore from "../../../useAuthStore";
 import { fetchContractorsByUserId } from "../../../src/services/contractorService";
+import { fetchProjectsByContractorEmail } from "../../../src/services/projectService";
+import { URL } from "../../../src/api/apiClient";
+import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 const profile = () => {
   const { user, designation } = useAuthStore();
+  const router = useRouter();
 
   const [projectsDetail, setProjectsDetail] = useState([]); // to store all user project
   const [tasks, setTasks] = useState([]); // to store tasks per project
@@ -46,7 +52,7 @@ const profile = () => {
             const projectData = data.data.map(
               (project) => (filteredData = project.attributes.projects.data)
             );
-            console.log('data', filteredData);
+            console.log("data", filteredData);
             setProjectsDetail(filteredData);
 
             // Fetch tasks for each project ID in selectedProjectId
@@ -85,10 +91,18 @@ const profile = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={{ padding: 10, marginBottom: 30 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ padding: 10, marginBottom: 30 }}
+      >
         <View>
           <View style={styles.profileImageContiner}>
-            <Image style={styles.userImage} source={icons.userProfile}></Image>
+            <Image
+              style={styles.userImage}
+              source={{
+                uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+              }}
+            ></Image>
           </View>
           <View style={styles.profileDetailSection}>
             <Text style={styles.userName}>
@@ -100,48 +114,105 @@ const profile = () => {
           </View>
         </View>
 
-        {uploadedHistory?.map((history, historyIndex) => (
-          <View key={historyIndex} style={{ margin: 10 }}>
-            <Text style={styles.subTitle}>
-              Submissions for{" "}
-              {history?.attributes?.standard_task?.data?.attributes?.Name || "N/A"} for{" "}
-              {history?.attributes?.project?.data?.attributes?.name || "N/A"}
-            </Text>
+        {uploadedHistory?.map((history, historyIndex) => {
+          // Get only the first submission from the submissions array
+          const firstSubmission = history?.attributes?.submissions?.data?.[0];
+          const totalSubmissions =
+            history?.attributes?.submissions?.data?.length || 0;
 
-            {history?.attributes?.submissions?.data?.map((data, dataIndex) => (
-              <View key={`${historyIndex}-${dataIndex}`} style={{ marginVertical: 5 }}>
-                <Text>
-                  {dataIndex+1}. Status: {data?.attributes?.status || "N/A"}
+          return (
+            <View key={historyIndex} style={styles.submissionSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  Submission for{" "}
+                  {history?.attributes?.standard_task?.data?.attributes?.Name ||
+                    "N/A"}{" "}
+                  for{" "}
+                  {history?.attributes?.project?.data?.attributes?.name ||
+                    "N/A"}
                 </Text>
-                <Text>
-                  Comments: {data?.attributes?.comment || "No comments"}
-                </Text>
-                <Text>
-                  Submitted on: {data?.attributes?.createdAt?.slice(0, 10) || "N/A"}
-                </Text>
-
-                {data?.attributes?.proofOfWork?.map((file, fileIndex) => (
+                {totalSubmissions > 1 && (
                   <TouchableOpacity
-                    key={`${historyIndex}-${dataIndex}-${fileIndex}`}
-                    style={styles.fileRow}
-                    onPress={() => Linking.openURL(file?.url || "#")}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/contractor/submission-history",
+                        params: {
+                          submissions: JSON.stringify(
+                            history?.attributes?.submissions?.data
+                          ),
+                          taskName:
+                            history?.attributes?.standard_task?.data?.attributes
+                              ?.Name,
+                          projectName:
+                            history?.attributes?.project?.data?.attributes
+                              ?.name,
+                        },
+                      })
+                    }
                   >
-                    <FontAwesome name="file" size={24} color={colors.primary} />
-                    <Text style={styles.fileName}>{file?.fileName || "File"}</Text>
-                    <FontAwesome
-                      name="download"
-                      size={15}
-                      color={colors.downloadIconColor}
-                    />
+                    <Text style={styles.viewAllLink}>
+                      View all ({totalSubmissions})
+                    </Text>
                   </TouchableOpacity>
-                ))}
+                )}
               </View>
-            ))}
-          </View>
-        ))}
+
+              {firstSubmission && (
+                <TouchableOpacity
+                  style={styles.submissionContainer}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/contractor/submission-details",
+                      params: {
+                        submission: JSON.stringify(firstSubmission),
+                        taskName:
+                          history?.attributes?.standard_task?.data?.attributes
+                            ?.Name,
+                        projectName:
+                          history?.attributes?.project?.data?.attributes?.name,
+                      },
+                    })
+                  }
+                >
+                  <View style={styles.submissionItem}>
+                    <View style={styles.fileIconContainer}>
+                      <FontAwesome5 name="file-alt" size={24} color="#666" />
+                    </View>
+                    <View style={styles.submissionDetails}>
+                      <Text style={styles.documentName}>Document_name.png</Text>
+                      <Text style={styles.submissionDate}>
+                        Submitted on:{" "}
+                        {firstSubmission?.attributes?.createdAt?.slice(0, 10) ||
+                          "N/A"}
+                      </Text>
+                      <Text style={styles.submissionComment}>
+                        {firstSubmission?.attributes?.comment || "No comments"}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor:
+                            firstSubmission?.attributes?.status === "approved"
+                              ? "#4CAF50"
+                              : "#FF9800",
+                        },
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {firstSubmission?.attributes?.status || "pending"}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        })}
         {/* <UploadedFileHIstory historyData={uploadedHistory} /> */}
 
-        <View style={{ marginTop: 20,  }}>
+        <View style={{ marginTop: 20 }}>
           <Text
             style={{
               fontSize: 20,
@@ -173,6 +244,63 @@ const profile = () => {
             ))}
           </ScrollView>
         </View>
+
+        <View style={{ marginTop: 20 }}>
+          {projectsDetail?.map((project) => (
+            <View key={project.id}>
+              {project.attributes.tasks?.data.map((task, index) => (
+                <View key={index} style={styles.submissionContainer}>
+                  <Text style={styles.submissionTitle}>
+                    Submission for {task.attributes.Name || `Task ${index + 1}`}{" "}
+                    for {project.attributes.name}
+                  </Text>
+
+                  <View style={styles.documentRow}>
+                    <View style={styles.documentInfo}>
+                      <View style={styles.iconContainer}>
+                        <FontAwesome5 name="file-alt" size={24} color="#666" />
+                      </View>
+                      <View style={styles.documentDetails}>
+                        <Text style={styles.documentName}>
+                          Document_name.png
+                        </Text>
+                        <Text style={styles.submissionDate}>
+                          Submitted on:{" "}
+                          {task.attributes.createdAt?.slice(0, 10)}
+                        </Text>
+                        <Text style={styles.documentDescription}>
+                          Lorem ipsum dolor sit amet consectetur. Augue et non
+                          amet vestibulum
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor:
+                            task.attributes.task_status === "completed"
+                              ? "#4CAF50"
+                              : "#FF9800",
+                        },
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {task.attributes.task_status === "completed"
+                          ? "Approved"
+                          : "Pending"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity style={styles.viewAllButton}>
+                    <Text style={styles.viewAllText}>View all</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
       </ScrollView>
       <BottomNavigation />
     </SafeAreaView>
@@ -196,7 +324,7 @@ const styles = StyleSheet.create({
   userImage: {
     width: 115,
     height: 115,
-    // borderRadius: '100%',
+    borderRadius: 57.5,
     objectFit: "cover",
   },
   profileDetailSection: {
@@ -225,5 +353,216 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     // fontFamily: fonts.WorkSans500,
     color: colors.blackColor,
+  },
+  projectTasksContainer: {
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  projectTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
+    color: colors.blackColor,
+  },
+
+  taskCard: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+  },
+
+  taskHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  taskTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.blackColor,
+  },
+
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  statusText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "500",
+    textTransform: "capitalize",
+  },
+
+  taskDetails: {
+    gap: 8,
+  },
+
+  taskInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  taskInfoText: {
+    color: "#666",
+    fontSize: 14,
+  },
+
+  submissionContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  submissionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  submissionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+  },
+  viewAllLink: {
+    color: "#007AFF",
+    fontSize: 14,
+  },
+  submissionItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  fileIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  submissionDetails: {
+    flex: 1,
+  },
+  documentName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+    marginBottom: 4,
+  },
+  submissionDate: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+  },
+  submissionComment: {
+    fontSize: 12,
+    color: "#666",
+    lineHeight: 16,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginLeft: 12,
+  },
+  statusText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "500",
+    textTransform: "capitalize",
+  },
+
+  documentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+
+  documentInfo: {
+    flexDirection: "row",
+    flex: 1,
+  },
+
+  iconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+
+  documentDetails: {
+    flex: 1,
+  },
+
+  documentDescription: {
+    fontSize: 12,
+    color: "#666",
+    lineHeight: 16,
+  },
+
+  viewAllButton: {
+    alignSelf: "flex-end",
+    padding: 8,
+  },
+
+  viewAllText: {
+    color: "#007AFF",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  submissionSection: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+  },
+  viewAllLink: {
+    color: "#007AFF",
+    fontSize: 14,
+  },
+  submissionContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
