@@ -172,37 +172,44 @@ const UploadProof = ({}) => {
   };
 
   const handleSubmit = async () => {
-    const validationError = validateSubmission();
-
-    if (validationError) {
-      setErrors(validationError);
-      return;
-    }
-
     try {
-      const fileIds = uploadedFileIds.filter((id) => typeof id === "number");
+      // Validate comment first
+      if (!comment.trim()) {
+        setErrors("Comment is required");
+        return;
+      }
+
+      const hasAlphabet = /[a-zA-Z]/.test(comment);
+      if (!hasAlphabet) {
+        setErrors("Comment must contain at least one letter");
+        return;
+      }
+
+      // Get file IDs from FileUpload component
+      const fileIds = await fileUploadRef.current?.handleSubmit();
+
+      if (!fileIds || fileIds.length === 0) {
+        // FileUpload component will set its own error
+        return;
+      }
+
       const submission = await createSubmission(fileIds, id);
       console.log("Submission created successfully:", submission);
 
-      // Clear all uploaded files and reset states
-      setUploadedFiles([]);
-      setUploadedFileIds([]);
+      // Clear form
       setComment("");
-      clearFiles();
-      setErrors(""); // Clear any existing errors
-
       if (fileUploadRef.current) {
         fileUploadRef.current.clearFiles();
       }
+      setErrors("");
 
-      // Show success toast message
+      // Show success message
       setToastMessage("Submission successful!");
       setToastVisible(true);
 
-      // Hide toast after 3 seconds
+      // Navigate after delay
       setTimeout(() => {
         setToastVisible(false);
-        // Navigate after showing toast
         navigation.navigate("(pages)/taskDetails", {
           taskData: { id },
           refresh: true,
@@ -412,9 +419,11 @@ const UploadProof = ({}) => {
           <View style={styles.uploadContainer}>
             <FileUpload
               ref={fileUploadRef}
-              uploadedFiles={uploadedFileIds}
-              setUploadedFiles={setUploadedFileIds}
-              onFileUploadSuccess={handleFileUploadSuccess}
+              onFileUploadSuccess={(fileIds) => setUploadedFileIds(fileIds)}
+              message="Upload your proof of work"
+              comment={comment}
+              setErrors={setErrors}
+              id={id}
             />
 
             {uploadedFiles
