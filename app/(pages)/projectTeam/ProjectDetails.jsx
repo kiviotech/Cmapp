@@ -43,7 +43,8 @@ const ProjectDetails = () => {
           const names = response?.data?.attributes?.users?.data.map(
             (item) => item?.attributes?.username
           );
-          setManagerNames(names); // Store manager names in state
+          console.log('names', names)
+          setManagerNames(names[0]); // Store manager names in state
           setJobRole(response?.data?.attributes?.job_role)
         } catch (error) {
           console.error("Error fetching manager details:", error);
