@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // import BottomNavigation from "./BottomNavigation";
@@ -113,6 +114,7 @@ const profile = () => {
               (project) => (filteredData = project.attributes.projects.data)
             );
             console.log("data", filteredData);
+            console.log("data", filteredData);
             setProjectsDetail(filteredData);
 
             // Fetch tasks for each project ID in selectedProjectId
@@ -155,8 +157,18 @@ const profile = () => {
         showsVerticalScrollIndicator={false}
         style={{ padding: 10, marginBottom: 30 }}
       >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ padding: 10, marginBottom: 30 }}
+      >
         <View>
           <View style={styles.profileImageContiner}>
+            <Image
+              style={styles.userImage}
+              source={{
+                uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+              }}
+            ></Image>
             <Image
               style={styles.userImage}
               source={{
@@ -190,7 +202,24 @@ const profile = () => {
                   for{" "}
                   {history?.attributes?.project?.data?.attributes?.name ||
                     "N/A"}
+        {uploadedHistory?.map((history, historyIndex) => {
+          // Get only the first submission from the submissions array
+          const firstSubmission = history?.attributes?.submissions?.data?.[0];
+          const totalSubmissions =
+            history?.attributes?.submissions?.data?.length || 0;
+
+          return (
+            <View key={historyIndex} style={styles.submissionSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  Submission for{" "}
+                  {history?.attributes?.standard_task?.data?.attributes?.Name ||
+                    "N/A"}{" "}
+                  for{" "}
+                  {history?.attributes?.project?.data?.attributes?.name ||
+                    "N/A"}
                 </Text>
+                {totalSubmissions > 1 && (
                 {totalSubmissions > 1 && (
                   <TouchableOpacity
                     onPress={() =>
@@ -213,7 +242,28 @@ const profile = () => {
                     <Text style={styles.viewAllLink}>
                       View all ({totalSubmissions})
                     </Text>
+                    onPress={() =>
+                      router.push({
+                        pathname: "/contractor/submission-history",
+                        params: {
+                          submissions: JSON.stringify(
+                            history?.attributes?.submissions?.data
+                          ),
+                          taskName:
+                            history?.attributes?.standard_task?.data?.attributes
+                              ?.Name,
+                          projectName:
+                            history?.attributes?.project?.data?.attributes
+                              ?.name,
+                        },
+                      })
+                    }
+                  >
+                    <Text style={styles.viewAllLink}>
+                      View all ({totalSubmissions})
+                    </Text>
                   </TouchableOpacity>
+                )}
                 )}
               </View>
 
@@ -375,6 +425,7 @@ const styles = StyleSheet.create({
   userImage: {
     width: 115,
     height: 115,
+    borderRadius: 57.5,
     borderRadius: 57.5,
     objectFit: "cover",
   },

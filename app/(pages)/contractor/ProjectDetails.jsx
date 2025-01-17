@@ -28,6 +28,7 @@ const ProjectDetails = () => {
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
   const [projectMangerName, setProjectManagerName] = useState("");
+  const [jobRole, setJobRole] = useState('')
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
@@ -58,14 +59,12 @@ const ProjectDetails = () => {
 
   useEffect(() => {
     const getProjectDetails = async () => {
-      try {
-        const response = await fetchProjectById(projectId);
-        console.log("Project Details Response:", response);
-
-        // Find Project Manager from approvers directly
-        const projectManager = response?.data?.attributes?.approvers?.data.find(
-          (approver) => approver.attributes.job_role === "Project Manager"
-        );
+      const response = await fetchProjectById(projectId);
+      // Find Project Manager ID
+      const projectManager = response?.data?.attributes?.approvers?.data.find(
+        (approver) => approver?.attributes?.job_role === "Project Manager"
+      );
+      console.log("Project Manager ID:", projectManager?.id);
 
         // Fetch project team data if project manager exists
         if (projectManager) {
@@ -79,15 +78,23 @@ const ProjectDetails = () => {
             console.error("Error fetching project team:", error);
             setProjectManagerName("N/A");
           }
+        // Fetch project team data if project manager exists
+        if (projectManager) {
+          try {
+            const teamData = await getProjectTeamById(projectManager.id);
+            const managerName =
+              teamData?.data?.data?.attributes?.users?.data[0]?.attributes
+                ?.username;
+            setProjectManagerName(managerName || "N/A");
+          } catch (error) {
+            console.error("Error fetching project team:", error);
+            setProjectManagerName("N/A");
+          }
         }
-
         setProjectDetails(response.data);
-      } catch (error) {
-        console.error("Error fetching project details:", error);
       }
-    };
-
     getProjectDetails();
+  }, [projectId]); // Add projectId as dependency
   }, [projectId]); // Add projectId as dependency
 
   return (
@@ -112,7 +119,7 @@ const ProjectDetails = () => {
         </View>
 
         <View style={styles.calendarContainer}>
-          <FontAwesome name="calendar" size={24} color="#F5C37F" />
+          <FontAwesome name="calendar" size={26} color="#F5C37F" />
           <View style={styles.dateContainer}>
             <Text style={styles.dueDateText}>Due Date</Text>
             <Text style={styles.dateText}>
@@ -205,7 +212,8 @@ const styles = StyleSheet.create({
     paddingTop: height * 0.05,
     display: "flex",
     flexDirection: "row",
-    gap: "10px",
+    gap: 10,
+    marginHorizontal: 20
   },
   header: {
     display: "flex",
@@ -237,12 +245,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.015,
-    paddingHorizontal: width * 0.1,
+    paddingHorizontal: 20
   },
   dateContainer: {
     flexDirection: "column",
     alignItems: "flex-start",
     marginLeft: width * 0.03,
+    gap: 5,
   },
   dueDateText: {
     fontSize: width * 0.04,
@@ -279,7 +288,6 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     flexDirection: "row",
-
     alignItems: "center",
     marginBottom: height * 0.02,
     paddingVertical: height * 0.01,
@@ -305,10 +313,10 @@ const styles = StyleSheet.create({
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
-    padding: width * 0.04,
+    padding: width * 0.02,
     borderRadius: 8,
-    marginLeft: "10px",
-    marginBottom: height * 0.015,
+    marginHorizontal: 'auto',
+    marginVertical: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
     width: "90%",

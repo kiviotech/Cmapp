@@ -22,8 +22,14 @@ const CrossPlatformDatePicker = ({ label, value, onChange, minDate }) => {
     setShowPicker(false);
     if (selectedDate) {
       onChange(selectedDate);
+    }else {
+      onChange(null); // Handle cleared date case
     }
   };
+
+  const currentDate = new Date();
+  const todayString = currentDate.toISOString().split("T")[0]; // To get current date in YYYY-MM-DD format
+
 
   const formatDateForWeb = (date) =>
     isValidDate(date) ? date.toISOString().split("T")[0] : "";
@@ -36,13 +42,8 @@ const CrossPlatformDatePicker = ({ label, value, onChange, minDate }) => {
         <input
           type="date"
           value={formatDateForWeb(value)}
-          onChange={(e) => {
-            const selectedDate = new Date(e.target.value);
-            if (isValidDate(selectedDate)) {
-              onChange(selectedDate);
-            }
-          }}
-          min={formatDateForWeb(effectiveMinDate)}
+          onChange={(e) => onChange(new Date(e.target.value))}
+          min={todayString} 
           style={styles.webDatePicker}
         />
       ) : (
@@ -64,7 +65,7 @@ const CrossPlatformDatePicker = ({ label, value, onChange, minDate }) => {
               mode="date"
               display="calendar"
               onChange={handleDateChange}
-              minimumDate={effectiveMinDate}
+              minimumDate={currentDate}
               maximumDate={new Date(2100, 11, 31)}
             />
           )}
