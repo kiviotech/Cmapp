@@ -41,7 +41,6 @@ const Contractor = () => {
   // const [contractorId, setContractorId] = useState([]);
 
   const { user, designation } = useAuthStore();
-  // // console.log(user, designation)
 
   useEffect(() => {
     const loadContractorData = async () => {
@@ -158,7 +157,6 @@ const Contractor = () => {
                     .includes(searchQuery.toLowerCase())
                 )
                 .map((task) => {
-                  console.log("Task data:", task);
                   const taskImageUrl = task?.attributes?.documents?.data?.[0]
                     ?.attributes?.url
                     ? `${URL}${task.attributes.documents.data[0].attributes.url}`

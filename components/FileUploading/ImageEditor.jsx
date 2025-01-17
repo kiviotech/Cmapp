@@ -74,20 +74,26 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
   const startDrawing = (e) => {
     if (!drawingContext) return;
 
-    if (Platform.OS === "android") {
-      setIsTouching(true);
-    }
+    e.preventDefault(); // Prevent default touch behavior
+    setIsTouching(true);
+    setIsDrawing(true);
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    let clientX, clientY;
+    if (e.touches) {
+      clientX = e.touches[0].pageX;
+      clientY = e.touches[0].pageY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
 
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
+    const x = (clientX - rect.left - window.scrollX) * scaleX;
+    const y = (clientY - rect.top - window.scrollY) * scaleY;
 
     if (currentTool === "eraser") {
       // Split paths at eraser point instead of just removing points
@@ -149,16 +155,24 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
   const draw = (e) => {
     if (!isDrawing || !drawingContext || currentTool === "eraser") return;
 
+    e.preventDefault(); // Prevent default touch behavior
+
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    let clientX, clientY;
+    if (e.touches) {
+      clientX = e.touches[0].pageX;
+      clientY = e.touches[0].pageY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
 
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
+    const x = (clientX - rect.left - window.scrollX) * scaleX;
+    const y = (clientY - rect.top - window.scrollY) * scaleY;
 
     currentPath.current.points.push({ x, y });
 
@@ -359,7 +373,7 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
 
   return (
     <View style={styles.container}>
-      {Platform.OS === "web" ? (
+      {Platform.OS === "web" && (
         <canvas
           ref={canvasRef}
           style={styles.canvas}
@@ -367,16 +381,10 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseOut={stopDrawing}
-        />
-      ) : (
-        <View
-          style={[styles.canvas, isTouching && { overflow: "hidden" }]}
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-        >
-          <canvas ref={canvasRef} />
-        </View>
+        />
       )}
 
       <View style={styles.controls}>

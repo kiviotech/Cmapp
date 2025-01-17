@@ -272,7 +272,7 @@ const TaskDetails = () => {
               />
             )}
           </View>
-          
+
           {/* Project Info Section */}
           <View style={styles.projectInfo}>
             <View style={styles.projectTitleContainer}>
@@ -299,13 +299,16 @@ const TaskDetails = () => {
             </Text>
           </View>
 
-          <View>
-            <TouchableOpacity style={styles.linkButton} onPress={openLink}>
-              <Text style={styles.linkButtonText}>
-                Click here to open Documents
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* Conditionally render the link button */}
+          {taskData?.attributes?.Urls && (
+            <View>
+              <TouchableOpacity style={styles.linkButton} onPress={openLink}>
+                <Text style={styles.linkButtonText}>
+                  Click here to open Documents
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Table Section */}
           <View style={styles.tableContainer}>
@@ -388,9 +391,11 @@ const TaskDetails = () => {
                 styles.notificationApproval,
                 {
                   backgroundColor:
-                  taskData?.attributes?.submission?.data?.attributes?.status === "approved"
+                    taskData?.attributes?.submission?.data?.attributes
+                      ?.status === "approved"
                       ? "#D4EDDA"
-                      : taskData?.attributes?.submission?.data?.attributes?.status === "declined"
+                      : taskData?.attributes?.submission?.data?.attributes
+                          ?.status === "declined"
                       ? "#ffebee"
                       : "rgba(251, 188, 85, 0.3)",
                 },
@@ -398,9 +403,11 @@ const TaskDetails = () => {
             >
               <Image
                 source={
-                  taskData?.attributes?.submission?.data?.attributes?.status === "approved"
+                  taskData?.attributes?.submission?.data?.attributes?.status ===
+                  "approved"
                     ? icons.approved
-                    : taskData?.attributes?.submission?.data?.attributes?.status === "declined"
+                    : taskData?.attributes?.submission?.data?.attributes
+                        ?.status === "declined"
                     ? icons.reject
                     : icons.uploadApproval
                 }
@@ -408,14 +415,17 @@ const TaskDetails = () => {
               <Text
                 style={{
                   color:
-                    taskData?.attributes?.submission?.data?.attributes?.status === "approved"
+                    taskData?.attributes?.submission?.data?.attributes
+                      ?.status === "approved"
                       ? "#28A745"
-                      : taskData?.attributes?.submission?.data?.attributes?.status === "declined"
+                      : taskData?.attributes?.submission?.data?.attributes
+                          ?.status === "declined"
                       ? "#DC3545"
                       : "#FBBC55",
                 }}
               >
-                {taskData?.attributes?.submission?.data?.attributes?.status || "Yet to Upload"}
+                {taskData?.attributes?.submission?.data?.attributes?.status ||
+                  "Yet to Upload"}
               </Text>
             </View>
 

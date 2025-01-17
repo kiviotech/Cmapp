@@ -184,9 +184,11 @@ const RequestDetails = () => {
             const updateTaskData = {
               data: {
                 task_status: "completed",
-                approver: user.id,
+                // approver: user.id,
               },
             };
+
+            console.log('updateTaskData', updateTaskData.data)
 
             const taskResp = await updateTask(taskData.id, updateTaskData);
 

@@ -64,7 +64,6 @@ const ProjectDetails = () => {
       const projectManager = response?.data?.attributes?.approvers?.data.find(
         (approver) => approver?.attributes?.job_role === "Project Manager"
       );
-      console.log("Project Manager ID:", projectManager?.id);
 
       // Fetch project team data if project manager exists
       if (projectManager) {
