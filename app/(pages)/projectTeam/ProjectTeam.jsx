@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   },
   overviewItem: {
     alignItems: "center",
-    height: 70,
+    height: 60,
     width: 90,
     // borderWidth:1,
     borderRadius: 10,

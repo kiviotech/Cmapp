@@ -43,7 +43,6 @@ const ProjectDetails = () => {
           const names = response?.data?.attributes?.users?.data.map(
             (item) => item?.attributes?.username
           );
-          console.log('names', names)
           setManagerNames(names[0]); // Store manager names in state
           setJobRole(response?.data?.attributes?.job_role)
         } catch (error) {

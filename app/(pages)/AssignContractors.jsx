@@ -66,9 +66,9 @@ const AssignContractors = () => {
 
   useEffect(() => {
     console.log("Received project ID:", projectId);
-    console.log("Received project_manager:", project_manager);
-    console.log("Received project_supervisor:", project_supervisor);
-    console.log("Received site_coordinator:", site_coordinator);
+    // console.log("Received project_manager:", project_manager);
+    // console.log("Received project_supervisor:", project_supervisor);
+    // console.log("Received site_coordinator:", site_coordinator);
   }, [projectId]);
 
   useEffect(() => {
@@ -79,7 +79,6 @@ const AssignContractors = () => {
           label: contractor.attributes.name,
           value: contractor.id,
         }));
-        console.log('types', types)
         setContractorTypeItems(types);
       } catch (error) {
         console.error("Error fetching contractor types:", error);
@@ -105,7 +104,6 @@ const AssignContractors = () => {
               contractor.attributes.sub_contractor?.data?.attributes?.name ||
               "No Sub Contractor",
           }));
-        console.log('contractors', contractors)
         setContractorItems(contractors);
       } catch (error) {
         console.error("Error fetching contractors:", error);
@@ -120,15 +118,12 @@ const AssignContractors = () => {
 
   // useEffect(() => {
   const fetchStandardTasks = async (value) => {
-    console.log(value);
     const contractorLabel = contractorTypeItems.find(
       (item) => item.value === value
     )?.label;
     try {
       const response = await fetchStandardTaskBySubcontractor(contractorLabel);
-      console.log('tasks resp', response)
       setAsignedTask(response.data)
-
       const roles = response?.data
         .map((task) => task.attributes?.project_team?.data?.attributes?.job_role)
         .filter((role) => role !== undefined); // Filter out undefined values
@@ -190,7 +185,15 @@ const AssignContractors = () => {
       );
       return;
     }
-    console.log('contractorValue', contractorItems)
+  
+    if (!assignedTask || assignedTask.length === 0) {
+      Alert.alert(
+        "Error",
+        "No tasks are available for the selected contractor type."
+      );
+      return;
+    }
+  
     const contractorTypeLabel = contractorTypeItems.find(
       (item) => item.value === contractorTypeValue
     )?.label;
@@ -198,7 +201,7 @@ const AssignContractors = () => {
       (item) => item.value === contractorValue
     )?.label;
     const taskLabel = taskItems.find((item) => item.value === taskValue)?.label;
-
+  
     const newContractor = {
       contractorType: contractorTypeValue,
       contractor: contractorValue,
@@ -208,15 +211,11 @@ const AssignContractors = () => {
       contractorLabel,
       taskLabel,
     };
-    //(newContractor.contractorTypeLabel);
-
+  
     setAssignedContractors([...assignedContractors, newContractor]);
-    setIsFinishButtonEnabled(true);
-    // setContractorTypeValue(null);
-    // setContractorValue(null);
-    // setTaskValue(null);
-    // setDueDate(null);
+    setIsFinishButtonEnabled(true); // Enable finish button if a contractor is added
   };
+  
 
   const handleFinishProjectSetup = async () => {
     // setTimeout(() => setToastVisible(false), 3000);
