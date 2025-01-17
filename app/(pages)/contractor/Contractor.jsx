@@ -172,8 +172,8 @@ const Contractor = () => {
                           }
                           backgroundColor={
                             project.attributes.project_status === "ahead"
-                            ? "e8f5e9"
-                            : "#ffebee"
+                              ? "e8f5e9"
+                              : "#ffebee"
                           }
                         />
                         <Text style={styles.projectStatusText}>
@@ -232,79 +232,43 @@ const Contractor = () => {
                     .includes(searchQuery.toLowerCase())
                 )
                 .map((task) => {
-                  console.log("Task data:", task);
-                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
-                    ?.attributes?.url
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]?.attributes?.url
                     ? `${URL}${task.attributes.documents.data[0].attributes.url}`
                     : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
                   return (
                     <View key={task.id} style={styles.milestoneCard}>
-                      <Image
-                        source={{ uri: taskImageUrl }}
-                        style={styles.milestoneImage}
-                      />
-                    );
-                  })}
-                  <View style={styles.milestoneContent}>
-                    <View style={styles.milestoneHeaderContainer}>
-                      <Text style={styles.milestoneTitle}>
-                        {task.attributes.standard_task.data.attributes.Name ||
-                          "Task"}
-                      </Text>
-                      <View style={styles.substituteButton}>
-                        <Text style={styles.substituteText}>Substructure</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.milestoneDescription}>
-                      {task.attributes.standard_task.data.attributes
-                        .Description ||
-                        "No description available for this task."}
-                    </Text>
-                    <View style={styles.divider} />
-                    <Text style={styles.deadlineText}>
-                      <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                      {task.attributes.due_date || "N/A"}
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.uploadButton}
-                      onPress={() =>
-                        navigation.navigate("(pages)/taskDetails", {
-                          taskData: task,
-                        })
-                      }
-                    >
-                      <Icon name="file-upload" size={16} color="#fff" />
-                      <Text style={styles.uploadButtonText}>
-                        Upload your Proof of work
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  {/* </View> */}
-                </TouchableOpacity>
-              ))
+                      {/* Task Image */}
+                      <Image source={{ uri: taskImageUrl }} style={styles.milestoneImage} />
+
+                      {/* Task Content */}
                       <View style={styles.milestoneContent}>
+                        {/* Header */}
                         <View style={styles.milestoneHeaderContainer}>
                           <Text style={styles.milestoneTitle}>
-                            {task.attributes.project.data.attributes.name ||
-                              "Project"}
+                            {task.attributes.standard_task.data.attributes.Name || "Task"}
                           </Text>
                           <View style={styles.substituteButton}>
-                            <Text style={styles.substituteText}>
-                              Substructure
-                            </Text>
+                            <Text style={styles.substituteText}>Substructure</Text>
                           </View>
                         </View>
+
+                        {/* Description */}
                         <Text style={styles.milestoneDescription}>
-                          {task.attributes.standard_task.data.attributes
-                            .Description ||
+                          {task.attributes.standard_task.data.attributes.Description ||
                             "No description available for this task."}
                         </Text>
+
+                        {/* Divider */}
                         <View style={styles.divider} />
+
+                        {/* Deadline */}
                         <Text style={styles.deadlineText}>
                           <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                          {task.attributes.due_date || "No deadline specified"}
+                          {task.attributes.due_date || "N/A"}
                         </Text>
+
+                        {/* Upload Button */}
                         <TouchableOpacity
                           style={styles.uploadButton}
                           onPress={() =>
@@ -323,14 +287,14 @@ const Contractor = () => {
                   );
                 })
             ) : (
+              // No Tasks Message
               <View style={styles.noTasksContainer}>
-                <Text style={styles.noTasksText}>
-                  No tasks have been assigned.
-                </Text>
+                <Text style={styles.noTasksText}>No tasks have been assigned.</Text>
               </View>
             )}
           </>
         )}
+
 
         {/* <View style={styles.milestoneCard}>
             <Image
