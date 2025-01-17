@@ -43,7 +43,12 @@ const SubmissionDetail = () => {
     const fetchSubmission = async () => {
       try {
         const response = await fetchSubmissionById(submissionData.id);
-        const imageUrl = `${URL}${response?.data?.attributes?.proofOfWork?.data?.[0]?.attributes?.formats?.large?.url}`;
+        console.log(
+          "Response:",
+          response?.data?.attributes?.proofOfWork?.data?.[0]?.attributes?.url
+        );
+        const imageUrl = `${URL}${response?.data?.attributes?.proofOfWork?.data?.[0]?.attributes?.url}`;
+        console.log("Image URL:", imageUrl);
         setProofImageUrl(imageUrl);
         console.log("Fetched Submission Data:", imageUrl);
       } catch (error) {
