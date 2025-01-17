@@ -50,7 +50,12 @@ const PersonalDetails = () => {
           </View>
 
           <View style={styles.profileImageContainer}>
-            <Image style={styles.profileImage} source={icons.userProfile} />
+            <Image
+              style={styles.profileImage}
+              source={{
+                uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+              }}
+            />
             <TouchableOpacity style={styles.editIconContainer}>
               <Ionicons name="pencil" size={14} color="white" />
             </TouchableOpacity>

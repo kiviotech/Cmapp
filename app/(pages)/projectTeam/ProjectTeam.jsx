@@ -347,7 +347,6 @@ const ProjectTeam = () => {
                       {project.attributes.description.length > 50
                         ? `${project.attributes.description.slice(0, 50)}...`
                         : project.attributes.description}
-
                     </Text>
 
                     {/* Project Status */}
@@ -405,13 +404,17 @@ const ProjectTeam = () => {
             <View>
               <Text style={styles.requestTitle}>
                 Submission for{" "}
-                {
-                  request?.attributes?.task?.data?.attributes?.project?.data
-                    ?.attributes?.name || "Project"
-                }{" - "} {request?.attributes?.task?.data?.attributes?.standard_task?.data?.attributes?.Name || "Work"}
+                {request?.attributes?.task?.data?.attributes?.project?.data
+                  ?.attributes?.name || "Project"}
+                {" - "}{" "}
+                {request?.attributes?.task?.data?.attributes?.standard_task
+                  ?.data?.attributes?.Name || "Work"}
               </Text>
               <Text style={styles.requestDescription}>
-                {request.attributes.comment || "No description available."}
+                {request.attributes.comment
+                  ? request.attributes.comment.charAt(0).toUpperCase() +
+                    request.attributes.comment.slice(1)
+                  : "No description available."}
               </Text>
               <View style={styles.requestStatusContainer}>
                 <Text
@@ -420,21 +423,20 @@ const ProjectTeam = () => {
                     {
                       color:
                         request.attributes.status === "approved"
-                          ? "green"
+                          ? "#4CAF50" // green
                           : request.attributes.status === "pending"
-                            ? "orange"
-                            : request.attributes.status === "declined"
-                              ? "red"
-                              : "black", // Default color
+                          ? "#FF9800" // orange
+                          : request.attributes.status === "rejected"
+                          ? "#F44336" // red
+                          : "black", // default color
                     },
                   ]}
                 >
                   {request.attributes.status
                     ? request.attributes.status.charAt(0).toUpperCase() +
-                    request.attributes.status.slice(1).toLowerCase()
+                      request.attributes.status.slice(1).toLowerCase()
                     : "Pending"}
                 </Text>
-
 
                 <TouchableOpacity
                   onPress={() => {
@@ -519,53 +521,57 @@ const ProjectTeam = () => {
 
                   return (
                     <View key={taskIndex} style={styles.milestoneCard}>
-                      <TouchableOpacity
-                        style={styles.milestoneCard}
-                        onPress={() =>
-                          navigation.navigate("(pages)/taskDetails", {
-                            taskData: task,
-                          })
-                        }
-                      >
-                        <Image
-                          source={{ uri: taskImageUrl }}
-                          style={styles.milestoneImage}
-                        />
-                        <View style={styles.milestoneContent}>
-                          <View style={styles.milestoneHeaderContainer}>
-                            <Text style={styles.milestoneTitle}>
-                              {standardTask.Name || "Task"}
-                            </Text>
-                            <View style={styles.substituteButton}>
-                              <Text style={styles.substituteText}>
-                                Substructure
-                              </Text>
-                            </View>
-                          </View>
-                          <Text style={styles.milestoneDescription}>
-                            {standardTask.Description ||
-                              "No description available."}
+                      <Image
+                        source={{ uri: taskImageUrl }}
+                        style={styles.milestoneImage}
+                      />
+                      <View style={styles.milestoneContent}>
+                        <View style={styles.milestoneHeaderContainer}>
+                          <Text style={styles.milestoneTitle}>
+                            {standardTask.Name || "Task"}
                           </Text>
-                          <View style={styles.divider} />
-                          <Text style={styles.deadlineText}>
-                            <FontAwesome
-                              name="calendar"
-                              size={16}
-                              color="#333"
-                            />{" "}
-                            Deadline:{" "}
-                            {task?.attributes?.due_date
-                              ? new Date(task.attributes.due_date)
+                          <View style={styles.substituteButton}>
+                            <Text style={styles.substituteText}>
+                              Substructure
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.milestoneDescription}>
+                          {standardTask.Description ||
+                            "No description available."}
+                        </Text>
+                        <View style={styles.divider} />
+                        <Text style={styles.deadlineText}>
+                          <FontAwesome name="calendar" size={16} color="#333" />{" "}
+                          Deadline:{" "}
+                          {task?.attributes?.due_date
+                            ? new Date(task.attributes.due_date)
                                 .toLocaleDateString("en-GB", {
                                   day: "2-digit",
                                   month: "2-digit",
                                   year: "numeric",
                                 })
                                 .replace(/\//g, "-")
-                              : "No deadline specified"}
+                            : "No deadline specified"}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.uploadProofButton}
+                          onPress={() =>
+                            navigation.navigate("(pages)/taskDetails", {
+                              taskData: task,
+                            })
+                          }
+                        >
+                          <Ionicons
+                            name="cloud-upload-outline"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.uploadProofText}>
+                            Upload your Proof of work
                           </Text>
-                        </View>
-                      </TouchableOpacity>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   );
                 })
@@ -949,6 +955,30 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#333",
+  },
+  uploadProofButton: {
+    backgroundColor: "#2196F3",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  uploadProofText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  statusApproved: {
+    color: "#4CAF50", // green
+  },
+  statusPending: {
+    color: "#FF9800", // orange
+  },
+  statusRejected: {
+    color: "#F44336", // red
   },
 });
 

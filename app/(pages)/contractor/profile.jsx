@@ -10,7 +10,6 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// import BottomNavigation from "./BottomNavigation";
 import BottomNavigation from "./BottomNavigation ";
 import colors from "../../../constants/colors";
 import { icons } from "../../../constants";
@@ -29,16 +28,76 @@ import { fetchProjectsByContractorEmail } from "../../../src/services/projectSer
 import { URL } from "../../../src/api/apiClient";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import SelectYourProject from "./SelectYourProject";
 
 const profile = () => {
   const { user, designation } = useAuthStore();
   const router = useRouter();
+  const navigation = useNavigation();
 
   const [projectsDetail, setProjectsDetail] = useState([]); // to store all user project
   const [tasks, setTasks] = useState([]); // to store tasks per project
   // const [contractorsDetails, setContractorsDetails] = useState([])
   const [uploadedHistory, setUploadedHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [contractorsData, setContractorsData] = useState([]);
+
+  useEffect(() => {
+    const loadContractorData = async () => {
+      if (user && user.id) {
+        try {
+          setIsLoading(true); // Start loading
+
+          // Fetch contractor data by user ID
+          const data = await fetchContractorsByUserId(user.id);
+          setContractorsData(data.data); // Set entire array of contractors
+
+          if (data.data.length > 0) {
+            const contractorId = data.data[0].id;
+            const projectData = data.data.flatMap(
+              (contractor) => contractor.attributes.projects.data
+            );
+
+            if (projectData.length > 0) {
+              // Fetch all tasks in a single batch using Promise.all
+              const allTasks = await Promise.all(
+                projectData.map(async (project) => {
+                  try {
+                    const taskData = await getTaskByContractorId(
+                      project.id,
+                      contractorId
+                    );
+                    // Filter ongoing tasks
+                    return taskData.data.data.filter(
+                      (task) => task.attributes.task_status === "ongoing"
+                    );
+                  } catch (taskError) {
+                    console.error(
+                      `Error fetching tasks for project ${project.id}:`,
+                      taskError
+                    );
+                    return []; // Return an empty array if task fetch fails
+                  }
+                })
+              );
+
+              // Flatten the tasks array and update state
+              setTasks(allTasks.flat());
+            } else {
+              setTasks([]); // No projects, set tasks to an empty array
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching contractor data:", error);
+        } finally {
+          setIsLoading(false); // End loading
+        }
+      }
+    };
+
+    loadContractorData();
+  }, [user]);
 
   useEffect(() => {
     const ContractorData = async () => {
@@ -52,6 +111,7 @@ const profile = () => {
             const projectData = data.data.map(
               (project) => (filteredData = project.attributes.projects.data)
             );
+            console.log("data", filteredData);
             console.log("data", filteredData);
             setProjectsDetail(filteredData);
 
@@ -160,7 +220,7 @@ const profile = () => {
               {firstSubmission && (
                 <TouchableOpacity
                   style={styles.submissionContainer}
-                  onPress={() =>
+                  onPress={() => {
                     router.push({
                       pathname: "/contractor/submission-details",
                       params: {
@@ -170,9 +230,12 @@ const profile = () => {
                             ?.Name,
                         projectName:
                           history?.attributes?.project?.data?.attributes?.name,
+                        allSubmissions: JSON.stringify(
+                          history?.attributes?.submissions?.data
+                        ),
                       },
-                    })
-                  }
+                    });
+                  }}
                 >
                   <View style={styles.submissionItem}>
                     <View style={styles.fileIconContainer}>
@@ -213,36 +276,10 @@ const profile = () => {
         {/* <UploadedFileHIstory historyData={uploadedHistory} /> */}
 
         <View style={{ marginTop: 20 }}>
-          <Text
-            style={{
-              fontSize: 20,
-              letterSpacing: 0.8,
-              color: colors.blackColor,
-              paddingLeft: 10,
-            }}
-          >
-            Your Projects
-          </Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.carousel}
-          >
-            {projectsDetail?.map((project, index) => (
-              <View key={index} style={styles.cardWrapper}>
-                <SelectYourProjectCard
-                  cardValue={{
-                    id: project.id,
-                    name: project.attributes.name,
-                    desc: project.attributes.description,
-                    update: project.attributes.project_status,
-                    deadline: project.attributes.end_date,
-                  }}
-                />
-              </View>
-            ))}
-          </ScrollView>
+          <SelectYourProject
+            isLoading={isLoading}
+            contractorsData={contractorsData}
+          />
         </View>
 
         <View style={{ marginTop: 20 }}>
@@ -250,51 +287,65 @@ const profile = () => {
             <View key={project.id}>
               {project.attributes.tasks?.data.map((task, index) => (
                 <View key={index} style={styles.submissionContainer}>
-                  <Text style={styles.submissionTitle}>
-                    Submission for {task.attributes.Name || `Task ${index + 1}`}{" "}
-                    for {project.attributes.name}
-                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      console.log("Project Task Data:", task);
+                      navigation.navigate("(pages)/taskDetails", {
+                        taskData: task,
+                        refresh: false,
+                      });
+                    }}
+                  >
+                    <Text style={styles.submissionTitle}>
+                      {task.attributes.Name || `Task ${index + 1}`} for{" "}
+                      {project.attributes.name}
+                    </Text>
 
-                  <View style={styles.documentRow}>
-                    <View style={styles.documentInfo}>
-                      <View style={styles.iconContainer}>
-                        <FontAwesome5 name="file-alt" size={24} color="#666" />
+                    <View style={styles.documentRow}>
+                      <View style={styles.documentInfo}>
+                        <View style={styles.iconContainer}>
+                          <FontAwesome5
+                            name="file-alt"
+                            size={24}
+                            color="#666"
+                          />
+                        </View>
+                        <View style={styles.documentDetails}>
+                          <Text style={styles.documentName}>
+                            Document_name.png
+                          </Text>
+                          <Text style={styles.submissionDate}>
+                            Submitted on:{" "}
+                            {task.attributes.createdAt?.slice(0, 10)}
+                          </Text>
+                          <Text style={styles.documentDescription}>
+                            Lorem ipsum dolor sit amet consectetur. Augue et non
+                            amet vestibulum
+                          </Text>
+                        </View>
                       </View>
-                      <View style={styles.documentDetails}>
-                        <Text style={styles.documentName}>
-                          Document_name.png
-                        </Text>
-                        <Text style={styles.submissionDate}>
-                          Submitted on:{" "}
-                          {task.attributes.createdAt?.slice(0, 10)}
-                        </Text>
-                        <Text style={styles.documentDescription}>
-                          Lorem ipsum dolor sit amet consectetur. Augue et non
-                          amet vestibulum
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor:
+                              task.attributes.task_status === "completed"
+                                ? "#4CAF50"
+                                : "#FF9800",
+                          },
+                        ]}
+                      >
+                        <Text style={styles.statusText}>
+                          {task.attributes.task_status === "completed"
+                            ? "Approved"
+                            : "Pending"}
                         </Text>
                       </View>
                     </View>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        {
-                          backgroundColor:
-                            task.attributes.task_status === "completed"
-                              ? "#4CAF50"
-                              : "#FF9800",
-                        },
-                      ]}
-                    >
-                      <Text style={styles.statusText}>
-                        {task.attributes.task_status === "completed"
-                          ? "Approved"
-                          : "Pending"}
-                      </Text>
-                    </View>
-                  </View>
 
-                  <TouchableOpacity style={styles.viewAllButton}>
-                    <Text style={styles.viewAllText}>View all</Text>
+                    <TouchableOpacity style={styles.viewAllButton}>
+                      <Text style={styles.viewAllText}>View all</Text>
+                    </TouchableOpacity>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -324,6 +375,7 @@ const styles = StyleSheet.create({
   userImage: {
     width: 115,
     height: 115,
+    borderRadius: 57.5,
     borderRadius: 57.5,
     objectFit: "cover",
   },
@@ -564,5 +616,69 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginVertical: 10,
+    paddingLeft: 10,
+  },
+  horizontalScrollContainer: {
+    paddingHorizontal: 5,
+  },
+  projectCard: {
+    width: 250,
+    padding: 15,
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  projectCardContent: {
+    flex: 1,
+  },
+  projectTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#333",
+  },
+  projectDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginVertical: 5,
+  },
+  projectStatus: {
+    fontSize: 14,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  projectStatusText: {
+    marginLeft: 5,
+    fontSize: 14,
+  },
+  projectEndDateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    paddingTop: 8,
+    marginTop: 5,
+  },
+  endDateIcon: {
+    marginRight: 4,
+  },
+  projectEndDate: {
+    fontSize: 14,
+    color: "#666",
+  },
+  noProjectsText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    padding: 20,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: "center",
   },
 });

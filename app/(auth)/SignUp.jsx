@@ -187,7 +187,10 @@ const SignUp = () => {
         message={toast.message}
         type={toast.type}
       />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={{ fontSize: 24 }}>Sign Up</Text>
@@ -269,6 +272,7 @@ const SignUp = () => {
               style={styles.dropdown}
               containerStyle={styles.dropdownContainerStyle}
               searchStyle={styles.searchBox}
+              showsVerticalScrollIndicator={false}
             />
             {errors.subContractor && (
               <Text style={styles.errorText}>{errors.subContractor}</Text>
@@ -330,7 +334,7 @@ const SignUp = () => {
           </View>
 
           <View style={styles.SignUpContainer}>
-            <Text style={{ fontSize: 12, color: "#9C9C9C" }}>
+            <Text style={{ fontSize: 16, color: "#9C9C9C" }}>
               Already have an account?{" "}
               <Text
                 style={{ color: "#577CFF" }}
@@ -381,7 +385,6 @@ const styles = StyleSheet.create({
   },
   dropdownContainerStyle: {
     maxHeight: 200,
-    overflow: "scroll",
     marginTop: 10,
     borderRadius: 10,
     borderWidth: 1,

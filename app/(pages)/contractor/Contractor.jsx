@@ -23,6 +23,7 @@ import { fetchContractorsByUserId } from "../../../src/services/contractorServic
 // import { fetchTasksByContractorId } from "../../../src/services/taskService";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { MEDIA_BASE_URL } from "../../../src/api/apiClient";
+import SelectYourProject from "./SelectYourProject";
 
 const validateImageURL = (url) => {
   return url && (url.startsWith("http://") || url.startsWith("https://"));
@@ -101,7 +102,7 @@ const Contractor = () => {
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Add User Info Section */}
+        {/* User Info Section */}
         <View style={styles.userInfoContainer}>
           <Image
             source={{
@@ -115,89 +116,14 @@ const Contractor = () => {
           </View>
         </View>
 
-        {/* Select Your Project */}
-        <Text style={styles.sectionHeader}>Select Your Project</Text>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <Text>Loading projects...</Text>
-          </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScrollContainer}
-          >
-            {contractorsData.length > 0 ? (
-              contractorsData.map((contractor) =>
-                contractor.attributes.projects.data.map((project) => (
-                  <TouchableOpacity
-                    key={project.id}
-                    style={[
-                      styles.projectCard,
-                      project.attributes.project_status === "pending"
-                        ? { backgroundColor: "#ffebee" }
-                        : { backgroundColor: "#e8f5e9" },
-                    ]}
-                    onPress={() =>
-                      navigation.navigate("(pages)/contractor/ProjectDetails", {
-                        projectId: project.id,
-                        projectData: project,
-                        contractorId: contractor.id,
-                      })
-                    }
-                  >
-                    <View style={styles.projectCardContent}>
-                      <Text style={styles.projectTitle}>
-                        {project.attributes.name}
-                      </Text>
-                      <Text style={styles.projectDescription}>
-                        {project.attributes.description}
-                      </Text>
-                      <Text style={styles.projectStatus}>
-                        ● {project.attributes.project_status || "Status"}
-                        {/* {project.attributes.phase || "Phase"} */}
-                      </Text>
-                      <View style={styles.projectStatusContainer}>
-                        <Icon
-                          name={
-                            project.attributes.project_status === "ahead"
-                              ? "check-circle"
-                              : "error"
-                          }
-                          size={16}
-                          color={
-                            project.attributes.project_status === "ahead"
-                              ? "green"
-                              : "red"
-                          }
-                          backgroundColor={
-                            project.attributes.project_status === "ahead"
-                              ? "e8f5e9"
-                              : "#ffebee"
-                          }
-                        />
-                        <Text style={styles.projectStatusText}>
-                          {project.attributes.project_status === "ahead"
-                            ? "Ahead of Schedule"
-                            : "Delayed"}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))
-              )
-            ) : (
-              <View>
-                <Text style={styles.noProjectsText}>No projects available</Text>
-              </View>
-            )}
-          </ScrollView>
-        )}
+        {/* Select Your Project Component */}
+        <SelectYourProject
+          isLoading={isLoading}
+          contractorsData={contractorsData}
+        />
 
         <View style={styles.headerContainer}>
           <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
-          {/* <Text style={styles.taskStatus}>7 Tasks Pending</Text> */}
-          {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
         </View>
 
         {/* Add Search Bar */}
@@ -232,43 +158,40 @@ const Contractor = () => {
                     .includes(searchQuery.toLowerCase())
                 )
                 .map((task) => {
-                  const taskImageUrl = task?.attributes?.documents?.data?.[0]?.attributes?.url
+                  console.log("Task data:", task);
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                    ?.attributes?.url
                     ? `${URL}${task.attributes.documents.data[0].attributes.url}`
                     : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
                   return (
                     <View key={task.id} style={styles.milestoneCard}>
-                      {/* Task Image */}
-                      <Image source={{ uri: taskImageUrl }} style={styles.milestoneImage} />
-
-                      {/* Task Content */}
+                      <Image
+                        source={{ uri: taskImageUrl }}
+                        style={styles.milestoneImage}
+                      />
                       <View style={styles.milestoneContent}>
-                        {/* Header */}
                         <View style={styles.milestoneHeaderContainer}>
                           <Text style={styles.milestoneTitle}>
-                            {task.attributes.standard_task.data.attributes.Name || "Task"}
+                            {task.attributes.project.data.attributes.name ||
+                              "Project"}
                           </Text>
                           <View style={styles.substituteButton}>
-                            <Text style={styles.substituteText}>Substructure</Text>
+                            <Text style={styles.substituteText}>
+                              Substructure
+                            </Text>
                           </View>
                         </View>
-
-                        {/* Description */}
                         <Text style={styles.milestoneDescription}>
-                          {task.attributes.standard_task.data.attributes.Description ||
+                          {task.attributes.standard_task.data.attributes
+                            .Description ||
                             "No description available for this task."}
                         </Text>
-
-                        {/* Divider */}
                         <View style={styles.divider} />
-
-                        {/* Deadline */}
                         <Text style={styles.deadlineText}>
                           <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                          {task.attributes.due_date || "N/A"}
+                          {task.attributes.due_date || "No deadline specified"}
                         </Text>
-
-                        {/* Upload Button */}
                         <TouchableOpacity
                           style={styles.uploadButton}
                           onPress={() =>
@@ -289,12 +212,13 @@ const Contractor = () => {
             ) : (
               // No Tasks Message
               <View style={styles.noTasksContainer}>
-                <Text style={styles.noTasksText}>No tasks have been assigned.</Text>
+                <Text style={styles.noTasksText}>
+                  No tasks have been assigned.
+                </Text>
               </View>
             )}
           </>
         )}
-
 
         {/* <View style={styles.milestoneCard}>
             <Image
@@ -354,6 +278,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    justifyContent: "center",
     marginBottom: 20,
   },
   profileImage: {
@@ -366,10 +291,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
+    textAlign: "center",
   },
   userRole: {
     fontSize: 14,
     color: "#888",
+    textAlign: "center",
     textAlign: "center",
   },
   searchContainer: {
@@ -585,8 +512,8 @@ const styles = StyleSheet.create({
     color: "#333",
     padding: 5,
     marginBottom: 15,
-    display: 'flex',
-    alignItems: 'center',
+    display: "flex",
+    alignItems: "center",
   },
   uploadButton: {
     backgroundColor: "#1e90ff",
@@ -674,6 +601,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     color: "#333",
+  },
+  projectEndDateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    paddingTop: 8,
+    marginTop: 5,
+  },
+  endDateIcon: {
+    marginRight: 4,
+  },
+  projectEndDate: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

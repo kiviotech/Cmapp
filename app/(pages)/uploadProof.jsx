@@ -194,6 +194,20 @@ const UploadProof = ({}) => {
       if (fileUploadRef.current) {
         fileUploadRef.current.clearFiles();
       }
+
+      // Show success toast message
+      setToastMessage("Submission successful!");
+      setToastVisible(true);
+
+      // Hide toast after 3 seconds
+      setTimeout(() => {
+        setToastVisible(false);
+        // Navigate after showing toast
+        navigation.navigate("(pages)/taskDetails", {
+          taskData: { id },
+          refresh: true,
+        });
+      }, 3000);
     } catch (error) {
       console.error("Error during submission:", error);
       setErrors("Error during submission. Please try again.");

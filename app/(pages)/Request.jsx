@@ -72,10 +72,12 @@ const RequestsScreen = () => {
         </Text>
       ) : (
         <Text style={styles.requestTitle}>
-          Submission for {" "}
+          Submission for{" "}
           {item.attributes.task?.data?.attributes?.project?.data?.attributes
-            .name || "Project"}{" - "}
-            {item?.attributes?.task?.data?.attributes?.standard_task?.data?.attributes?.Name || "Work"}
+            .name || "Project"}
+          {" - "}
+          {item?.attributes?.task?.data?.attributes?.standard_task?.data
+            ?.attributes?.Name || "Work"}
         </Text>
       )}
       {item.attributes.comment && (
@@ -94,7 +96,9 @@ const RequestsScreen = () => {
           ],
         ]}
       >
-        Status: {item?.attributes?.status.charAt(0).toUpperCase() + item?.attributes?.status.slice(1).toLowerCase()}
+        Status:{" "}
+        {item?.attributes?.status.charAt(0).toUpperCase() +
+          item?.attributes?.status.slice(1).toLowerCase()}
       </Text>
       <TouchableOpacity
         onPress={() =>

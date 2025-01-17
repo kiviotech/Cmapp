@@ -397,30 +397,44 @@ const RequestDetails = () => {
             <Text style={styles.label}>Documents:</Text>
             <View>{documents.map(renderDocument)}</View>
           </View>
-          {/* <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.rejectButton}
-              onPress={() => handleStatusChange("rejected")}
-            >
-              <Text style={styles.buttonText}>Reject Request</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.approveButton}
-              onPress={() => handleStatusChange("approved")}
-            >
-              <Text style={styles.buttonText}>Approve Request</Text>
-            </TouchableOpacity>
-          </View> */}
 
-          {/* {requesterName != user.username } */}
+          {/* Show approval status for approved requests */}
+          {requestData?.attributes?.status === "approved" && (
+            <View style={styles.statusContainer}>
+              <View style={styles.approvedStatus}>
+                <AntDesign name="checkcircle" size={24} color="#A3D65C" />
+                <Text style={styles.approvedStatusText}>
+                  This request has been approved
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {requestData?.attributes?.status === "rejected" && (
+            <View style={styles.statusContainer}>
+              <View style={styles.rejectedStatus}>
+                <AntDesign name="closecircle" size={24} color="#FC5275" />
+                <Text style={styles.rejectedStatusText}>
+                  This request has been rejected
+                </Text>
+              </View>
+              {requestData?.attributes?.rejection_reason && (
+                <View style={styles.rejectionReasonContainer}>
+                  <Text style={styles.rejectionReasonLabel}>Reason:</Text>
+                  <Text style={styles.rejectionReasonText}>
+                    {requestData.attributes.rejection_reason}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Show action buttons only for pending requests */}
           {requestData?.attributes?.status === "pending" && (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.rejectButton}
-                onPress={
-                  () => setDeclineModalVisible(true)
-                  // handleStatusChange("rejected")
-                }
+                onPress={() => setDeclineModalVisible(true)}
               >
                 <Text style={styles.buttonText}>Reject Request</Text>
               </TouchableOpacity>
@@ -433,68 +447,68 @@ const RequestDetails = () => {
               </TouchableOpacity>
             </View>
           )}
-
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setModalVisible(false)}
-          >
-            <View style={styles.imageModalContainer}>
-              <TouchableOpacity
-                style={styles.closeImageButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <AntDesign name="close" size={24} color="white" />
-              </TouchableOpacity>
-              {selectedImage && (
-                <Image
-                  source={{ uri: selectedImage }}
-                  style={styles.fullScreenImage}
-                  resizeMode="contain"
-                />
-              )}
-            </View>
-          </Modal>
-
-          {/* Decline Reason Modal */}
-          <Modal
-            visible={declineModalVisible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setDeclineModalVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Reason for Declining</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter reason for Declining"
-                  value={declineReason}
-                  onChangeText={setDeclineReason}
-                  multiline={true}
-                />
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={styles.rejectButton}
-                    onPress={() => setDeclineModalVisible(false)}
-                  >
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.approveButton}
-                    onPress={() => {
-                      handleStatusChange("rejected");
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Submit</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
         </ScrollView>
       )}
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.imageModalContainer}>
+          <TouchableOpacity
+            style={styles.closeImageButton}
+            onPress={() => setModalVisible(false)}
+          >
+            <AntDesign name="close" size={24} color="white" />
+          </TouchableOpacity>
+          {selectedImage && (
+            <Image
+              source={{ uri: selectedImage }}
+              style={styles.fullScreenImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
+
+      {/* Decline Reason Modal */}
+      <Modal
+        visible={declineModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setDeclineModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Reason for Declining</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter reason for Declining"
+              value={declineReason}
+              onChangeText={setDeclineReason}
+              multiline={true}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.rejectButton}
+                onPress={() => setDeclineModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.approveButton}
+                onPress={() => {
+                  handleStatusChange("rejected");
+                }}
+              >
+                <Text style={styles.buttonText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -701,6 +715,61 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 1,
     padding: 10,
+  },
+  statusContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  approvedStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0F9EB",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#A3D65C",
+  },
+  approvedStatusText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#2C5282",
+    fontWeight: "600",
+  },
+  rejectedStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF5F5",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FC5275",
+  },
+  rejectedStatusText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#C53030",
+    fontWeight: "600",
+  },
+  rejectionReasonContainer: {
+    marginTop: 12,
+    backgroundColor: "#FFF5F5",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FC5275",
+  },
+  rejectionReasonLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#C53030",
+    marginBottom: 4,
+  },
+  rejectionReasonText: {
+    fontSize: 14,
+    color: "#C53030",
   },
 });
 

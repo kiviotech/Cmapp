@@ -83,6 +83,7 @@ const TaskDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [taskStatus, setTaskStatus] = useState("");
 
   useEffect(() => {
     const fetchStandardTaskDetails = async () => {
@@ -125,11 +126,26 @@ const TaskDetails = () => {
       try {
         if (taskData?.id) {
           const updatedTaskData = await fetchTaskById(taskData.id);
-          route.params = {
-            ...route.params,
-            taskData: updatedTaskData.data,
-            refresh: false,
-          };
+          if (updatedTaskData?.data) {
+            route.params = {
+              ...route.params,
+              taskData: updatedTaskData.data,
+              refresh: false,
+            };
+            setTaskStatus(updatedTaskData.data.attributes?.task_status);
+            const submissionIds =
+              updatedTaskData.data?.attributes?.submissions?.data?.map(
+                (item) => item.id
+              );
+            if (submissionIds && submissionIds.length > 0) {
+              const submissionPromises = submissionIds.map((id) =>
+                fetchSubmissionById(id)
+              );
+              const responses = await Promise.all(submissionPromises);
+              const submissionData = responses.map((response) => response.data);
+              setSubmissions(submissionData);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching updated task data:", error);

@@ -7,6 +7,7 @@ import {
   Image,
   StyleSheet,
   Dimensions,
+  ScrollView,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -165,96 +166,101 @@ const Login = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.container}>
-          <Image
-            source={{
-              uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
-            }}
-            // source={icons.logo}
-            style={styles.image}
-            resizeMode="contain" // Adjusts the image to fit within the specified dimensions
-          />
-        </View>
-        <View>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Login</Text>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.labelText}>E-mail</Text>
-            <LoginField
-              placeholder="Your email or phone"
-              value={form.mobile}
-              handleChangeText={(value) => handleChangeText("mobile", value)}
-              keyboardType="email-address"
-              style={styles.loginField}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        <View style={styles.content}>
+          <View style={styles.container}>
+            <Image
+              source={{
+                uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
+              }}
+              // source={icons.logo}
+              style={styles.image}
+              resizeMode="contain" // Adjusts the image to fit within the specified dimensions
             />
-            {errors.mobile ? (
-              <Text style={styles.errorText}>{errors.mobile}</Text>
-            ) : null}
+          </View>
+          <View>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Login</Text>
+            </View>
 
-            {usePassword ? (
-              <View style={styles.passwordContainer}>
-                <Text style={styles.labelText}>Password</Text>
-                <LoginField
-                  style={styles.loginField}
-                  placeholder="Password"
-                  value={form.password}
-                  handleChangeText={(value) =>
-                    handleChangeText("password", value)
-                  }
-                  secureTextEntry={true}
-                />
-                {errors.password ? (
-                  <Text style={styles.errorText}>{errors.password}</Text>
-                ) : null}
-              </View>
-            ) : (
-              <View style={styles.otpContainer}>
-                <Text style={styles.labelText}>OTP</Text>
-                <LoginField
-                  placeholder="OTP"
-                  value={form.otp}
-                  handleChangeText={(value) => handleChangeText("otp", value)}
-                  keyboardType="number-pad"
-                  style={styles.loginField}
-                />
-                {errors.otp ? (
-                  <Text style={styles.errorText}>{errors.otp}</Text>
-                ) : null}
-              </View>
-            )}
+            <View style={styles.inputContainer}>
+              <Text style={styles.labelText}>E-mail</Text>
+              <LoginField
+                placeholder="Your email or phone"
+                value={form.mobile}
+                handleChangeText={(value) => handleChangeText("mobile", value)}
+                keyboardType="email-address"
+                style={styles.loginField}
+              />
+              {errors.mobile ? (
+                <Text style={styles.errorText}>{errors.mobile}</Text>
+              ) : null}
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate("(auth)/ForgotPassword")}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-            </TouchableOpacity>
+              {usePassword ? (
+                <View style={styles.passwordContainer}>
+                  <Text style={styles.labelText}>Password</Text>
+                  <LoginField
+                    style={styles.loginField}
+                    placeholder="Password"
+                    value={form.password}
+                    handleChangeText={(value) =>
+                      handleChangeText("password", value)
+                    }
+                    secureTextEntry={true}
+                  />
+                  {errors.password ? (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  ) : null}
+                </View>
+              ) : (
+                <View style={styles.otpContainer}>
+                  <Text style={styles.labelText}>OTP</Text>
+                  <LoginField
+                    placeholder="OTP"
+                    value={form.otp}
+                    handleChangeText={(value) => handleChangeText("otp", value)}
+                    keyboardType="number-pad"
+                    style={styles.loginField}
+                  />
+                  {errors.otp ? (
+                    <Text style={styles.errorText}>{errors.otp}</Text>
+                  ) : null}
+                </View>
+              )}
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate("(auth)/ForgotPassword")}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <CustomButton
+              buttonStyle={styles.loginButton}
+              textStyle={styles.loginButtonText}
+              text="LOGIN"
+              handlePress={() => handleLogin("login")}
+            />
+          </View>
+
+          <View style={styles.signUpContainer}>
+            <Text style={styles.signUpText}>
+              Don’t have an account?
+              <TouchableOpacity
+                onPress={() => navigation.navigate("(auth)/SignUp")}
+              >
+                <Text style={styles.signUpLink}> Sign Up</Text>
+              </TouchableOpacity>
+            </Text>
           </View>
         </View>
-
-        <View style={styles.buttonContainer}>
-          <CustomButton
-            buttonStyle={styles.loginButton}
-            textStyle={styles.loginButtonText}
-            text="LOGIN"
-            handlePress={() => handleLogin("login")}
-          />
-        </View>
-
-        <View style={styles.signUpContainer}>
-          <Text style={styles.signUpText}>
-            Don’t have an account?
-            <TouchableOpacity
-              onPress={() => navigation.navigate("(auth)/SignUp")}
-            >
-              <Text style={styles.signUpLink}> Sign Up</Text>
-            </TouchableOpacity>
-          </Text>
-        </View>
-      </View>
+      </ScrollView>
 
       <Modal
         transparent={true}
@@ -287,9 +293,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
   },
   content: {
     width: "100%",
@@ -347,7 +350,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   signUpText: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#9C9C9C",
   },
   signUpLink: {
@@ -397,5 +400,10 @@ const styles = StyleSheet.create({
   image: {
     width: width * 0.8, // Sets the image width to 80% of the screen width
     height: width * 0.8, // Sets the image height to maintain aspect ratio
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    marginBottom: 40,
   },
 });

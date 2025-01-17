@@ -28,7 +28,7 @@ const ProjectDetails = () => {
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
   const [projectMangerName, setProjectManagerName] = useState("");
-  const [jobRole, setJobRole] = useState('')
+  const [jobRole, setJobRole] = useState("");
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
@@ -66,21 +66,21 @@ const ProjectDetails = () => {
       );
       console.log("Project Manager ID:", projectManager?.id);
 
-        // Fetch project team data if project manager exists
-        if (projectManager) {
-          try {
-            const teamData = await getProjectTeamById(projectManager.id);
-            const managerName =
-              teamData?.data?.data?.attributes?.users?.data[0]?.attributes
-                ?.username;
-            setProjectManagerName(managerName || "N/A");
-          } catch (error) {
-            console.error("Error fetching project team:", error);
-            setProjectManagerName("N/A");
-          }
+      // Fetch project team data if project manager exists
+      if (projectManager) {
+        try {
+          const teamData = await getProjectTeamById(projectManager.id);
+          const managerName =
+            teamData?.data?.data?.attributes?.users?.data[0]?.attributes
+              ?.username;
+          setProjectManagerName(managerName || "N/A");
+        } catch (error) {
+          console.error("Error fetching project team:", error);
+          setProjectManagerName("N/A");
         }
-        setProjectDetails(response.data);
       }
+      setProjectDetails(response.data);
+    };
     getProjectDetails();
   }, [projectId]); // Add projectId as dependency
 
@@ -95,8 +95,10 @@ const ProjectDetails = () => {
         </TouchableOpacity>
         <Text style={styles.header}>Project Details</Text>
       </View>
-
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.projectNameContainer}>
           <Text style={styles.projectName}>
             {projectDetails?.attributes?.name || "Project Name"}
@@ -198,7 +200,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     gap: 10,
-    marginHorizontal: 20
+    marginHorizontal: 20,
   },
   header: {
     display: "flex",
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.015,
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
   },
   dateContainer: {
     flexDirection: "column",
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: width * 0.02,
     borderRadius: 8,
-    marginHorizontal: 'auto',
+    marginHorizontal: "auto",
     marginVertical: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
