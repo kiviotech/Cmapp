@@ -114,78 +114,6 @@ const Contractor = () => {
             <Text style={styles.userName}>{user.username}</Text>
             <Text style={styles.userRole}>{designation}</Text>
           </View>
-          ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScrollContainer}
-          >
-            {contractorsData.length > 0 ? (
-              contractorsData.map((contractor) =>
-                contractor.attributes.projects.data.map((project) => (
-                  <TouchableOpacity
-                    key={project.id}
-                    style={[
-                      styles.projectCard,
-                      project.attributes.project_status === "pending"
-                        ? { backgroundColor: "#ffebee" }
-                        : { backgroundColor: "#e8f5e9" },
-                    ]}
-                    onPress={() =>
-                      navigation.navigate("(pages)/contractor/ProjectDetails", {
-                        projectId: project.id,
-                        projectData: project,
-                        contractorId: contractor.id,
-                      })
-                    }
-                  >
-                    <View style={styles.projectCardContent}>
-                      <Text style={styles.projectTitle}>
-                        {project.attributes.name}
-                      </Text>
-                      <Text style={styles.projectDescription}>
-                        {project.attributes.description}
-                      </Text>
-                      <Text style={styles.projectStatus}>
-                        ● {project.attributes.project_status || "Status"}
-                        {/* {project.attributes.phase || "Phase"} */}
-                      </Text>
-                      <View style={styles.projectStatusContainer}>
-                        <Icon
-                          name={
-                            project.attributes.project_status === "ahead"
-                              ? "check-circle"
-                              : "error"
-                          }
-                          size={16}
-                          color={
-                            project.attributes.project_status === "ahead"
-                              ? "green"
-                              : "red"
-                          }
-                          backgroundColor={
-                            project.attributes.project_status === "ahead"
-                              ? "e8f5e9"
-                              : "#ffebee"
-                          }
-                        />
-                        <Text style={styles.projectStatusText}>
-                          {project.attributes.project_status === "ahead"
-                            ? "Ahead of Schedule"
-                            : "Delayed"}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))
-              )
-            ) : (
-              <View>
-                <Text style={styles.noProjectsText}>No projects available</Text>
-              </View>
-            )}
-          </ScrollView>
-          )}
         </View>
 
         {/* Select Your Project Component */}
@@ -196,24 +124,6 @@ const Contractor = () => {
 
         <View style={styles.headerContainer}>
           <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
-          {/* <Text style={styles.taskStatus}>7 Tasks Pending</Text> */}
-          {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
-        </View>
-
-        {/* Add Search Bar */}
-        <View style={styles.searchContainer}>
-          <Icon
-            name="search"
-            size={20}
-            color="#666"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search tasks by name..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
         </View>
 
         {/* Add Search Bar */}

@@ -423,12 +423,12 @@ const ProjectTeam = () => {
                     {
                       color:
                         request.attributes.status === "approved"
-                          ? "green"
+                          ? "#4CAF50" // green
                           : request.attributes.status === "pending"
-                          ? "orange"
-                          : request.attributes.status === "declined"
-                          ? "red"
-                          : "black", // Default color
+                          ? "#FF9800" // orange
+                          : request.attributes.status === "rejected"
+                          ? "#F44336" // red
+                          : "black", // default color
                     },
                   ]}
                 >

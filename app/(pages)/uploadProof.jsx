@@ -27,7 +27,6 @@ import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
 import colors from "../../constants/colors";
 import useFileUploadStore from "../../src/stores/fileUploadStore";
-import useFileUploadStore from "../../src/stores/fileUploadStore";
 
 const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -49,7 +48,6 @@ const UploadProof = ({}) => {
   const route = useRoute();
   const { id } = route?.params;
   const fileUploadRef = useRef(null);
-  const clearFiles = useFileUploadStore((state) => state.clearFiles);
   const clearFiles = useFileUploadStore((state) => state.clearFiles);
 
   useEffect(() => {
@@ -144,42 +142,16 @@ const UploadProof = ({}) => {
     const hasAlphabet = /[a-zA-Z]/.test(text);
 
     if (uploadedFileIds.length === 0 && text.length === 0) {
-  const handleCommentChange = (text) => {
-    setComment(text);
-    const hasAlphabet = /[a-zA-Z]/.test(text);
-
-    if (uploadedFileIds.length === 0 && text.length === 0) {
       setErrors("Images and comments are required");
     } else if (uploadedFileIds.length === 0) {
       setErrors("Images are required");
     } else if (text.length === 0) {
-    } else if (text.length === 0) {
       setErrors("Comment is required");
-    } else if (!hasAlphabet) {
-      setErrors("Comment must contain at least one letter");
     } else if (!hasAlphabet) {
       setErrors("Comment must contain at least one letter");
     } else {
       setErrors("");
     }
-  };
-
-  const validateSubmission = () => {
-    const hasAlphabet = /[a-zA-Z]/.test(comment);
-    let errorMessage = "";
-
-    if (uploadedFileIds.length === 0 && !comment) {
-      errorMessage = "Images and comment are required";
-    } else if (uploadedFileIds.length === 0) {
-      errorMessage = "Images are required";
-    } else if (!comment) {
-      errorMessage = "Comment is required";
-    } else if (!hasAlphabet) {
-      errorMessage = "Comment must contain at least one letter";
-    }
-
-    return errorMessage;
-  };
   };
 
   const validateSubmission = () => {
@@ -204,10 +176,6 @@ const UploadProof = ({}) => {
 
     if (validationError) {
       setErrors(validationError);
-    const validationError = validateSubmission();
-
-    if (validationError) {
-      setErrors(validationError);
       return;
     }
 
@@ -217,12 +185,9 @@ const UploadProof = ({}) => {
       console.log("Submission created successfully:", submission);
 
       // Clear all uploaded files and reset states
-      // Clear all uploaded files and reset states
       setUploadedFiles([]);
       setUploadedFileIds([]);
       setComment("");
-      clearFiles();
-      setErrors(""); // Clear any existing errors
       clearFiles();
       setErrors(""); // Clear any existing errors
 
@@ -245,7 +210,6 @@ const UploadProof = ({}) => {
       }, 3000);
     } catch (error) {
       console.error("Error during submission:", error);
-      setErrors("Error during submission. Please try again.");
       setErrors("Error during submission. Please try again.");
     }
   };
@@ -423,35 +387,10 @@ const UploadProof = ({}) => {
     };
   }, []);
 
-  const handleBackNavigation = () => {
-    clearFiles();
-    setUploadedFiles([]);
-    setUploadedFileIds([]);
-    if (fileUploadRef.current) {
-      fileUploadRef.current.clearFiles();
-    }
-    navigation.navigate("(pages)/taskDetails", {
-      taskData: { id },
-      refresh: true,
-    });
-  };
-
-  useEffect(() => {
-    return () => {
-      clearFiles();
-      setUploadedFiles([]);
-      setUploadedFileIds([]);
-      if (fileUploadRef.current) {
-        fileUploadRef.current.clearFiles();
-      }
-    };
-  }, []);
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={handleBackNavigation}>
           <TouchableOpacity onPress={handleBackNavigation}>
             <Image source={icons.backarrow}></Image>
           </TouchableOpacity>
@@ -526,7 +465,6 @@ const UploadProof = ({}) => {
               style={styles.commentInput}
               placeholder="Add your comment..."
               value={comment}
-              onChangeText={handleCommentChange}
               onChangeText={handleCommentChange}
               multiline={true}
               numberOfLines={5}
@@ -735,15 +673,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#007BFF",
     padding: 10,
     borderRadius: 5,
-  },
-  errorContainer: {
-    marginVertical: 10,
-    paddingHorizontal: 20,
-  },
-  errorText: {
-    color: "#FC5275",
-    fontSize: 14,
-    textAlign: "center",
   },
   errorContainer: {
     marginVertical: 10,

@@ -61,15 +61,13 @@ const Settings = () => {
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
       <ScrollView>
-        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.sectionTitle}>My Account</Text>
         <View
           style={[
             styles.section,
             { borderBottomWidth: 1, borderBottomColor: "#CACACA" },
           ]}
         >
-          <Text style={styles.sectionTitle}>My Account</Text>
-
           <View style={styles.innerContainer}>
             <TouchableOpacity
               style={styles.item}
@@ -77,7 +75,7 @@ const Settings = () => {
                 navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
               }
             >
-              <Text style={styles.itemText}>Personal Details</Text>
+              <Text style={styles.itemText}>Personal details</Text>
               <FontAwesome
                 style={{ color: colors.blackColor }}
                 name="chevron-right"
@@ -87,9 +85,7 @@ const Settings = () => {
 
             <TouchableOpacity
               style={styles.item}
-              onPress={() =>
-                navigation.navigate("(pages)/ChangePassword")
-              }
+              onPress={() => navigation.navigate("(pages)/ChangePassword")}
             >
               <Text style={styles.itemText}>Change password</Text>
               <FontAwesome
@@ -99,29 +95,24 @@ const Settings = () => {
               />
             </TouchableOpacity>
           </View>
+        </View>
+        <Text style={styles.sectionTitle}>Settings</Text>
 
-          <Text style={styles.sectionTitle}>Settings</Text>
-
-          <View style={styles.innerContainer}>
-            <View style={styles.item}>
-              <Text style={styles.itemText}>Push notifications</Text>
-              <View style={styles.switchContainer}>
-                <Switch
-                  trackColor={{ false: "#767577", true: colors.primary }}
-                  thumbColor={isEnabled ? colors.whiteColor : colors.whiteColor}
-                  onValueChange={toggleSwitch}
-                  value={isEnabled}
-                  style={styles.switch}
-                />
-              </View>
-            </View>
+        <View style={styles.innerContainer}>
+          <View style={styles.item}>
+            <Text style={styles.itemText}>Push notifications</Text>
+            <Switch
+              trackColor={{ false: "#767577", true: "#0066FF" }}
+              thumbColor={colors.whiteColor}
+              onValueChange={toggleSwitch}
+              value={isEnabled}
+              style={styles.switch}
+            />
           </View>
         </View>
 
         <Text style={styles.sectionTitle}>More</Text>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>More</Text>
-
           <View style={styles.innerContainer}>
             <TouchableOpacity
               style={styles.item}
@@ -159,6 +150,7 @@ const Settings = () => {
               />
             </TouchableOpacity>
           </View>
+        </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={showLogoutPopup}>
           <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
@@ -234,25 +226,29 @@ const styles = StyleSheet.create({
   section: {
     backgroundColor: colors.whiteColor,
     marginBottom: 20,
-    borderRadius: 10,
+    borderRadius: 15,
     marginHorizontal: 15,
   },
   sectionTitle: {
-    fontSize: width * 0.045,
-    marginBottom: height * 0.01,
-    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 10,
+    marginLeft: 15,
+    color: "#000",
+    fontWeight: "600",
   },
   innerContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
+    backgroundColor: "#fff",
     borderRadius: 15,
-    marginVertical: 10
+    marginHorizontal: 15,
   },
-  itemContainer: {
+  item: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: height * 0.015,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
   itemText: {
     fontSize: 16,
@@ -265,8 +261,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.whiteColor,
     marginHorizontal: 15,
     paddingVertical: 15,
-    borderRadius: 10,
+    borderRadius: 15,
     marginTop: 10,
+    marginBottom: 20,
   },
   logoutText: {
     fontSize: 16,
