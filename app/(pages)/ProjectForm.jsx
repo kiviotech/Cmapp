@@ -85,7 +85,7 @@ const ProjectForm = () => {
         const supervisorsResponse = await fetchProjectTeamManager(
           "Project Supervisor"
         );
-        console.log('supervisorsResponse', supervisorsResponse.data)
+        // console.log('supervisorsResponse', supervisorsResponse.data)
         setProjectSupervisorTeamId(supervisorsResponse?.data[0]?.id)
         const supervisorsList = supervisorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
@@ -165,6 +165,9 @@ const ProjectForm = () => {
       newErrors.projectAddress = "Project address is required";
     if (!startDate) newErrors.startDate = "Start date is required";
     if (!endDate) newErrors.endDate = "End date is required";
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      newErrors.endDate = "End date must be after start date";
+    }
     if (!uploadedFiles) newErrors.uploadedFiles = "Document is required";
     if (!projectManager)
       newErrors.projectManager = "Project manager selection is required";
@@ -187,7 +190,7 @@ const ProjectForm = () => {
       const formattedEndDate = endDate
         ? endDate.toISOString().slice(0, 10)
         : null;
-      console.log(documentIds.flat());
+      // console.log(documentIds.flat());
 
       const projectData = {
         data: {
@@ -256,7 +259,7 @@ const ProjectForm = () => {
   };
 
   const handleFileUploadSuccess = (id) => {
-    console.log("File uploaded with ID:", id);
+    // console.log("File uploaded with ID:", id);
     setDocumentIds((prevIds) => [...prevIds, id]);
   };
 
@@ -391,7 +394,15 @@ const ProjectForm = () => {
               value={supervisor}
               items={supervisorItems}
               setOpen={setSupervisorOpen}
-              setValue={setSupervisor}
+              setValue={(value) => {
+                setSupervisor(value);
+                if (value) {
+                    setErrors((prevErrors) => ({
+                        ...prevErrors,
+                        supervisor: null,
+                    }));
+                }
+            }}
               setItems={setSupervisorItems}
               placeholder="Select Project Supervisor"
               style={styles.dropdown}
@@ -411,7 +422,15 @@ const ProjectForm = () => {
               value={projectManager}
               items={projectManagerItems}
               setOpen={setProjectManagerOpen}
-              setValue={setProjectManager}
+              setValue={(value) => {
+                setProjectManager(value);
+                if (value) {
+                    setErrors((prevErrors) => ({
+                        ...prevErrors,
+                        projectManager: null,
+                    }));
+                }
+            }}
               setItems={setProjectManagerItems}
               placeholder="Select Project Manager"
               style={styles.dropdown}
@@ -431,7 +450,15 @@ const ProjectForm = () => {
               value={coordinator}
               items={coordinatorItems}
               setOpen={setCoordinatorOpen}
-              setValue={setCoordinator}
+              setValue={(value) => {
+                setCoordinator(value);
+                if (value) {
+                    setErrors((prevErrors) => ({
+                        ...prevErrors,
+                        coordinator: null,
+                    }));
+                }
+            }}
               setItems={setCoordinatorItems}
               placeholder="Select Site Coordinator"
               style={styles.dropdown}
