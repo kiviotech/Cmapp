@@ -58,37 +58,37 @@ const ProjectDetails = () => {
 
   useEffect(() => {
     const getProjectDetails = async () => {
-      const response = await fetchProjectById(projectId);
-      const userId = response?.data?.id;
-      console.log("user id", response.data.id);
-      const data = await fetchProjectById(userId);
+      try {
+        const response = await fetchProjectById(projectId);
+        console.log("Project Details Response:", response);
 
-      // Add console log for projectDetails
-      console.log("Project Details:", response.data);
+        // Find Project Manager from approvers directly
+        const projectManager = response?.data?.attributes?.approvers?.data.find(
+          (approver) => approver.attributes.job_role === "Project Manager"
+        );
 
-      // Find Project Manager ID
-      const projectManager = data?.data?.attributes?.approvers?.data.find(
-        (approver) => approver.attributes.job_role === "Project Manager"
-      );
-      console.log("Project Manager ID:", projectManager?.id);
-
-      // Add this new code to fetch project team data
-      if (projectManager?.id) {
-        try {
-          const teamData = await getProjectTeamById(projectManager.id);
-          const managerName =
-            teamData?.data?.data?.attributes?.users?.data[0]?.attributes
-              ?.username;
-          setProjectManagerName(managerName || "N/A");
-        } catch (error) {
-          console.error("Error fetching project team:", error);
+        // Fetch project team data if project manager exists
+        if (projectManager) {
+          try {
+            const teamData = await getProjectTeamById(projectManager.id);
+            const managerName =
+              teamData?.data?.data?.attributes?.users?.data[0]?.attributes
+                ?.username;
+            setProjectManagerName(managerName || "N/A");
+          } catch (error) {
+            console.error("Error fetching project team:", error);
+            setProjectManagerName("N/A");
+          }
         }
-      }
 
-      setProjectDetails(response.data);
+        setProjectDetails(response.data);
+      } catch (error) {
+        console.error("Error fetching project details:", error);
+      }
     };
+
     getProjectDetails();
-  }, []);
+  }, [projectId]); // Add projectId as dependency
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -101,7 +101,10 @@ const ProjectDetails = () => {
         </TouchableOpacity>
         <Text style={styles.header}>Project Details</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.projectNameContainer}>
           <Text style={styles.projectName}>
             {projectDetails?.attributes?.name || "Project Name"}

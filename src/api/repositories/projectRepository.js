@@ -20,3 +20,6 @@ export const updateProject = (id, data) =>
 
 export const deleteProject = (id) =>
   apiClient.delete(projectEndpoints.deleteProject(id));
+
+export const getProjectsByContractorEmail = (email) =>
+  apiClient.get(projectEndpoints.getProjectsByContractorEmail(email));

@@ -401,19 +401,33 @@ const ProjectTeam = () => {
           <View key={request.id} style={styles.requestItem}>
             <View>
               <Text style={styles.requestTitle}>
-                Submitted{" "}
-                {
-                  request?.attributes?.task?.data?.attributes?.project?.data
-                    ?.attributes?.name
-                }{" "}
-                Work
+                {request?.attributes?.task?.data?.attributes?.project?.data
+                  ?.attributes?.name
+                  ? `Submitted ${request.attributes.task.data.attributes.project.data.attributes.name} Work`
+                  : "Submitted Work"}
               </Text>
               <Text style={styles.requestDescription}>
-                {request.attributes.description || "No description available."}
+                {request.attributes.description
+                  ? request.attributes.description.charAt(0).toUpperCase() +
+                    request.attributes.description.slice(1)
+                  : "No description available."}
               </Text>
               <View style={styles.requestStatusContainer}>
-                <Text style={styles.requestStatusPending}>
-                  {request.attributes.status || "Pending"}
+                <Text
+                  style={[
+                    styles.requestStatusPending,
+                    request.attributes.status === "approved" &&
+                      styles.statusApproved,
+                    request.attributes.status === "pending" &&
+                      styles.statusPending,
+                    request.attributes.status === "rejected" &&
+                      styles.statusRejected,
+                  ]}
+                >
+                  {request.attributes.status
+                    ? request.attributes.status.charAt(0).toUpperCase() +
+                      request.attributes.status.slice(1)
+                    : "Pending"}
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -501,53 +515,57 @@ const ProjectTeam = () => {
 
                   return (
                     <View key={taskIndex} style={styles.milestoneCard}>
-                      <TouchableOpacity
-                        style={styles.milestoneCard}
-                        onPress={() =>
-                          navigation.navigate("(pages)/taskDetails", {
-                            taskData: task,
-                          })
-                        }
-                      >
-                        <Image
-                          source={{ uri: taskImageUrl }}
-                          style={styles.milestoneImage}
-                        />
-                        <View style={styles.milestoneContent}>
-                          <View style={styles.milestoneHeaderContainer}>
-                            <Text style={styles.milestoneTitle}>
-                              {standardTask.Name || "Task"}
+                      <Image
+                        source={{ uri: taskImageUrl }}
+                        style={styles.milestoneImage}
+                      />
+                      <View style={styles.milestoneContent}>
+                        <View style={styles.milestoneHeaderContainer}>
+                          <Text style={styles.milestoneTitle}>
+                            {standardTask.Name || "Task"}
+                          </Text>
+                          <View style={styles.substituteButton}>
+                            <Text style={styles.substituteText}>
+                              Substructure
                             </Text>
-                            <View style={styles.substituteButton}>
-                              <Text style={styles.substituteText}>
-                                Substructure
-                              </Text>
-                            </View>
                           </View>
-                          <Text style={styles.milestoneDescription}>
-                            {standardTask.Description ||
-                              "No description available."}
-                          </Text>
-                          <View style={styles.divider} />
-                          <Text style={styles.deadlineText}>
-                            <FontAwesome
-                              name="calendar"
-                              size={16}
-                              color="#333"
-                            />{" "}
-                            Deadline:{" "}
-                            {task?.attributes?.due_date
-                              ? new Date(task.attributes.due_date)
-                                  .toLocaleDateString("en-GB", {
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                    year: "numeric",
-                                  })
-                                  .replace(/\//g, "-")
-                              : "No deadline specified"}
-                          </Text>
                         </View>
-                      </TouchableOpacity>
+                        <Text style={styles.milestoneDescription}>
+                          {standardTask.Description ||
+                            "No description available."}
+                        </Text>
+                        <View style={styles.divider} />
+                        <Text style={styles.deadlineText}>
+                          <FontAwesome name="calendar" size={16} color="#333" />{" "}
+                          Deadline:{" "}
+                          {task?.attributes?.due_date
+                            ? new Date(task.attributes.due_date)
+                                .toLocaleDateString("en-GB", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })
+                                .replace(/\//g, "-")
+                            : "No deadline specified"}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.uploadProofButton}
+                          onPress={() =>
+                            navigation.navigate("(pages)/taskDetails", {
+                              taskData: task,
+                            })
+                          }
+                        >
+                          <Ionicons
+                            name="cloud-upload-outline"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.uploadProofText}>
+                            Upload your Proof of work
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   );
                 })
@@ -935,6 +953,30 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#333",
+  },
+  uploadProofButton: {
+    backgroundColor: "#2196F3",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  uploadProofText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  statusApproved: {
+    color: "#4CAF50", // green
+  },
+  statusPending: {
+    color: "#FF9800", // orange
+  },
+  statusRejected: {
+    color: "#F44336", // red
   },
 });
 

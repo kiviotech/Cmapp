@@ -24,6 +24,7 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
   const [baseImage, setBaseImage] = useState(null);
   const [paths, setPaths] = useState([]);
   const currentPath = useRef({ points: [] });
+  const [isTouching, setIsTouching] = useState(false);
 
   const colors = [
     "#FF0000", // Red
@@ -43,6 +44,9 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
         const ctx = canvas.getContext("2d");
         const img = new window.Image();
 
+        // Add crossOrigin attribute to allow cross-origin image loading
+        img.crossOrigin = "anonymous";
+
         img.onload = () => {
           const containerWidth = canvas.parentElement.clientWidth;
           const scale = containerWidth / img.width;
@@ -58,19 +62,32 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
           setDrawingContext(ctx);
         };
 
-        img.src = imageUri;
+        // Add timestamp or random query parameter to bypass cache
+        const imageUrlWithTimestamp = `${imageUri}${
+          imageUri.includes("?") ? "&" : "?"
+        }t=${Date.now()}`;
+        img.src = imageUrlWithTimestamp;
       }
     }
   }, [imageUri]);
 
   const startDrawing = (e) => {
     if (!drawingContext) return;
+
+    if (Platform.OS === "android") {
+      setIsTouching(true);
+    }
+
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
 
     if (currentTool === "eraser") {
       // Split paths at eraser point instead of just removing points
@@ -131,12 +148,17 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
 
   const draw = (e) => {
     if (!isDrawing || !drawingContext || currentTool === "eraser") return;
+
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
 
     currentPath.current.points.push({ x, y });
 
@@ -147,6 +169,7 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
   const stopDrawing = () => {
     if (!drawingContext) return;
     setIsDrawing(false);
+    setIsTouching(false);
     drawingContext.closePath();
 
     if (currentPath.current && currentTool === "brush") {
@@ -346,7 +369,14 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
           onMouseOut={stopDrawing}
         />
       ) : (
-        <View style={styles.canvas} />
+        <View
+          style={[styles.canvas, isTouching && { overflow: "hidden" }]}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+        >
+          <canvas ref={canvasRef} />
+        </View>
       )}
 
       <View style={styles.controls}>
@@ -376,6 +406,18 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
               size={20}
               color={currentTool === "eraser" ? "#FFFFFF" : "#4B5563"}
             />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toolButton, styles.saveButton]}
+            onPress={applyEdits}
+          >
+            <FontAwesome name="save" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toolButton, styles.cancelButton]}
+            onPress={onCancel}
+          >
+            <FontAwesome name="times" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -411,18 +453,6 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
           onChange={setSaturation}
           label="Saturation"
         />
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.cancelButton]}
-            onPress={onCancel}
-          >
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={applyEdits}>
-            <Text style={styles.buttonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -440,6 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
+    touchAction: "none",
   },
   controls: {
     backgroundColor: "#FFFFFF",
@@ -519,6 +550,14 @@ const styles = StyleSheet.create({
   selectedTool: {
     backgroundColor: "#3B82F6",
     borderColor: "#2563EB",
+  },
+  saveButton: {
+    backgroundColor: "#10B981", // Green color
+    borderColor: "#059669",
+  },
+  cancelButton: {
+    backgroundColor: "#EF4444", // Red color
+    borderColor: "#DC2626",
   },
 });
 

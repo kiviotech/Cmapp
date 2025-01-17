@@ -12,7 +12,12 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import {
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+  AntDesign,
+} from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../useAuthStore";
 import { updateExistingRegistration } from "../../src/services/registrationService";
@@ -341,6 +346,29 @@ const RequestDetails = () => {
             ))}
           </View>
         </View>
+
+        {requestData?.attributes?.status === "approved" && (
+          <View style={styles.statusContainer}>
+            <View style={styles.approvedStatus}>
+              <AntDesign name="checkcircle" size={24} color="#A3D65C" />
+              <Text style={styles.approvedStatusText}>
+                This request has been approved
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {requestData?.attributes?.status === "rejected" && (
+          <View style={styles.statusContainer}>
+            <View style={styles.rejectedStatus}>
+              <AntDesign name="closecircle" size={24} color="#FC5275" />
+              <Text style={styles.rejectedStatusText}>
+                This request has been rejected
+              </Text>
+            </View>
+          </View>
+        )}
+
         {requestData?.attributes?.status === "pending" && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -515,6 +543,44 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: "#FFF",
     fontSize: width * 0.04,
+    fontWeight: "600",
+  },
+
+  statusContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  approvedStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0F9EB",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#A3D65C",
+  },
+  approvedStatusText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#2C5282",
+    fontWeight: "600",
+  },
+  rejectedStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF5F5",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FC5275",
+  },
+  rejectedStatusText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#C53030",
     fontWeight: "600",
   },
 });

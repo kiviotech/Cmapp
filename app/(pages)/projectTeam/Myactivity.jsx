@@ -267,7 +267,12 @@ const Myactivity = () => {
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container}>
         <View style={styles.profileImageContainer}>
-          <Image style={styles.userImage} source={icons.userProfile} />
+          <Image
+            style={styles.userImage}
+            source={{
+              uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+            }}
+          />
         </View>
         <View style={styles.profileDetailSection}>
           <Text style={styles.userName}>{user?.username}</Text>
@@ -356,9 +361,11 @@ const Myactivity = () => {
         <View style={styles.requestsHeader}>
           <Text style={styles.sectionHeader}>Requests Activity</Text>
         </View>
-        
+
         {requests.map((request) => (
-          <TouchableOpacity key={request?.id} style={styles.requestItem}
+          <TouchableOpacity
+            key={request?.id}
+            style={styles.requestItem}
             onPress={() => {
               navigation.navigate("(pages)/TaskRequestDetails", {
                 requestData: request,
@@ -367,27 +374,32 @@ const Myactivity = () => {
           >
             <View>
               <Text style={styles.requestTitle}>
-                Submission for {request?.attributes?.task?.data?.attributes?.standard_task?.data?.attributes?.Name || "task"}{" "}in{" "}
+                Submission for{" "}
+                {request?.attributes?.task?.data?.attributes?.standard_task
+                  ?.data?.attributes?.Name || "task"}{" "}
+                in{" "}
                 {request?.attributes?.task?.data?.attributes?.project?.data
                   ?.attributes?.name || "Project"}{" "}
               </Text>
               <Text style={styles.requestDescription}>
-                {request?.attributes?.comment ||
-                  "No comments available."}
+                {request?.attributes?.comment || "No comments available."}
               </Text>
 
               <View style={styles.requestStatusContainer}>
-                <Text style={[
-
-                  request?.attributes?.status === 'approved'
-                    ? styles.requestStatusApproved
-                    : request?.attributes?.status === 'rejected'
+                <Text
+                  style={[
+                    styles.statusBold,
+                    request?.attributes?.status === "approved"
+                      ? styles.requestStatusApproved
+                      : request?.attributes?.status === "rejected"
                       ? styles.requestStatusRejected
-                      : request?.attributes?.status === 'pending'
-                        ? styles.requestStatusPendingText
-                        : {}
-                ]}>
-                  {request?.attributes?.status.charAt(0).toUpperCase() + request?.attributes?.status?.slice(1).toLowerCase()}
+                      : request?.attributes?.status === "pending"
+                      ? styles.requestStatusPendingText
+                      : {},
+                  ]}
+                >
+                  {request?.attributes?.status.charAt(0).toUpperCase() +
+                    request?.attributes?.status?.slice(1).toLowerCase()}
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -530,6 +542,9 @@ const styles = StyleSheet.create({
   },
   requestStatusPendingText: {
     color: "red",
+  },
+  statusBold: {
+    fontWeight: "bold",
   },
 });
 

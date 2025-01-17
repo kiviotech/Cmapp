@@ -17,7 +17,6 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
 import useFileUploadStore from "../../src/stores/fileUploadStore";
-import ImageEditor from "./ImageEditor";
 
 const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   const [cameraActive, setIsCameraActive] = useState(false);
@@ -25,7 +24,6 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const uploadIntervals = useRef({});
-  const [editingImage, setEditingImage] = useState(null);
 
   const {
     uploadedFiles,
@@ -35,6 +33,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
     deleteFile,
     removeFile,
     getAllFileIds,
+    updateFileStatus,
   } = useFileUploadStore();
 
   useImperativeHandle(ref, () => ({
@@ -44,7 +43,41 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   }));
 
   const handleImageSelected = (imageUri) => {
-    setEditingImage(imageUri);
+    const newFile = {
+      uri: imageUri,
+      name: `image-${Date.now()}.jpg`,
+      progress: 0,
+      status: "uploading",
+    };
+
+    addFiles([newFile]);
+
+    const interval = setInterval(() => {
+      updateFileProgress(newFile.name, (prevProgress) => {
+        const newProgress = prevProgress + 10;
+        if (newProgress >= 90) {
+          clearInterval(interval);
+        }
+        return newProgress;
+      });
+    }, 500);
+
+    uploadIntervals.current[newFile.name] = interval;
+
+    uploadFile(newFile)
+      .then(() => {
+        clearInterval(uploadIntervals.current[newFile.name]);
+        delete uploadIntervals.current[newFile.name];
+        updateFileProgress(newFile.name, 100);
+        updateFileStatus(newFile.name, "success");
+        onFileUploadSuccess(getAllFileIds());
+      })
+      .catch((error) => {
+        console.error("Error uploading file:", error);
+        clearInterval(uploadIntervals.current[newFile.name]);
+        delete uploadIntervals.current[newFile.name];
+        updateFileStatus(newFile.name, "error");
+      });
   };
 
   const handleFileUpload = async () => {
@@ -57,7 +90,9 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
       });
 
       if (!result.canceled) {
-        handleImageSelected(result.assets[0].uri);
+        result.assets.forEach((asset) => {
+          handleImageSelected(asset.uri);
+        });
       }
     } catch (error) {
       console.error("Error selecting files:", error);
@@ -143,43 +178,6 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
     }
   };
 
-  const handleSaveEdit = async (editedImageUri) => {
-    const newFile = {
-      uri: editedImageUri,
-      name: `edited-image-${Date.now()}.jpg`,
-      progress: 0,
-      status: "uploading",
-    };
-
-    addFiles([newFile]);
-    setEditingImage(null);
-
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      if (progress <= 90) {
-        updateFileProgress(newFile.name, progress);
-      }
-    }, 500);
-
-    uploadIntervals.current[newFile.name] = interval;
-
-    try {
-      await uploadFile(newFile);
-      clearInterval(uploadIntervals.current[newFile.name]);
-      delete uploadIntervals.current[newFile.name];
-      onFileUploadSuccess(getAllFileIds());
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      clearInterval(uploadIntervals.current[newFile.name]);
-      delete uploadIntervals.current[newFile.name];
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingImage(null);
-  };
-
   useEffect(() => {
     return () => {
       if (stream) {
@@ -191,131 +189,119 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
 
   return (
     <View style={styles.container}>
-      {editingImage ? (
-        <ImageEditor
-          imageUri={editingImage}
-          onSave={handleSaveEdit}
-          onCancel={handleCancelEdit}
-        />
-      ) : (
-        <View style={styles.uploadContainer}>
-          <Text style={styles.uploadText}>
-            {message
-              ? message
-              : "Upload your proof of work in .png or .jpeg format"}
-          </Text>
+      <View style={styles.uploadContainer}>
+        <Text style={styles.uploadText}>
+          {message
+            ? message
+            : "Upload your proof of work in .png or .jpeg format"}
+        </Text>
 
-          {!cameraActive && (
-            <>
-              <TouchableOpacity
-                style={styles.uploadButton}
-                onPress={handleFileUpload}
-              >
-                <Text style={styles.buttonText}>Browse files</Text>
-              </TouchableOpacity>
-
-              <Text style={styles.orText}>OR</Text>
-            </>
-          )}
-
-          {cameraActive ? (
-            <View style={styles.cameraContainer}>
-              <video
-                ref={videoRef}
-                style={styles.videoPreview}
-                autoPlay
-                muted
-              />
-              <TouchableOpacity
-                style={styles.captureButton}
-                onPress={captureImage}
-              >
-                <Text style={styles.buttonText}>Capture</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={closeCamera}
-              >
-                <Text style={styles.buttonText}>Close Camera</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+        {!cameraActive && (
+          <>
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={handleCameraUpload}
+              onPress={handleFileUpload}
             >
-              <Text style={styles.buttonText}>Use Camera</Text>
+              <Text style={styles.buttonText}>Browse files</Text>
             </TouchableOpacity>
-          )}
-          {uploadedFiles.map((file, index) => (
-            <View key={`${file.name}-${index}`} style={styles.fileRow}>
-              <FontAwesome name="file" size={24} color="#6B7280" />
-              <View style={styles.progressBarContainer}>
-                <View style={styles.docNameContainer}>
-                  <Text style={styles.fileName}>{file?.name}</Text>
-                  {file.status === "success" ? (
-                    <FontAwesome
-                      name="check-circle"
-                      size={15}
-                      color="#A3D65C"
-                    />
-                  ) : file.status === "error" ? (
-                    <FontAwesome
-                      name="exclamation-circle"
-                      size={15}
-                      color="#FC5275"
-                    />
-                  ) : (
-                    <Text style={{ color: "#838383", fontSize: 10 }}>
-                      {`${file.progress}%`}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.progressBackground}>
-                  <View
-                    style={[
-                      styles.progressBar,
-                      {
-                        width: `${file.progress}%`,
-                        backgroundColor:
-                          file.status === "success"
-                            ? "#A3D65C"
-                            : file.status === "error"
-                            ? "#FC5275"
-                            : "#FFD439",
-                      },
-                    ]}
+
+            <Text style={styles.orText}>OR</Text>
+          </>
+        )}
+
+        {cameraActive ? (
+          <View style={styles.cameraContainer}>
+            <video ref={videoRef} style={styles.videoPreview} autoPlay muted />
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={captureImage}
+            >
+              <Text style={styles.buttonText}>Capture</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={closeCamera}>
+              <Text style={styles.buttonText}>Close Camera</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={handleCameraUpload}
+          >
+            <Text style={styles.buttonText}>Use Camera</Text>
+          </TouchableOpacity>
+        )}
+        {uploadedFiles.map((file, index) => (
+          <View key={`${file.name}-${index}`} style={styles.fileRow}>
+            <FontAwesome name="file" size={24} color="#6B7280" />
+            <View style={styles.progressBarContainer}>
+              <View style={styles.docNameContainer}>
+                <Text style={styles.fileName}>{file?.name}</Text>
+                {file.status === "success" ? (
+                  <FontAwesome name="check-circle" size={15} color="#A3D65C" />
+                ) : file.status === "error" ? (
+                  <FontAwesome
+                    name="exclamation-circle"
+                    size={15}
+                    color="#FC5275"
                   />
-                </View>
+                ) : (
+                  <Text style={{ color: "#838383", fontSize: 10 }}>
+                    {`${
+                      typeof file.progress === "number"
+                        ? Math.round(file.progress)
+                        : 0
+                    }%`}
+                  </Text>
+                )}
               </View>
-              <TouchableOpacity
-                onPress={() => handleRemoveFile(file.name)}
-                disabled={file.status === "uploading"}
-              >
-                <FontAwesome
-                  style={{ marginTop: 15 }}
-                  name="trash"
-                  size={15}
-                  color={file.status === "uploading" ? "#CCCCCC" : "#FC5275"}
+              <View style={styles.progressBackground}>
+                <View
+                  style={[
+                    styles.progressBar,
+                    {
+                      width: `${
+                        typeof file.progress === "number"
+                          ? Math.round(file.progress)
+                          : 0
+                      }%`,
+                      backgroundColor:
+                        file.status === "success"
+                          ? "#A3D65C"
+                          : file.status === "error"
+                          ? "#FC5275"
+                          : "#FFD439",
+                    },
+                  ]}
                 />
-              </TouchableOpacity>
+              </View>
             </View>
-          ))}
+            <TouchableOpacity
+              onPress={() => handleRemoveFile(file.name)}
+              disabled={file.status === "uploading"}
+            >
+              <FontAwesome
+                style={{ marginTop: 15 }}
+                name="trash"
+                size={15}
+                color={file.status === "uploading" ? "#CCCCCC" : "#FC5275"}
+              />
+            </TouchableOpacity>
+          </View>
+        ))}
 
-          {/* {uploadedFiles.map((file, index) => (
-            <View key={index} style={styles.thumbnailContainer}>
-              <Image source={{ uri: file.uri }} style={styles.thumbnail} />
-              <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
-                <FontAwesome name="trash" size={20} color="#FC5275" />
-              </TouchableOpacity>
-            </View>
-          ))}
+        {/* {uploadedFiles.map((file, index) => (
+          <View key={index} style={styles.thumbnailContainer}>
+            <Image source={{ uri: file.uri }} style={styles.thumbnail} />
+            <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
+              <FontAwesome name="trash" size={20} color="#FC5275" />
+            </TouchableOpacity>
+          </View>
+        ))}
 
-          {uploading && (
-            <ActivityIndicator size="large" color="#3B82F6" style={styles.loader} />
-          )} */}
-        </View>
-      )}
+        {uploading && (
+          <ActivityIndicator size="large" color="#3B82F6" style={styles.loader} />
+        )} */}
+      </View>
     </View>
   );
 });

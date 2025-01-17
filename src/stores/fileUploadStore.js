@@ -195,7 +195,19 @@ const useFileUploadStore = create((set, get) => ({
     });
   },
 
-  clearFiles: () => set({ uploadedFiles: [] }),
+  clearFiles: () =>
+    set({
+      uploadedFiles: [],
+      fileIdMap: {},
+      uploading: false,
+    }),
+
+  updateFileStatus: (fileName, status) =>
+    set((state) => ({
+      uploadedFiles: state.uploadedFiles.map((file) =>
+        file.name === fileName ? { ...file, status } : file
+      ),
+    })),
 }));
 
 export default useFileUploadStore;

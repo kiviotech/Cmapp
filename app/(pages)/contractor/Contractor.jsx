@@ -23,6 +23,7 @@ import { fetchContractorsByUserId } from "../../../src/services/contractorServic
 // import { fetchTasksByContractorId } from "../../../src/services/taskService";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { MEDIA_BASE_URL } from "../../../src/api/apiClient";
+import SelectYourProject from "./SelectYourProject";
 
 const validateImageURL = (url) => {
   return url && (url.startsWith("http://") || url.startsWith("https://"));
@@ -100,87 +101,47 @@ const Contractor = () => {
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView style={styles.container}>
-        {/* User Info */}
-
-        {/* Select Your Project */}
-        <Text style={styles.sectionHeader}>Select Your Project</Text>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <Text>Loading projects...</Text>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* User Info Section */}
+        <View style={styles.userInfoContainer}>
+          <Image
+            source={{
+              uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+            }}
+            style={styles.profileImage}
+          />
+          <View>
+            <Text style={styles.userName}>{user.username}</Text>
+            <Text style={styles.userRole}>{designation}</Text>
           </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScrollContainer}
-          >
-            {contractorsData.length > 0 ? (
-              contractorsData.map((contractor) =>
-                contractor.attributes.projects.data.map((project) => (
-                  <TouchableOpacity
-                    key={project.id}
-                    style={[
-                      styles.projectCard,
-                      project.attributes.project_status === "pending"
-                        ? { backgroundColor: "#ffebee" }
-                        : { backgroundColor: "#e8f5e9" },
-                    ]}
-                    onPress={() =>
-                      navigation.navigate("(pages)/contractor/ProjectDetails", {
-                        projectId: project.id,
-                        projectData: project,
-                        contractorId: contractor.id,
-                      })
-                    }
-                  >
-                    <View style={styles.projectCardContent}>
-                      <Text style={styles.projectTitle}>
-                        {project.attributes.name}
-                      </Text>
-                      <Text style={styles.projectDescription}>
-                        {project.attributes.description}
-                      </Text>
-                      <Text style={styles.projectStatus}>
-                        ● {project.attributes.project_status || "Status"}
-                        {/* {project.attributes.phase || "Phase"} */}
-                      </Text>
-                      <View style={styles.projectStatusContainer}>
-                        <Icon
-                          name={
-                            project.attributes.project_status === "ahead"
-                              ? "check-circle"
-                              : "error"
-                          }
-                          size={16}
-                          color={
-                            project.attributes.project_status === "ahead"
-                              ? "green"
-                              : "red"
-                          }
-                        />
-                        <Text style={styles.projectStatusText}>
-                          {project.attributes.project_status === "ahead"
-                            ? "Ahead of Schedule"
-                            : "Delayed"}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))
-              )
-            ) : (
-              <View>
-                <Text style={styles.noProjectsText}>No projects available</Text>
-              </View>
-            )}
-          </ScrollView>
-        )}
+        </View>
+
+        {/* Select Your Project Component */}
+        <SelectYourProject
+          isLoading={isLoading}
+          contractorsData={contractorsData}
+        />
 
         <View style={styles.headerContainer}>
           <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
           {/* <Text style={styles.taskStatus}>7 Tasks Pending</Text> */}
           {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
+        </View>
+
+        {/* Add Search Bar */}
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
 
         {/* Milestone Cards */}
@@ -192,69 +153,64 @@ const Contractor = () => {
         ) : (
           <>
             {tasks.length > 0 ? (
-              tasks.map((task) => (
-                <TouchableOpacity
-                  key={task.id}
-                  style={styles.milestoneCard}
-                  onPress={() =>
-                    navigation.navigate("(pages)/taskDetails", {
-                      taskData: task,
-                    })
-                  }
-                >
-                  {/* <View style={styles.milestoneCard}> */}
-                  <Text style={styles.milestoneTitle}>
-                    {task.attributes.project.data.attributes.name || "Project"}
-                  </Text>
-                  {task?.attributes?.documents?.data?.map((taskdoc) => {
-                    const taskImageUrl = taskdoc?.attributes?.url
-                      ? `${MEDIA_BASE_URL}${taskdoc?.attributes?.url}`
-                      : "https://via.placeholder.com/150";
-                    return (
+              tasks
+                .filter((task) =>
+                  task.attributes.project.data.attributes.name
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())
+                )
+                .map((task) => {
+                  console.log("Task data:", task);
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                    ?.attributes?.url
+                    ? `${URL}${task.attributes.documents.data[0].attributes.url}`
+                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+
+                  return (
+                    <View key={task.id} style={styles.milestoneCard}>
                       <Image
-                        key={taskdoc.id} // Use a unique key for each task document
                         source={{ uri: taskImageUrl }}
                         style={styles.milestoneImage}
                       />
-                    );
-                  })}
-                  <View style={styles.milestoneContent}>
-                    <View style={styles.milestoneHeaderContainer}>
-                      <Text style={styles.milestoneTitle}>
-                        {task.attributes.standard_task.data.attributes.Name ||
-                          "Task"}
-                      </Text>
-                      <View style={styles.substituteButton}>
-                        <Text style={styles.substituteText}>Substructure</Text>
+                      <View style={styles.milestoneContent}>
+                        <View style={styles.milestoneHeaderContainer}>
+                          <Text style={styles.milestoneTitle}>
+                            {task.attributes.project.data.attributes.name ||
+                              "Project"}
+                          </Text>
+                          <View style={styles.substituteButton}>
+                            <Text style={styles.substituteText}>
+                              Substructure
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.milestoneDescription}>
+                          {task.attributes.standard_task.data.attributes
+                            .Description ||
+                            "No description available for this task."}
+                        </Text>
+                        <View style={styles.divider} />
+                        <Text style={styles.deadlineText}>
+                          <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                          {task.attributes.due_date || "No deadline specified"}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.uploadButton}
+                          onPress={() =>
+                            navigation.navigate("(pages)/taskDetails", {
+                              taskData: task,
+                            })
+                          }
+                        >
+                          <Icon name="file-upload" size={16} color="#fff" />
+                          <Text style={styles.uploadButtonText}>
+                            Upload your Proof of work
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
-                    <Text style={styles.milestoneDescription}>
-                      {task.attributes.standard_task.data.attributes
-                        .Description ||
-                        "No description available for this task."}
-                    </Text>
-                    <View style={styles.divider} />
-                    <Text style={styles.deadlineText}>
-                      <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                      {task.attributes.due_date || "No deadline specified"}
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.uploadButton}
-                      onPress={() =>
-                        navigation.navigate("(pages)/taskDetails", {
-                          taskData: task,
-                        })
-                      }
-                    >
-                      <Icon name="file-upload" size={16} color="#fff" />
-                      <Text style={styles.uploadButtonText}>
-                        Upload your Proof of work
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  {/* </View> */}
-                </TouchableOpacity>
-              ))
+                  );
+                })
             ) : (
               <View style={styles.noTasksContainer}>
                 <Text style={styles.noTasksText}>
@@ -322,6 +278,7 @@ const styles = StyleSheet.create({
   userInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 20,
   },
   profileImage: {
@@ -333,27 +290,30 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
   },
   userRole: {
     fontSize: 14,
     color: "#888",
+    textAlign: "center",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
-    marginLeft: 55,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 45,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: "#fff",
-  },
-  searchIcon: {
-    marginLeft: "auto",
+    fontSize: 16,
+    color: "#333",
   },
   sectionHeader: {
     fontSize: 18,
@@ -637,6 +597,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     color: "#333",
+  },
+  projectEndDateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    paddingTop: 8,
+    marginTop: 5,
+  },
+  endDateIcon: {
+    marginRight: 4,
+  },
+  projectEndDate: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

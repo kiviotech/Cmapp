@@ -29,14 +29,12 @@ const Settings = () => {
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const navigation = useNavigation();
-  
 
   const handleLogout = () => {
     clearAuth();
     router.replace("(auth)/login");
     setIsModalVisible(false);
     logout();
-
   };
 
   const showLogoutPopup = () => {
@@ -59,105 +57,96 @@ const Settings = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profile</Text>
+      </View>
       <ScrollView>
-        <Text style={styles.title}>Settings</Text>
-        <View
-          style={[
-            styles.section,
-            { borderBottomWidth: 1, borderBottomColor: "#CACACA" },
-          ]}
-        >
-          <Text style={styles.sectionTitle}>Account Settings</Text>
-
+        <Text style={styles.sectionTitle}>My Account</Text>
+        <View style={styles.section}>
           <TouchableOpacity
-            style={styles.item}
+            style={styles.itemContainer}
             onPress={() =>
               navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
             }
           >
-            <Text style={styles.itemText}>Personal Details</Text>
+            <Text style={styles.itemText}>Personal details</Text>
             <FontAwesome
-              style={{ color: colors.blackColor }}
+              style={{ color: colors.greyColor }}
               name="chevron-right"
               size={15}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate("(pages)/ChangePassword")
-            }
+            style={styles.itemContainer}
+            onPress={() => navigation.navigate("(pages)/ChangePassword")}
           >
             <Text style={styles.itemText}>Change password</Text>
             <FontAwesome
-              style={{ color: colors.blackColor }}
+              style={{ color: colors.greyColor }}
               name="chevron-right"
               size={15}
             />
           </TouchableOpacity>
+        </View>
 
-          <View style={styles.item}>
+        <Text style={styles.sectionTitle}>Settings</Text>
+        <View style={styles.section}>
+          <View style={styles.itemContainer}>
             <Text style={styles.itemText}>Push notifications</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                trackColor={{ false: "#767577", true: colors.primary }}
-                thumbColor={isEnabled ? colors.whiteColor : colors.whiteColor}
-                onValueChange={toggleSwitch}
-                value={isEnabled}
-                style={styles.switch}
-              />
-            </View>
+            <Switch
+              trackColor={{ false: "#767577", true: "#4A90E2" }}
+              thumbColor={colors.whiteColor}
+              onValueChange={toggleSwitch}
+              value={isEnabled}
+              style={styles.switch}
+            />
           </View>
         </View>
 
+        <Text style={styles.sectionTitle}>More</Text>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>More</Text>
-
           <TouchableOpacity
-            style={styles.item}
+            style={styles.itemContainer}
             onPress={() => showInfoModal("About us")}
           >
             <Text style={styles.itemText}>About us</Text>
             <FontAwesome
-              style={{ color: colors.blackColor }}
+              style={{ color: colors.greyColor }}
               name="chevron-right"
               size={15}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.item}
+            style={styles.itemContainer}
             onPress={() => showInfoModal("Privacy policy")}
           >
             <Text style={styles.itemText}>Privacy policy</Text>
             <FontAwesome
-              style={{ color: colors.blackColor }}
+              style={{ color: colors.greyColor }}
               name="chevron-right"
               size={15}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.item}
+            style={styles.itemContainer}
             onPress={() => showInfoModal("Terms and conditions")}
           >
             <Text style={styles.itemText}>Terms and conditions</Text>
             <FontAwesome
-              style={{ color: colors.blackColor }}
+              style={{ color: colors.greyColor }}
               name="chevron-right"
               size={15}
             />
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={showLogoutPopup}
-          >
-            <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
         </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={showLogoutPopup}>
+          <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </ScrollView>
       <BottomNavigation />
 
@@ -223,58 +212,54 @@ export default Settings;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: width * 0.05,
-    paddingTop: width * 0.05,
     backgroundColor: colors.background,
-    paddingBottom: 10,
-  },
-  title: {
-    fontSize: width * 0.06,
-    fontWeight: "bold",
-    marginBottom: height * 0.02,
-    color: colors.blackColor,
   },
   section: {
-    marginBottom: height * 0.03,
-    paddingBottom: height * 0.015,
-  },
-  switchContainer: {
-    height: height * 0.06,
-    justifyContent: "center",
-    paddingRight: width * 0.05,
-  },
-  switch: {
-    transform: [{ scale: 1.5 }],
+    backgroundColor: colors.whiteColor,
+    marginBottom: 20,
+    borderRadius: 10,
+    marginHorizontal: 15,
   },
   sectionTitle: {
-    fontSize: width * 0.045,
-    marginBottom: height * 0.01,
-    color: "#ADADAD",
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.blackColor,
+    paddingHorizontal: 15,
+    paddingTop: 15,
+    paddingBottom: 5,
+    marginBottom: 10,
+    marginLeft: 10,
   },
-  item: {
+  itemContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: height * 0.018,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
   itemText: {
-    fontSize: width * 0.045,
+    fontSize: 16,
     color: colors.blackColor,
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: height * 0.015,
+    backgroundColor: colors.whiteColor,
+    marginHorizontal: 15,
+    paddingVertical: 15,
     borderRadius: 10,
-    marginTop: height * 0.02,
+    marginTop: 10,
   },
   logoutText: {
-    fontSize: width * 0.045,
+    fontSize: 16,
     color: "#FF3B30",
-    marginLeft: width * 0.02,
-    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  switch: {
+    transform: [{ scale: 0.8 }],
   },
 
   // Modal Styles
@@ -339,5 +324,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  header: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    marginTop: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: colors.blackColor,
   },
 });

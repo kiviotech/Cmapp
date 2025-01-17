@@ -17,6 +17,9 @@ const projectEndpoints = {
   updateProject: (id) => `/projects/${id}`,
 
   deleteProject: (id) => `/projects/${id}`,
+
+  getProjectsByContractorEmail: (email) =>
+    `/projects?filters[contractors][email][$eq]=${email}&populate=*`,
 };
 
 export default projectEndpoints;
