@@ -398,7 +398,7 @@ const ProjectTeam = () => {
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
-        {console.log(requests[0])}
+        {/* {console.log(requests[0])} */}
         {requests.map((request) => (
           <View key={request.id} style={styles.requestItem}>
             <View>

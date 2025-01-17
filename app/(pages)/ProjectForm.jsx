@@ -60,10 +60,9 @@ const ProjectForm = () => {
   const [coordinator, setCoordinator] = useState(null);
   const [coordinatorOpen, setCoordinatorOpen] = useState(false);
   const [coordinatorItems, setCoordinatorItems] = useState([]);
-  const [projectManagerTeamId, setProjectManagerTeamId] = useState('');
-  const [projectSupervisorTeamId, setProjectSupervisorTeamId] = useState('');
-  const [siteCoordTeamId, setsiteCoordTeamId] = useState('');
-
+  const [projectManagerTeamId, setProjectManagerTeamId] = useState("");
+  const [projectSupervisorTeamId, setProjectSupervisorTeamId] = useState("");
+  const [siteCoordTeamId, setsiteCoordTeamId] = useState("");
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -72,7 +71,7 @@ const ProjectForm = () => {
         const managersResponse = await fetchProjectTeamManager(
           "Project Manager"
         );
-        setProjectManagerTeamId(managersResponse?.data[0]?.id)
+        setProjectManagerTeamId(managersResponse?.data[0]?.id);
         const managersList = managersResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
             label: user.attributes?.username,
@@ -85,8 +84,8 @@ const ProjectForm = () => {
         const supervisorsResponse = await fetchProjectTeamManager(
           "Project Supervisor"
         );
-        console.log('supervisorsResponse', supervisorsResponse.data)
-        setProjectSupervisorTeamId(supervisorsResponse?.data[0]?.id)
+        console.log("supervisorsResponse", supervisorsResponse.data);
+        setProjectSupervisorTeamId(supervisorsResponse?.data[0]?.id);
         const supervisorsList = supervisorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
             label: user.attributes?.username,
@@ -99,7 +98,7 @@ const ProjectForm = () => {
         const coordinatorsResponse = await fetchProjectTeamManager(
           "Site Coordinator"
         );
-        setsiteCoordTeamId(coordinatorsResponse?.data[0]?.id)
+        setsiteCoordTeamId(coordinatorsResponse?.data[0]?.id);
         const coordinatorsList = coordinatorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
             label: user.attributes?.username,
@@ -124,12 +123,13 @@ const ProjectForm = () => {
     if (!value) {
       setErrors((prev) => ({
         ...prev,
-        [fieldName]: `${fieldName.charAt(0).toUpperCase() +
+        [fieldName]: `${
+          fieldName.charAt(0).toUpperCase() +
           fieldName
             .slice(1)
             .replace(/([A-Z])/g, " $1")
             .trim()
-          } is required`,
+        } is required`,
       }));
     } else {
       setErrors((prev) => ({
@@ -197,12 +197,16 @@ const ProjectForm = () => {
           start_date: formattedStartDate,
           project_type: projectType,
           location: projectAddress,
-          approvers: [projectSupervisorTeamId, projectManagerTeamId, siteCoordTeamId],
+          approvers: [
+            projectSupervisorTeamId,
+            projectManagerTeamId,
+            siteCoordTeamId,
+          ],
           project_manager: projectManager,
           project_supervisor: supervisor,
           site_coordinator: coordinator,
           project_status: "ongoing",
-          documents: documentIds.flat(),
+          documents: documentIds,
         },
       };
 
@@ -257,7 +261,12 @@ const ProjectForm = () => {
 
   const handleFileUploadSuccess = (id) => {
     console.log("File uploaded with ID:", id);
-    setDocumentIds((prevIds) => [...prevIds, id]);
+    setDocumentIds((prevIds) => {
+      if (!prevIds.includes(id)) {
+        return [...prevIds, id];
+      }
+      return prevIds;
+    });
   };
 
   const closeModal = () => {
@@ -455,16 +464,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                      ? "Select Project Supervisor"
-                      : "Select Site Coordinator"}
+                    ? "Select Project Supervisor"
+                    : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                        ? projectSupervisors
-                        : siteCoordinators
+                      ? projectSupervisors
+                      : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
@@ -533,16 +542,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                      ? "Select Project Supervisor"
-                      : "Select Site Coordinator"}
+                    ? "Select Project Supervisor"
+                    : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                        ? projectSupervisors
-                        : siteCoordinators
+                      ? projectSupervisors
+                      : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (

@@ -16,52 +16,61 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
-import useFileUploadStore from "../../src/stores/fileUploadStore";
 
 const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const uploadIntervals = useRef({});
 
-  const {
-    uploadedFiles,
-    addFiles,
-    updateFileProgress,
-    uploadFile,
-    deleteFile,
-    removeFile,
-    getAllFileIds,
-    updateFileStatus,
-  } = useFileUploadStore();
-
   useImperativeHandle(ref, () => ({
     clearFiles: () => {
-      useFileUploadStore.getState().clearFiles();
+      setUploadedFiles([]);
     },
   }));
 
+  const updateFileProgress = (fileName, progress) => {
+    setUploadedFiles((prev) =>
+      prev.map((file) =>
+        file.name === fileName ? { ...file, progress } : file
+      )
+    );
+  };
+
+  const updateFileStatus = (fileName, status) => {
+    setUploadedFiles((prev) =>
+      prev.map((file) => (file.name === fileName ? { ...file, status } : file))
+    );
+  };
+
+  const removeFile = (fileName) => {
+    setUploadedFiles((prev) => prev.filter((file) => file.name !== fileName));
+  };
+
+  const getAllFileIds = () => {
+    return uploadedFiles.map((file) => file.name);
+  };
+
   const handleImageSelected = (imageUris) => {
-    // Ensure imageUris is always treated as an array
     const files = (Array.isArray(imageUris) ? imageUris : [imageUris]).map(
       (imageUri) => ({
         uri: imageUri,
         name: `image-${Date.now()}-${Math.random()
           .toString(36)
-          .substr(2, 9)}.jpg`, // Unique name
+          .substr(2, 9)}.jpg`,
         progress: 0,
         status: "uploading",
       })
     );
 
-    // Add all files to state
-    addFiles(files);
+    // Add files to local state
+    setUploadedFiles((prev) => [...prev, ...files]);
 
     files.forEach((newFile) => {
       let currentProgress = 0;
 
-      // Create an interval for this specific file
       const interval = setInterval(() => {
         currentProgress += 10;
         updateFileProgress(newFile.name, currentProgress);
@@ -73,21 +82,14 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
 
       uploadIntervals.current[newFile.name] = interval;
 
-      // Start the upload
-      uploadFile(newFile)
-        .then(() => {
-          clearInterval(uploadIntervals.current[newFile.name]);
-          delete uploadIntervals.current[newFile.name];
-          updateFileProgress(newFile.name, 100);
-          updateFileStatus(newFile.name, "success");
-          onFileUploadSuccess(getAllFileIds());
-        })
-        .catch((error) => {
-          console.error("Error uploading file:", error);
-          clearInterval(uploadIntervals.current[newFile.name]);
-          delete uploadIntervals.current[newFile.name];
-          updateFileStatus(newFile.name, "error");
-        });
+      // Simulate upload - replace with actual upload logic
+      setTimeout(() => {
+        clearInterval(uploadIntervals.current[newFile.name]);
+        delete uploadIntervals.current[newFile.name];
+        updateFileProgress(newFile.name, 100);
+        updateFileStatus(newFile.name, "success");
+        onFileUploadSuccess(getAllFileIds());
+      }, 3000);
     });
   };
 
@@ -153,9 +155,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
     }
 
     removeFile(fileName);
-
-    const remainingFileIds = getAllFileIds();
-    onFileUploadSuccess(remainingFileIds);
+    onFileUploadSuccess(getAllFileIds());
   };
 
   const closeCamera = () => {
