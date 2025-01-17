@@ -33,7 +33,6 @@ const ProjectList = () => {
               projectData.data.data.map((item) => [item.id, item])
             ).values()
           );
-          console.log("unique", uniqueProjects);
           setProjectsDetail(uniqueProjects);
         }
       } catch (error) {

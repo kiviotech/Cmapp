@@ -12,7 +12,6 @@ const AssignProjectTeam = () => {
     const route = useRoute();
     const navigation = useNavigation();
     const { projectId, project_manager, project_supervisor, site_coordinator } = route.params;
-    console.log('params', projectId, project_manager, project_supervisor, site_coordinator);
 
     const [projectManager, setProjectManager] = useState(null);
     const [projectSupervisor, setProjectSupervisor] = useState(null);
@@ -65,7 +64,6 @@ const AssignProjectTeam = () => {
             setProjectManagerTeamId(projectManagerResp?.data[0]?.id)
 
             const projectSupervisorResp = await fetchProjectTeamIdByUserId(project_supervisor);
-            console.log('projectSupervisorResp', projectSupervisorResp.data)
             setProjectSupervisorTeamId(projectSupervisorResp?.data[0]?.id)
 
             const siteCordResp = await fetchProjectTeamIdByUserId(site_coordinator);
@@ -95,7 +93,6 @@ const AssignProjectTeam = () => {
                                     approver: projectSupervisorTeamId,
                                 }
                             };
-                            console.log('Payload:', payload);
                             await createTask(payload);
                         })
                     );
@@ -117,6 +114,7 @@ const AssignProjectTeam = () => {
             await assignTasks(siteCoordinatorTasks, site_coordinator, projectSupervisorTeamId);
 
             alert("Tasks have been successfully assigned to the project team!");
+            console.log("Tasks have been successfully assigned to the project team!");
 
             navigation.navigate("(pages)/AssignContractors", {
                 projectId: projectId,

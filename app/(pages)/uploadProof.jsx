@@ -504,7 +504,7 @@ const UploadProof = ({}) => {
           </View>
         </View>
       </ScrollView>
-      <BottomNavigation />
+      {/* <BottomNavigation /> */}
     </SafeAreaView>
   );
 };
