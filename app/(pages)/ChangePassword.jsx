@@ -40,7 +40,10 @@ const ChangePassword = () => {
 const checkFields = () => {
   if (!currentPassword || !newPassword || !confirmPassword) {
     setErrors("Please fill in all the fields.");
-  } else {
+  } else if (newPassword != confirmPassword) {
+    setErrors("Current password and Confirm password should be same")
+  }
+    else {
     setErrors(""); // Clear error if all fields are filled
   }
 };
@@ -57,6 +60,9 @@ const checkFields = () => {
 
   const handleSubmit = async () => {
     checkFields();
+    if (newPassword != confirmPassword) {
+      setErrors("Current password and Confirm password should be same")
+    }
     if (
       newPassword === confirmPassword &&
       validation.minLength &&
