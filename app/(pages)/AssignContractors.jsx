@@ -53,6 +53,8 @@ const AssignContractors = () => {
     task: "",
     dueDate: "",
   });
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const [jobRole, setJobRole] = useState([]);
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
@@ -205,7 +207,7 @@ const AssignContractors = () => {
       contractorLabel,
       taskLabel,
     };
-   //(newContractor.contractorTypeLabel);
+    //(newContractor.contractorTypeLabel);
 
     setAssignedContractors([...assignedContractors, newContractor]);
     setIsFinishButtonEnabled(true);
@@ -216,6 +218,9 @@ const AssignContractors = () => {
   };
 
   const handleFinishProjectSetup = async () => {
+    setToastMessage("Project Setup successfully!");
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 3000);
     if (assignedContractors.length === 0) {
       Alert.alert("Error", "Please add at least one contractor.");
       return;
@@ -269,7 +274,7 @@ const AssignContractors = () => {
       Alert.alert("Success", "Project setup completed and tasks assigned!");
       clearProjectData();
       setAssignedContractors([]);
-      navigation.navigate("(pages)/AssignContractors?projectId="+projectId);
+      navigation.navigate("(pages)/dashboard");
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);
       Alert.alert(
@@ -279,6 +284,9 @@ const AssignContractors = () => {
     }
   };
 
+  const handleSkip =  () => {
+    navigation.navigate('(pages)/dashboard')
+  }
 
   const handleDisabledButtonPress = () => {
     if (!isFinishButtonEnabled) {
@@ -311,6 +319,11 @@ const AssignContractors = () => {
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
+        {toastVisible && (
+          <View style={styles.toast}>
+            <Text style={styles.toastText}>{toastMessage}</Text>
+          </View>
+        )}
         <View style={styles.container}>
           <View style={styles.header}>
             {/* <Ionicons
@@ -463,6 +476,12 @@ const AssignContractors = () => {
                 </Text>
               </View>
             )}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.finishbtn} onPress={handleSkip}>
+
+                <Text style={styles.finishButtonText}>Skip for Now</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -563,6 +582,11 @@ const styles = StyleSheet.create({
     position: "relative",
     alignItems: "center",
     marginTop: 20,
+  },
+  finishbtn: {
+    color: '#000',
+    fontSize: 18,
+    textAlign: 'center',
   },
   tooltip: {
     position: "absolute",

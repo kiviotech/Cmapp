@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import axios from 'axios';
-import { Platform } from 'react-native';
-import { BASE_URL } from '../api/apiClient';
-import { getToken } from '../utils/storage';
+import { create } from "zustand";
+import axios from "axios";
+import { Platform } from "react-native";
+import { BASE_URL } from "../api/apiClient";
+import { getToken } from "../utils/storage";
 
 const useFileUploadStore = create((set, get) => ({
   uploadedFiles: [],
@@ -31,13 +31,13 @@ const useFileUploadStore = create((set, get) => ({
     set((state) => ({
       uploadedFiles: state.uploadedFiles.map((file) =>
         file.name === fileName
-          ? { ...file, status: 'success', progress: 100, fileId }
+          ? { ...file, status: "success", progress: 100, fileId }
           : file
       ),
       fileIdMap: {
         ...state.fileIdMap,
-        [fileName]: { id: fileId, uri }
-      }
+        [fileName]: { id: fileId, uri },
+      },
     }));
   },
 
@@ -46,7 +46,7 @@ const useFileUploadStore = create((set, get) => ({
     set((state) => ({
       uploadedFiles: state.uploadedFiles.map((file) =>
         file.name === fileName
-          ? { ...file, status: 'error', progress: 0 }
+          ? { ...file, status: "error", progress: 0 }
           : file
       ),
     }));
@@ -61,11 +61,13 @@ const useFileUploadStore = create((set, get) => ({
 
       return {
         // Remove from uploadedFiles array
-        uploadedFiles: state.uploadedFiles.filter((file) => file.name !== fileName),
+        uploadedFiles: state.uploadedFiles.filter(
+          (file) => file.name !== fileName
+        ),
         // Update fileIdMap without the removed file
         fileIdMap: newFileIdMap,
         // Keep uploading state unchanged
-        uploading: state.uploading
+        uploading: state.uploading,
       };
     });
   },
@@ -83,7 +85,10 @@ const useFileUploadStore = create((set, get) => ({
         const mimeType = fileExtension === "png" ? "image/png" : "image/jpeg";
 
         fileToUpload = {
-          uri: Platform.OS === "android" ? file.uri : file.uri.replace("file://", ""),
+          uri:
+            Platform.OS === "android"
+              ? file.uri
+              : file.uri.replace("file://", ""),
           type: mimeType,
           name: file.name,
         };
@@ -106,22 +111,24 @@ const useFileUploadStore = create((set, get) => ({
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const response = await axios.post(`${BASE_URL}/upload`, formData, { headers });
+      const response = await axios.post(`${BASE_URL}/upload`, formData, {
+        headers,
+      });
 
       if (response.status === 200) {
         const fileId = response.data[0].id;
-        
+
         set((state) => ({
           uploadedFiles: state.uploadedFiles.map((f) =>
             f.name === file.name
-              ? { ...f, status: 'success', progress: 100, fileId }
+              ? { ...f, status: "success", progress: 100, fileId }
               : f
           ),
           fileIdMap: {
             ...state.fileIdMap,
-            [file.name]: { id: fileId, uri: file.uri }
+            [file.name]: { id: fileId, uri: file.uri },
           },
-          uploading: false
+          uploading: false,
         }));
 
         return fileId;
@@ -141,11 +148,11 @@ const useFileUploadStore = create((set, get) => ({
   deleteFile: async (fileId) => {
     try {
       const token = await getToken();
-      
+
       // Base headers for all requests
       const headers = {
-        accept: 'application/json',
-        'Content-Type': 'application/json',
+        accept: "application/json",
+        "Content-Type": "application/json",
       };
 
       // Add authorization header only if token exists
@@ -153,16 +160,22 @@ const useFileUploadStore = create((set, get) => ({
         headers.Authorization = `Bearer ${token}`;
       }
 
-      console.log('Delete request URL:', `${BASE_URL}/upload/files/${fileId}`);
+      console.log("Delete request URL:", `${BASE_URL}/upload/files/${fileId}`);
 
-      const response = await axios.delete(`${BASE_URL}/upload/files/${fileId}`, { 
-        headers,
-        withCredentials: true
-      });
+      const response = await axios.delete(
+        `${BASE_URL}/upload/files/${fileId}`,
+        {
+          headers,
+          withCredentials: true,
+        }
+      );
 
       return response.status === 200;
     } catch (error) {
-      console.error("Error deleting file:", error.response?.data || error.message);
+      console.error(
+        "Error deleting file:",
+        error.response?.data || error.message
+      );
       return false;
     }
   },
@@ -170,7 +183,7 @@ const useFileUploadStore = create((set, get) => ({
   // Get all current file IDs
   getAllFileIds: () => {
     const { fileIdMap } = get();
-    return Object.values(fileIdMap).map(f => f.id);
+    return Object.values(fileIdMap).map((f) => f.id);
   },
 
   // Reset store
@@ -181,6 +194,8 @@ const useFileUploadStore = create((set, get) => ({
       uploading: false,
     });
   },
+
+  clearFiles: () => set({ uploadedFiles: [] }),
 }));
 
-export default useFileUploadStore; 
+export default useFileUploadStore;

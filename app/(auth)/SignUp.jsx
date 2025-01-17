@@ -70,11 +70,10 @@ const SignUp = () => {
     }
   };
   
-
   const validate = () => {
     const newErrors = {};
-    if (!form.name) newErrors.name = "Full name is required";
-    else if (!/^[a-zA-Z]+$/.test(form.name))
+    if (!form.name.trim()) newErrors.name = "Full name is required";
+    else if (!/^[a-zA-Z]+$/.test(form.name.trim()))
       newErrors.name = "Only alphabets are allowed";
     if (!form.email) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))

@@ -83,9 +83,10 @@ const Notification = () => {
     const isRegistration = !!item.attributes.email;
     const notificationTitle = isRegistration
       ? `Registration Request from ${item.attributes.username}`
-      : `Submission for ${item.attributes.task?.data?.attributes?.project?.data?.attributes
-        ?.name || "Project"
-      }`;
+      : `Submission for ${
+          item.attributes.task?.data?.attributes?.project?.data?.attributes
+            ?.name || "Project"
+        }`;
 
     return (
       <TouchableOpacity
@@ -136,11 +137,10 @@ const Notification = () => {
         </View>
       </View>
       <FlatList
-        data={unreadNotifications}
-        keyExtractor={(item) => {
-          // Ensure unique key by combining registration and submission ids
-          const prefix = item.attributes.email ? 'reg-' : 'sub-';
-          return `${prefix}${item.id}`;
+        data={[...unreadNotifications].reverse()}
+        keyExtractor={(item, index) => {
+          const prefix = item.attributes.email ? "reg" : "sub";
+          return `unread-${prefix}-${item.id}-${index}`;
         }}
         renderItem={renderNotificationItem}
         contentContainerStyle={styles.listContent}
@@ -155,11 +155,10 @@ const Notification = () => {
         </View>
       </View>
       <FlatList
-        data={readNotifications}
-        keyExtractor={(item) => {
-          // Ensure unique key by combining registration and submission ids
-          const prefix = item.attributes.email ? 'reg-' : 'sub-';
-          return `${prefix}${item.id}`;
+        data={[...readNotifications].reverse()}
+        keyExtractor={(item, index) => {
+          const prefix = item.attributes.email ? "reg" : "sub";
+          return `read-${prefix}-${item.id}-${index}`;
         }}
         renderItem={renderNotificationItem}
         contentContainerStyle={styles.listContent}

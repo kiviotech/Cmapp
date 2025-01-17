@@ -55,7 +55,6 @@
     "react-native-toast-message": "^2.2.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10",
-    "react-native-webview": "^13.12.3",
     "yarn": "^1.22.22",
     "zustand": "^5.0.0"
   },

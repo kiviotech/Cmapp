@@ -6,10 +6,10 @@ import {
   Alert,
   Image,
   StyleSheet,
-  Dimensions
+  Dimensions,
 } from "react-native";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -30,6 +30,7 @@ import fonts from "../../constants/fonts";
 import { login } from "../../src/utils/auth";
 import { Modal } from "react-native";
 import useAuthStore from "../../useAuthStore";
+// import { icons } from "../../constants/icons";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 
 NativeWindStyleSheet.setOutput({
@@ -165,13 +166,16 @@ const Login = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-      <View style={styles.container}>
-      <Image
-        source={{ uri: 'https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png' }}
-        style={styles.image}
-        resizeMode="contain" // Adjusts the image to fit within the specified dimensions
-      />
-    </View>
+        <View style={styles.container}>
+          <Image
+            // source={{
+            //   uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
+            // }}
+            source={icons.loginLogo}
+            style={styles.image}
+            resizeMode="contain" // Adjusts the image to fit within the specified dimensions
+          />
+        </View>
         <View>
           <View style={styles.header}>
             <Text style={styles.headerText}>Login</Text>
@@ -387,11 +391,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    alignItems: 'center', // Centers the image horizontally
-    justifyContent: 'center', // Centers the image vertically
+    alignItems: "center", // Centers the image horizontally
+    justifyContent: "center", // Centers the image vertically
   },
   image: {
     width: width * 0.8, // Sets the image width to 80% of the screen width
     height: width * 0.8, // Sets the image height to maintain aspect ratio
-  }
+  },
 });

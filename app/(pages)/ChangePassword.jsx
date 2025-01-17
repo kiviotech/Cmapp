@@ -76,11 +76,12 @@ const ChangePassword = () => {
           alert(response.data.error?.message || "Failed to update password.");
         }
       } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred while updating the password.");
+        if (error.response && error.response.status === 400) {
+          alert("Check the current password.");
+        } else {
+          alert("Please ensure all requirements are met.");
+        }
       }
-    } else {
-      alert("Please ensure all requirements are met.");
     }
   };
 
@@ -215,18 +216,18 @@ const ChangePassword = () => {
             </View>
           </View>
 
-          <View style>
+          <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.button} onPress={handleSubmit}>
               <Text style={styles.buttonText}>Update Password</Text>
             </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => navigation.navigate("(pages)/contractor/settings")}
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => navigation.navigate("(pages)/contractor/settings")}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -305,24 +306,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 5,
   },
+  buttonContainer: {
+    alignItems: "center",
+    marginTop: 20,
+  },
   button: {
-    // backgroundColor: "#1e90ff",
-    backgroundColor: "lightgreen",
+    backgroundColor: "#1e90ff",
     padding: 15,
     borderRadius: 30,
-    marginHorizontal: "auto",
     marginBottom: 10,
     height: 50,
     width: 150,
-    left: 95,
   },
   buttonText: {
     color: "#fff",
     fontSize: 14,
     fontWeight: "bold",
+    textAlign: "center",
   },
   cancelButton: {
     alignItems: "center",
+    marginTop: 10,
   },
   cancelText: {
     color: "#888",

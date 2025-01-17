@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import {
   View,
   Text,
@@ -11,13 +17,15 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
 import useFileUploadStore from "../../src/stores/fileUploadStore";
+import ImageEditor from "./ImageEditor";
 
-const FileUpload = ({ onFileUploadSuccess, message }) => {
+const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const uploadIntervals = useRef({});
+  const [editingImage, setEditingImage] = useState(null);
 
   const {
     uploadedFiles,
@@ -29,47 +37,27 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
     getAllFileIds,
   } = useFileUploadStore();
 
+  useImperativeHandle(ref, () => ({
+    clearFiles: () => {
+      useFileUploadStore.getState().clearFiles();
+    },
+  }));
+
+  const handleImageSelected = (imageUri) => {
+    setEditingImage(imageUri);
+  };
+
   const handleFileUpload = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+        allowsEditing: false,
         base64: false,
         allowsMultipleSelection: true,
       });
 
       if (!result.canceled) {
-        const newFiles = result.assets.map((asset) => ({
-          uri: asset.uri,
-          name: asset.fileName || `image-${Date.now()}.png`,
-          progress: 0,
-          status: "uploading",
-        }));
-
-        addFiles(newFiles);
-
-        for (const newFile of newFiles) {
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 10;
-            if (progress <= 90) {
-              updateFileProgress(newFile.name, progress);
-            }
-          }, 500);
-
-          uploadIntervals.current[newFile.name] = interval;
-
-          try {
-            await uploadFile(newFile);
-            clearInterval(uploadIntervals.current[newFile.name]);
-            delete uploadIntervals.current[newFile.name];
-            onFileUploadSuccess(getAllFileIds());
-          } catch (error) {
-            console.error("Error uploading file:", error);
-            clearInterval(uploadIntervals.current[newFile.name]);
-            delete uploadIntervals.current[newFile.name];
-          }
-        }
+        handleImageSelected(result.assets[0].uri);
       }
     } catch (error) {
       console.error("Error selecting files:", error);
@@ -98,36 +86,7 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
         });
 
         if (!result.canceled) {
-          const fileUri = result.assets[0].uri;
-          const fileName = fileUri.split("/").pop() || "camera_image.jpg";
-
-          const newFile = {
-            uri: fileUri,
-            name: fileName,
-            progress: 0,
-            status: "uploading",
-          };
-
-          addFiles([newFile]);
-          setUploading(true);
-
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 10;
-            if (progress <= 90) {
-              updateFileProgress(newFile.name, progress);
-            }
-
-            if (progress >= 90) {
-              clearInterval(interval);
-              setUploading(false);
-              uploadFile(newFile).then(() => {
-                onFileUploadSuccess(getAllFileIds());
-              });
-            }
-          }, 500);
-
-          uploadIntervals.current[newFile.name] = interval;
+          handleImageSelected(result.assets[0].uri);
         }
       } catch (error) {
         console.error("Error capturing image:", error);
@@ -177,21 +136,48 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
       const context = canvas.getContext("2d");
       context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
-        const file = new File([blob], "web_camera_image.jpg", {
-          type: "image/jpeg",
-        });
-        const newFile = {
-          uri: URL.createObjectURL(blob),
-          name: file.name,
-          progress: 0,
-          status: "uploading",
-        };
-        addFiles([newFile]);
-        uploadFile(newFile).then(() => {
-          onFileUploadSuccess(getAllFileIds());
-        });
+        const imageUrl = URL.createObjectURL(blob);
+        handleImageSelected(imageUrl);
+        closeCamera();
       }, "image/jpeg");
     }
+  };
+
+  const handleSaveEdit = async (editedImageUri) => {
+    const newFile = {
+      uri: editedImageUri,
+      name: `edited-image-${Date.now()}.jpg`,
+      progress: 0,
+      status: "uploading",
+    };
+
+    addFiles([newFile]);
+    setEditingImage(null);
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      if (progress <= 90) {
+        updateFileProgress(newFile.name, progress);
+      }
+    }, 500);
+
+    uploadIntervals.current[newFile.name] = interval;
+
+    try {
+      await uploadFile(newFile);
+      clearInterval(uploadIntervals.current[newFile.name]);
+      delete uploadIntervals.current[newFile.name];
+      onFileUploadSuccess(getAllFileIds());
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      clearInterval(uploadIntervals.current[newFile.name]);
+      delete uploadIntervals.current[newFile.name];
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingImage(null);
   };
 
   useEffect(() => {
@@ -205,114 +191,134 @@ const FileUpload = ({ onFileUploadSuccess, message }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.uploadContainer}>
-        <Text style={styles.uploadText}>
-          {message
-            ? message
-            : "Upload your proof of work in .png or .jpeg format"}
-        </Text>
+      {editingImage ? (
+        <ImageEditor
+          imageUri={editingImage}
+          onSave={handleSaveEdit}
+          onCancel={handleCancelEdit}
+        />
+      ) : (
+        <View style={styles.uploadContainer}>
+          <Text style={styles.uploadText}>
+            {message
+              ? message
+              : "Upload your proof of work in .png or .jpeg format"}
+          </Text>
 
-        {!cameraActive && (
-          <>
+          {!cameraActive && (
+            <>
+              <TouchableOpacity
+                style={styles.uploadButton}
+                onPress={handleFileUpload}
+              >
+                <Text style={styles.buttonText}>Browse files</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.orText}>OR</Text>
+            </>
+          )}
+
+          {cameraActive ? (
+            <View style={styles.cameraContainer}>
+              <video
+                ref={videoRef}
+                style={styles.videoPreview}
+                autoPlay
+                muted
+              />
+              <TouchableOpacity
+                style={styles.captureButton}
+                onPress={captureImage}
+              >
+                <Text style={styles.buttonText}>Capture</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={closeCamera}
+              >
+                <Text style={styles.buttonText}>Close Camera</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <TouchableOpacity
               style={styles.uploadButton}
-              onPress={handleFileUpload}
+              onPress={handleCameraUpload}
             >
-              <Text style={styles.buttonText}>Browse files</Text>
+              <Text style={styles.buttonText}>Use Camera</Text>
             </TouchableOpacity>
-
-            <Text style={styles.orText}>OR</Text>
-          </>
-        )}
-
-        {cameraActive ? (
-          <View style={styles.cameraContainer}>
-            <video ref={videoRef} style={styles.videoPreview} autoPlay muted />
-            <TouchableOpacity
-              style={styles.captureButton}
-              onPress={captureImage}
-            >
-              <Text style={styles.buttonText}>Capture</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={closeCamera}>
-              <Text style={styles.buttonText}>Close Camera</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={handleCameraUpload}
-          >
-            <Text style={styles.buttonText}>Use Camera</Text>
-          </TouchableOpacity>
-        )}
-        {uploadedFiles.map((file, index) => (
-          <View key={`${file.name}-${index}`} style={styles.fileRow}>
-            <FontAwesome name="file" size={24} color="#6B7280" />
-            <View style={styles.progressBarContainer}>
-              <View style={styles.docNameContainer}>
-                <Text style={styles.fileName}>{file?.name}</Text>
-                {file.status === "success" ? (
-                  <FontAwesome name="check-circle" size={15} color="#A3D65C" />
-                ) : file.status === "error" ? (
-                  <FontAwesome
-                    name="exclamation-circle"
-                    size={15}
-                    color="#FC5275"
+          )}
+          {uploadedFiles.map((file, index) => (
+            <View key={`${file.name}-${index}`} style={styles.fileRow}>
+              <FontAwesome name="file" size={24} color="#6B7280" />
+              <View style={styles.progressBarContainer}>
+                <View style={styles.docNameContainer}>
+                  <Text style={styles.fileName}>{file?.name}</Text>
+                  {file.status === "success" ? (
+                    <FontAwesome
+                      name="check-circle"
+                      size={15}
+                      color="#A3D65C"
+                    />
+                  ) : file.status === "error" ? (
+                    <FontAwesome
+                      name="exclamation-circle"
+                      size={15}
+                      color="#FC5275"
+                    />
+                  ) : (
+                    <Text style={{ color: "#838383", fontSize: 10 }}>
+                      {`${file.progress}%`}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.progressBackground}>
+                  <View
+                    style={[
+                      styles.progressBar,
+                      {
+                        width: `${file.progress}%`,
+                        backgroundColor:
+                          file.status === "success"
+                            ? "#A3D65C"
+                            : file.status === "error"
+                            ? "#FC5275"
+                            : "#FFD439",
+                      },
+                    ]}
                   />
-                ) : (
-                  <Text style={{ color: "#838383", fontSize: 10 }}>
-                    {`${file.progress}%`}
-                  </Text>
-                )}
+                </View>
               </View>
-              <View style={styles.progressBackground}>
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      width: `${file.progress}%`,
-                      backgroundColor:
-                        file.status === "success"
-                          ? "#A3D65C"
-                          : file.status === "error"
-                          ? "#FC5275"
-                          : "#FFD439",
-                    },
-                  ]}
+              <TouchableOpacity
+                onPress={() => handleRemoveFile(file.name)}
+                disabled={file.status === "uploading"}
+              >
+                <FontAwesome
+                  style={{ marginTop: 15 }}
+                  name="trash"
+                  size={15}
+                  color={file.status === "uploading" ? "#CCCCCC" : "#FC5275"}
                 />
-              </View>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              onPress={() => handleRemoveFile(file.name)}
-              disabled={file.status === "uploading"}
-            >
-              <FontAwesome
-                style={{ marginTop: 15 }}
-                name="trash"
-                size={15}
-                color={file.status === "uploading" ? "#CCCCCC" : "#FC5275"}
-              />
-            </TouchableOpacity>
-          </View>
-        ))}
+          ))}
 
-        {/* {uploadedFiles.map((file, index) => (
-          <View key={index} style={styles.thumbnailContainer}>
-            <Image source={{ uri: file.uri }} style={styles.thumbnail} />
-            <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
-              <FontAwesome name="trash" size={20} color="#FC5275" />
-            </TouchableOpacity>
-          </View>
-        ))}
+          {/* {uploadedFiles.map((file, index) => (
+            <View key={index} style={styles.thumbnailContainer}>
+              <Image source={{ uri: file.uri }} style={styles.thumbnail} />
+              <TouchableOpacity onPress={() => handleRemoveFile(file.name)}>
+                <FontAwesome name="trash" size={20} color="#FC5275" />
+              </TouchableOpacity>
+            </View>
+          ))}
 
-        {uploading && (
-          <ActivityIndicator size="large" color="#3B82F6" style={styles.loader} />
-        )} */}
-      </View>
+          {uploading && (
+            <ActivityIndicator size="large" color="#3B82F6" style={styles.loader} />
+          )} */}
+        </View>
+      )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

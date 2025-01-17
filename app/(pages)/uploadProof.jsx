@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Modal
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
@@ -26,8 +26,9 @@ import FileUpload from "../../components/FileUploading/FileUpload";
 import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
 import useFileUploadStore from "../../src/stores/fileUploadStore"
+import colors from "../../constants/colors";
 
-const UploadProof = ({ }) => {
+const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -46,7 +47,7 @@ const UploadProof = ({ }) => {
   const navigation = useNavigation();
   const route = useRoute();
   const { id } = route?.params;
-  const resetFileUploadStore = useFileUploadStore(state => state.reset);
+  const fileUploadRef = useRef(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -59,7 +60,7 @@ const UploadProof = ({ }) => {
           const status = latestSubmission?.attributes?.status;
           const taskName =
             taskData?.data?.attributes?.standard_task?.data?.attributes?.Name;
-          setTaskStatus(status === "ongoing" ? status : Pending);
+          setTaskStatus(status === "ongoing" ? status : "pending");
           if (status === "rejected") {
             setRejectionComment(latestSubmission?.attributes?.rejectionComment);
           }
@@ -135,41 +136,50 @@ const UploadProof = ({ }) => {
     }
   };
 
-  const handleSubmit = async () => {
-    const hasError = uploadedFileIds.length === 0 || !comment;
-
-    if (uploadedFileIds.length === 0 || !comment) {
-      console.log('uploadedFileIds', uploadedFileIds)
-      setErrors("Images and comments are required")
+  useEffect(() => {
+    if (uploadedFileIds.length === 0 && comment.length === 0) {
+      setErrors("Images and comments are required");
+    } else if (uploadedFileIds.length === 0) {
+      setErrors("Images are required");
+    } else if (comment.length === 0) {
+      setErrors("Comment is required");
+    } else {
+      setErrors("");
     }
+  }, [uploadedFileIds, comment]);
 
-    // If there are errors, do not proceed
-    if (hasError) {
-      setToastMessage("Please fix the errors before submitting.");
+  const handleSubmit = async () => {
+    if (errors) {
+      setToastMessage(errors);
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 3000);
-      return; 
+      return;
     }
 
-    // Proceed with submission if no errors
     try {
       const fileIds = uploadedFileIds.filter((id) => typeof id === "number");
-
       const submission = await createSubmission(fileIds, id);
       console.log("Submission created successfully:", submission);
 
-      setToastMessage("Submission created successfully!");
-      setToastVisible(true);
-      setTimeout(() => setToastVisible(false), 3000);
-      
-      // Clear form
-      resetFileUploadStore();
+      // Clear all uploaded files and reset the FileUpload component
       setUploadedFiles([]);
       setUploadedFileIds([]);
       setComment("");
+
+      if (fileUploadRef.current) {
+        fileUploadRef.current.clearFiles();
+      }
+
+      setToastMessage("Submission created successfully!");
+      setToastVisible(true);
+
+      // // Navigate back to task details with a refresh flag
+      // navigation.navigate("(pages)/taskDetails", {
+      //   taskId: id,
+      //   refresh: true,
+      // });
     } catch (error) {
       console.error("Error during submission:", error);
-
       setToastMessage("Error during submission. Please try again.");
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 3000);
@@ -194,10 +204,10 @@ const UploadProof = ({ }) => {
         prevFiles.map((f) =>
           f.name === file.name
             ? {
-              ...f,
-              progress,
-              status: progress < 100 ? "uploading" : "success",
-            }
+                ...f,
+                progress,
+                status: progress < 100 ? "uploading" : "success",
+              }
             : f
         )
       );
@@ -327,28 +337,36 @@ const UploadProof = ({ }) => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          paddingVertical: 20,
-          alignItems: "center",
-          paddingLeft: 10,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.navigate("(pages)/dashboard")}
-        >
-          <Image source={icons.backarrow}></Image>
-        </TouchableOpacity>
-        <Text style={styles.instructions}>1. Upload your proof of work</Text>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("(pages)/taskDetails", {
+                taskData: { id },
+                refresh: true,
+              })
+            }
+          >
+            <Image source={icons.backarrow}></Image>
+          </TouchableOpacity>
+          <Text style={styles.detailsText}>Upload your proof of work</Text>
+        </View>
       </View>
+
       <View>
-        <Text>{errors ? <Text style={styles.errorText}>{errors}</Text> : null}</Text>
+        <Text>
+          {errors ? <Text style={styles.errorText}>{errors}</Text> : null}
+        </Text>
       </View>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.mainContainer}>
           <View style={styles.uploadContainer}>
             <FileUpload
+              ref={fileUploadRef}
               uploadedFiles={uploadedFileIds}
               setUploadedFiles={setUploadedFileIds}
               onFileUploadSuccess={handleFileUploadSuccess}
@@ -369,9 +387,9 @@ const UploadProof = ({ }) => {
                           color="#A3D65C"
                         />
                       ) : file.status === "uploading" ? (
-                        <Text
-                          style={{ color: "#838383", fontSize: 10 }}
-                        >${file.progress}%</Text>
+                        <Text style={{ color: "#838383", fontSize: 10 }}>
+                          ${file.progress}%
+                        </Text>
                       ) : null}
                     </View>
                     <View style={styles.progressBackground}>
@@ -440,53 +458,6 @@ const UploadProof = ({ }) => {
               </View>
             </Modal>
           </View>
-
-          <Text style={styles.instructions}>2. Supervisor’s Approval</Text>
-          <View
-            style={[
-              styles.notificationApproval,
-              {
-                backgroundColor:
-                  taskStatus === "approved"
-                    ? "#D4EDDA"
-                    : taskStatus === "declined"
-                      ? "#ffebee" // light red
-                      : "rgba(251, 188, 85, 0.3)", // light green for approved
-              },
-            ]}
-          >
-            <Image
-              source={
-                taskStatus === "approved"
-                  ? icons.approved // Pending icon
-                  : taskStatus === "declined"
-                    ? icons.reject // Declined icon
-                    : icons.uploadApproval // Approved icon
-              }
-            />
-            <Text
-              style={{
-                color:
-                  taskStatus === "approved"
-                    ? "#28A745"
-                    : taskStatus === "declined"
-                      ? "#DC3545" // red
-                      : "#FBBC55", // green for approved
-              }}
-            >
-              {taskStatus}
-            </Text>
-          </View>
-
-          {taskStatus.includes("Rejected") && (
-            <View style={styles.rejectionContainer}>
-              <Text style={styles.rejectionText}>
-                Rejection Comment: {rejectionComment}
-              </Text>
-            </View>
-          )}
-
-          <UploadedFileHIstory historyData={uploadedHistory} />
         </View>
       </ScrollView>
       <BottomNavigation />
@@ -503,17 +474,28 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     marginBottom: 50,
   },
-  instructions: {
-    fontSize: 18,
-    // fontFamily: fonts.WorkSans600,
-    paddingBottom: 10,
-    paddingLeft: 20,
+  header: {
+    paddingTop: 25,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    flex: 1,
+    paddingHorizontal: 25,
+    alignItems: "center",
+  },
+  detailsText: {
+    fontSize: 24,
+    paddingLeft: 15,
   },
   errorText: {
     color: "red",
     fontSize: 12,
     marginTop: 4,
-    marginLeft: 20
+    marginLeft: 20,
   },
   commentInput: {
     borderWidth: 1,
@@ -609,57 +591,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 10,
   },
-  notificationApproval: {
-    backgroundColor: "rgba(251, 188, 85, 0.30)",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 16,
-    height: 50,
-    marginTop: 5,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    gap: 10,
-  },
-  rejectionContainer: {
-    backgroundColor: "#FED5DD",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 16,
-  },
-  rejectionText: {
-    color: "#FC5275",
-    // fontFamily: fonts.WorkSans500,
-  },
   toast: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 20,
     right: 20,
-    backgroundColor: '#28a745',
+    backgroundColor: "#28a745",
     padding: 15,
     borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 1000,
   },
   toastText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalBackground: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // semi-transparent background
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     width: 250,
   },
   modalText: {
@@ -667,7 +626,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   closeButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: "#007BFF",
     padding: 10,
     borderRadius: 5,
   },
