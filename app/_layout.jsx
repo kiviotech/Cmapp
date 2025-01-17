@@ -87,6 +87,11 @@ const Layout = ({ user, designation }) => {
           <ProjectTeamScreens />
         )}
         <Stack.Screen name="index" />
+        <Stack.Screen name="notification" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="NotificationDetails"
+          options={{ headerShown: false }}
+        />
       </Stack>
     </ToastProvider>
   );

@@ -1,67 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  FlatList,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  Image,
+  SafeAreaView,
+  TextInput,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import CustomButton from "../../components/CustomButton";
-import { FontAwesome } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import fonts from "../../constants/fonts";
-import colors from "../../constants/colors";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import {
-  getRegistrations,
-  updateRegistration,
-} from "../../src/api/repositories/registrationRepository";
-import {
-  getSubmissions,
-  updateSubmission,
-} from "../../src/api/repositories/submissionRepository";
-import { createUser } from "../../src/api/repositories/userRepository";
-import useAuthStore from "../../useAuthStore";
-import { fetchContractorsByUserId } from "../../src/services/contractorService";
-import { getTaskByContractorId } from "../../src/api/repositories/taskRepository";
-import { icons } from "../../constants";
 import BottomNavigation from "./contractor/BottomNavigation ";
+import { getTaskByContractorId } from "../../src/api/repositories/taskRepository";
+import { fetchContractorsByUserId } from "../../src/services/contractorService";
+import useAuthStore from "../../useAuthStore";
 
-const UploadProof = () => {
-  const navigation = useNavigation();
-  const [tasks, setTasks] = useState([]);
-  const [submissionDetail, setSubmissionDetail] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [uploadedHistory, setUploadedHistory] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+const Notification = () => {
+  const [activeTab, setActiveTab] = useState("Unread");
+  const [searchQuery, setSearchQuery] = useState("");
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [tasks, setTasks] = useState([]);
+  const navigation = useNavigation();
   const { user } = useAuthStore();
 
   useEffect(() => {
-    const SubmissionData = async () => {
+    const fetchData = async () => {
       if (user && user.id) {
         try {
           const data = await fetchContractorsByUserId(user.id);
-          // setContractorsData(data.data); // Set entire array of contractors
           var filteredData = [];
           if (data.data.length > 0) {
-            const contractorId = data.data[0].id; // Assuming one contractor per user
+            const contractorId = data.data[0].id;
             const projectData = data.data.map(
               (project) => (filteredData = project.attributes.projects.data)
             );
 
-            // setProjectsDetail(filteredData)
-
-            // Fetch tasks for each project ID in selectedProjectId
             const allTasks = [];
-            const submissionData = [];
-            let submission = [];
             let unread = [];
             let read = [];
+
             for (const projectId of filteredData) {
               const taskData = await getTaskByContractorId(
                 projectId.id,
@@ -70,202 +49,329 @@ const UploadProof = () => {
               const ongoingTasks = taskData.data.data.filter(
                 (task) => task.attributes.task_status === "ongoing"
               );
-              allTasks.push(...ongoingTasks); // Accumulate tasks for each project
+              allTasks.push(...ongoingTasks);
             }
-            // setTasks(allTasks); // Update tasks state with all fetched tasks
 
-            for (const item of allTasks) {
-              submission = item.attributes.submissions.data
-              submissionData.push(submission);
+            for (const task of allTasks) {
+              const submissions = task.attributes.submissions.data;
               unread = unread.concat(
-                submission?.filter((elem) => elem.attributes.notification_status === 'unread')
+                submissions?.filter(
+                  (sub) => sub.attributes.notification_status === "unread"
+                )
               );
               read = read.concat(
-                submission?.filter((elem) => elem.attributes.notification_status === 'read')
+                submissions?.filter(
+                  (sub) => sub.attributes.notification_status === "read"
+                )
               );
-            };
+            }
+
             setTasks(allTasks);
-            setSubmissionDetail(submissionData.flat());
             setUnreadNotifications(unread);
             setReadNotifications(read);
           }
         } catch (error) {
-          console.error("Error fetching contractor data:", error);
+          console.error("Error fetching notifications:", error);
         } finally {
           setIsLoading(false);
         }
       }
     };
-    SubmissionData();
+    fetchData();
   }, [user]);
 
-  const handleDeleteNotification = (id) => {
-    const updatedDetails = submissionDetail.map((history) =>
-      history.filter((data) => data.id !== id)
-    );
-    setSubmissionDetail(updatedDetails.filter((history) => history.length > 0));
+  const markAsRead = async (item) => {
+    try {
+      // Update notification status logic here
+      setUnreadNotifications((prev) =>
+        prev.filter((notification) => notification.id !== item.id)
+      );
+      setReadNotifications((prev) => [
+        ...prev,
+        {
+          ...item,
+          attributes: { ...item.attributes, notification_status: "read" },
+        },
+      ]);
+    } catch (error) {
+      console.error("Error updating notification status:", error);
+    }
   };
 
+  const renderNotificationItem = ({ item }) => {
+    const task = tasks.find((t) =>
+      t.attributes.submissions.data.some((s) => s.id === item.id)
+    );
+
+    const createdAt = new Date(item.attributes.createdAt);
+    const formattedTime = createdAt.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const status = item.attributes.status || "pending";
+    const statusColor =
+      {
+        approved: "#4CAF50",
+        rejected: "#FF4444",
+        pending: "#FFA500",
+      }[status.toLowerCase()] || "#6C757D";
+
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          markAsRead(item);
+          navigation.navigate("(pages)/notificationDetails", {
+            notification: JSON.stringify(item),
+            task: JSON.stringify(task),
+            formattedTime,
+            statusColor,
+          });
+        }}
+      >
+        <View style={styles.notificationContainer}>
+          <Ionicons
+            name="document-text-outline"
+            size={24}
+            color="#4CAF50"
+            style={styles.icon}
+          />
+          <View style={styles.textContainer}>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>
+                Submission for{" "}
+                {task?.attributes?.project?.data?.attributes?.name}
+              </Text>
+              <Text style={styles.time}>{formattedTime}</Text>
+            </View>
+            <View style={styles.bottomRow}>
+              <Text style={styles.message}>
+                {item.attributes.comment || "No additional information"}
+              </Text>
+              <Text style={[styles.status, { color: statusColor }]}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const filteredNotifications = (notifications) => {
+    const searchText = searchQuery.toLowerCase();
+    return notifications.filter((item) => {
+      const comment = item.attributes.comment?.toLowerCase() || "";
+      const task = tasks.find((t) =>
+        t.attributes.submissions.data.some((s) => s.id === item.id)
+      );
+      const projectName =
+        task?.attributes?.project?.data?.attributes?.name?.toLowerCase() || "";
+
+      return (
+        searchText === "" ||
+        comment.includes(searchText) ||
+        projectName.includes(searchText)
+      );
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.areaContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.border}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("(pages)/dashboard")}
-        >
-          <Ionicons name="arrow-back" size={24} color="black" />
-          {/* Back Icon */}
-        </TouchableOpacity>
-        <Text style={styles.instructions}>Notifications</Text>
+    <SafeAreaView style={styles.areaContainer}>
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Notifications</Text>
+        </View>
+
+        <View style={styles.categoryTabsContainer}>
+          {["Unread", "Read"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.categoryTab,
+                activeTab === tab && styles.activeCategoryTab,
+              ]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text
+                style={[
+                  styles.categoryTabText,
+                  activeTab === tab && styles.activeCategoryText,
+                ]}
+              >
+                {tab} (
+                {tab === "Unread"
+                  ? unreadNotifications.length
+                  : readNotifications.length}
+                )
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search notifications..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
       </View>
 
-      <ScrollView style={{ marginBottom: 80 }}>
-        {isLoading ? (
-          <Text>Loading...</Text>
-        ) : (
-          tasks?.map((task, taskIndex) => {
-            // Check if submissions data exists
-            const hasSubmissions =
-              task?.attributes?.submissions?.data &&
-              task.attributes.submissions.data.length > 0;
-            return (
-              hasSubmissions && (
-                <View key={taskIndex}>
-                  <Text style={styles.taskTitle}>
-                    {task?.attributes?.project?.data?.attributes?.name}
-                  </Text>
-                  <View key={`task-${taskIndex}`} style={{ marginHorizontal: 20 }}>
-                  {task?.attributes?.submissions?.data
-                    // Reverse submissions to display the latest on top
-                    .slice()
-                    .reverse()
-                    .map((history, historyIndex) => (  
-                        <View
-                          key={`history-${history.id}-${historyIndex}`} // Ensure unique keys
-                          style={{ marginBottom: 10 }} // Optional: Add some spacing
-                        >
-                          <TouchableOpacity
-                            style={styles.notificationContainer}
-                          // Uncomment and adjust the navigation logic if needed
-                          // onPress={() =>
-                          //   navigation.navigate("(pages)/notificationDetails", {
-                          //     historyId: history.id, // Pass history.id as a parameter
-                          //   })
-                          // }
-                          >
-                            <View style={{ flexDirection: "row", alignItems: "center" }}>
-                              <Image source={icons.file} />
-                              <Text style={styles.pagraph}>
-                                Your submission for{" "}
-                                {
-                                  task.attributes.standard_task.data.attributes.Name
-                                }{" "}
-                                has been: {history.attributes.status}
-                              </Text>
-                            </View>
-                            <Text>
-                              Comments:{" "}
-                              {history.attributes.comment
-                                ? history.attributes.comment
-                                : "No Comments"}
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )
-                    )}
-                    {/* Uncomment if you need the delete button */}
-                    {/* <CustomButton
-                buttonStyle={styles.deleteButton}
-                textStyle={styles.deleteButtonText}
-                text="Delete"
-                handlePress={() => handleDeleteNotification(data.id)}
-              /> */}
-                  </View>
-                </View>
-              )
-            );
-          })
-        )}
-      </ScrollView>
+      <FlatList
+        data={filteredNotifications(
+          activeTab === "Unread" ? unreadNotifications : readNotifications
+        ).reverse()}
+        keyExtractor={(item, index) => `notification-${item.id}-${index}`}
+        renderItem={renderNotificationItem}
+        contentContainerStyle={styles.listContent}
+        style={styles.flatList}
+        showsVerticalScrollIndicator={false}
+      />
+
       <BottomNavigation />
     </SafeAreaView>
   );
 };
 
-export default UploadProof;
-
 const styles = StyleSheet.create({
-  mainContainer: {
+  areaContainer: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingBottom: 10,
-    backgroundColor: "#fff",
-  },
-  instructions: {
-    fontSize: 24,
-    // fontFamily: fonts.WorkSans600,
-    paddingLeft: 20,
-  },
-  pagraph: {
-    color: colors.blackColor,
-    fontSize: 20,
     padding: 5,
-    // fontWeight: 500,
-    marginLeft: 10,
-    // fontFamily: fonts.WorkSans400,
+    marginTop: 20,
+    width: "100%",
   },
-  seeMore: {
-    textAlign: "center",
-    color: colors.primary,
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+    zIndex: 1,
   },
-  border: {
-    borderColor: colors.borderColor,
-    borderBottomWidth: 1,
-    height: 70,
+  header: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    margin: 10,
+    paddingBottom: 18,
   },
-  taskTitle: {
-    fontSize: 20,
-    marginVertical: 10,
-    marginHorizontal: 20,
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1C1C1E",
+  },
+  flatList: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   notificationContainer: {
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.borderColor,
-    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     padding: 15,
-    backgroundColor: "#F9F9F9",
+    borderRadius: 10,
+    marginBottom: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 5,
-    elevation: 5,
-    gap: 10, // Adds a subtle shadow effect
+    shadowOffset: { width: 0, height: 1 },
   },
-  // seeMoreButton: {
-  //   // backgroundColor: "#000",
-  //   backgroundColor: "#ffffff",
-  //   padding: 3,
-  //   borderRadius: 100,
-  //   shadowColor: "#000", // Shadow color
-  //   shadowOffset: { width: 0, height: 2 }, // Shadow offset (x and y)
-  //   shadowOpacity: 0.25, // Shadow opacity
-  //   shadowRadius: 3.84, // Shadow blur radius
-  //   elevation: 5, // Shadow for Android
-  //   justifyContent: "flex-end",
-  //   width: 120,
-  // },
-  deleteButton: {
-    marginTop: 8,
-    backgroundColor: "red",
+  icon: {
+    marginRight: 10,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1C1C1E",
+    flex: 1,
+    marginRight: 8,
+  },
+  time: {
+    fontSize: 12,
+    color: "#A0A0A0",
+  },
+  message: {
+    fontSize: 14,
+    color: "#6C757D",
+    flex: 1,
+    marginRight: 8,
+  },
+  status: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  listContent: {
+    paddingBottom: 80,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    height: 40,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
+  categoryTabsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16,
+  },
+  categoryTab: {
     paddingVertical: 8,
-    borderRadius: 4,
-    width: "20%",
+    paddingHorizontal: 16,
+    width: "50%",
   },
-  deleteButtonText: {
-    color: "#fff",
+  activeCategoryTab: {
+    borderColor: "#577CFF",
+    borderBottomWidth: 6,
+    borderBottomColor: "#577CFF",
+  },
+  categoryTabText: {
+    color: "#1C1C1E",
+    fontWeight: "bold",
     textAlign: "center",
   },
+  activeCategoryText: {
+    color: "#577CFF",
+  },
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 2,
+  },
 });
+
+export default Notification;
