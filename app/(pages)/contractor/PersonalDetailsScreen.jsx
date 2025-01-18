@@ -28,8 +28,6 @@ const PersonalDetailsScreen = () => {
 
   const navigation = useNavigation();
   const { user } = useAuthStore();
-  console.log(user);
-  console.log("User email:", user.email);
 
   useEffect(() => {
     const getProjects = async () => {

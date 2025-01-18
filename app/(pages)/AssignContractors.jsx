@@ -14,7 +14,10 @@ import {
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
-import { fetchStandardTaskBySubcontractor, fetchStandardTasks } from "../../src/services/standardTaskService";
+import {
+  fetchStandardTaskBySubcontractor,
+  fetchStandardTasks,
+} from "../../src/services/standardTaskService";
 import { fetchSubContractors } from "../../src/services/subContractorService";
 import {
   fetchProjectById,
@@ -61,15 +64,8 @@ const AssignContractors = () => {
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
   const route = useRoute();
   const navigation = useNavigation();
-  const { projectId, project_manager, project_supervisor, site_coordinator } = route.params;
-
-
-  useEffect(() => {
-    console.log("Received project ID:", projectId);
-    // console.log("Received project_manager:", project_manager);
-    // console.log("Received project_supervisor:", project_supervisor);
-    // console.log("Received site_coordinator:", site_coordinator);
-  }, [projectId]);
+  const { projectId, project_manager, project_supervisor, site_coordinator } =
+    route.params;
 
   useEffect(() => {
     const loadContractorTypes = async () => {
@@ -123,13 +119,14 @@ const AssignContractors = () => {
     )?.label;
     try {
       const response = await fetchStandardTaskBySubcontractor(contractorLabel);
-      setAsignedTask(response.data)
+      setAsignedTask(response.data);
       const roles = response?.data
-        .map((task) => task.attributes?.project_team?.data?.attributes?.job_role)
+        .map(
+          (task) => task.attributes?.project_team?.data?.attributes?.job_role
+        )
         .filter((role) => role !== undefined); // Filter out undefined values
 
       setJobRole(roles);
-
     } catch (error) {
       console.error("Error fetching standard tasks:", error);
     }
@@ -155,7 +152,6 @@ const AssignContractors = () => {
       loadProjectDetails();
     }
   }, [projectId]);
-
 
   const validateFields = () => {
     let errors = {};
@@ -185,7 +181,7 @@ const AssignContractors = () => {
       );
       return;
     }
-  
+
     if (!assignedTask || assignedTask.length === 0) {
       Alert.alert(
         "Error",
@@ -193,7 +189,7 @@ const AssignContractors = () => {
       );
       return;
     }
-  
+
     const contractorTypeLabel = contractorTypeItems.find(
       (item) => item.value === contractorTypeValue
     )?.label;
@@ -201,7 +197,7 @@ const AssignContractors = () => {
       (item) => item.value === contractorValue
     )?.label;
     const taskLabel = taskItems.find((item) => item.value === taskValue)?.label;
-  
+
     const newContractor = {
       contractorType: contractorTypeValue,
       contractor: contractorValue,
@@ -211,11 +207,10 @@ const AssignContractors = () => {
       contractorLabel,
       taskLabel,
     };
-  
+
     setAssignedContractors([...assignedContractors, newContractor]);
     setIsFinishButtonEnabled(true); // Enable finish button if a contractor is added
   };
-  
 
   const handleFinishProjectSetup = async () => {
     // setTimeout(() => setToastVisible(false), 3000);
@@ -286,8 +281,8 @@ const AssignContractors = () => {
   };
 
   const handleSkip = () => {
-    navigation.navigate('(pages)/dashboard')
-  }
+    navigation.navigate("(pages)/dashboard");
+  };
 
   const handleDisabledButtonPress = () => {
     if (!isFinishButtonEnabled) {
@@ -362,7 +357,9 @@ const AssignContractors = () => {
             zIndexInverse={1000}
           />
           {validationErrors.contractorType && (
-            <Text style={styles.errorText}>{validationErrors.contractorType}</Text>
+            <Text style={styles.errorText}>
+              {validationErrors.contractorType}
+            </Text>
           )}
 
           <Text style={styles.label}>Contractor</Text>
@@ -415,9 +412,7 @@ const AssignContractors = () => {
           </View>
 
           {validationErrors.dueDate && (
-            <Text style={styles.errorText}>
-              {validationErrors.dueDate}
-            </Text>
+            <Text style={styles.errorText}>{validationErrors.dueDate}</Text>
           )}
 
           <TouchableOpacity
@@ -444,7 +439,8 @@ const AssignContractors = () => {
                     key={idx} // Add a unique key for each task
                     style={{ marginHorizontal: 5 }}
                   >
-                    {assigned.attributes.Name}{","}
+                    {assigned.attributes.Name}
+                    {","}
                   </Text>
                 ))}
               </Text>
@@ -456,7 +452,6 @@ const AssignContractors = () => {
               </Text>
             </View>
           ))}
-
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -513,13 +508,13 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     zIndex: 9999,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   popupText: {
     color: "#fff",
     textAlign: "center",
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   container: {
     flex: 1,
@@ -609,9 +604,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   finishbtn: {
-    color: '#000',
+    color: "#000",
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
   },
   tooltip: {
     position: "absolute",

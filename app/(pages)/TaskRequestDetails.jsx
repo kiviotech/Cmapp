@@ -47,7 +47,6 @@ const RequestDetails = () => {
   const [documents, setDocuments] = useState([]);
 
   const { user } = useAuthStore();
-  console.log("user", user);
 
   useEffect(() => {
     setTaskData(requestData?.attributes?.task?.data);
@@ -56,8 +55,6 @@ const RequestDetails = () => {
         ?.attributes?.username
     );
     setDocuments(requestData?.attributes?.proofOfWork?.data || []);
-    console.log("Documents:", requestData?.attributes?.proofOfWork?.data);
-    console.log("task Data", requestData);
   }, [requestData]);
 
   const handleDownloadImage = async (imageFormats) => {
@@ -102,7 +99,6 @@ const RequestDetails = () => {
             const progress =
               downloadProgress.totalBytesWritten /
               downloadProgress.totalBytesExpectedToWrite;
-            console.log(`Download progress: ${progress * 100}%`);
           }
         );
 
@@ -177,8 +173,6 @@ const RequestDetails = () => {
         );
 
         if (response.data) {
-          console.log("Submission updated successfully:", response.data);
-
           // Update task status
           if (newStatus === "approved") {
             const updateTaskData = {
@@ -188,12 +182,9 @@ const RequestDetails = () => {
               },
             };
 
-            console.log('updateTaskData', updateTaskData.data)
-
             const taskResp = await updateTask(taskData.id, updateTaskData);
 
             if (taskResp.data) {
-              console.log("Task status updated successfully:", taskResp.data);
               Alert.alert(
                 "Success",
                 `Request ${newStatus} and task status updated successfully!`
@@ -213,8 +204,13 @@ const RequestDetails = () => {
             );
           }
 
-          // Navigate back
-          navigation.goBack();
+          // Navigate back with status update info
+          navigation.navigate("(pages)/projectTeam/Notification", {
+            statusUpdate: {
+              status: newStatus,
+              timestamp: new Date().toISOString(),
+            },
+          });
         }
       } catch (error) {
         console.error("Error updating request or task:", error);
@@ -228,7 +224,6 @@ const RequestDetails = () => {
 
   const handleImagePreview = (imageFormats) => {
     const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
-    console.log("Preview Image URL:", imageUrl);
     setSelectedImage(imageUrl);
     setModalVisible(true);
   };
@@ -240,7 +235,7 @@ const RequestDetails = () => {
       Alert.alert("Error", "Invalid image format data.");
       return;
     }
-    
+
     const imageUrl = `${URL}${imageFormats.thumbnail.url}`;
     setEditingImage({
       id: imageFormats.id,
@@ -249,7 +244,6 @@ const RequestDetails = () => {
     });
     setShowImageEditor(true);
   };
-  
 
   const handleSaveEditedImage = async (editedImageBlob) => {
     try {
@@ -322,55 +316,54 @@ const RequestDetails = () => {
   const renderDocument = (doc) => {
     // Ensure doc and doc.attributes are defined before accessing
     if (!doc || !doc.attributes) {
-      console.log("Invalid document:", doc);
       return null; // Return nothing if document is invalid
     }
-  
+
     const { name, ext, size, formats } = doc.attributes;
 
     return (
       <View key={doc.id} style={styles.documentContainer}>
-      <View style={styles.documentInfo}>
-        <FontAwesome5
-          name={ext?.includes(".png") ? "file-image" : "file-alt"}
-          size={24}
-          color="#333"
-        />
-        <View style={styles.documentText}>
-          <Text style={styles.documentName}>
-            {name || "Unnamed document"}
-          </Text>
-          <Text style={styles.documentSize}>
-            {`${(size / 1024).toFixed(2)} kb`}
-          </Text>
+        <View style={styles.documentInfo}>
+          <FontAwesome5
+            name={ext?.includes(".png") ? "file-image" : "file-alt"}
+            size={24}
+            color="#333"
+          />
+          <View style={styles.documentText}>
+            <Text style={styles.documentName}>
+              {name || "Unnamed document"}
+            </Text>
+            <Text style={styles.documentSize}>
+              {`${(size / 1024).toFixed(2)} kb`}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.documentActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleImagePreview(formats)}
+          >
+            <MaterialIcons name="visibility" size={20} color="#577CFF" />
+            <Text style={styles.actionButtonText}>View</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleEditImage(formats)}
+          >
+            <MaterialIcons name="edit" size={20} color="#577CFF" />
+            <Text style={styles.actionButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.downloadButton}
+            onPress={() => handleDownloadImage(formats)}
+          >
+            <MaterialIcons name="download" size={20} color="#FFF" />
+            <Text style={styles.downloadButtonText}>Download</Text>
+          </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.documentActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleImagePreview(formats)}
-        >
-          <MaterialIcons name="visibility" size={20} color="#577CFF" />
-          <Text style={styles.actionButtonText}>View</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleEditImage(formats)}
-        >
-          <MaterialIcons name="edit" size={20} color="#577CFF" />
-          <Text style={styles.actionButtonText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.downloadButton}
-          onPress={() => handleDownloadImage(formats)}
-        >
-          <MaterialIcons name="download" size={20} color="#FFF" />
-          <Text style={styles.downloadButtonText}>Download</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-};
+    );
+  };
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -532,7 +525,7 @@ const styles = StyleSheet.create({
   container: {
     padding: width * 0.037,
     paddingTop: height * 0.038,
-    backgroundColor: "#FFF",
+    backgroundColor: "#F8F8F8",
     flexGrow: 1,
   },
   header: {
@@ -609,8 +602,6 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 8,
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
   },
   actionButton: {
     flexDirection: "row",

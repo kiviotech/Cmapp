@@ -111,8 +111,6 @@ const profile = () => {
             const projectData = data.data.map(
               (project) => (filteredData = project.attributes.projects.data)
             );
-            console.log("data", filteredData);
-            console.log("data", filteredData);
             setProjectsDetail(filteredData);
 
             // Fetch tasks for each project ID in selectedProjectId
@@ -289,7 +287,6 @@ const profile = () => {
                 <View key={index} style={styles.submissionContainer}>
                   <TouchableOpacity
                     onPress={() => {
-                      console.log("Project Task Data:", task);
                       navigation.navigate("(pages)/taskDetails", {
                         taskData: task,
                         refresh: false,

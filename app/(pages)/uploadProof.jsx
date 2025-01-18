@@ -100,7 +100,6 @@ const UploadProof = ({}) => {
       const data = response.data;
 
       if (response.status === 200) {
-        // console.log("Files uploaded successfully:", data);
         const fileIds = data.map((file) => file.id);
         return fileIds;
       } else {
@@ -192,7 +191,6 @@ const UploadProof = ({}) => {
       }
 
       const submission = await createSubmission(uploadedFileIds, id);
-      // console.log("Submission created successfully:", submission);
 
       // Clear form
       setComment("");
@@ -332,9 +330,7 @@ const UploadProof = ({}) => {
       });
 
       if (response.status === 200) {
-        // console.log("File uploaded successfully:", response.data);
       } else {
-        console.log("Failed to upload file");
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -366,7 +362,6 @@ const UploadProof = ({}) => {
 
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds((prevIds) => [...prevIds, ...fileIds]);
-    // console.log("Uploaded file IDs:", uploadedFileIds);
   };
 
   const handleBackNavigation = () => {

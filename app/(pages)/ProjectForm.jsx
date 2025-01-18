@@ -15,6 +15,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
 import { fetchUsers } from "../../src/services/userService";
 import { createNewProject } from "../../src/services/projectService";
+// import FileUploadProjectForm from "../../components/FileUploadProjectForm/FileUploadProjectForm";
 import FileUpload from "../../components/FileUploading/FileUpload";
 import { useNavigation } from "@react-navigation/native";
 import apiClient from "../../src/api/apiClient";
@@ -84,7 +85,6 @@ const ProjectForm = () => {
         const supervisorsResponse = await fetchProjectTeamManager(
           "Project Supervisor"
         );
-        console.log("supervisorsResponse", supervisorsResponse.data);
         setProjectSupervisorTeamId(supervisorsResponse?.data[0]?.id);
         const supervisorsList = supervisorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
@@ -181,8 +181,11 @@ const ProjectForm = () => {
   };
 
   const handleFileUploadSuccess = (fileIds) => {
-    // Ensure fileIds is a flat array of unique IDs
-    setDocumentIds([...new Set(fileIds)]);
+    // Ensure fileIds is a flat array of numbers
+    const uniqueIds = Array.isArray(fileIds)
+      ? fileIds.map((id) => Number(id))
+      : [];
+    setDocumentIds(uniqueIds);
   };
 
   const handleProjectCreation = async () => {
@@ -213,7 +216,8 @@ const ProjectForm = () => {
           project_supervisor: supervisor,
           site_coordinator: coordinator,
           project_status: "ongoing",
-          documents: documentIds, // This will now be a flat array of unique IDs
+          // Ensure documents is properly formatted as an array of numbers
+          documents: documentIds,
         },
       };
 
@@ -495,11 +499,6 @@ const ProjectForm = () => {
                       onPress={() => {
                         setSelectedUser(item.username);
                         setDropdownVisible(false);
-                        // Handle specific selection if needed
-                        console.log(
-                          `Selected ${selectedDropdown}:`,
-                          item.username
-                        );
                       }}
                       style={styles.modalItem}
                     >
@@ -579,10 +578,6 @@ const ProjectForm = () => {
                           setSiteCoordinators(item.username);
                         }
                         setDropdownVisible(false);
-                        console.log(
-                          `Selected ${selectedDropdown}:`,
-                          item.username
-                        );
                       }}
                       style={styles.modalItem}
                     >

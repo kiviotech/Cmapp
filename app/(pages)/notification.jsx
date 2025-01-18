@@ -14,6 +14,7 @@ import BottomNavigation from "./contractor/BottomNavigation ";
 import { getTaskByContractorId } from "../../src/api/repositories/taskRepository";
 import { fetchContractorsByUserId } from "../../src/services/contractorService";
 import useAuthStore from "../../useAuthStore";
+import { updateExistingSubmission } from "../../src/services/submissionService";
 
 const Notification = () => {
   const [activeTab, setActiveTab] = useState("Unread");
@@ -31,7 +32,6 @@ const Notification = () => {
   //       try {
   //         setIsLoading(true);
   //         const data = await fetchContractorsByUserId(user.id);
-  //         console.log('data', data.data)
   //         var filteredData = [];
   //         if (data.data.length > 0) {
   //           const contractorId = data.data[0].id;
@@ -48,11 +48,9 @@ const Notification = () => {
   //               projectId.id,
   //               contractorId
   //             );
-  //             console.log('tasks data', taskData.data.data)
   //             const ongoingTasks = taskData.data.data.filter(
   //               (task) => task.attributes.task_status === "ongoing"
   //             );
-  //             console.log('ongoing', on)
   //             allTasks.push(...ongoingTasks);
   //           }
 
@@ -85,80 +83,90 @@ const Notification = () => {
   // }, [user]);
 
   useEffect(() => {
-  const fetchData = async () => {
-    if (user && user.id) {
-      try {
-        setIsLoading(true);
+    const fetchData = async () => {
+      if (user && user.id) {
+        try {
+          setIsLoading(true);
 
-        // Fetch contractor data by user ID
-        const data = await fetchContractorsByUserId(user.id);
+          // Fetch contractor data by user ID
+          const data = await fetchContractorsByUserId(user.id);
 
-        if (data.data.length > 0) {
-          const contractorId = data.data[0].id;
+          if (data.data.length > 0) {
+            const contractorId = data.data[0].id;
 
-          // Extract and flatten project IDs
-          const projectIds = data.data.flatMap(
-            (contractor) => contractor.attributes.projects.data || []
-          );
-
-          // Fetch tasks for all projects in parallel using Promise.all
-          const taskPromises = projectIds.map((project) =>
-            getTaskByContractorId(project.id, contractorId)
-          );
-
-          const taskResults = await Promise.all(taskPromises);
-
-          // Collect all ongoing tasks
-          const allTasks = taskResults.flatMap((taskResult) =>
-            taskResult?.data?.data
-          );
-
-          // Process notifications
-          const unread = [];
-          const read = [];
-          allTasks.forEach((task) => {
-            const submissions = task.attributes.submissions.data || [];
-            unread.push(
-              ...submissions.filter(
-                (sub) => sub.attributes.notification_status === "unread"
-              )
+            // Extract and flatten project IDs
+            const projectIds = data.data.flatMap(
+              (contractor) => contractor.attributes.projects.data || []
             );
-            read.push(
-              ...submissions.filter(
-                (sub) => sub.attributes.notification_status === "read"
-              )
-            );
-          });
 
-          // Update state with tasks and notifications
-          setTasks(allTasks);
-          setUnreadNotifications(unread);
-          setReadNotifications(read);
+            // Fetch tasks for all projects in parallel using Promise.all
+            const taskPromises = projectIds.map((project) =>
+              getTaskByContractorId(project.id, contractorId)
+            );
+
+            const taskResults = await Promise.all(taskPromises);
+
+            // Collect all ongoing tasks
+            const allTasks = taskResults.flatMap(
+              (taskResult) => taskResult?.data?.data
+            );
+
+            // Process notifications
+            const unread = [];
+            const read = [];
+            allTasks.forEach((task) => {
+              const submissions = task.attributes.submissions.data || [];
+              unread.push(
+                ...submissions.filter(
+                  (sub) => sub.attributes.notification_status === "unread"
+                )
+              );
+              read.push(
+                ...submissions.filter(
+                  (sub) => sub.attributes.notification_status === "read"
+                )
+              );
+            });
+
+            // Update state with tasks and notifications
+            setTasks(allTasks);
+            setUnreadNotifications(unread);
+            setReadNotifications(read);
+          }
+        } catch (error) {
+          console.error("Error fetching notifications:", error);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      } finally {
-        setIsLoading(false);
       }
-    }
-  };
+    };
 
-  fetchData();
-}, [user]);
+    fetchData();
+  }, [user]);
 
   const markAsRead = async (item) => {
     try {
-      // Update notification status logic here
-      setUnreadNotifications((prev) =>
-        prev.filter((notification) => notification.id !== item.id)
-      );
-      setReadNotifications((prev) => [
-        ...prev,
-        {
-          ...item,
-          attributes: { ...item.attributes, notification_status: "read" },
-        },
-      ]);
+      // Only update the notification status if it's currently unread
+      if (item.attributes.notification_status === "unread") {
+        // Update the notification status using the submission service
+        await updateExistingSubmission(item.id, {
+          data: {
+            notification_status: "read",
+          },
+        });
+
+        // Update local state
+        setUnreadNotifications((prev) =>
+          prev.filter((notification) => notification.id !== item.id)
+        );
+        setReadNotifications((prev) => [
+          ...prev,
+          {
+            ...item,
+            attributes: { ...item.attributes, notification_status: "read" },
+          },
+        ]);
+      }
     } catch (error) {
       console.error("Error updating notification status:", error);
     }
@@ -168,6 +176,8 @@ const Notification = () => {
     const task = tasks.find((t) =>
       t.attributes.submissions.data.some((s) => s.id === item.id)
     );
+
+    console.log("Notification Item:", item.id);
 
     const createdAt = new Date(item.attributes.createdAt);
     const formattedTime = createdAt.toLocaleString("en-US", {
@@ -304,7 +314,10 @@ const Notification = () => {
       <FlatList
         data={filteredNotifications(
           activeTab === "Unread" ? unreadNotifications : readNotifications
-        ).reverse()}
+        ).sort(
+          (a, b) =>
+            new Date(b.attributes.createdAt) - new Date(a.attributes.createdAt)
+        )}
         keyExtractor={(item, index) => `notification-${item.id}-${index}`}
         renderItem={renderNotificationItem}
         contentContainerStyle={styles.listContent}

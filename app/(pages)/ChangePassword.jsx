@@ -23,9 +23,8 @@ const ChangePassword = () => {
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
-    const [errors, setErrors] = useState('')
+  const [errors, setErrors] = useState("");
   const { user, token } = useAuthStore();
-  console.log("first", token);
 
   const [validation, setValidation] = useState({
     minLength: false,
@@ -37,16 +36,15 @@ const ChangePassword = () => {
   const navigation = useNavigation();
 
   // Function to check if all fields are filled
-const checkFields = () => {
-  if (!currentPassword || !newPassword || !confirmPassword) {
-    setErrors("Please fill in all the fields.");
-  } else if (newPassword != confirmPassword) {
-    setErrors("Current password and Confirm password should be same")
-  }
-    else {
-    setErrors(""); // Clear error if all fields are filled
-  }
-};
+  const checkFields = () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setErrors("Please fill in all the fields.");
+    } else if (newPassword != confirmPassword) {
+      setErrors("Current password and Confirm password should be same");
+    } else {
+      setErrors(""); // Clear error if all fields are filled
+    }
+  };
 
   const handlePasswordChange = (password) => {
     setNewPassword(password);
@@ -61,7 +59,7 @@ const checkFields = () => {
   const handleSubmit = async () => {
     checkFields();
     if (newPassword != confirmPassword) {
-      setErrors("Current password and Confirm password should be same")
+      setErrors("Current password and Confirm password should be same");
     }
     if (
       newPassword === confirmPassword &&
@@ -94,7 +92,7 @@ const checkFields = () => {
         }
       } catch (error) {
         if (error.response && error.response.status === 400) {
-          setErrors("The current password is invalid.")
+          setErrors("The current password is invalid.");
           alert("Check the current password.");
         } else {
           alert("Please ensure all requirements are met.");
@@ -309,9 +307,9 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: 14,
-    marginBottom: 10
+    marginBottom: 10,
   },
   validationContainer: {
     marginVertical: 15,

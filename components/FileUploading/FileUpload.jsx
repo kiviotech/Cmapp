@@ -4,6 +4,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useEffect,
+  useCallback,
 } from "react";
 import {
   View,
@@ -20,18 +21,26 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [fileIds, setFileIds] = useState([]);
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const uploadIntervals = useRef({});
-  const fileIdsRef = useRef([]);
+  const callbackRef = useRef(onFileUploadSuccess);
+
+  // Update callback ref when prop changes
+  useEffect(() => {
+    callbackRef.current = onFileUploadSuccess;
+  }, [onFileUploadSuccess]);
 
   useImperativeHandle(ref, () => ({
     clearFiles: () => {
       setUploadedFiles([]);
-      fileIdsRef.current = [];
-      if (onFileUploadSuccess) {
-        onFileUploadSuccess([]);
-      }
+      setFileIds([]);
+      setTimeout(() => {
+        if (callbackRef.current) {
+          callbackRef.current([]);
+        }
+      }, 0);
     },
   }));
 
@@ -40,7 +49,6 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   };
 
   const updateFileProgress = (fileName, progress) => {
-    console.log(`Updating progress for ${fileName}: ${progress}%`);
     setUploadedFiles((prev) =>
       prev.map((file) =>
         file.name === fileName ? { ...file, progress } : file
@@ -48,24 +56,37 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
     );
   };
 
-  const updateFileStatus = (fileName, status, fileId) => {
-    console.log(`Updating status for ${fileName}: ${status}`);
+  const updateFileStatus = useCallback((fileName, status, fileId) => {
+    if (status === "success" && fileId) {
+      setFileIds((prevIds) => {
+        const newIds = !prevIds.includes(fileId)
+          ? [...prevIds, fileId]
+          : prevIds;
+        if (!prevIds.includes(fileId)) {
+          // Defer callback execution
+          setTimeout(() => {
+            if (callbackRef.current) {
+              callbackRef.current(newIds);
+            }
+          }, 0);
+        }
+        return newIds;
+      });
+    }
+
     setUploadedFiles((prev) =>
       prev.map((file) => {
         if (file.name === fileName) {
-          const updatedFile = { ...file, status };
-          if (status === "success" && fileId) {
-            updatedFile.fileId = fileId;
-            if (!fileIdsRef.current.includes(fileId)) {
-              fileIdsRef.current.push(fileId);
-            }
-          }
-          return updatedFile;
+          return {
+            ...file,
+            status,
+            fileId: status === "success" ? fileId : file.fileId,
+          };
         }
         return file;
       })
     );
-  };
+  }, []);
 
   const uploadFileToAPI = async (file) => {
     try {
@@ -193,7 +214,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
             });
 
             if (onFileUploadSuccess) {
-              onFileUploadSuccess(fileIdsRef.current);
+              onFileUploadSuccess(fileIds);
             }
           }
         } catch (error) {
@@ -219,11 +240,8 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
         base64: false,
       });
 
-      console.log("ImagePicker result:", result);
-
       if (!result.canceled && result.assets?.length > 0) {
         const imageUris = result.assets.map((asset) => asset.uri);
-        console.log("Selected image URIs:", imageUris);
         await handleImageSelected(result);
       }
     } catch (error) {
@@ -233,101 +251,101 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
   };
 
   const handleCameraUpload = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        alert("Camera permission is required to use this feature.");
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-
-      console.log("Camera result:", result);
-
-      if (!result.canceled && result.assets?.length > 0) {
-        const asset = result.assets[0];
-        const fileName = `camera-${Date.now()}.jpg`;
-
-        // Add file to state to show progress
-        setUploadedFiles((prev) => [
-          ...prev,
-          {
-            name: fileName,
-            progress: 0,
-            status: "uploading",
-          },
-        ]);
-
-        // Create FormData with the correct file structure
-        const formData = new FormData();
-
-        // Handle different platform file structures
-        if (Platform.OS === "web") {
-          // For web, fetch the blob first
-          const response = await fetch(asset.uri);
-          const blob = await response.blob();
-          formData.append(
-            "files",
-            new File([blob], fileName, { type: "image/jpeg" })
-          );
-        } else {
-          // For native platforms
-          formData.append("files", {
-            uri: asset.uri,
-            type: asset.mimeType || "image/jpeg",
-            name: fileName,
-          });
+    if (Platform.OS === "web") {
+      setIsCameraActive(true);
+      openWebCamera();
+    } else {
+      try {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== "granted") {
+          alert("Camera permission is required to use this feature.");
+          return;
         }
 
-        try {
-          console.log("Uploading file:", fileName);
-          const uploadResponse = await apiClient.post("/upload", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Accept: "application/json",
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+        });
+
+        if (!result.canceled && result.assets?.length > 0) {
+          const asset = result.assets[0];
+          const fileName = `camera-${Date.now()}.jpg`;
+
+          // Add file to state to show progress
+          setUploadedFiles((prev) => [
+            ...prev,
+            {
+              name: fileName,
+              progress: 0,
+              status: "uploading",
             },
-            transformRequest: [
-              function (data) {
-                return data;
+          ]);
+
+          // Create FormData with the correct file structure
+          const formData = new FormData();
+
+          // Handle different platform file structures
+          if (Platform.OS === "web") {
+            // For web, fetch the blob first
+            const response = await fetch(asset.uri);
+            const blob = await response.blob();
+            formData.append(
+              "files",
+              new File([blob], fileName, { type: "image/jpeg" })
+            );
+          } else {
+            // For native platforms
+            formData.append("files", {
+              uri: asset.uri,
+              type: asset.mimeType || "image/jpeg",
+              name: fileName,
+            });
+          }
+
+          try {
+            const uploadResponse = await apiClient.post("/upload", formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+                Accept: "application/json",
               },
-            ],
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / progressEvent.total
-              );
-              updateFileProgress(fileName, percentCompleted);
-            },
-          });
+              transformRequest: [
+                function (data) {
+                  return data;
+                },
+              ],
+              onUploadProgress: (progressEvent) => {
+                const percentCompleted = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                updateFileProgress(fileName, percentCompleted);
+              },
+            });
 
-          console.log("Upload response:", uploadResponse);
+            if (uploadResponse.status === 200) {
+              const fileData = Array.isArray(uploadResponse.data)
+                ? uploadResponse.data[0]
+                : uploadResponse.data;
 
-          if (uploadResponse.status === 200) {
-            const fileData = Array.isArray(uploadResponse.data)
-              ? uploadResponse.data[0]
-              : uploadResponse.data;
-
-            if (fileData && fileData.id) {
-              updateFileStatus(fileName, "success", fileData.id);
-              if (onFileUploadSuccess) {
-                onFileUploadSuccess(fileIdsRef.current);
+              if (fileData && fileData.id) {
+                updateFileStatus(fileName, "success", fileData.id);
+                if (onFileUploadSuccess) {
+                  onFileUploadSuccess(fileIds);
+                }
               }
             }
+          } catch (error) {
+            console.error("Upload failed:", error);
+            console.error("Error response:", error.response?.data);
+            updateFileStatus(fileName, "error");
+            alert("Failed to upload image. Please try again.");
           }
-        } catch (error) {
-          console.error("Upload failed:", error);
-          console.error("Error response:", error.response?.data);
-          updateFileStatus(fileName, "error");
-          alert("Failed to upload image. Please try again.");
         }
+      } catch (error) {
+        console.error("Error in handleCameraUpload:", error);
+        alert("Failed to capture image. Please try again.");
       }
-    } catch (error) {
-      console.error("Error in handleCameraUpload:", error);
-      alert("Failed to capture image. Please try again.");
     }
   };
 
@@ -338,19 +356,23 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
     setIsCameraActive(false);
   };
 
-  const openWebCamera = () => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((mediaStream) => {
-        setStream(mediaStream);
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          videoRef.current.play();
-        }
-      })
-      .catch((error) => {
-        console.error("Error accessing the camera: ", error);
+  const openWebCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
       });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (error) {
+      console.error("Error accessing the camera: ", error);
+      alert(
+        "Failed to access camera. Please make sure camera permissions are granted."
+      );
+      setIsCameraActive(false);
+    }
   };
 
   const captureImage = () => {
@@ -402,7 +424,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
             if (fileData && fileData.id) {
               updateFileStatus(fileName, "success", fileData.id);
               if (onFileUploadSuccess) {
-                onFileUploadSuccess(fileIdsRef.current);
+                onFileUploadSuccess(fileIds);
               }
             }
           }
@@ -416,6 +438,31 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
     }
   };
 
+  const handleRemoveFile = useCallback((fileName) => {
+    if (uploadIntervals.current[fileName]) {
+      clearInterval(uploadIntervals.current[fileName]);
+      delete uploadIntervals.current[fileName];
+    }
+
+    setUploadedFiles((prev) => {
+      const removedFile = prev.find((file) => file.name === fileName);
+      if (removedFile?.fileId) {
+        setFileIds((prevIds) => {
+          const newIds = prevIds.filter((id) => id !== removedFile.fileId);
+          // Defer callback execution
+          setTimeout(() => {
+            if (callbackRef.current) {
+              callbackRef.current(newIds);
+            }
+          }, 0);
+          return newIds;
+        });
+      }
+      return prev.filter((file) => file.name !== fileName);
+    });
+  }, []);
+
+  // Cleanup effect
   useEffect(() => {
     return () => {
       if (stream) {
@@ -424,29 +471,6 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
       Object.values(uploadIntervals.current).forEach(clearInterval);
     };
   }, [stream]);
-
-  const handleRemoveFile = (fileName) => {
-    if (uploadIntervals.current[fileName]) {
-      clearInterval(uploadIntervals.current[fileName]);
-      delete uploadIntervals.current[fileName];
-    }
-
-    setUploadedFiles((prev) => {
-      const removedFile = prev.find((file) => file.name === fileName);
-
-      const updatedFiles = prev.filter((file) => file.name !== fileName);
-
-      fileIdsRef.current = updatedFiles
-        .filter((file) => file.fileId && file.status === "success")
-        .map((file) => file.fileId);
-
-      if (onFileUploadSuccess) {
-        onFileUploadSuccess(fileIdsRef.current);
-      }
-
-      return updatedFiles;
-    });
-  };
 
   return (
     <View style={styles.container}>
@@ -474,7 +498,15 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
 
         {cameraActive ? (
           <View style={styles.cameraContainer}>
-            <video ref={videoRef} style={styles.videoPreview} autoPlay muted />
+            {Platform.OS === "web" && (
+              <video
+                ref={videoRef}
+                style={styles.videoPreview}
+                autoPlay
+                playsInline
+                muted
+              />
+            )}
             <TouchableOpacity
               style={styles.captureButton}
               onPress={captureImage}
@@ -552,7 +584,6 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     marginTop: 20,
     width: "100%",
   },

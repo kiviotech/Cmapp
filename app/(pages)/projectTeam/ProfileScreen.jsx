@@ -47,7 +47,6 @@ const ProfileScreen = () => {
   };
 
   const showErrorModal = (title) => {
-    console.log("error title", errorTitle);
     setErrorTitle(title); // Set the specific title passed in
     setIsErrorModalVisible(true);
   };
@@ -88,9 +87,7 @@ const ProfileScreen = () => {
           />
           <ProfileItem
             title="Change password"
-            onPress={() =>
-              navigation.navigate("(pages)/ChangePassword")
-            }
+            onPress={() => navigation.navigate("(pages)/ChangePassword")}
           />
           <ProfileItem
             title="My Activity"

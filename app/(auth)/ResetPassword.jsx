@@ -1,11 +1,18 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, ScrollView, Alert, TextInput, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { resetPassword } from "../../src/utils/auth";
 import { BASE_URL } from "../../src/api/apiClient";
 import axios from "axios";
-
 
 const ResetPassword = () => {
   const { code } = useLocalSearchParams();
@@ -54,11 +61,13 @@ const ResetPassword = () => {
         const data = {
           password: form.password,
           passwordConfirm: form.confirmPassword,
-          code: code
-        }
+          code: code,
+        };
         // Simulate successful password reset
         const response = await axios.post(
-          `${BASE_URL}/auth/reset-password`, data);
+          `${BASE_URL}/auth/reset-password`,
+          data
+        );
         Alert.alert("Success", "Password reset successfully!");
         // Navigate to the password changed notification screen
         // router.push("/auth/passwordChangedNotification");
@@ -67,7 +76,6 @@ const ResetPassword = () => {
         Alert.alert("Error", "An error occurred. Please try again.");
       }
     } else {
-      console.log("Form is not valid", errors);
     }
   };
 
@@ -75,9 +83,7 @@ const ResetPassword = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Create New Password</Text>
-        <Text style={styles.subtitle}>
-          Enter your new password below.
-        </Text>
+        <Text style={styles.subtitle}>Enter your new password below.</Text>
 
         {/* New Password Field */}
         <View style={styles.inputContainer}>

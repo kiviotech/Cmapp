@@ -45,13 +45,10 @@ const RequestDetails = () => {
   const user = useAuthStore();
 
   useEffect(() => {
-    console.log("Request Details:", requestData);
-
     const fetchContractorGroups = async () => {
       try {
         const response = await fetchUserGroupsWithContractorRole();
         const ids = response?.data?.map((item) => item.id) || [];
-        console.log("Contractor Group IDs:", ids);
         setContractorGroupIds(ids);
       } catch (error) {
         console.error("Error fetching contractor groups:", error);
@@ -105,7 +102,6 @@ const RequestDetails = () => {
             const progress =
               downloadProgress.totalBytesWritten /
               downloadProgress.totalBytesExpectedToWrite;
-            console.log(`Download progress: ${progress * 100}%`);
           }
         );
 
@@ -167,6 +163,14 @@ const RequestDetails = () => {
       if (response.data) {
         Alert.alert("Success", `Request ${newStatus} successfully!`);
 
+        // Navigate back with status update info
+        navigation.navigate("(pages)/projectTeam/Notification", {
+          statusUpdate: {
+            status: newStatus,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
         if (newStatus === "approved") {
           await handleCreateUser();
         }
@@ -193,7 +197,6 @@ const RequestDetails = () => {
       const response = await createNewUser(userData);
       if (response) {
         const newUserId = response.user.id;
-        console.log("User created successfully with ID:", newUserId);
         Alert.alert("Success", "User account created successfully.");
 
         if (contractorGroupIds.length > 0) {
@@ -229,7 +232,6 @@ const RequestDetails = () => {
         updatedGroupData
       );
       if (response) {
-        console.log("User added to contractor group:", response);
       }
     } catch (error) {
       console.error("Error updating contractor group:", error);
@@ -254,7 +256,6 @@ const RequestDetails = () => {
 
       const response = await createNewContractor(contractorData);
       if (response) {
-        console.log("Contractor record created successfully:", response);
         Alert.alert("Success", "Contractor record created successfully.");
       }
     } catch (error) {
@@ -291,16 +292,26 @@ const RequestDetails = () => {
           </Text>
         </View>
       </View>
-      <View style={styles.documentActions}>
+      <View style={styles.actionButtons}>
         <TouchableOpacity
+          style={styles.actionButton}
           onPress={() => handleImagePreview(docs.attributes.formats)}
         >
-          <MaterialIcons name="visibility" size={20} color="#666" />
+          <View style={styles.buttonContent}>
+            <MaterialIcons name="visibility" size={16} color="#374151" />
+            <Text style={styles.actionButtonText}>View</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.actionButton, styles.downloadButton]}
           onPress={() => handleDownloadImage(docs.attributes.formats)}
         >
-          <Text style={styles.downloadButton}>Download</Text>
+          <View style={styles.buttonContent}>
+            <MaterialIcons name="file-download" size={16} color="#FFFFFF" />
+            <Text style={[styles.actionButtonText, styles.downloadButtonText]}>
+              Download
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -421,7 +432,7 @@ const styles = StyleSheet.create({
   container: {
     padding: width * 0.037,
     paddingTop: height * 0.038,
-    backgroundColor: "#FFF",
+    backgroundColor: "#F8F8F8",
     flexGrow: 1,
   },
   header: {
@@ -458,7 +469,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: height * 0.015,
-    backgroundColor: "#F7F7F7",
+    backgroundColor: "#fff",
     borderRadius: 8,
     marginBottom: height * 0.01,
     justifyContent: "space-between",
@@ -582,6 +593,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#C53030",
     fontWeight: "600",
+  },
+
+  actionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  actionButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  downloadButton: {
+    backgroundColor: "#3B82F6",
+  },
+  downloadButtonText: {
+    color: "#FFFFFF",
   },
 });
 

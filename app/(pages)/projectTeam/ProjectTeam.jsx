@@ -75,6 +75,20 @@ const renderCard = ({ item }) => (
   </View>
 );
 
+const getProjectStatus = (project) => {
+  const status = project.attributes.project_status;
+  switch (status) {
+    case "completed":
+      return { text: "Completed", color: "#4CAF50" };
+    case "ongoing":
+      return { text: "Ongoing", color: "#2196F3" };
+    case "pending":
+      return { text: "Pending", color: "#FFA000" };
+    default:
+      return { text: "Unknown", color: "#757575" };
+  }
+};
+
 const ProjectTeam = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const navigation = useNavigation();
@@ -200,7 +214,6 @@ const ProjectTeam = () => {
   //       );
   //       setJobProfile(userResponse.data.job_profile.name);
   //     } catch (error) {
-  //       console.log("error");
   //     }
   //   };
   //   fetchUserData();
@@ -322,65 +335,103 @@ const ProjectTeam = () => {
             contentContainerStyle={styles.horizontalScrollContainer}
           >
             {projectDetails.length > 0 ? (
-              projectDetails.map((project) => (
-                <TouchableOpacity
-                  key={project.id}
-                  style={[
-                    styles.projectCard,
-                    project.attributes.project_status === "pending"
-                      ? { backgroundColor: "#ffebee" }
-                      : { backgroundColor: "#e8f5e9" },
-                  ]}
-                  onPress={() =>
-                    navigation.navigate("(pages)/projectTeam/ProjectDetails", {
-                      projectData: project,
-                    })
-                  }
-                >
-                  <View style={styles.projectCardContent}>
-                    {/* Project Name and Description */}
-                    <Text style={styles.projectTitle}>
-                      {project.attributes.name}
-                    </Text>
-                    <Text style={styles.projectDescription}>
-                      {project.attributes.description.length > 50
-                        ? `${project.attributes.description.slice(0, 50)}...`
-                        : project.attributes.description}
-                    </Text>
+              projectDetails.map((project) => {
+                const endDate = new Date(project.attributes.end_date);
+                const today = new Date();
+                const isDelayed = today > endDate;
+                const projectStatus = getProjectStatus(project);
 
-                    {/* Project Status */}
-                    <Text style={styles.projectStatus}>
-                      ●{" "}
-                      {project.attributes.project_status
-                        ? "Status"
-                        : "Status unknown"}
-                      : {project.attributes.project_status || "N/A"}
-                    </Text>
-
-                    {/* Additional Project Info */}
-                    <View style={styles.projectStatusContainer}>
-                      <Icon
-                        name={
-                          project.attributes.project_status === "ahead"
-                            ? "check-circle"
-                            : "error"
+                return (
+                  <TouchableOpacity
+                    key={project.id}
+                    style={[
+                      styles.projectCard,
+                      isDelayed
+                        ? { backgroundColor: "#ffebee" }
+                        : { backgroundColor: "#e8f5e9" },
+                    ]}
+                    onPress={() =>
+                      navigation.navigate(
+                        "(pages)/projectTeam/ProjectDetails",
+                        {
+                          projectData: project,
                         }
-                        size={16}
-                        color={
-                          project.attributes.project_status === "ahead"
-                            ? "green"
-                            : "red"
-                        }
-                      />
-                      <Text style={styles.projectStatusText}>
-                        {project.attributes.project_status === "ahead"
-                          ? "Ahead of Schedule"
-                          : "Delayed"}
+                      )
+                    }
+                  >
+                    <View style={styles.projectCardContent}>
+                      <Text style={styles.projectCardTitle}>
+                        {project.attributes.name}
                       </Text>
+                      <Text style={styles.projectCardDescription}>
+                        {project.attributes.description || "No description"}
+                      </Text>
+
+                      <View style={styles.statusContainer}>
+                        <View>
+                          <View
+                            style={[
+                              styles.projectStatusBadge,
+                              {
+                                backgroundColor: "#FFFFFF",
+                                alignSelf: "flex-start",
+                                marginBottom: 8,
+                              },
+                            ]}
+                          >
+                            <View style={styles.statusBadgeContent}>
+                              <View
+                                style={[
+                                  styles.statusDot,
+                                  {
+                                    backgroundColor: isDelayed
+                                      ? "#ff5252"
+                                      : "#4caf50",
+                                  },
+                                ]}
+                              />
+                              <Text style={styles.projectStatusText}>
+                                {projectStatus.text}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.statusIndicator}>
+                            <Icon
+                              name={isDelayed ? "error" : "check-circle"}
+                              size={16}
+                              color={isDelayed ? "#ff5252" : "#4caf50"}
+                            />
+                            <Text
+                              style={[
+                                styles.statusText,
+                                { color: isDelayed ? "#ff5252" : "#4caf50" },
+                              ]}
+                            >
+                              {isDelayed ? "Delayed" : "On Schedule"}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      <View style={styles.dateContainer}>
+                        <Icon name="event" size={16} color="#666" />
+                        <Text style={styles.dateText}>
+                          End Date:{" "}
+                          {project.attributes.end_date
+                            ? new Date(
+                                project.attributes.end_date
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Not set"}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                );
+              })
             ) : (
               <View style={styles.noProjectsContainer}>
                 <Text style={styles.noProjectsText}>No projects available</Text>
@@ -394,48 +445,48 @@ const ProjectTeam = () => {
           <TouchableOpacity
             onPress={() => navigation.navigate("(pages)/Request")}
           >
-            <Text style={styles.seeAll}>See all</Text>
+            <Text style={styles.seeAllButton}>See all</Text>
           </TouchableOpacity>
         </View>
         {requests.map((request) => (
-          <View key={request.id} style={styles.requestItem}>
+          <TouchableOpacity
+            key={request?.id}
+            style={styles.requestItem}
+            onPress={() => {
+              navigation.navigate("(pages)/TaskRequestDetails", {
+                requestData: request,
+              });
+            }}
+          >
             <View>
               <Text style={styles.requestTitle}>
                 Submission for{" "}
+                {request?.attributes?.task?.data?.attributes?.standard_task
+                  ?.data?.attributes?.Name || "task"}{" "}
+                in{" "}
                 {request?.attributes?.task?.data?.attributes?.project?.data
                   ?.attributes?.name || "Project"}
-                {" - "}{" "}
-                {request?.attributes?.task?.data?.attributes?.standard_task
-                  ?.data?.attributes?.Name || "Work"}
               </Text>
               <Text style={styles.requestDescription}>
-                {request.attributes.comment
-                  ? request.attributes.comment.charAt(0).toUpperCase() +
-                    request.attributes.comment.slice(1)
-                  : "No description available."}
+                {request?.attributes?.comment || "No comments available."}
               </Text>
+
               <View style={styles.requestStatusContainer}>
                 <Text
                   style={[
-                    styles.requestStatus,
-                    {
-                      color:
-                        request.attributes.status === "approved"
-                          ? "#4CAF50" // green
-                          : request.attributes.status === "pending"
-                          ? "#FF9800" // orange
-                          : request.attributes.status === "rejected"
-                          ? "#F44336" // red
-                          : "black", // default color
-                    },
+                    styles.statusBold,
+                    request?.attributes?.status === "approved"
+                      ? styles.requestStatusApproved
+                      : request?.attributes?.status === "rejected"
+                      ? styles.requestStatusRejected
+                      : request?.attributes?.status === "pending"
+                      ? styles.requestStatusPendingText
+                      : {},
                   ]}
                 >
-                  {request.attributes.status
-                    ? request.attributes.status.charAt(0).toUpperCase() +
-                      request.attributes.status.slice(1).toLowerCase()
-                    : "Pending"}
+                  {request?.attributes?.status.charAt(0).toUpperCase() +
+                    request?.attributes?.status?.slice(1).toLowerCase()}
                 </Text>
-
                 <TouchableOpacity
                   onPress={() => {
                     navigation.navigate("(pages)/TaskRequestDetails", {
@@ -447,7 +498,7 @@ const ProjectTeam = () => {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
 
         <View style={styles.container1}>
@@ -702,71 +753,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   projectCard: {
-    width: 210,
-    padding: 15,
-    borderRadius: 10,
+    width: 280,
+    padding: 16,
+    borderRadius: 8,
     marginRight: 15,
-  },
-  projectTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  projectDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 5,
-  },
-  projectStatus: {
-    fontSize: 14,
-    color: "#ff5252",
-    marginBottom: 10,
-  },
-  projectStatusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  projectStatusText: {
-    marginLeft: 5,
-    fontSize: 14,
-    color: "green",
-  },
-  requestsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  seeAll: {
-    fontSize: 14,
-    color: "#1e90ff",
-  },
-  requestItem: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
     elevation: 2,
   },
-  requestTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+  projectCardContent: {
+    gap: 8,
   },
-  requestDescription: {
+  projectCardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  projectCardDescription: {
     fontSize: 14,
     color: "#666",
-    marginVertical: 5,
+    marginBottom: 4,
   },
-  requestStatusContainer: {
+  statusRow: {
+    marginTop: 8,
+  },
+  statusIndicator: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
+    alignItems: "center",
+    gap: 6,
   },
-  requestStatus: {
-    color: "#ff5252",
-    fontWeight: "bold",
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  viewLink: {
-    color: "#1e90ff",
+  statusText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 8,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#666",
   },
   projectTitle: {
     fontSize: 18,
@@ -865,21 +899,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   statusContainer: {
+    marginVertical: 8,
+  },
+  statusIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 5,
+    gap: 6,
   },
-  statusText: {
-    fontSize: 14,
-    marginLeft: 5,
-    color: "#666",
+  projectStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
   },
-  pendingDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: "#888",
-    borderRadius: 4,
-    marginRight: 5,
+  statusBadgeContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  projectStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#333",
   },
 
   //   ~==================================================================================
@@ -977,6 +1027,53 @@ const styles = StyleSheet.create({
   },
   statusRejected: {
     color: "#F44336", // red
+  },
+  requestItem: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  requestTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  requestDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginVertical: 5,
+  },
+  requestStatusContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  requestStatusApproved: {
+    color: "#38A169",
+  },
+  requestStatusRejected: {
+    color: "#E53E3E",
+  },
+  requestStatusPendingText: {
+    color: "red",
+  },
+  statusBold: {
+    fontWeight: "bold",
+  },
+  viewLink: {
+    color: "#1e90ff",
+  },
+  requestsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  seeAllButton: {
+    color: "#2196F3",
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
 

@@ -62,7 +62,13 @@ const SelectYourProject = ({ isLoading, contractorsData }) => {
                     {project.attributes.description}
                   </Text>
 
-                  <View style={styles.statusBadge}>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      project.attributes.project_status.toLowerCase() ===
+                        "pending" && styles.pendingStatusBadge,
+                    ]}
+                  >
                     <View style={styles.statusDot} />
                     <Text style={styles.statusText}>
                       {project.attributes.project_status}
@@ -217,6 +223,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignSelf: "flex-start",
     marginVertical: 4,
+  },
+  pendingStatusBadge: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   statusDot: {
     width: 6,

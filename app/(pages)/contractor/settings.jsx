@@ -222,6 +222,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingHorizontal: 5,
   },
   section: {
     backgroundColor: colors.whiteColor,
@@ -267,6 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FF3B30",
     marginLeft: 8,
+    fontWeight: "600",
   },
   switch: {
     transform: [{ scale: 0.8 }],
@@ -336,14 +338,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   header: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
-    marginTop: 10,
+    marginTop: 20,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     color: colors.blackColor,
   },
