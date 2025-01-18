@@ -12,86 +12,101 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import useAuthStore from "../../../useAuthStore";
-// import { getProjects } from "../../../src/api/repositories/projectRepository";
-// import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import BottomNavigation from "./BottomNavigation ";
-// import { fetchSubcategories } from "../../../src/services/subcategoryService";
-import { fetchContractorsByUserId } from "../../../src/services/contractorService";
-// import { fetchTasksByContractorId } from "../../../src/services/taskService";
-import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
-import { MEDIA_BASE_URL } from "../../../src/api/apiClient";
 import SelectYourProject from "./SelectYourProject";
+import { fetchTasks } from "../../../src/services/taskService";
 
 const validateImageURL = (url) => {
   return url && (url.startsWith("http://") || url.startsWith("https://"));
 };
 
 const Contractor = () => {
-  const [contractorsData, setContractorsData] = useState([]);
   const navigation = useNavigation();
-  const [projectsDetail, setProjectsDetail] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  // const [filteredData, setFilteredData] = useState(tasks);
-  // const [contractorId, setContractorId] = useState([]);
-
+  const [hasMore, setHasMore] = useState(true); // Flag to check if there are more tasks to load
+  const [page, setPage] = useState(1); // Current page
+  const pageSize = 1; // Number of tasks per page
   const { user, designation } = useAuthStore();
 
-  useEffect(() => {
-    const loadContractorData = async () => {
-      if (user && user.id) {
-        try {
-          setIsLoading(true); // Start loading
+  const fetchTasksWithPagination = async (userId, page) => {
+    try {
+      setIsLoading(true); // Start loading
+      const response = await fetchTasks(userId, page, pageSize); // Use page state for pagination
+      const data = response.data;
 
-          const data = await fetchContractorsByUserId(user.id);
+      // Extract unique projects
+      const projectsData = data
+        .map((taskData) => taskData?.attributes?.project?.data)
+        .filter(
+          (project, index, self) =>
+            project && self.findIndex((p) => p?.id === project.id) === index
+        );
 
-          if (data.data.length > 0) {
-            const contractorId = data.data[0].id;
-            const projectData = data.data.flatMap(
-              (contractor) => contractor?.attributes?.projects?.data
-            );
-            if (projectData.length > 0) {
-              // Fetch all tasks in a single batch using Promise.all
-              const allTasks = await Promise.all(
-                projectData.map(async (project) => {
-                  try {
-                    const taskData = await getTaskByContractorId(
-                      project.id,
-                      contractorId
-                    );
-                    return taskData.data.data.filter(
-                      (task) => task.attributes.task_status === "ongoing"
-                    );
-                  } catch (taskError) {
-                    console.error(
-                      `Error fetching tasks for project ${project.id}:`,
-                      taskError
-                    );
-                    return []; // Return an empty array if task fetch fails
-                  }
-                })
-              );
-              // Flatten the tasks array and update state
-              setContractorsData(data.data);
-              setTasks(allTasks.flat());
-            } else {
-              setTasks([]); // No projects, set tasks to an empty array
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching contractor data:", error);
-        } finally {
-          setIsLoading(false); // End loading
-        }
-      }
+      setTasks((prevTasks) => [...prevTasks, ...data]); // Append tasks to the existing ones
+      setProjects((prevProjects) => [...prevProjects, ...projectsData]); // Append unique projects
+      setHasMore(data.length === pageSize); // Check if more tasks are available
+    } catch (error) {
+      console.error('Error fetching contractor data:', error);
+    } finally {
+      setIsLoading(false); // End loading
+    }
+  };
+
+  const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), delay);
     };
-    loadContractorData();
-  }, [user]);
+  };
+  // Debounced version of fetchTasksWithPagination
+  const debouncedFetchTasks = debounce((userId, page) => {
+    fetchTasksWithPagination(userId, page);
+  }, 500); // Adjust delay as necessary
+
+  useEffect(() => {
+    if (user && user.id) {
+      debouncedFetchTasks(user.id, page); // Trigger debounced fetch
+    }
+  }, [user, page]);
+
+  const loadMoreTasks = () => {
+    if (!isLoading && hasMore) {
+      setPage((prevPage) => prevPage + 1); // Increment page for the next batch of tasks
+    }
+  };
+
+  // useEffect(() => {
+  //   const loadContractorData = async () => {
+  //     if (user && user.id) {
+  //       try {
+  //         setIsLoading(true); // Start loading  
+  //         const data = await fetchTasks(user.id);  
+  //         const projectsData = data.data
+  //           .map((taskData) => taskData?.attributes?.project?.data) // Map to project data
+  //           .filter(
+  //             (project, index, self) =>
+  //               project && // Ensure project is not null or undefined
+  //               self.findIndex((p) => p?.id === project.id) === index // Ensure unique projects
+  //           );  
+  //         setTasks(data.data); // Set tasks
+  //         setProjects(projectsData); // Set unique projects  
+  //       } catch (error) {
+  //         console.error('Error fetching contractor data:', error);
+  //       } finally {
+  //         setIsLoading(false); // End loading
+  //       }
+  //     }
+  //   };
+
+  //   loadContractorData();
+  // }, [user]);
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -113,7 +128,7 @@ const Contractor = () => {
         {/* Select Your Project Component */}
         <SelectYourProject
           isLoading={isLoading}
-          contractorsData={contractorsData}
+          projects={projects}
         />
 
         <View style={styles.headerContainer}>
@@ -136,124 +151,82 @@ const Contractor = () => {
           />
         </View>
 
-        {/* Milestone Cards */}
         {isLoading ? (
-          // Loader
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#007bff" />
           </View>
         ) : (
-          <>
-            {tasks.length > 0 ? (
-              tasks
-                .filter((task) =>
-                  task.attributes.project.data.attributes.name
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-                )
-                .map((task) => {
-                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
-                    ?.attributes?.url
-                    ? `${URL}${task.attributes.documents.data[0].attributes.url}`
-                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+          <FlatList
+            data={tasks.filter((task) =>
+              task.attributes.project.data.attributes.name
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+            )}
+            renderItem={({ item: task }) => {
+              const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                ?.attributes?.url
+                ? `${URL}${task.attributes.documents.data[0].attributes.url}`
+                : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
-                  return (
-                    <View key={task.id} style={styles.milestoneCard}>
-                      <Text style={styles.milestoneTitle}>
-                        {task.attributes.project.data.attributes.name ||
-                          "Project"}
-                      </Text>
-                      <Image
-                        source={{ uri: taskImageUrl }}
-                        style={styles.milestoneImage}
-                      />
-                      <View style={styles.milestoneContent}>
-                        <View style={styles.milestoneHeaderContainer}>
-                          <View style={styles.projectTaskName}>
-
-                            <Text style={styles.milestoneTitle}>
-                              {task.attributes.standard_task.data.attributes.Name ||
-                                "Task"}
-                            </Text>
-                          </View>
-                          <View style={styles.substituteButton}>
-                            <Text style={styles.substituteText}>
-                              Substructure
-                            </Text>
-                          </View>
-                        </View>
-                        <Text style={styles.milestoneDescription}>
-                          {task.attributes.standard_task.data.attributes
-                            .Description ||
-                            "No description available for this task."}
+              return (
+                <View key={task.id} style={styles.milestoneCard}>
+                  <Text style={styles.milestoneTitle}>
+                    {task.attributes.project.data.attributes.name ||
+                      "Project"}
+                  </Text>
+                  <Image
+                    source={{ uri: taskImageUrl }}
+                    style={styles.milestoneImage}
+                  />
+                  <View style={styles.milestoneContent}>
+                    <View style={styles.milestoneHeaderContainer}>
+                      <View style={styles.projectTaskName}>
+                        <Text style={styles.milestoneTitle}>
+                          {task.attributes.standard_task.data.attributes.Name ||
+                            "Task"}
                         </Text>
-                        <View style={styles.divider} />
-                        <Text style={styles.deadlineText}>
-                          <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                          {task.attributes.due_date || "No deadline specified"}
+                      </View>
+                      <View style={styles.substituteButton}>
+                        <Text style={styles.substituteText}>
+                          Substructure
                         </Text>
-                        <TouchableOpacity
-                          style={styles.uploadButton}
-                          onPress={() =>
-                            navigation.navigate("(pages)/taskDetails", {
-                              taskData: task,
-                            })
-                          }
-                        >
-                          <Icon name="file-upload" size={16} color="#fff" />
-                          <Text style={styles.uploadButtonText}>
-                            Upload your Proof of work
-                          </Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
-                  );
-                })
-            ) : (
-              // No Tasks Message
-              <View style={styles.noTasksContainer}>
-                <Text style={styles.noTasksText}>
-                  No tasks have been assigned.
-                </Text>
-              </View>
-            )}
-          </>
+                    <Text style={styles.milestoneDescription}>
+                      {task.attributes.standard_task.data.attributes
+                        .Description ||
+                        "No description available for this task."}
+                    </Text>
+                    <View style={styles.divider} />
+                    <Text style={styles.deadlineText}>
+                      <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                      {task.attributes.due_date || "No deadline specified"}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={() =>
+                        navigation.navigate("(pages)/taskDetails", {
+                          taskData: task,
+                        })
+                      }
+                    >
+                      <Icon name="file-upload" size={16} color="#fff" />
+                      <Text style={styles.uploadButtonText}>
+                        Upload your Proof of work
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            }}
+            keyExtractor={(item) => item.id.toString()}
+            onEndReached={loadMoreTasks}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              isLoading ? <ActivityIndicator size="small" color="#0000ff" /> : null
+            }
+          />
         )}
-
-        {/* <View style={styles.milestoneCard}>
-            <Image
-              source={{ uri: "https://via.placeholder.com/150" }}
-              style={styles.milestoneImage}
-            />
-            <View style={styles.milestoneContent}>
-              <View style={styles.milestoneHeaderContainer}>
-                <Text style={styles.milestoneTitle}>
-                  Verification & Inspection
-                </Text>
-                <TouchableOpacity style={styles.substituteButton}>
-                  <Text style={styles.substituteText}>Substructure</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.projectName}>Project Name</Text>
-              <Text style={styles.milestoneDescription}>
-                Regular site walkthroughs to ensure compliance with safety
-                regulations and quality standards.
-              </Text>
-              <View style={styles.divider} />
-              <Text style={styles.deadlineText}>
-                <Icon name="event" size={16} color="#333" /> Deadline: Mon, 10
-                July 2022
-              </Text>
-              <View style={styles.statusContainer}>
-                <Icon name="check-circle" size={16} color="green" />
-                <Text style={styles.statusText}>Uploaded Proof of Work</Text>
-              </View>
-              <View style={styles.statusContainer}>
-                <View style={styles.pendingDot} />
-                <Text style={styles.statusText}>Pending Approval</Text>
-              </View>
-            </View>
-          </View> */}
       </ScrollView>
       <BottomNavigation />
     </SafeAreaView>

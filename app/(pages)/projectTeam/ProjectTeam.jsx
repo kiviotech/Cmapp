@@ -17,7 +17,6 @@ import useAuthStore from "../../../useAuthStore";
 import { getProjects } from "../../../src/api/repositories/projectRepository";
 import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import BottomNavigation from "./BottomNavigation";
-import { fetchSubcategories } from "../../../src/services/subcategoryService";
 import { fetchSubmissions } from "../../../src/services/submissionService";
 import {
   Ionicons,
@@ -31,6 +30,7 @@ import apiClient, {
   MEDIA_BASE_URL,
   URL,
 } from "../../../src/api/apiClient";
+import { fetchTasks } from "../../../src/services/taskService";
 
 const data = [
   {
@@ -82,115 +82,132 @@ const ProjectTeam = () => {
   const [tasksDetail, setTasksDetail] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [jobProfile, setJobProfile] = useState("");
-  const [subcategories, setSubcategories] = useState([]);
+  // const [subcategories, setSubcategories] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [requests, setRequests] = useState([]);
   const [projectTeamId, setProjectTeamId] = useState(null);
   const [projectDetails, setProjectDetails] = useState([]);
   const [taskDetails, setTaskDetails] = useState([]);
-  const { user, designation, role, projects, permissions } = useAuthStore();
+  const { user, designation, role, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const ongoingProjectsCount = projectDetails.filter(
-    (item) => item.attributes.project_status === "ongoing"
-  ).length;
-
-  const completedProjectsCount = projectDetails.filter(
-    (item) => item.attributes.project_status === "completed"
-  ).length;
+  const [hasMore, setHasMore] = useState(true); // Flag to check if there are more tasks to load
+  const [page, setPage] = useState(1); // Current page
+  const pageSize = 1; // Number of tasks per page
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
     const fetchProjectTeamId = async () => {
       if (user && user.id) {
         try {
-          const response = await fetchProjectTeamIdByUserId(user.id);
-          const [{ id }] = response?.data;
-          setProjectTeamId(id);
+          setIsLoading(true); // Start loading
+          const response = await fetchTasks(user.id, page, pageSize); // Use page state for pagination
+          const data = response.data;
+
+          // Extract unique projects
+          const projectsData = data
+            .map((taskData) => taskData?.attributes?.project?.data)
+            .filter(
+              (project, index, self) =>
+                project && self.findIndex((p) => p?.id === project.id) === index
+            );
+          setTasks(data); // Append tasks to the existing ones
+          setProjects(projectsData); // Append unique projects
+          // setHasMore(data.length === pageSize);
         } catch (error) {
           console.error("Error fetching project team ID:", error);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
     fetchProjectTeamId();
-  }, [user]);
+  }, [user, page]);
 
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const projectResponse = await fetchProjectDetailsByApproverId(
-            projectTeamId
-          );
-          const projects = projectResponse.data;
-          const projectsWithTasks = await Promise.all(
-            projects.map(async (project) => {
-              const tasks = project.attributes.tasks.data;
-              const taskDetails = await Promise.all(
-                tasks.map(async (task) => {
-                  const taskResponse = await apiClient.get(
-                    `/tasks/${task.id}?populate=*`
-                  );
+  const ongoingProjectsCount = projects.filter(
+    (item) => item.attributes.project_status === "ongoing"
+  ).length;
 
-                  return { id: task.id, ...taskResponse.data };
-                })
-              );
-              return { ...project, taskDetails };
-            })
-          );
+  const completedProjectsCount = projects.filter(
+    (item) => item.attributes.project_status === "completed"
+  ).length;
 
-          setProjectDetails(projectsWithTasks);
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const fetchProjectDetails = async () => {
+  //     if (projectTeamId) {
+  //       try {
+  //         const projectResponse = await fetchProjectDetailsByApproverId(
+  //           projectTeamId
+  //         );
+  //         const projects = projectResponse.data;
+  //         const projectsWithTasks = await Promise.all(
+  //           projects.map(async (project) => {
+  //             const tasks = project.attributes.tasks.data;
+  //             const taskDetails = await Promise.all(
+  //               tasks.map(async (task) => {
+  //                 const taskResponse = await apiClient.get(
+  //                   `/tasks/${task.id}?populate=*`
+  //                 );
 
-    fetchProjectDetails();
-  }, [projectTeamId]);
+  //                 return { id: task.id, ...taskResponse.data };
+  //               })
+  //             );
+  //             return { ...project, taskDetails };
+  //           })
+  //         );
 
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const response = await fetchProjectDetailsByApproverId(projectTeamId);
-          setProjectDetails(response.data); // Store project details with tasks
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
-    fetchProjectDetails();
-  }, [projectTeamId]);
+  //         setProjectDetails(projectsWithTasks);
+  //       } catch (error) {
+  //         console.error("Error fetching project details:", error);
+  //       }
+  //     }
+  //   };
 
-  useEffect(() => {
-    const fetchTaskDetails = async () => {
-      const allTaskDetails = [];
+  //   fetchProjectDetails();
+  // }, [projectTeamId]);
 
-      for (const project of projectDetails) {
-        const tasks = project.attributes.tasks.data;
-        for (const task of tasks) {
-          try {
-            const taskResponse = await apiClient.get(
-              `${BASE_URL}/tasks/${task.id}?populate=*`
-            );
-            allTaskDetails.push(taskResponse.data);
-          } catch (error) {
-            console.error(
-              `Error fetching details for task ID ${task.id}:`,
-              error
-            );
-          }
-        }
-      }
+  // useEffect(() => {
+  //   const fetchProjectDetails = async () => {
+  //     if (projectTeamId) {
+  //       try {
+  //         const response = await fetchProjectDetailsByApproverId(projectTeamId);
+  //         setProjectDetails(response.data); // Store project details with tasks
+  //       } catch (error) {
+  //         console.error("Error fetching project details:", error);
+  //       }
+  //     }
+  //   };
+  //   fetchProjectDetails();
+  // }, [projectTeamId]);
 
-      setTaskDetails(allTaskDetails);
-    };
+  // useEffect(() => {
+  //   const fetchTaskDetails = async () => {
+  //     const allTaskDetails = [];
 
-    if (projectDetails.length > 0) {
-      fetchTaskDetails();
-    }
-  }, [projectDetails]);
+  //     for (const project of projectDetails) {
+  //       const tasks = project.attributes.tasks.data;
+  //       for (const task of tasks) {
+  //         try {
+  //           const taskResponse = await apiClient.get(
+  //             `${BASE_URL}/tasks/${task.id}?populate=*`
+  //           );
+  //           allTaskDetails.push(taskResponse.data);
+  //         } catch (error) {
+  //           console.error(
+  //             `Error fetching details for task ID ${task.id}:`,
+  //             error
+  //           );
+  //         }
+  //       }
+  //     }
+
+  //     setTaskDetails(allTaskDetails);
+  //   };
+
+  //   if (projectDetails.length > 0) {
+  //     fetchTaskDetails();
+  //   }
+  // }, [projectDetails]);
 
   // useEffect(() => {
   //   const fetchUserData = async () => {
@@ -206,42 +223,42 @@ const ProjectTeam = () => {
   //   fetchUserData();
   // }, []);
 
-  useEffect(() => {
-    let isMounted = true;
+  // useEffect(() => {
+  //   let isMounted = true;
 
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      try {
-        const projectData = await getProjects();
-        if (isMounted && projectData?.data?.data) {
-          const uniqueProjects = Array.from(
-            new Map(
-              projectData.data.data.map((item) => [item.id, item])
-            ).values()
-          );
-          setProjectsDetail(uniqueProjects);
-          if (uniqueProjects.length > 0) {
-            setSelectedProjectId(uniqueProjects[0]?.id);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        if (isMounted) {
-          setProjectsDetail([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
+  //   const fetchProjects = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       const projectData = await getProjects();
+  //       if (isMounted && projectData?.data?.data) {
+  //         const uniqueProjects = Array.from(
+  //           new Map(
+  //             projectData.data.data.map((item) => [item.id, item])
+  //           ).values()
+  //         );
+  //         setProjectsDetail(uniqueProjects);
+  //         if (uniqueProjects.length > 0) {
+  //           setSelectedProjectId(uniqueProjects[0]?.id);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching projects:", error);
+  //       if (isMounted) {
+  //         setProjectsDetail([]);
+  //       }
+  //     } finally {
+  //       if (isMounted) {
+  //         setIsLoading(false);
+  //       }
+  //     }
+  //   };
 
-    fetchProjects();
+  //   fetchProjects();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -269,7 +286,7 @@ const ProjectTeam = () => {
 
   const filteredTasks = (tasks) => {
     return tasks.filter((taskDetail) =>
-      taskDetail.data.attributes.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
+      taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
         searchQuery.toLowerCase()
       )
     );
@@ -311,6 +328,7 @@ const ProjectTeam = () => {
         </View>
 
         <Text style={styles.sectionHeader}>Select Your Project</Text>
+
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <Text>Loading projects...</Text>
@@ -321,8 +339,8 @@ const ProjectTeam = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScrollContainer}
           >
-            {projectDetails.length > 0 ? (
-              projectDetails.map((project) => (
+            {projects.length > 0 ? (
+              projects.map((project) => (
                 <TouchableOpacity
                   key={project.id}
                   style={[
@@ -333,7 +351,10 @@ const ProjectTeam = () => {
                   ]}
                   onPress={() =>
                     navigation.navigate("(pages)/projectTeam/ProjectDetails", {
-                      projectData: project,
+                    projectId: project.id,
+                    projectData: project,
+                    userId: user.id,
+                    tasksData: tasks,
                     })
                   }
                 >
@@ -397,6 +418,7 @@ const ProjectTeam = () => {
             <Text style={styles.seeAll}>See all</Text>
           </TouchableOpacity>
         </View>
+
         {requests.map((request) => (
           <View key={request.id} style={styles.requestItem}>
             <View>
@@ -411,7 +433,7 @@ const ProjectTeam = () => {
               <Text style={styles.requestDescription}>
                 {request.attributes.comment
                   ? request.attributes.comment.charAt(0).toUpperCase() +
-                    request.attributes.comment.slice(1)
+                  request.attributes.comment.slice(1)
                   : "No description available."}
               </Text>
               <View style={styles.requestStatusContainer}>
@@ -423,16 +445,16 @@ const ProjectTeam = () => {
                         request.attributes.status === "approved"
                           ? "#4CAF50" // green
                           : request.attributes.status === "pending"
-                          ? "#FF9800" // orange
-                          : request.attributes.status === "rejected"
-                          ? "#F44336" // red
-                          : "black", // default color
+                            ? "#FF9800" // orange
+                            : request.attributes.status === "rejected"
+                              ? "#F44336" // red
+                              : "black", // default color
                     },
                   ]}
                 >
                   {request.attributes.status
                     ? request.attributes.status.charAt(0).toUpperCase() +
-                      request.attributes.status.slice(1).toLowerCase()
+                    request.attributes.status.slice(1).toLowerCase()
                     : "Pending"}
                 </Text>
 
@@ -470,24 +492,22 @@ const ProjectTeam = () => {
             onChangeText={setSearchQuery}
           />
         </View>
-
-        {projectDetails.map((projectItem, projectIndex) => {
-          const project = projectItem.attributes;
-          const tasks = (projectItem.taskDetails || []).filter(
+        {tasks.map((task, projectIndex) => {
+          const project = task?.attributes?.project?.data;
+          const ongoingTasks = tasks.filter(
             (taskDetail) =>
-              taskDetail.data.attributes.task_status !== "completed"
+              taskDetail.attributes.task_status !== "completed"
           );
 
-          if (tasks.length === 0 || project.project_status === "completed") {
+          if (task.length === 0 || project.project_status === "completed") {
             return null;
           }
 
-          const filteredTasksList = filteredTasks(tasks);
-
+          const filteredTasksList = filteredTasks(ongoingTasks);
           return (
             <View key={projectIndex}>
               <Text style={styles.projectTitle}>
-                {project.name || "Project"}
+                {project?.attributes?.name || "Project"}
               </Text>
 
               <View style={styles.headerContainer}>
@@ -500,16 +520,15 @@ const ProjectTeam = () => {
               </View>
 
               {filteredTasksList.length > 0 ? (
-                filteredTasksList.map((taskDetail, taskIndex) => {
-                  const task = taskDetail.data;
+                filteredTasksList.map((task, taskIndex) => {
                   const standardTask =
-                    task.attributes.standard_task?.data?.attributes || {};
-                  const statusText = task.task_status || "Pending";
-                  const statusStyle = getStatusStyle(task.task_status);
+                    task?.attributes?.standard_task?.data || {};
+                  const statusText = task?.attributes?.task_status || "Pending";
+                  const statusStyle = getStatusStyle(task?.attributes?.task_status);
 
                   // const taskImageUrl = task.attributes?.documents?.data?.[0]
                   //   ?.attributes?.url
-                  //   ? `${BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
+                  //   ? ${BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}
                   //   : "https://via.placeholder.com/150";
 
                   const taskImageUrl = task?.attributes?.documents?.data?.[0]
@@ -526,7 +545,7 @@ const ProjectTeam = () => {
                       <View style={styles.milestoneContent}>
                         <View style={styles.milestoneHeaderContainer}>
                           <Text style={styles.milestoneTitle}>
-                            {standardTask.Name || "Task"}
+                            {standardTask?.attributes?.Name || "Task"}
                           </Text>
                           <View style={styles.substituteButton}>
                             <Text style={styles.substituteText}>
@@ -535,7 +554,7 @@ const ProjectTeam = () => {
                           </View>
                         </View>
                         <Text style={styles.milestoneDescription}>
-                          {standardTask.Description ||
+                          {standardTask?.attributes?.Description ||
                             "No description available."}
                         </Text>
                         <View style={styles.divider} />
@@ -544,12 +563,12 @@ const ProjectTeam = () => {
                           Deadline:{" "}
                           {task?.attributes?.due_date
                             ? new Date(task.attributes.due_date)
-                                .toLocaleDateString("en-GB", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                })
-                                .replace(/\//g, "-")
+                              .toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              })
+                              .replace(/\//g, "-")
                             : "No deadline specified"}
                         </Text>
                         <TouchableOpacity
@@ -581,6 +600,7 @@ const ProjectTeam = () => {
             </View>
           );
         })}
+
       </ScrollView>
       <BottomNavigation />
     </SafeAreaView>

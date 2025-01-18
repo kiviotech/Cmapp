@@ -9,9 +9,11 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
+import useAuthStore from "../../../useAuthStore";
 
-const SelectYourProject = ({ isLoading, contractorsData }) => {
+const SelectYourProject = ({ isLoading, projects }) => {
   const navigation = useNavigation();
+  const { user } = useAuthStore()
 
   if (isLoading) {
     return (
@@ -29,9 +31,8 @@ const SelectYourProject = ({ isLoading, contractorsData }) => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.horizontalScrollContainer}
       >
-        {contractorsData.length > 0 ? (
-          contractorsData.map((contractor) =>
-            contractor.attributes.projects.data.map((project) => (
+        {projects.length > 0 ? (
+          projects.map((project) =>
               <TouchableOpacity
                 key={project.id}
                 style={[
@@ -50,7 +51,7 @@ const SelectYourProject = ({ isLoading, contractorsData }) => {
                   navigation.navigate("(pages)/contractor/ProjectDetails", {
                     projectId: project.id,
                     projectData: project,
-                    contractorId: contractor.id,
+                    userId: user.id,
                   })
                 }
               >
@@ -126,7 +127,6 @@ const SelectYourProject = ({ isLoading, contractorsData }) => {
                   </View>
                 </View>
               </TouchableOpacity>
-            ))
           )
         ) : (
           <View>
