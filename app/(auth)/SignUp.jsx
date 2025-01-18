@@ -170,6 +170,18 @@ const SignUp = () => {
     loadSubContractors();
   }, []);
 
+  useEffect(() => {
+    const logUsers = async () => {
+      try {
+        const users = await fetchUsers();
+        console.log("Fetched users:", users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    logUsers();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Toast

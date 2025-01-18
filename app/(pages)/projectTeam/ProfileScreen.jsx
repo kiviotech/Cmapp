@@ -124,7 +124,9 @@ const ProfileScreen = () => {
         <Text style={styles.sectionHeader}>Settings</Text>
         <View style={styles.sectionContainer}>
           <View style={styles.itemContainer}>
-            <Text style={styles.itemText}>Push notifications</Text>
+            <Text style={styles.itemText}>
+              Notifications {isEnabled ? "On" : "Off"}
+            </Text>
             <Switch
               trackColor={{ false: "#767577", true: "#81b0ff" }}
               thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}

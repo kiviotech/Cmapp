@@ -125,7 +125,9 @@ const Settings = () => {
 
         <View style={styles.innerContainer}>
           <View style={styles.item}>
-            <Text style={styles.itemText}>Push notifications</Text>
+            <Text style={styles.itemText}>
+              Notifications {isEnabled ? "On" : "Off"}
+            </Text>
             <Switch
               trackColor={{ false: "#767577", true: "#0066FF" }}
               thumbColor={colors.whiteColor}
