@@ -173,12 +173,17 @@ const RequestDetails = () => {
         );
 
         if (response.data) {
-          // Update task status
+          // Close the decline modal if rejecting
+          if (newStatus === "rejected") {
+            setDeclineModalVisible(false);
+            setDeclineReason(""); // Reset the decline reason
+          }
+
+          // Update task status for approved requests
           if (newStatus === "approved") {
             const updateTaskData = {
               data: {
                 task_status: "completed",
-                // approver: user.id,
               },
             };
 

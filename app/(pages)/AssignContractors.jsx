@@ -213,7 +213,6 @@ const AssignContractors = () => {
   };
 
   const handleFinishProjectSetup = async () => {
-    // setTimeout(() => setToastVisible(false), 3000);
     if (assignedContractors.length === 0) {
       Alert.alert("Error", "Please add at least one contractor.");
       return;
@@ -236,7 +235,7 @@ const AssignContractors = () => {
           const taskData = {
             data: {
               project: projectId,
-              standard_task: task.id, // Use the task ID from assignedTask
+              standard_task: task.id,
               submissions: [],
               contractor: contractor.contractor,
               documents: [],
@@ -270,6 +269,13 @@ const AssignContractors = () => {
       setIsLoading(false);
       clearProjectData();
       setAssignedContractors([]);
+
+      // Clear input fields
+      setContractorTypeValue(null);
+      setContractorValue(null);
+      setDueDate(null);
+      setContractorItems([]); // Clear contractor dropdown options
+
       // navigation.navigate("(pages)/dashboard");
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);
