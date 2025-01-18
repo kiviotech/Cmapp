@@ -10,11 +10,13 @@ import {
   Image,
 } from "react-native";
 import ProgressBar from "react-native-progress/Bar";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import useProjectStore from "../../../projectStore";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { icons } from "../../../constants";
+import { fetchProjectById } from "../../../src/services/projectService";
+import { getProjectTeamById } from "../../../src/api/repositories/projectTeamRepository";
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,9 +25,10 @@ const ProjectDetails = () => {
   const route = useRoute();
   const [tasks, setTasks] = useState([]);
   const { projectId, projectData, contractorId } = route.params || {};
-  console.log(projectData.attributes)
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
+  const [projectMangerName, setProjectManagerName] = useState("");
+  const [jobRole, setJobRole] = useState("");
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
@@ -33,7 +36,6 @@ const ProjectDetails = () => {
         try {
           const allTasks = [];
           const taskData = await getTaskByContractorId(projectId, contractorId);
-          console.log('taskdata', ...taskData.data.data)
           allTasks.push(...taskData.data.data); // Accumulate tasks for each project
 
           setTasks(allTasks); // Set tasks state with accumulated tasks
@@ -46,7 +48,6 @@ const ProjectDetails = () => {
             ? completedTasks / allTasks.length
             : 0;
           setProgress(progressPercentage); // Set progress percentage
-
         } catch (error) {
           console.error("Error fetching tasks:", error);
         }
@@ -55,65 +56,90 @@ const ProjectDetails = () => {
 
     fetchProjectTasks();
   }, []);
-  
-  useEffect(() => {
-    if (route.params?.projectData) {
-      setProjectDetails(route.params.projectDetails);
-    }
-  }, [route.params?.projectData, setProjectDetails]);
 
-  const project = projectDetails?.attributes || {};
+  useEffect(() => {
+    const getProjectDetails = async () => {
+      const response = await fetchProjectById(projectId);
+      // Find Project Manager ID
+      const projectManager = response?.data?.attributes?.approvers?.data.find(
+        (approver) => approver?.attributes?.job_role === "Project Manager"
+      );
+
+      // Fetch project team data if project manager exists
+      if (projectManager) {
+        try {
+          const teamData = await getProjectTeamById(projectManager.id);
+          const managerName =
+            teamData?.data?.data?.attributes?.users?.data[0]?.attributes
+              ?.username;
+          setProjectManagerName(managerName || "N/A");
+        } catch (error) {
+          console.error("Error fetching project team:", error);
+          setProjectManagerName("N/A");
+        }
+      }
+      setProjectDetails(response.data);
+    };
+    getProjectDetails();
+  }, [projectId]); // Add projectId as dependency
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <View style={{ flexDirection: 'row', flex: 1, paddingHorizontal: width * 0.05, alignItems: 'center' }}>
-        <TouchableOpacity 
-        onPress={() => navigation.navigate('(pages)/dashboard')}
+      <View style={styles.container1}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("(pages)/dashboard")}
         >
-          <Image source={icons.backarrow}></Image>
+          {/* <Image source={icons.backarrow}></Image> */}
+          <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.header}>Project Details</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.projectNameContainer}>
           <Text style={styles.projectName}>
-            {projectData.attributes.name || "Project Name"}
+            {projectDetails?.attributes?.name || "Project Name"}
           </Text>
         </View>
 
         <View style={styles.calendarContainer}>
-          <FontAwesome name="calendar" size={24} color="#F5C37F" />
+          <FontAwesome name="calendar" size={26} color="#F5C37F" />
           <View style={styles.dateContainer}>
             <Text style={styles.dueDateText}>Due Date</Text>
-            <Text style={styles.dateText}>{projectData.attributes.end_date || "N/A"}</Text>
+            <Text style={styles.dateText}>
+              {projectDetails?.attributes?.end_date || "N/A"}
+            </Text>
           </View>
         </View>
 
         <Text style={styles.label}>
           Project Manager:{" "}
-          <Text style={styles.text}>
-            {project.user?.data?.attributes?.username || "N/A"}
-          </Text>
+          <Text style={styles.text}>{projectMangerName || "N/A"}</Text>
         </Text>
 
         <Text style={styles.label}>Project Details:</Text>
         <Text style={styles.projectDescription}>
-          {projectData.attributes.description || "No project description provided."}
+          {projectDetails?.attributes?.description ||
+            "No project description provided."}
         </Text>
 
         <View style={styles.progressContainer}>
-          <Text style={styles.progressLabel}>Project Progress:</Text>
+          <Text style={styles.progressLabel}>Your Progress:</Text>
           <ProgressBar
             progress={progress}
-            width={200}
+            width={180}
+            height={10}
             color="#66B8FC"
             style={styles.progressBarContainer}
           />
-          <Text style={styles.progressPercentage}>{Math.round(progress * 100)}%</Text>
+          <Text style={styles.progressPercentage}>
+            {Math.round(progress * 100)}%
+          </Text>
         </View>
 
         <Text style={styles.label}>All Tasks</Text>
-
 
         {tasks.map((task) => (
           <View key={task.id} style={styles.taskContainer}>
@@ -134,7 +160,8 @@ const ProjectDetails = () => {
               </Text>
             </View>
             <Text style={styles.taskDescription} numberOfLines={2}>
-              {task.attributes.standard_task.data.attributes.Description || "No description available."}
+              {task.attributes.standard_task.data.attributes.Description ||
+                "No description available."}
             </Text>
             <View style={styles.assign}>
               {/* <Text style={styles.assignedInfo}>Assigned Contractor Name</Text> */}
@@ -160,21 +187,40 @@ const ProjectDetails = () => {
 const styles = StyleSheet.create({
   AreaContainer: {
     flex: 1,
+    paddingHorizontal: width * 0.04,
     backgroundColor: "#FFFFFF",
   },
   container: {
+    paddingTop: height * 0.05,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: width * 0.05
+  },
+  container1: {
+    paddingTop: height * 0.05,
+    display: "flex",
+    flexDirection: "row",
+    gap: 10,
+    marginHorizontal: 20,
   },
   header: {
+    display: "flex",
     fontSize: width * 0.055,
     fontWeight: "bold",
+    marginBottom: height * 0.015,
     color: "#192252",
-    paddingHorizontal: width * 0.05
+  },
+  headerText: {
+    fontSize: width * 0.055,
+    fontWeight: "bold",
+    marginBottom: height * 0.015,
+    color: "#192252",
+    marginLeft: 10,
+    marginTop: -5,
+    border: "1px solid red",
   },
   projectNameContainer: {
     alignItems: "flex-start",
-    marginBottom: height * 0.015,
+    // marginBottom: height * 0.015,
+    paddingHorizontal: width * 0.05,
   },
   projectName: {
     fontSize: width * 0.055,
@@ -185,11 +231,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: height * 0.015,
+    paddingHorizontal: 20,
   },
   dateContainer: {
     flexDirection: "column",
     alignItems: "flex-start",
     marginLeft: width * 0.03,
+    gap: 5,
   },
   dueDateText: {
     fontSize: width * 0.04,
@@ -199,12 +247,19 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
     color: "#F5C37F",
   },
+  statusStyle: {
+    color: "red",
+  },
+  noTasksText: {
+    paddingHorizontal: width * 0.05,
+  },
   label: {
     fontSize: width * 0.042,
     fontWeight: "bold",
     color: "#192252",
     marginBottom: height * 0.008,
     marginTop: height * 0.02,
+    paddingHorizontal: width * 0.05,
   },
   text: {
     fontSize: width * 0.04,
@@ -214,8 +269,8 @@ const styles = StyleSheet.create({
     fontSize: width * 0.038,
     color: "#6E6E6E",
     marginBottom: height * 0.02,
-    padding: width * 0.035,
-    lineHeight: height * 0.025, // Increased line height for readability
+    paddingHorizontal: width * 0.05,
+    lineHeight: height * 0.015, // Increased line height for readability
   },
   progressContainer: {
     flexDirection: "row",
@@ -226,11 +281,15 @@ const styles = StyleSheet.create({
   progressBarContainer: {
     marginLeft: width * 0.02,
     marginTop: height * 0.005,
+    border: "1px solid red",
   },
   progressLabel: {
     fontSize: width * 0.04,
     fontWeight: "bold",
     color: "#192252",
+    paddingHorizontal: width * 0.05,
+    width: "40%",
+    whiteSpace: "nowrap",
   },
   progressPercentage: {
     fontSize: width * 0.035,
@@ -240,11 +299,13 @@ const styles = StyleSheet.create({
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
-    padding: width * 0.04,
+    padding: width * 0.02,
     borderRadius: 8,
-    marginBottom: height * 0.015,
+    marginHorizontal: "auto",
+    marginVertical: height * 0.015,
     borderWidth: 1,
     borderColor: "#E0E0E0",
+    width: "90%",
   },
   task: {
     flexDirection: "row",

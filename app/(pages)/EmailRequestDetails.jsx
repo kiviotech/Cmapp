@@ -12,7 +12,12 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import {
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+  AntDesign,
+} from "@expo/vector-icons";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../useAuthStore";
 import { updateExistingRegistration } from "../../src/services/registrationService";
@@ -40,13 +45,10 @@ const RequestDetails = () => {
   const user = useAuthStore();
 
   useEffect(() => {
-    console.log("Request Details:", requestData);
-
     const fetchContractorGroups = async () => {
       try {
         const response = await fetchUserGroupsWithContractorRole();
         const ids = response?.data?.map((item) => item.id) || [];
-        console.log("Contractor Group IDs:", ids);
         setContractorGroupIds(ids);
       } catch (error) {
         console.error("Error fetching contractor groups:", error);
@@ -59,22 +61,84 @@ const RequestDetails = () => {
   const documents = requestData?.attributes?.documents?.data || [];
 
   const handleDownloadImage = async (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const imageUrl = `${URL}${imageFormats?.thumbnail?.url}`;
+    const filename = imageFormats?.name || "download.png";
+
     if (Platform.OS === "web") {
-      console.log(imageUrl);
-      // Open the image in a new tab for download on web
-      WebBrowser.openBrowserAsync(imageUrl);
-    } else {
-      // Native download
       try {
-        const fileUri = FileSystem.documentDirectory + imageFormats?.name;
+        // Fetch the image first
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        // Create object URL for the blob
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create an anchor element
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+
+        // Programmatically click the link
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error("Error downloading on web:", error);
+        Alert.alert("Error", "An error occurred while downloading the image.");
+      }
+    } else {
+      // For Android/iOS
+      try {
+        const fileUri = `${FileSystem.documentDirectory}${filename}`;
+
         const downloadResumable = FileSystem.createDownloadResumable(
           imageUrl,
-          fileUri
+          fileUri,
+          {},
+          (downloadProgress) => {
+            const progress =
+              downloadProgress.totalBytesWritten /
+              downloadProgress.totalBytesExpectedToWrite;
+          }
         );
+
         const { uri } = await downloadResumable.downloadAsync();
-        console.log("Downloaded image:", uri);
-        Alert.alert("Download complete!", `File saved to: ${uri}`);
+
+        if (Platform.OS === "android") {
+          // Save to downloads folder on Android
+          const permissions =
+            await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+          if (permissions.granted) {
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              filename,
+              "image/png"
+            ).then(async (createdUri) => {
+              await FileSystem.writeAsStringAsync(createdUri, base64, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              Alert.alert(
+                "Success",
+                "File downloaded successfully to Downloads folder!"
+              );
+            });
+          } else {
+            Alert.alert(
+              "Permission denied",
+              "Unable to save file to Downloads folder"
+            );
+          }
+        } else {
+          // For iOS
+          Alert.alert("Download Complete", `File saved to: ${uri}`);
+        }
       } catch (error) {
         console.error("Error downloading image:", error);
         Alert.alert("Error", "An error occurred while downloading the image.");
@@ -99,11 +163,22 @@ const RequestDetails = () => {
       if (response.data) {
         Alert.alert("Success", `Request ${newStatus} successfully!`);
 
+        // Navigate back with status update info
+        navigation.navigate("(pages)/projectTeam/Notification", {
+          statusUpdate: {
+            status: newStatus,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        // Call the onStatusUpdate callback if it exists
+        if (route.params?.onStatusUpdate) {
+          await route.params.onStatusUpdate(newStatus);
+        }
+
         if (newStatus === "approved") {
           await handleCreateUser();
         }
-
-        navigation.goBack();
       }
     } catch (error) {
       console.error("Error updating request:", error);
@@ -125,7 +200,6 @@ const RequestDetails = () => {
       const response = await createNewUser(userData);
       if (response) {
         const newUserId = response.user.id;
-        console.log("User created successfully with ID:", newUserId);
         Alert.alert("Success", "User account created successfully.");
 
         if (contractorGroupIds.length > 0) {
@@ -161,7 +235,6 @@ const RequestDetails = () => {
         updatedGroupData
       );
       if (response) {
-        console.log("User added to contractor group:", response);
       }
     } catch (error) {
       console.error("Error updating contractor group:", error);
@@ -186,7 +259,6 @@ const RequestDetails = () => {
 
       const response = await createNewContractor(contractorData);
       if (response) {
-        console.log("Contractor record created successfully:", response);
         Alert.alert("Success", "Contractor record created successfully.");
       }
     } catch (error) {
@@ -199,13 +271,17 @@ const RequestDetails = () => {
   };
 
   const handleImagePreview = (imageFormats) => {
-    const imageUrl = `${URL}${imageFormats?.large?.url || imageFormats?.url}`;
+    const imageUrl = `${URL}${
+      imageFormats?.large?.url ||
+      imageFormats?.medium?.url ||
+      imageFormats?.small?.url
+    }`;
     setSelectedImage(imageUrl);
     setModalVisible(true);
   };
 
   const renderDocument = (docs) => (
-    <View key={docs.id} style={styles.documentContainer}>
+    <View key={`doc-${docs.id}`} style={styles.documentContainer}>
       <View style={styles.documentInfo}>
         <FontAwesome5
           name={docs.attributes.ext === ".png" ? "file-image" : "file-alt"}
@@ -219,16 +295,26 @@ const RequestDetails = () => {
           </Text>
         </View>
       </View>
-      <View style={styles.documentActions}>
+      <View style={styles.actionButtons}>
         <TouchableOpacity
+          style={styles.actionButton}
           onPress={() => handleImagePreview(docs.attributes.formats)}
         >
-          <MaterialIcons name="visibility" size={20} color="#666" />
+          <View style={styles.buttonContent}>
+            <MaterialIcons name="visibility" size={16} color="#374151" />
+            <Text style={styles.actionButtonText}>View</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.actionButton, styles.downloadButton]}
           onPress={() => handleDownloadImage(docs.attributes.formats)}
         >
-          <Text style={styles.downloadButton}>Download</Text>
+          <View style={styles.buttonContent}>
+            <MaterialIcons name="file-download" size={16} color="#FFFFFF" />
+            <Text style={[styles.actionButtonText, styles.downloadButtonText]}>
+              Download
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -266,8 +352,37 @@ const RequestDetails = () => {
             </Text>
           </Text>
           <Text style={styles.label}>Documents:</Text>
-          <View>{documents.map(renderDocument)}</View>
+          <View>
+            {documents.map((doc, index) => (
+              <View key={`document-${doc.id}-${index}`}>
+                {renderDocument(doc)}
+              </View>
+            ))}
+          </View>
         </View>
+
+        {requestData?.attributes?.status === "approved" && (
+          <View style={styles.statusContainer}>
+            <View style={styles.approvedStatus}>
+              <AntDesign name="checkcircle" size={24} color="#A3D65C" />
+              <Text style={styles.approvedStatusText}>
+                This request has been approved
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {requestData?.attributes?.status === "rejected" && (
+          <View style={styles.statusContainer}>
+            <View style={styles.rejectedStatus}>
+              <AntDesign name="closecircle" size={24} color="#FC5275" />
+              <Text style={styles.rejectedStatusText}>
+                This request has been rejected
+              </Text>
+            </View>
+          </View>
+        )}
+
         {requestData?.attributes?.status === "pending" && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -320,7 +435,7 @@ const styles = StyleSheet.create({
   container: {
     padding: width * 0.037,
     paddingTop: height * 0.038,
-    backgroundColor: "#FFF",
+    backgroundColor: "#F8F8F8",
     flexGrow: 1,
   },
   header: {
@@ -357,7 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: height * 0.015,
-    backgroundColor: "#F7F7F7",
+    backgroundColor: "#fff",
     borderRadius: 8,
     marginBottom: height * 0.01,
     justifyContent: "space-between",
@@ -443,6 +558,72 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: width * 0.04,
     fontWeight: "600",
+  },
+
+  statusContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  approvedStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0F9EB",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#A3D65C",
+  },
+  approvedStatusText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#2C5282",
+    fontWeight: "600",
+  },
+  rejectedStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF5F5",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FC5275",
+  },
+  rejectedStatusText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: "#C53030",
+    fontWeight: "600",
+  },
+
+  actionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  actionButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: "#F3F4F6",
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  downloadButton: {
+    backgroundColor: "#3B82F6",
+  },
+  downloadButtonText: {
+    color: "#FFFFFF",
   },
 });
 

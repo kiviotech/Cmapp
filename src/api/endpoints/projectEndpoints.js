@@ -10,13 +10,16 @@ const projectEndpoints = {
   //   `/projects?filters[approver][id][$eq]=${id}&populate=tasks`,
 
   getProjectDetailsById: (id) =>
-    `/projects?filters[approver][id][$eq]=${id}&populate[0]=tasks&populate[1]=approver`,
+    `/projects?filters[approvers][id][$eq]=${id}&populate[0]=tasks&populate[1]=approvers`,
 
   createProject: "/projects",
 
   updateProject: (id) => `/projects/${id}`,
 
   deleteProject: (id) => `/projects/${id}`,
+
+  getProjectsByContractorEmail: (email) =>
+    `/projects?filters[contractors][email][$eq]=${email}&populate=*`,
 };
 
 export default projectEndpoints;

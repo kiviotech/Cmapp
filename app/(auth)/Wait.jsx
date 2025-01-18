@@ -1,14 +1,25 @@
 
 import { View, Text, StyleSheet } from 'react-native';
-import React from 'react';
+import React,{useEffect} from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Toast from '../Toast';
+import { login } from '../../src/utils/auth';
 
 
 const Wait = () => {
 
+ 
   const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push('/login'); // Navigate to targetPage after 3 seconds
+    }, 3000); // 3000ms = 3 seconds
+
+    return () => clearTimeout(timer); // Clean up the timer on component unmount
+  }, [router]);
+
 
   return (
     <SafeAreaView style={styles.container}>

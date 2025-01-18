@@ -6,6 +6,7 @@ import {
   ScrollView,
   SafeAreaView,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 import ProgressBar from "react-native-progress/Bar";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -13,32 +14,37 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import BottomNavigation from "./BottomNavigation";
 import useProjectStore from "../../../projectStore";
 import { fetchProjectTeamById } from "../../../src/services/projectTeamService";
+import { fetchTaskById } from "../../../src/services/taskService";
 
 const { width, height } = Dimensions.get("window");
 
 const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { projectData: routeProjectData } = route.params || {};
+  const { projectId, projectData: routeProjectData } = route.params || {};
 
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [jobRole, setJobRole] = useState("");
 
   useEffect(() => {
     if (routeProjectData) {
       setProjectData(routeProjectData);
+      fetchProjectTasks();
     }
 
-    const approverId = routeProjectData?.attributes?.approver?.data?.id;
+    const approverId = routeProjectData?.attributes?.approvers?.data[0]?.id;
 
     const fetchManagerDetails = async () => {
       if (approverId) {
         try {
           const response = await fetchProjectTeamById(approverId);
-          const names = response.data.attributes.users.data.map(
-            (item) => item.attributes.username
+          const names = response?.data?.attributes?.users?.data.map(
+            (item) => item?.attributes?.username
           );
-          setManagerNames(names); // Store manager names in state
+          setManagerNames(names[0]); // Store manager names in state
+          setJobRole(response?.data?.attributes?.job_role);
         } catch (error) {
           console.error("Error fetching manager details:", error);
         }
@@ -46,7 +52,24 @@ const ProjectDetails = () => {
     };
 
     fetchManagerDetails();
-  }, [routeProjectData, setProjectData]);
+    // }, [routeProjectData, setProjectData]);
+  }, []);
+
+  const fetchProjectTasks = async () => {
+    try {
+      const taskIds =
+        routeProjectData?.attributes?.tasks?.data?.map((task) => task.id) || [];
+      const taskPromises = taskIds.map(async (taskId) => {
+        const response = await fetchTaskById(taskId);
+        return response;
+      });
+
+      const taskResults = await Promise.all(taskPromises);
+      setTasks(taskResults);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
 
   const project = projectData?.attributes || {};
 
@@ -59,16 +82,19 @@ const ProjectDetails = () => {
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color="black"
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
-          />
+          >
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
           <Text style={styles.headerText}>Project Details</Text>
-        </Text>
+        </View>
 
         <View style={styles.projectNameContainer}>
           <Text style={styles.projectName}>
@@ -77,15 +103,29 @@ const ProjectDetails = () => {
         </View>
 
         <View style={styles.calendarContainer}>
-          <FontAwesome name="calendar" size={24} color="#F5C37F" />
-          <View style={styles.dateContainer}>
-            <Text style={styles.dueDateText}>Due Date</Text>
-            <Text style={styles.dateText}>{project.end_date || "N/A"}</Text>
+          <View style={styles.dueDateContainer}>
+            <FontAwesome name="calendar" size={26} color="#F5C37F" />
+            <View style={styles.dateContainer}>
+              <Text style={styles.dueDateText}>Due Date</Text>
+              <Text style={styles.dateText}>{project.end_date || "N/A"}</Text>
+            </View>
+          </View>
+          <View>
+            <TouchableOpacity
+              style={styles.assignBtn}
+              onPress={() => {
+                navigation.navigate("(pages)/AssignContractors", {
+                  projectId: projectData.id,
+                });
+              }}
+            >
+              <Text style={styles.assignText}>Assign Tasks</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         <Text style={styles.label}>
-          Project Manager:{" "}
+          {jobRole || "Project Manager"}:{" "}
           <Text style={styles.text}>{managerNames || "N/A"}</Text>
         </Text>
 
@@ -95,10 +135,11 @@ const ProjectDetails = () => {
         </Text>
 
         <View style={styles.progressContainer}>
-          <Text style={styles.progressLabel}>Project Progress:</Text>
+          <Text style={styles.progressLabel}>Your Progress:</Text>
           <ProgressBar
             progress={progress}
-            width={200}
+            width={180}
+            height={10}
             color="#66B8FC"
             style={styles.progressBarContainer}
           />
@@ -109,28 +150,12 @@ const ProjectDetails = () => {
 
         <Text style={styles.label}>All Tasks</Text>
 
-        {projectData?.taskDetails?.length > 0 ? (
-          projectData.taskDetails.map((taskDetail, index) => {
-            const task = taskDetail.data.attributes;
-            const standardTask = task.standard_task?.data?.attributes || {};
-            const status = task.task_status;
-
-            let statusText = "Pending...";
-            let statusStyle = styles.pendingStatus;
-
-            if (status === "completed") {
-              statusText = "Completed";
-              statusStyle = styles.completedStatus;
-            } else if (status === "ongoing") {
-              statusText = "Ongoing";
-              statusStyle = styles.ongoingStatus;
-            } else if (status === "ahead") {
-              statusText = "Ahead of Schedule";
-              statusStyle = styles.aheadStatus;
-            } else if (status === "delayed") {
-              statusText = "Delayed";
-              statusStyle = styles.delayedStatus;
-            }
+        {tasks.length > 0 ? (
+          tasks.map((task, index) => {
+            const taskData = task?.data?.attributes || {};
+            const standardTask =
+              taskData?.standard_task?.data?.attributes || {};
+            const status = taskData.task_status;
 
             return (
               <View key={index} style={styles.taskContainer}>
@@ -138,18 +163,39 @@ const ProjectDetails = () => {
                   <Text style={styles.taskName} numberOfLines={1}>
                     {standardTask.Name || "Task Name"}
                   </Text>
-                  <Text style={statusStyle}>{statusText}</Text>
+                  <Text
+                    style={[
+                      styles.statusStyle,
+                      status === "completed"
+                        ? styles.completedStatus
+                        : status === "ongoing"
+                        ? styles.ongoingStatus
+                        : styles.pendingStatus,
+                    ]}
+                  >
+                    {status === "completed"
+                      ? "Completed"
+                      : status === "ongoing"
+                      ? "Ongoing"
+                      : "Pending"}
+                  </Text>
                 </View>
                 <Text style={styles.taskDescription} numberOfLines={2}>
                   {standardTask.Description || "No description available."}
                 </Text>
                 <View style={styles.assign}>
-                  {/* <Text style={styles.dueDate}>
-                        {status === "completed"
-                          ? `Completed on ${task.updatedAt}`
-                          : `Updated on ${task.updatedAt}`}
-                      </Text> 
-                  */}
+                  <Text style={styles.dueDate}>
+                    Due:{" "}
+                    {taskData.due_date
+                      ? new Date(taskData.due_date)
+                          .toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })
+                          .replace(/\//g, "-")
+                      : "N/A"}
+                  </Text>
                 </View>
               </View>
             );
@@ -168,151 +214,170 @@ const ProjectDetails = () => {
 const styles = StyleSheet.create({
   AreaContainer: {
     flex: 1,
-    paddingHorizontal: width * 0.04,
     backgroundColor: "#FFFFFF",
   },
   container: {
-    paddingTop: height * 0.05,
-    backgroundColor: "#FFFFFF",
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 80,
   },
-  header: {
-    display: "flex",
-    fontSize: width * 0.055,
-    fontWeight: "bold",
-    marginBottom: height * 0.015,
-    color: "#192252",
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  backButton: {
+    padding: 8,
   },
   headerText: {
-    fontSize: width * 0.055,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: height * 0.015,
     color: "#192252",
-    marginLeft: 10,
-    marginTop: -5,
+    marginLeft: 8,
   },
   projectNameContainer: {
-    alignItems: "flex-start",
-    marginBottom: height * 0.015,
+    marginBottom: 16,
   },
   projectName: {
-    fontSize: width * 0.055,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#192252",
   },
   calendarContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: height * 0.015,
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  dueDateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   dateContainer: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    marginLeft: width * 0.03,
+    marginLeft: 12,
+    gap: 5,
   },
   dueDateText: {
-    fontSize: width * 0.04,
+    fontSize: 14,
     color: "#333",
   },
   dateText: {
-    fontSize: width * 0.04,
+    fontSize: 14,
     color: "#F5C37F",
+    fontWeight: "500",
+  },
+  assignBtn: {
+    backgroundColor: "#f0f0f0",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  assignText: {
+    fontSize: 16,
+    color: "#192252",
   },
   label: {
-    fontSize: width * 0.042,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "600",
     color: "#192252",
-    marginBottom: height * 0.008,
-    marginTop: height * 0.02,
+    marginTop: 16,
+    marginBottom: 8,
   },
   text: {
-    fontSize: width * 0.04,
+    fontSize: 15,
     color: "#000",
+    fontWeight: "normal",
   },
   projectDescription: {
-    fontSize: width * 0.038,
+    fontSize: 14,
     color: "#6E6E6E",
-    marginBottom: height * 0.02,
-    padding: width * 0.035,
-    lineHeight: height * 0.025, // Increased line height for readability
+    lineHeight: 20,
+    marginBottom: 16,
   },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: height * 0.02,
-    paddingVertical: height * 0.01,
-  },
-  progressBarContainer: {
-    marginLeft: width * 0.02,
-    marginTop: height * 0.005,
+    justifyContent: "space-between",
+    marginVertical: 10,
+    paddingVertical: 5,
   },
   progressLabel: {
-    fontSize: width * 0.04,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "600",
     color: "#192252",
+    width: "35%",
+  },
+  progressBarContainer: {
+    marginLeft: 8,
   },
   progressPercentage: {
-    fontSize: width * 0.035,
+    fontSize: 14,
     color: "#66B8FC",
-    position: "absolute",
-    right: width * 0.02,
+    marginLeft: 8,
   },
   taskContainer: {
     backgroundColor: "#FFFFFF",
-    padding: width * 0.04,
-    borderRadius: 8,
-    marginBottom: height * 0.015,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: "#E0E0E0",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   task: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: height * 0.005,
-  },
-  assign: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: height * 0.005,
+    marginBottom: 8,
   },
   taskName: {
-    fontSize: width * 0.043,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "600",
     color: "#000",
+    flex: 1,
+    marginRight: 8,
+  },
+  taskDescription: {
+    fontSize: 14,
+    color: "#6E6E6E",
+    marginBottom: 8,
+    lineHeight: 20,
   },
   pendingStatus: {
-    fontSize: width * 0.038,
+    fontSize: 14,
     color: "#FB8951",
+    fontWeight: "500",
+  },
+  ongoingStatus: {
+    fontSize: 14,
+    color: "#66B8FC",
+    fontWeight: "500",
   },
   completedStatus: {
-    fontSize: width * 0.038,
+    fontSize: 14,
     color: "#A3D65C",
-  },
-  assignedInfo: {
-    fontSize: width * 0.035,
-    color: "#A0A0A0",
+    fontWeight: "500",
   },
   dueDate: {
-    fontSize: width * 0.035,
+    fontSize: 13,
     color: "#FC5275",
   },
-  completionDate: {
-    fontSize: width * 0.035,
-    color: "#A8A8A8",
-  },
-  addButton: {
-    backgroundColor: "#5E8BFF",
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.1,
-    borderRadius: 20,
+  noTasksContainer: {
+    padding: 16,
     alignItems: "center",
-    marginTop: height * 0.02,
-    alignSelf: "center",
   },
-  addButtonText: {
-    fontSize: width * 0.04,
-    color: "#FFFFFF",
+  noTasksText: {
+    fontSize: 16,
+    color: "#6E6E6E",
   },
 });
 

@@ -55,25 +55,41 @@ const ProjectList = () => {
   }, []);
 
   const renderProject = ({ item }) => (
-    <View style={styles.projectContainer}>
+    <TouchableOpacity
+      style={styles.projectContainer}
+      onPress={() =>
+        navigation.navigate("(pages)/projectTeam/ProjectDetails", {
+          projectId: item.id,
+          projectData: item,
+          contractorId: item.attributes.contractors?.data?.[0]?.id,
+        })
+      }
+    >
       <View
         style={[styles.colorBar, { backgroundColor: item.color || "#4A90E2" }]}
       />
       <View style={styles.projectDetails}>
-        <Text style={styles.username}>
+        <Text numberOfLines={1} style={styles.username}>
           {item.attributes.user?.data?.attributes?.username || "Unknown User"}
         </Text>
-        <Text style={[styles.projectName, { color: item.color || "#4A90E2" }]}>
+        <Text
+          numberOfLines={2}
+          style={[styles.projectName, { color: item.color || "#4A90E2" }]}
+        >
           {item.attributes.name || "Unnamed Project"}
         </Text>
-        <Text style={styles.startDate}>
-          Started on {new Date(item.attributes.createdAt).toLocaleDateString()}
-        </Text>
-        <Text style={styles.dueDate}>
-          Due {new Date(item.attributes.end_date).toLocaleDateString()}
-        </Text>
+        <View style={styles.dateContainer}>
+          <Text style={styles.startDate}>
+            Started:{" "}
+            {new Date(item.attributes.createdAt).toLocaleDateString("en-GB")}
+          </Text>
+          <Text style={styles.dueDate}>
+            Due:{" "}
+            {new Date(item.attributes.end_date).toLocaleDateString("en-GB")}
+          </Text>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -84,24 +100,27 @@ const ProjectList = () => {
         </View>
       </View>
       {isLoading ? (
-        <ActivityIndicator size="large" color="#4A90E2" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4A90E2" />
+        </View>
       ) : (
         <FlatList
-          data={projectsDetail}
+          data={[...projectsDetail].reverse()}
           keyExtractor={(item) => item.id}
           renderItem={renderProject}
           contentContainerStyle={styles.flatListContainer}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={styles.emptyListText}>No projects found</Text>
+          }
         />
       )}
-      {/* </View> */}
       <TouchableOpacity
         onPress={() => navigation.navigate("(pages)/ProjectForm")}
         style={styles.addButton}
       >
         <Text style={styles.addButtonText}>Add New Project</Text>
       </TouchableOpacity>
-      {/* </View> */}
       <BottomNavigation />
     </SafeAreaView>
   );
@@ -142,68 +161,83 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "#ffffff",
     borderRadius: 12,
-    padding: width * 0.04,
-    marginBottom: height * 0.015,
+    padding: 12,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 5,
-    alignItems: "center",
     width: "90%",
     alignSelf: "center",
+    minHeight: 100,
   },
   colorBar: {
-    width: width * 0.02,
+    width: 4,
     height: "100%",
     borderRadius: 4,
-    marginRight: width * 0.03,
+    marginRight: 12,
   },
   projectDetails: {
     flex: 1,
+    justifyContent: "space-between",
   },
   username: {
-    fontSize: width * 0.035,
+    fontSize: 14,
     color: "#999",
   },
   projectName: {
-    fontSize: width * 0.05,
+    fontSize: 16,
     fontWeight: "bold",
-    marginVertical: height * 0.005,
+    marginVertical: 4,
+  },
+  dateContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
   },
   startDate: {
-    fontSize: width * 0.035,
+    fontSize: 12,
     color: "#4CAF50",
   },
   dueDate: {
-    fontSize: width * 0.035,
+    fontSize: 12,
     color: "#FC5275",
     fontWeight: "500",
-    position: "absolute",
-    right: width * 0.04,
-    bottom: height * 0.015,
+  },
+  emptyListText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#666",
   },
   flatListContainer: {
-    paddingBottom: height * 0.18,
+    paddingBottom: height * 0.25,
   },
   addButton: {
     position: "absolute",
-    bottom: height * 0.12,
-    right: width * 0.05,
+    bottom: 100,
+    right: 20,
     backgroundColor: "#4A90E2",
     borderRadius: 20,
-    paddingHorizontal: width * 0.05,
-    paddingVertical: height * 0.015,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 5,
+    zIndex: 2,
   },
   addButtonText: {
     color: "#fff",
     fontSize: width * 0.04,
     fontWeight: "500",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

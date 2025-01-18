@@ -10,6 +10,7 @@ import {
   Dimensions,
   FlatList,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -22,25 +23,11 @@ import { fetchContractorsByUserId } from "../../../src/services/contractorServic
 // import { fetchTasksByContractorId } from "../../../src/services/taskService";
 import { getTaskByContractorId } from "../../../src/api/repositories/taskRepository";
 import { MEDIA_BASE_URL } from "../../../src/api/apiClient";
+import SelectYourProject from "./SelectYourProject";
 
-// const renderCard = ({ item }) => (
-//   <View style={styles.card}>
-//     <View style={styles.cardHeader}>
-//       <Text style={styles.title}>{item.title}</Text>
-//       <Icon name="bell-outline" size={20} color="green" />
-//     </View>
-//     <Text style={styles.projectName}>{item.projectName}</Text>
-//     <View style={styles.divider} />
-//     <View style={styles.infoRow}>
-//       <Icon name="calendar" size={20} color="black" />
-//       <Text style={styles.infoText}>{item.date}</Text>
-//     </View>
-//     <View style={styles.infoRow}>
-//       <Icon name="clock-outline" size={20} color="black" />
-//       <Text style={styles.infoText}>{item.time}</Text>
-//     </View>
-//   </View>
-// );
+const validateImageURL = (url) => {
+  return url && (url.startsWith("http://") || url.startsWith("https://"));
+};
 
 const Contractor = () => {
   const [contractorsData, setContractorsData] = useState([]);
@@ -54,51 +41,62 @@ const Contractor = () => {
   // const [contractorId, setContractorId] = useState([]);
 
   const { user, designation } = useAuthStore();
-  // // console.log(user, designation)
 
   useEffect(() => {
     const loadContractorData = async () => {
       if (user && user.id) {
         try {
-          const data = await fetchContractorsByUserId(user.id);
-          setContractorsData(data.data); // Set entire array of contractors
-          var filteredData = [];
-          if (data.data.length > 0) {
-            const contractorId = data.data[0].id; // Assuming one contractor per user
-            const projectData = data.data.map(
-              (project) => (filteredData = project.attributes.projects.data)
-            );
+          setIsLoading(true); // Start loading
 
-            // Fetch tasks for each project ID in selectedProjectId
-            const allTasks = [];
-            for (const projectId of filteredData) {
-              const taskData = await getTaskByContractorId(
-                projectId.id,
-                contractorId
+          const data = await fetchContractorsByUserId(user.id);
+
+          if (data.data.length > 0) {
+            const contractorId = data.data[0].id;
+            const projectData = data.data.flatMap(
+              (contractor) => contractor?.attributes?.projects?.data
+            );
+            if (projectData.length > 0) {
+              // Fetch all tasks in a single batch using Promise.all
+              const allTasks = await Promise.all(
+                projectData.map(async (project) => {
+                  try {
+                    const taskData = await getTaskByContractorId(
+                      project.id,
+                      contractorId
+                    );
+                    return taskData.data.data.filter(
+                      (task) => task.attributes.task_status === "ongoing"
+                    );
+                  } catch (taskError) {
+                    console.error(
+                      `Error fetching tasks for project ${project.id}:`,
+                      taskError
+                    );
+                    return []; // Return an empty array if task fetch fails
+                  }
+                })
               );
-              const ongoingTasks = taskData.data.data.filter(
-                (task) => task.attributes.task_status === "ongoing"
-              );
-              allTasks.push(...ongoingTasks); // Accumulate tasks for each project
+              // Flatten the tasks array and update state
+              setContractorsData(data.data);
+              setTasks(allTasks.flat());
+            } else {
+              setTasks([]); // No projects, set tasks to an empty array
             }
-            setTasks(allTasks); // Update tasks state with all fetched tasks
           }
         } catch (error) {
           console.error("Error fetching contractor data:", error);
         } finally {
-          setIsLoading(false);
+          setIsLoading(false); // End loading
         }
       }
     };
     loadContractorData();
-  }, []);
-
-  // console.log('tasks', tasks[0].attributes.documents.data[0].attributes)
+  }, [user]);
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView style={styles.container}>
-        {/* User Info */}
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* User Info Section */}
         <View style={styles.userInfoContainer}>
           <Image
             source={{
@@ -107,155 +105,120 @@ const Contractor = () => {
             style={styles.profileImage}
           />
           <View>
-            {/* <Text style={styles.userName}>{user.username}</Text> */}
-            <Text style={styles.userName}>
-              {user ? user.username : "Guest"}
-            </Text>
-            <Text style={styles.userRole}>
-              {designation || "No designation"}
-            </Text>
-          </View>
-          <View style={styles.searchContainer}>
-            {/* <TouchableOpacity style={styles.searchIcon}>
-                <Icon name="search" size={24} color="#333" />
-              </TouchableOpacity> */}
+            <Text style={styles.userName}>{user.username}</Text>
+            <Text style={styles.userRole}>{designation}</Text>
           </View>
         </View>
 
-        {/* Select Your Project */}
-        <Text style={styles.sectionHeader}>Select Your Project</Text>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <Text>Loading projects...</Text>
-          </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScrollContainer}
-          >
-            {contractorsData.length > 0 ? (
-              contractorsData.map((contractor) =>
-                contractor.attributes.projects.data.map((project) => (
-                  <TouchableOpacity
-                    key={project.id}
-                    style={[
-                      styles.projectCard,
-                      project.attributes.project_status === "pending"
-                        ? { backgroundColor: "#ffebee" }
-                        : { backgroundColor: "#e8f5e9" },
-                    ]}
-                    onPress={() =>
-                      navigation.navigate("(pages)/contractor/ProjectDetails", {
-                        projectId: project.id,
-                        projectData: project,
-                        contractorId: contractor.id,
-                      })
-                    }
-                  >
-                    <View style={styles.projectCardContent}>
-                      <Text style={styles.projectTitle}>
-                        {project.attributes.name}
-                      </Text>
-                      <Text style={styles.projectDescription}>
-                        {project.attributes.description}
-                      </Text>
-                      <Text style={styles.projectStatus}>
-                        ● {project.attributes.project_status || "Status"}
-                        {/* {project.attributes.phase || "Phase"} */}
-                      </Text>
-                      <View style={styles.projectStatusContainer}>
-                        <Icon
-                          name={
-                            project.attributes.project_status === "ahead"
-                              ? "check-circle"
-                              : "error"
-                          }
-                          size={16}
-                          color={
-                            project.attributes.project_status === "ahead"
-                              ? "green"
-                              : "red"
-                          }
-                        />
-                        <Text style={styles.projectStatusText}>
-                          {project.attributes.project_status === "ahead"
-                            ? "Ahead of Schedule"
-                            : "Delayed"}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))
-              )
-            ) : (
-              <View>
-                <Text style={styles.noProjectsText}>No projects available</Text>
-              </View>
-            )}
-          </ScrollView>
-        )}
+        {/* Select Your Project Component */}
+        <SelectYourProject
+          isLoading={isLoading}
+          contractorsData={contractorsData}
+        />
 
         <View style={styles.headerContainer}>
           <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
-          {/* <Text style={styles.taskStatus}>7 Tasks Pending</Text> */}
-          {/* <Icon name="tune" size={24} color="#333" style={styles.filterIcon} /> */}
+        </View>
+
+        {/* Add Search Bar */}
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
 
         {/* Milestone Cards */}
-        {tasks.map((task, index) => (
-          <View key={index} style={styles.milestoneCard}>
-            <View style={styles.milestoneCard}>
-              <Text style={styles.milestoneTitle}>
-                {task.attributes.project.data.attributes.name || "Project"}
-              </Text>
-              {task.attributes.documents.data?.map((taskdoc) => (
-                <Image
-                  source={{
-                    uri:
-                      `${MEDIA_BASE_URL}${taskdoc.attributes.url}` ||
-                      "https://via.placeholder.com/150",
-                  }}
-                  style={styles.milestoneImage}
-                />
-              ))}
-
-              <View style={styles.milestoneContent}>
-                <View style={styles.milestoneHeaderContainer}>
-                  <Text style={styles.milestoneTitle}>
-                    {task.attributes.standard_task.data.attributes.Name ||
-                      "Task"}
-                  </Text>
-                  <View style={styles.substituteButton}>
-                    <Text style={styles.substituteText}>Substructure</Text>
-                  </View>
-                </View>
-                <Text style={styles.milestoneDescription}>
-                  {task.attributes.standard_task.data.attributes.Description ||
-                    "No description available for this task."}
-                </Text>
-                <View style={styles.divider} />
-                <Text style={styles.deadlineText}>
-                  <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                  {task.attributes.due_date || "No deadline specified"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.uploadButton}
-                  onPress={() =>
-                    navigation.navigate("(pages)/taskDetails", {
-                      taskData: task,
-                    })
-                  }
-                >
-                  <Icon name="file-upload" size={16} color="#fff" />
-                  <Text style={styles.uploadButtonText}>
-                    Upload your Proof of work
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        {isLoading ? (
+          // Loader
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#007bff" />
           </View>
-        ))}
+        ) : (
+          <>
+            {tasks.length > 0 ? (
+              tasks
+                .filter((task) =>
+                  task.attributes.project.data.attributes.name
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())
+                )
+                .map((task) => {
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                    ?.attributes?.url
+                    ? `${URL}${task.attributes.documents.data[0].attributes.url}`
+                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+
+                  return (
+                    <View key={task.id} style={styles.milestoneCard}>
+                      <Text style={styles.milestoneTitle}>
+                        {task.attributes.project.data.attributes.name ||
+                          "Project"}
+                      </Text>
+                      <Image
+                        source={{ uri: taskImageUrl }}
+                        style={styles.milestoneImage}
+                      />
+                      <View style={styles.milestoneContent}>
+                        <View style={styles.milestoneHeaderContainer}>
+                          <View style={styles.projectTaskName}>
+
+                            <Text style={styles.milestoneTitle}>
+                              {task.attributes.standard_task.data.attributes.Name ||
+                                "Task"}
+                            </Text>
+                          </View>
+                          <View style={styles.substituteButton}>
+                            <Text style={styles.substituteText}>
+                              Substructure
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.milestoneDescription}>
+                          {task.attributes.standard_task.data.attributes
+                            .Description ||
+                            "No description available for this task."}
+                        </Text>
+                        <View style={styles.divider} />
+                        <Text style={styles.deadlineText}>
+                          <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                          {task.attributes.due_date || "No deadline specified"}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.uploadButton}
+                          onPress={() =>
+                            navigation.navigate("(pages)/taskDetails", {
+                              taskData: task,
+                            })
+                          }
+                        >
+                          <Icon name="file-upload" size={16} color="#fff" />
+                          <Text style={styles.uploadButtonText}>
+                            Upload your Proof of work
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
+            ) : (
+              // No Tasks Message
+              <View style={styles.noTasksContainer}>
+                <Text style={styles.noTasksText}>
+                  No tasks have been assigned.
+                </Text>
+              </View>
+            )}
+          </>
+        )}
 
         {/* <View style={styles.milestoneCard}>
             <Image
@@ -314,6 +277,8 @@ const styles = StyleSheet.create({
   userInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    justifyContent: "center",
     marginBottom: 20,
   },
   profileImage: {
@@ -325,27 +290,32 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
+    textAlign: "center",
   },
   userRole: {
     fontSize: 14,
     color: "#888",
+    textAlign: "center",
+    textAlign: "center",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
-    marginLeft: 55,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 45,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: "#fff",
-  },
-  searchIcon: {
-    marginLeft: "auto",
+    fontSize: 16,
+    color: "#333",
   },
   sectionHeader: {
     fontSize: 18,
@@ -402,15 +372,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   projectCard: {
-    width: 250,
+    width: 220,
     padding: 15,
     borderRadius: 10,
-    // elevation: 3,
     marginRight: 15,
-  },
-  projectTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
   },
   projectDescription: {
     fontSize: 14,
@@ -469,9 +434,6 @@ const styles = StyleSheet.create({
   viewLink: {
     color: "#1e90ff",
   },
-
-  //   !-----------===============================================
-
   projectTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -516,6 +478,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
+  projectTaskName: {
+    display: 'flex',
+  },
   milestoneTitle: {
     fontSize: 16,
     fontWeight: "bold",
@@ -548,7 +513,10 @@ const styles = StyleSheet.create({
   deadlineText: {
     fontSize: 14,
     color: "#333",
+    padding: 5,
     marginBottom: 15,
+    display: "flex",
+    alignItems: "center",
   },
   uploadButton: {
     backgroundColor: "#1e90ff",
@@ -582,6 +550,9 @@ const styles = StyleSheet.create({
 
   //   ~==================================================================================
 
+  loaderContainer: {
+    paddingTop: 30,
+  },
   heading: {
     fontSize: 20,
     fontWeight: "bold",
@@ -633,6 +604,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     color: "#333",
+  },
+  projectEndDateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    paddingTop: 8,
+    marginTop: 5,
+  },
+  endDateIcon: {
+    marginRight: 4,
+  },
+  projectEndDate: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

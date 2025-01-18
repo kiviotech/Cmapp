@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -15,8 +15,9 @@ import colors from "../../../constants/colors";
 // import BottomNavigation from "./BottomNavigation";
 import BottomNavigation from "./BottomNavigation ";
 import { logout } from "../../../src/utils/auth";
-import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../../useAuthStore";
+import { useNavigation, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,15 +26,40 @@ const Settings = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
-  const navigation = useNavigation();
+
+  useEffect(() => {
+    // Load the saved notification state when component mounts
+    loadNotificationState();
+  }, []);
+
+  const loadNotificationState = async () => {
+    try {
+      const savedState = await AsyncStorage.getItem("pushNotifications");
+      setIsEnabled(savedState === "true");
+    } catch (error) {
+      console.error("Error loading notification state:", error);
+    }
+  };
+
+  const toggleSwitch = async () => {
+    try {
+      const newState = !isEnabled;
+      setIsEnabled(newState);
+      await AsyncStorage.setItem("pushNotifications", String(newState));
+    } catch (error) {
+      console.error("Error saving notification state:", error);
+    }
+  };
+
+  const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const navigation = useNavigation();
 
   const handleLogout = () => {
-    logout();
     clearAuth();
-    navigation.navigate("(auth)/login");
+    router.replace("(auth)/login");
     setIsModalVisible(false);
+    logout();
   };
 
   const showLogoutPopup = () => {
@@ -56,106 +82,107 @@ const Settings = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profile</Text>
+      </View>
       <ScrollView>
-        <Text style={styles.title}>Settings</Text>
-
+        <Text style={styles.sectionTitle}>My Account</Text>
         <View
           style={[
             styles.section,
             { borderBottomWidth: 1, borderBottomColor: "#CACACA" },
           ]}
         >
-          <Text style={styles.sectionTitle}>Account Settings</Text>
-
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
-            }
-          >
-            <Text style={styles.itemText}>Edit profile</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate("(pages)/contractor/ChangePasswordScreen")
-            }
-          >
-            <Text style={styles.itemText}>Change password</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
-
-          <View style={styles.item}>
-            <Text style={styles.itemText}>Push notifications</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                trackColor={{ false: "#767577", true: colors.primary }}
-                thumbColor={isEnabled ? colors.whiteColor : colors.whiteColor}
-                onValueChange={toggleSwitch}
-                value={isEnabled}
-                style={styles.switch}
+          <View style={styles.innerContainer}>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() =>
+                navigation.navigate("(pages)/contractor/PersonalDetailsScreen")
+              }
+            >
+              <Text style={styles.itemText}>Personal details</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
               />
-            </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => navigation.navigate("(pages)/ChangePassword")}
+            >
+              <Text style={styles.itemText}>Change password</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={styles.sectionTitle}>Settings</Text>
+
+        <View style={styles.innerContainer}>
+          <View style={styles.item}>
+            <Text style={styles.itemText}>
+              Notifications {isEnabled ? "On" : "Off"}
+            </Text>
+            <Switch
+              trackColor={{ false: "#767577", true: "#0066FF" }}
+              thumbColor={colors.whiteColor}
+              onValueChange={toggleSwitch}
+              value={isEnabled}
+              style={styles.switch}
+            />
           </View>
         </View>
 
+        <Text style={styles.sectionTitle}>More</Text>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>More</Text>
+          <View style={styles.innerContainer}>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => showInfoModal("About us")}
+            >
+              <Text style={styles.itemText}>About us</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => showInfoModal("About us")}
-          >
-            <Text style={styles.itemText}>About us</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => showInfoModal("Privacy policy")}
+            >
+              <Text style={styles.itemText}>Privacy policy</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => showInfoModal("Privacy policy")}
-          >
-            <Text style={styles.itemText}>Privacy policy</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => showInfoModal("Terms and conditions")}
-          >
-            <Text style={styles.itemText}>Terms and conditions</Text>
-            <FontAwesome
-              style={{ color: colors.blackColor }}
-              name="chevron-right"
-              size={15}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={showLogoutPopup}
-          >
-            <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => showInfoModal("Terms and conditions")}
+            >
+              <Text style={styles.itemText}>Terms and conditions</Text>
+              <FontAwesome
+                style={{ color: colors.blackColor }}
+                name="chevron-right"
+                size={15}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={showLogoutPopup}>
+          <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </ScrollView>
       <BottomNavigation />
 
@@ -221,58 +248,57 @@ export default Settings;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: width * 0.05,
-    paddingTop: width * 0.05,
     backgroundColor: colors.background,
-    paddingBottom: height * 0.05,
-  },
-  title: {
-    fontSize: width * 0.06,
-    fontWeight: "bold",
-    marginBottom: height * 0.02,
-    color: colors.blackColor,
+    paddingHorizontal: 5,
   },
   section: {
-    marginBottom: height * 0.03,
-    paddingBottom: height * 0.015,
-  },
-  switchContainer: {
-    height: height * 0.06,
-    justifyContent: "center",
-    paddingRight: width * 0.05,
-  },
-  switch: {
-    transform: [{ scale: 1.5 }],
+    backgroundColor: colors.whiteColor,
+    marginBottom: 20,
+    borderRadius: 15,
+    marginHorizontal: 15,
   },
   sectionTitle: {
-    fontSize: width * 0.045,
-    marginBottom: height * 0.01,
-    color: "#ADADAD",
+    fontSize: 16,
+    marginBottom: 10,
+    marginLeft: 15,
+    color: "#000",
+    fontWeight: "600",
+  },
+  innerContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    marginHorizontal: 15,
   },
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: height * 0.018,
+    paddingVertical: 15,
+    paddingHorizontal: 15,
   },
   itemText: {
-    fontSize: width * 0.045,
+    fontSize: 16,
     color: colors.blackColor,
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: height * 0.015,
-    borderRadius: 10,
-    marginTop: height * 0.02,
+    backgroundColor: colors.whiteColor,
+    marginHorizontal: 15,
+    paddingVertical: 15,
+    borderRadius: 15,
+    marginTop: 10,
+    marginBottom: 20,
   },
   logoutText: {
-    fontSize: width * 0.045,
+    fontSize: 16,
     color: "#FF3B30",
-    marginLeft: width * 0.02,
-    fontWeight: "bold",
+    marginLeft: 8,
+    fontWeight: "600",
+  },
+  switch: {
+    transform: [{ scale: 0.8 }],
   },
 
   // Modal Styles
@@ -337,5 +363,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  header: {
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    marginTop: 20,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: colors.blackColor,
   },
 });

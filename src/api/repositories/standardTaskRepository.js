@@ -4,6 +4,12 @@ import standardTaskEndpoints from "../endpoints/standardTaskEndpoints";
 export const getStandardTasks = () =>
   apiClient.get(standardTaskEndpoints.getStandardTasks);
 
+export const getStandardTaskBySubcontractor = (subcontractor) =>
+  apiClient.get(standardTaskEndpoints.getStandardTasksBySubcontractor(subcontractor));
+
+export const getStandardTaskByProjectTeam = (projectTeam) =>
+  apiClient.get(standardTaskEndpoints.getStandardTasksByProjectTeam(projectTeam));
+
 export const getStandardTaskById = (id) =>
   apiClient.get(standardTaskEndpoints.getStandardTaskById(id));
 

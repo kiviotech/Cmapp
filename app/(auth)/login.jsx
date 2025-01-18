@@ -6,7 +6,11 @@ import {
   Alert,
   Image,
   StyleSheet,
+  Dimensions,
+  ScrollView,
 } from "react-native";
+
+const { width } = Dimensions.get("window");
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -25,6 +29,9 @@ import { useNavigation } from "@react-navigation/native";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import { login } from "../../src/utils/auth";
+import { Modal } from "react-native";
+import useAuthStore from "../../useAuthStore";
+// import { icons } from "../../constants/icons";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 
 NativeWindStyleSheet.setOutput({
@@ -47,6 +54,15 @@ const Login = () => {
     }
   }, [fontsLoaded]);
 
+  const token = useAuthStore((state) => state.token);
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (token) {
+      router.replace("/dashboard");
+    }
+  }, [token, router]);
+
   if (!fontsLoaded) {
     return null;
   }
@@ -63,7 +79,8 @@ const Login = () => {
     otp: "",
   });
 
-  const router = useRouter();
+  const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
+
   const navigation = useNavigation();
 
   const validateField = (name, value) => {
@@ -130,97 +147,139 @@ const Login = () => {
       //   await AsyncStorage.setItem("username", response.user.username);
       //   await AsyncStorage.setItem("id", response.user.id.toString());
 
-      //   console.log("Username stored in AsyncStorage:", response.user.username);
-      //   console.log("User ID stored in AsyncStorage:", response.user.id);
-
       //   // Navigate to the dashboard using the router
       // }
       router.replace("/dashboard");
     } catch (error) {
       console.error("Error during login:", error.message);
       // Handle the error, such as displaying an error message to the user
+      setIsErrorModalVisible(true);
     }
+  };
+
+  const closeErrorModal = () => {
+    setIsErrorModalVisible(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Login</Text>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.labelText}>E-mail</Text>
-            <LoginField
-              placeholder="Your email or phone"
-              value={form.mobile}
-              handleChangeText={(value) => handleChangeText("mobile", value)}
-              keyboardType="email-address"
-              style={styles.loginField}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        <View style={styles.content}>
+          <View style={styles.container}>
+            <Image
+              source={{
+                uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
+              }}
+              // source={icons.logo}
+              style={styles.image}
+              resizeMode="contain" // Adjusts the image to fit within the specified dimensions
             />
-            {errors.mobile ? (
-              <Text style={styles.errorText}>{errors.mobile}</Text>
-            ) : null}
+          </View>
+          <View>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Login</Text>
+            </View>
 
-            {usePassword ? (
-              <View style={styles.passwordContainer}>
-                <Text style={styles.labelText}>Password</Text>
-                <LoginField
-                  style={styles.loginField}
-                  placeholder="Password"
-                  value={form.password}
-                  handleChangeText={(value) =>
-                    handleChangeText("password", value)
-                  }
-                  secureTextEntry={true}
-                />
-                {errors.password ? (
-                  <Text style={styles.errorText}>{errors.password}</Text>
-                ) : null}
-              </View>
-            ) : (
-              <View style={styles.otpContainer}>
-                <Text style={styles.labelText}>OTP</Text>
-                <LoginField
-                  placeholder="OTP"
-                  value={form.otp}
-                  handleChangeText={(value) => handleChangeText("otp", value)}
-                  keyboardType="number-pad"
-                  style={styles.loginField}
-                />
-                {errors.otp ? (
-                  <Text style={styles.errorText}>{errors.otp}</Text>
-                ) : null}
-              </View>
-            )}
+            <View style={styles.inputContainer}>
+              <Text style={styles.labelText}>E-mail</Text>
+              <LoginField
+                placeholder="Your email or phone"
+                value={form.mobile}
+                handleChangeText={(value) => handleChangeText("mobile", value)}
+                keyboardType="email-address"
+                style={styles.loginField}
+              />
+              {errors.mobile ? (
+                <Text style={styles.errorText}>{errors.mobile}</Text>
+              ) : null}
 
-            <TouchableOpacity activeOpacity={0.8}>
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              {usePassword ? (
+                <View style={styles.passwordContainer}>
+                  <Text style={styles.labelText}>Password</Text>
+                  <LoginField
+                    style={styles.loginField}
+                    placeholder="Password"
+                    value={form.password}
+                    handleChangeText={(value) =>
+                      handleChangeText("password", value)
+                    }
+                    secureTextEntry={true}
+                  />
+                  {errors.password ? (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  ) : null}
+                </View>
+              ) : (
+                <View style={styles.otpContainer}>
+                  <Text style={styles.labelText}>OTP</Text>
+                  <LoginField
+                    placeholder="OTP"
+                    value={form.otp}
+                    handleChangeText={(value) => handleChangeText("otp", value)}
+                    keyboardType="number-pad"
+                    style={styles.loginField}
+                  />
+                  {errors.otp ? (
+                    <Text style={styles.errorText}>{errors.otp}</Text>
+                  ) : null}
+                </View>
+              )}
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate("(auth)/ForgotPassword")}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <CustomButton
+              buttonStyle={styles.loginButton}
+              textStyle={styles.loginButtonText}
+              text="LOGIN"
+              handlePress={() => handleLogin("login")}
+            />
+          </View>
+
+          <View style={styles.signUpContainer}>
+            <Text style={styles.signUpText}>
+              Don’t have an account?
+              <TouchableOpacity
+                onPress={() => navigation.navigate("(auth)/SignUp")}
+              >
+                <Text style={styles.signUpLink}> Sign Up</Text>
+              </TouchableOpacity>
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+
+      <Modal
+        transparent={true}
+        visible={isErrorModalVisible}
+        animationType="fade"
+        onRequestClose={closeErrorModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Invalid Credentials</Text>
+            <Text style={styles.modalMessage}>
+              Please check your email and password and try again.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={closeErrorModal}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
-
-        <View style={styles.buttonContainer}>
-          <CustomButton
-            buttonStyle={styles.loginButton}
-            textStyle={styles.loginButtonText}
-            text="LOGIN"
-            handlePress={() => handleLogin("login")}
-          />
-        </View>
-
-        <View style={styles.signUpContainer}>
-          <Text style={styles.signUpText}>
-            Don’t have an account?
-            <TouchableOpacity
-              onPress={() => navigation.navigate("(auth)/SignUp")}
-            >
-              <Text style={styles.signUpLink}> Sign Up</Text>
-            </TouchableOpacity>
-          </Text>
-        </View>
-      </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -231,9 +290,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
   },
   content: {
     width: "100%",
@@ -260,7 +316,6 @@ const styles = StyleSheet.create({
   labelText: {
     color: colors.loginSignUpLabelColor,
     fontSize: 13,
-    // fontFamily: fonts.WorkSans400,
     paddingBottom: 2,
   },
   forgotPasswordText: {
@@ -292,7 +347,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   signUpText: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#9C9C9C",
   },
   signUpLink: {
@@ -300,5 +355,52 @@ const styles = StyleSheet.create({
   },
   loginField: {
     marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: "white",
+  },
+  container: {
+    flex: 1,
+    alignItems: "center", // Centers the image horizontally
+    justifyContent: "center", // Centers the image vertically
+  },
+  image: {
+    width: width * 0.8, // Sets the image width to 80% of the screen width
+    height: width * 0.8, // Sets the image height to maintain aspect ratio
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    marginBottom: 40,
   },
 });

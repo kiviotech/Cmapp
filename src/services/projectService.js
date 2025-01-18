@@ -6,6 +6,7 @@ import {
   deleteProject,
   getAssignedProjectById,
   getProjectDetailsById,
+  getProjectsByContractorEmail,
 } from "../api/repositories/projectRepository";
 
 // Fetch all projects
@@ -87,6 +88,17 @@ export const deleteProjectById = async (id) => {
     return response.data;
   } catch (error) {
     console.error(`Error deleting project with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Fetch projects by contractor email
+export const fetchProjectsByContractorEmail = async (email) => {
+  try {
+    const response = await getProjectsByContractorEmail(email);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching projects for contractor ${email}:`, error);
     throw error;
   }
 };

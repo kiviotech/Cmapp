@@ -32,6 +32,11 @@ import reject from "../assets/icons/png/reject.png";
 import userProfile from "../assets/icons/png/userProfile.jpeg";
 import backarrow from "../assets/icons/png/backarrow.png";
 import file from "../assets/icons/png/file.png";
+
+import loginLogo from "../assets/images/login.png";
+import loginHouse from "../assets/images/House.png";
+import title from "../assets/images/title.png";
+
 export default {
   date,
   facebook,
@@ -66,4 +71,7 @@ export default {
   userProfile,
   file,
   backarrow,
+  loginLogo,
+  loginHouse,
+  title,
 };

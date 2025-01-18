@@ -19,6 +19,9 @@ import { useToast } from "../ToastContext";
 import Toast from "../Toast";
 import { getProjects } from "../../src/api/repositories/projectRepository";
 import { fetchSubContractors } from "../../src/services/subContractorService";
+import useAuthStore from "../../useAuthStore";
+import { fetchUsers } from "../../src/services/userService";
+import useFileUploadStore from "../../src/stores/fileUploadStore";
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -37,28 +40,76 @@ const SignUp = () => {
     email: "",
     password: "",
     socialSecurity: "",
+    subContractor: "",
   });
   const [errors, setErrors] = useState({});
   const router = useRouter();
+  const token = useAuthStore((state) => state.token);
+  const resetFileUploadStore = useFileUploadStore((state) => state.reset);
+
+  useEffect(() => {
+    if (token) {
+      router.replace("/");
+    }
+  }, [token, router]);
 
   const handleChangeText = (field, value) => {
+    // Clear the specific error message for the field when the user starts typing
+    if (errors[field]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
+    }
+
+    // For name field, only allow letters and spaces
+    if (field === "name") {
+      // Remove any non-letter and non-space characters
+      const sanitizedValue = value.replace(/[^a-zA-Z\s]/g, "");
+      setForm({ ...form, [field]: sanitizedValue });
+      return;
+    }
+
+    // Handle other fields normally
+    if (field === "password" && value.length > 0 && value.length < 8) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 8 characters long",
+      }));
+    }
+
     setForm({ ...form, [field]: value });
   };
-
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds(fileIds);
-    console.log("Uploaded file IDs:", fileIds);
+
+    // Clear the error message for contractorLicense when a file is uploaded
+    if (errors.contractorLicense) {
+      setErrors((prevErrors) => ({ ...prevErrors, contractorLicense: "" }));
+    }
   };
 
-  const validate = () => {
+  const validate = async () => {
     const newErrors = {};
-    if (!form.name) newErrors.name = "Full name is required";
+
+    // Basic validations
+    if (!form.name.trim()) {
+      newErrors.name = "Full name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(form.name.trim())) {
+      newErrors.name = "Only alphabets and spaces are allowed";
+    }
     if (!form.email) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       newErrors.email = "Enter a valid email address";
+    else {
+      // Check for existing email
+      const users = await fetchUsers();
+      const emailExists = users.some((user) => user.email === form.email);
+      if (emailExists) {
+        newErrors.email =
+          "Email already exists. Please use a different email address";
+      }
+    }
     if (!form.password) newErrors.password = "Password is required";
-    else if (form.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters long";
+    else if (form.password.length < 8)
+      newErrors.password = "Password must be at least 8 characters long";
     if (!form.socialSecurity)
       newErrors.socialSecurity = "Social Security Number is required";
     else if (form.socialSecurity.length < 6)
@@ -71,24 +122,14 @@ const SignUp = () => {
   };
 
   const submit = async () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     try {
-      const { name, email, password, socialSecurity } = form;
-      console.log("Data being sent to signup:", {
-        name,
-        email,
-        password,
-        socialSecurity,
-        uploadedFileIds,
-        selectedProject,
-        selectedSubContractor,
-      });
+      const newErrors = await validate();
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
 
+      const { name, email, password, socialSecurity } = form;
       const res = await signup(
         name,
         email,
@@ -100,6 +141,7 @@ const SignUp = () => {
       );
 
       if (res) {
+        resetFileUploadStore();
         showToast("Request for new account sent", "success");
         router.replace("/Wait");
       }
@@ -137,6 +179,18 @@ const SignUp = () => {
     loadSubContractors();
   }, []);
 
+  useEffect(() => {
+    const logUsers = async () => {
+      try {
+        const users = await fetchUsers();
+        console.log("Fetched users:", users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    logUsers();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Toast
@@ -144,7 +198,10 @@ const SignUp = () => {
         message={toast.message}
         type={toast.type}
       />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={{ fontSize: 24 }}>Sign Up</Text>
@@ -214,10 +271,19 @@ const SignUp = () => {
               onChange={(item) => {
                 setSelectedSubContractor(item.value);
                 setIsDropdownFocused(false);
+
+                // Ensure errors are not null or undefined before updating
+                if (errors && errors.subContractor) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    subContractor: "",
+                  }));
+                }
               }}
               style={styles.dropdown}
               containerStyle={styles.dropdownContainerStyle}
               searchStyle={styles.searchBox}
+              showsVerticalScrollIndicator={false}
             />
             {errors.subContractor && (
               <Text style={styles.errorText}>{errors.subContractor}</Text>
@@ -257,6 +323,7 @@ const SignUp = () => {
               uploadedFiles={uploadedFileIds}
               setUploadedFiles={setUploadedFileIds}
               onFileUploadSuccess={handleFileUploadSuccess}
+              message={"Upload your ID proof here in .png or .jpeg format"}
             />
             {errors.contractorLicense && (
               <Text style={styles.errorText}>{errors.contractorLicense}</Text>
@@ -278,7 +345,7 @@ const SignUp = () => {
           </View>
 
           <View style={styles.SignUpContainer}>
-            <Text style={{ fontSize: 12, color: "#9C9C9C" }}>
+            <Text style={{ fontSize: 16, color: "#9C9C9C" }}>
               Already have an account?{" "}
               <Text
                 style={{ color: "#577CFF" }}
@@ -329,7 +396,6 @@ const styles = StyleSheet.create({
   },
   dropdownContainerStyle: {
     maxHeight: 200,
-    overflow: "scroll",
     marginTop: 10,
     borderRadius: 10,
     borderWidth: 1,

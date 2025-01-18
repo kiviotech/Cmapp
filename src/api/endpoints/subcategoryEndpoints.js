@@ -1,5 +1,5 @@
 const subcategoryEndpoints = {
-  getSubcategories: `subcategories?populate=*`,
+  getSubcategories: `/subcategories?populate=*`,
   getSubcategoryById: (id) => `/subcategories/${id}`,
   createSubcategory: "/subcategories",
   updateSubcategory: (id) => `/subcategories/${id}`,

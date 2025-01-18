@@ -29,6 +29,9 @@ export const resetPassword = (data) =>
 export const forgotPassword = (data) =>
   apiClient.post(userEndpoints.forgotPassword, data);
 
+export const changePassword = (data) =>
+  apiClient.post(userEndpoints.changePassowrd, data);
+
 export const getRoles = () => apiClient.get(userEndpoints.getRoles);
 
 export const getRoleById = (id) => apiClient.get(userEndpoints.getRoleById(id));

@@ -8,11 +8,16 @@ import {
   Alert,
   StyleSheet,
   Dimensions,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
-import { fetchStandardTasks } from "../../src/services/standardTaskService";
+import {
+  fetchStandardTaskBySubcontractor,
+  fetchStandardTasks,
+} from "../../src/services/standardTaskService";
 import { fetchSubContractors } from "../../src/services/subContractorService";
 import {
   fetchProjectById,
@@ -32,22 +37,35 @@ const AssignContractors = () => {
   const [contractorOpen, setContractorOpen] = useState(false);
   const [contractorValue, setContractorValue] = useState(null);
   const [contractorItems, setContractorItems] = useState([]);
-  const [taskOpen, setTaskOpen] = useState(false);
+  const [assignedTask, setAsignedTask] = useState([]);
+  // const [taskOpen, setTaskOpen] = useState(false);
   const [taskValue, setTaskValue] = useState(null);
   const [taskItems, setTaskItems] = useState([]);
   const [dueDate, setDueDate] = useState(null);
   const [assignedContractors, setAssignedContractors] = useState([]);
   const [createdTaskIds, setCreatedTaskIds] = useState([]);
+  const [isFinishButtonEnabled, setIsFinishButtonEnabled] = useState(false);
+  const [projectDates, setProjectDates] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showTypeError, setShowTypeError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({
+    contractorType: "",
+    contractor: "",
+    task: "",
+    dueDate: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [popupVisible, setPopupVisible] = useState(false);
 
+  const [jobRole, setJobRole] = useState([]);
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
-
   const route = useRoute();
   const navigation = useNavigation();
-  const projectDataId = route.params?.projectId;
-
-  useEffect(() => {
-    console.log("Received project ID:", projectDataId);
-  }, [projectDataId]);
+  const { projectId, project_manager, project_supervisor, site_coordinator } =
+    route.params;
 
   useEffect(() => {
     const loadContractorTypes = async () => {
@@ -64,25 +82,6 @@ const AssignContractors = () => {
     };
     loadContractorTypes();
   }, []);
-
-  // useEffect(() => {
-  //   const loadContractors = async () => {
-  //     try {
-  //       const response = await fetchContractors();
-  //       const contractors = response.data.map((contractor) => ({
-  //         label: contractor.attributes.username,
-  //         value: contractor.id,
-  //         sub_contractor:
-  //           contractor.attributes.sub_contractor?.data?.attributes?.name ||
-  //           "No Sub Contractor",
-  //       }));
-  //       setContractorItems(contractors);
-  //     } catch (error) {
-  //       console.error("Error fetching contractors:", error);
-  //     }
-  //   };
-  //   loadContractors();
-  // }, []);
 
   useEffect(() => {
     const loadContractors = async () => {
@@ -113,27 +112,80 @@ const AssignContractors = () => {
     }
   }, [contractorTypeValue]);
 
+  // useEffect(() => {
+  const fetchStandardTasks = async (value) => {
+    const contractorLabel = contractorTypeItems.find(
+      (item) => item.value === value
+    )?.label;
+    try {
+      const response = await fetchStandardTaskBySubcontractor(contractorLabel);
+      setAsignedTask(response.data);
+      const roles = response?.data
+        .map(
+          (task) => task.attributes?.project_team?.data?.attributes?.job_role
+        )
+        .filter((role) => role !== undefined); // Filter out undefined values
+
+      setJobRole(roles);
+    } catch (error) {
+      console.error("Error fetching standard tasks:", error);
+    }
+  };
+  // }, [contractorTypeItems]);
+
   useEffect(() => {
-    const loadStandardTasks = async () => {
+    const loadProjectDetails = async () => {
       try {
-        const response = await fetchStandardTasks();
-        const tasks = response.data.map((task) => ({
-          label: task.attributes.Name,
-          value: task.id,
-        }));
-        setTaskItems(tasks);
+        const response = await fetchProjectById(projectId);
+        if (response?.data) {
+          setProjectDates({
+            startDate: new Date(response.data.attributes.start_date),
+            endDate: new Date(response.data.attributes.end_date),
+          });
+        }
       } catch (error) {
-        console.error("Error fetching standard tasks:", error);
+        console.error("Error fetching project details:", error);
       }
     };
-    loadStandardTasks();
-  }, []);
 
-  const handleAddContractor = () => {
-    if (!contractorTypeValue || !contractorValue || !taskValue || !dueDate) {
+    if (projectId) {
+      loadProjectDetails();
+    }
+  }, [projectId]);
+
+  const validateFields = () => {
+    let errors = {};
+    if (!contractorTypeValue) {
+      errors.contractorType = "Contractor type is required.";
+    }
+    if (!contractorValue) {
+      errors.contractor = "Contractor is required.";
+    }
+    if (!dueDate) {
+      errors.dueDate = "Due date is required.";
+    } else {
+      const today = new Date();
+      if (new Date(dueDate) < today) {
+        errors.dueDate = "Please select a future date.";
+      }
+    }
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleAddContractor = async () => {
+    if (!validateFields()) {
       Alert.alert(
         "Error",
         "Please select all required fields, including Due Date."
+      );
+      return;
+    }
+
+    if (!assignedTask || assignedTask.length === 0) {
+      Alert.alert(
+        "Error",
+        "No tasks are available for the selected contractor type."
       );
       return;
     }
@@ -157,10 +209,7 @@ const AssignContractors = () => {
     };
 
     setAssignedContractors([...assignedContractors, newContractor]);
-    setContractorTypeValue(null);
-    setContractorValue(null);
-    setTaskValue(null);
-    setDueDate(null);
+    setIsFinishButtonEnabled(true); // Enable finish button if a contractor is added
   };
 
   const handleFinishProjectSetup = async () => {
@@ -168,7 +217,7 @@ const AssignContractors = () => {
       Alert.alert("Error", "Please add at least one contractor.");
       return;
     }
-
+    setIsLoading(true);
     try {
       const contractorIds = assignedContractors.map(
         (contractor) => contractor.contractor
@@ -176,26 +225,34 @@ const AssignContractors = () => {
 
       // Create tasks and store their IDs
       const taskIds = [];
+
       for (const contractor of assignedContractors) {
-        const taskData = {
-          data: {
-            project: projectDataId,
-            standard_task: contractor.task,
-            submissions: [],
-            contractor: contractor.contractor,
-            documents: [],
-            task_status: "ongoing",
-            due_date: contractor.dueDate.toISOString().slice(0, 10),
-          },
-        };
-        const taskResponse = await createTask(taskData);
-        if (taskResponse?.data?.id) {
-          taskIds.push(taskResponse.data.id);
+        if (!assignedTask || assignedTask.length === 0) {
+          throw new Error("No assigned tasks available for this contractor.");
+        }
+
+        for (const task of assignedTask) {
+          const taskData = {
+            data: {
+              project: projectId,
+              standard_task: task.id,
+              submissions: [],
+              contractor: contractor.contractor,
+              documents: [],
+              task_status: "ongoing",
+              due_date: contractor.dueDate.toISOString().slice(0, 10),
+            },
+          };
+
+          const taskResponse = await createTask(taskData);
+          if (taskResponse?.data?.id) {
+            taskIds.push(taskResponse.data.id);
+          }
         }
       }
 
-      if (taskIds.length !== assignedContractors.length) {
-        throw new Error("Some tasks could not be created.");
+      if (taskIds.length === 0) {
+        throw new Error("No tasks could be created.");
       }
 
       const projectData = {
@@ -205,12 +262,21 @@ const AssignContractors = () => {
           project_status: "pending",
         },
       };
-
-      await updateExistingProject(projectDataId, projectData);
-
+      await updateExistingProject(projectId, projectData);
       Alert.alert("Success", "Project setup completed and tasks assigned!");
+      setPopupVisible(true);
+      setTimeout(() => setPopupVisible(false), 3000);
+      setIsLoading(false);
       clearProjectData();
-      navigation.navigate("(pages)/dashboard");
+      setAssignedContractors([]);
+
+      // Clear input fields
+      setContractorTypeValue(null);
+      setContractorValue(null);
+      setDueDate(null);
+      setContractorItems([]); // Clear contractor dropdown options
+
+      // navigation.navigate("(pages)/dashboard");
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);
       Alert.alert(
@@ -220,17 +286,60 @@ const AssignContractors = () => {
     }
   };
 
+  const handleSkip = () => {
+    navigation.navigate("(pages)/dashboard");
+  };
+
+  const handleDisabledButtonPress = () => {
+    if (!isFinishButtonEnabled) {
+      if (Platform.OS === "web") {
+        setShowTooltip(true);
+      } else {
+        Alert.alert(
+          "Action Required",
+          "Please add at least one contractor first"
+        );
+      }
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (!isFinishButtonEnabled) {
+      Alert.alert(
+        "Action Required",
+        "Please add at least one contractor first"
+      );
+    }
+  };
+
+  const handleContractorPress = () => {
+    if (!contractorTypeValue) {
+      setShowTypeError(true);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
+        {isLoading && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+            <Text>Creating tasks, please wait...</Text>
+          </View>
+        )}
+        {popupVisible && (
+          <View style={styles.popup}>
+            <Text style={styles.popupText}>Tasks successfully created!</Text>
+          </View>
+        )}
         <View style={styles.container}>
           <View style={styles.header}>
-            <Ionicons
+            {/* <Ionicons
               name="arrow-back"
               size={24}
               color="black"
               onPress={() => navigation.goBack()}
-            />
+            /> */}
             <Text style={styles.headerText}>Assign Contractors</Text>
           </View>
 
@@ -240,16 +349,27 @@ const AssignContractors = () => {
             value={contractorTypeValue}
             items={contractorTypeItems}
             setOpen={setContractorTypeOpen}
-            setValue={setContractorTypeValue}
+            setValue={(value) => {
+              setContractorTypeValue(value);
+              setShowTypeError(false);
+              // fetchStandardTasks(contractorTypeValue);
+            }}
+            onChangeValue={fetchStandardTasks} // Trigger the function on selection
             setItems={setContractorTypeItems}
             placeholder="Select the contractor type"
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
-            zIndex={3000}
+            zIndex={6000}
             zIndexInverse={1000}
           />
+          {validationErrors.contractorType && (
+            <Text style={styles.errorText}>
+              {validationErrors.contractorType}
+            </Text>
+          )}
 
           <Text style={styles.label}>Contractor</Text>
+          {/* <TouchableOpacity onPress={handleContractorPress} activeOpacity={1}> */}
           <DropDownPicker
             open={contractorOpen}
             value={contractorValue}
@@ -261,11 +381,15 @@ const AssignContractors = () => {
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
             disabled={!contractorTypeValue}
-            zIndex={2000}
-            zIndexInverse={2000}
+            zIndex={4000}
+            zIndexInverse={1000}
           />
+          {/* </TouchableOpacity> */}
+          {validationErrors.contractor && (
+            <Text style={styles.errorText}>{validationErrors.contractor}</Text>
+          )}
 
-          <Text style={styles.label}>Assign Task</Text>
+          {/* <Text style={styles.label}>Assign Task</Text>
           <DropDownPicker
             open={taskOpen}
             value={taskValue}
@@ -276,12 +400,26 @@ const AssignContractors = () => {
             placeholder="Select Task"
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
-            zIndex={1000}
+            zIndex={2000}
             zIndexInverse={3000}
           />
+          {validationErrors.task && (
+            <Text style={styles.errorText}>{validationErrors.task}</Text>
+          )} */}
 
           <Text style={styles.label}>Due Date</Text>
-          <CrossPlatformDatePicker value={dueDate} onChange={setDueDate} />
+          <View style={styles.datePickerContainer}>
+            <CrossPlatformDatePicker
+              value={dueDate}
+              onChange={setDueDate}
+              minDate={projectDates.startDate}
+              maxDate={projectDates.endDate}
+            />
+          </View>
+
+          {validationErrors.dueDate && (
+            <Text style={styles.errorText}>{validationErrors.dueDate}</Text>
+          )}
 
           <TouchableOpacity
             style={styles.addButton}
@@ -301,22 +439,57 @@ const AssignContractors = () => {
                 {contractor.contractorLabel}
               </Text>
               <Text style={styles.contractorInfo}>
-                <Text style={styles.boldText}>Task:</Text>{" "}
-                {contractor.taskLabel}
+                <Text style={styles.boldText}>Tasks:</Text>{" "}
+                {assignedTask?.map((assigned, idx) => (
+                  <Text
+                    key={idx} // Add a unique key for each task
+                    style={{ marginHorizontal: 5 }}
+                  >
+                    {assigned.attributes.Name}
+                    {","}
+                  </Text>
+                ))}
               </Text>
               <Text style={styles.contractorInfo}>
                 <Text style={styles.boldText}>Due Date:</Text>{" "}
-                {contractor.dueDate?.toLocaleDateString()}
+                {contractor.dueDate
+                  ? new Date(contractor.dueDate).toLocaleDateString()
+                  : "N/A"}
               </Text>
             </View>
           ))}
 
-          <TouchableOpacity
-            style={styles.finishButton}
-            onPress={handleFinishProjectSetup}
-          >
-            <Text style={styles.finishButtonText}>Finish Project Setup</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.finishButton,
+                !isFinishButtonEnabled && styles.finishButtonDisabled,
+              ]}
+              onPress={handleFinishProjectSetup}
+              onPressIn={
+                Platform.OS !== "web" ? handleDisabledButtonPress : undefined
+              }
+              onMouseEnter={() =>
+                !isFinishButtonEnabled && setShowTooltip(true)
+              }
+              onMouseLeave={() => setShowTooltip(false)}
+              disabled={!isFinishButtonEnabled}
+            >
+              <Text style={styles.finishButtonText}>Finish Project Setup</Text>
+            </TouchableOpacity>
+            {showTooltip && !isFinishButtonEnabled && (
+              <View style={styles.tooltip}>
+                <Text style={styles.tooltipText}>
+                  Please add at least one contractor first
+                </Text>
+              </View>
+            )}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.finishbtn} onPress={handleSkip}>
+                <Text style={styles.finishbtn}>Skip for Now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -329,6 +502,25 @@ const styles = StyleSheet.create({
     padding: 5,
     marginTop: 20,
     width: "100%",
+  },
+  loaderContainer: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  popup: {
+    backgroundColor: "#4caf50",
+    padding: 15,
+    borderRadius: 10,
+    zIndex: 9999,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  popupText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "bold",
   },
   container: {
     flex: 1,
@@ -358,7 +550,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   dropdown: {
-    marginBottom: 15,
+    marginBottom: 5,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 5,
@@ -372,10 +564,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: "60%",
     alignSelf: "center",
-    backgroundColor: "#0000FF",
+    backgroundColor: "#4a90e2",
     padding: 15,
     borderRadius: 15,
     alignItems: "center",
+    cursor: "pointer",
   },
   finishButtonText: {
     color: "#fff",
@@ -384,7 +577,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: "flex-end",
-    marginBottom: 20,
+    marginVertical: 20,
   },
   addButtonText: {
     color: "#007BFF",
@@ -402,6 +595,41 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: "bold",
+  },
+  datePickerContainer: {
+    marginRight: 20,
+  },
+  finishButtonDisabled: {
+    backgroundColor: "#cccccc",
+    opacity: 0.7,
+    cursor: "not-allowed",
+  },
+  buttonContainer: {
+    position: "relative",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  finishbtn: {
+    color: "#000",
+    fontSize: 18,
+    textAlign: "center",
+  },
+  tooltip: {
+    position: "absolute",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    padding: 10,
+    borderRadius: 5,
+    top: -45,
+    zIndex: 1000,
+  },
+  tooltipText: {
+    color: "white",
+    fontSize: 14,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 10,
   },
 });
 

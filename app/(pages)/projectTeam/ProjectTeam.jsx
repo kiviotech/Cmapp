@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   FlatList,
+  TextInput,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -25,7 +26,11 @@ import {
 } from "@expo/vector-icons";
 import { fetchProjectTeamIdByUserId } from "../../../src/services/projectTeamService";
 import { fetchProjectDetailsByApproverId } from "../../../src/services/projectService";
-import apiClient, { MEDIA_BASE_URL } from "../../../src/api/apiClient";
+import apiClient, {
+  BASE_URL,
+  MEDIA_BASE_URL,
+  URL,
+} from "../../../src/api/apiClient";
 
 const data = [
   {
@@ -70,6 +75,20 @@ const renderCard = ({ item }) => (
   </View>
 );
 
+const getProjectStatus = (project) => {
+  const status = project.attributes.project_status;
+  switch (status) {
+    case "completed":
+      return { text: "Completed", color: "#4CAF50" };
+    case "ongoing":
+      return { text: "Ongoing", color: "#2196F3" };
+    case "pending":
+      return { text: "Pending", color: "#FFA000" };
+    default:
+      return { text: "Unknown", color: "#757575" };
+  }
+};
+
 const ProjectTeam = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const navigation = useNavigation();
@@ -85,6 +104,7 @@ const ProjectTeam = () => {
   const [taskDetails, setTaskDetails] = useState([]);
   const { user, designation, role, projects, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const ongoingProjectsCount = projectDetails.filter(
     (item) => item.attributes.project_status === "ongoing"
@@ -99,7 +119,7 @@ const ProjectTeam = () => {
       if (user && user.id) {
         try {
           const response = await fetchProjectTeamIdByUserId(user.id);
-          const [{ id }] = response.data;
+          const [{ id }] = response?.data;
           setProjectTeamId(id);
         } catch (error) {
           console.error("Error fetching project team ID:", error);
@@ -117,7 +137,6 @@ const ProjectTeam = () => {
             projectTeamId
           );
           const projects = projectResponse.data;
-
           const projectsWithTasks = await Promise.all(
             projects.map(async (project) => {
               const tasks = project.attributes.tasks.data;
@@ -167,7 +186,7 @@ const ProjectTeam = () => {
         for (const task of tasks) {
           try {
             const taskResponse = await apiClient.get(
-              `https://cmappapi.kivio.in/api/tasks/${task.id}?populate=*`
+              `${BASE_URL}/tasks/${task.id}?populate=*`
             );
             allTaskDetails.push(taskResponse.data);
           } catch (error) {
@@ -195,7 +214,6 @@ const ProjectTeam = () => {
   //       );
   //       setJobProfile(userResponse.data.job_profile.name);
   //     } catch (error) {
-  //       console.log("error");
   //     }
   //   };
   //   fetchUserData();
@@ -262,9 +280,17 @@ const ProjectTeam = () => {
     }, [])
   );
 
+  const filteredTasks = (tasks) => {
+    return tasks.filter((taskDetail) =>
+      taskDetail.data.attributes.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
+        searchQuery.toLowerCase()
+      )
+    );
+  };
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.userInfoContainer}>
           <Image
             source={{
@@ -309,63 +335,103 @@ const ProjectTeam = () => {
             contentContainerStyle={styles.horizontalScrollContainer}
           >
             {projectDetails.length > 0 ? (
-              projectDetails.map((project) => (
-                <TouchableOpacity
-                  key={project.id}
-                  style={[
-                    styles.projectCard,
-                    project.attributes.project_status === "ongoing"
-                      ? { backgroundColor: "#e8f5e9" }
-                      : { backgroundColor: "#ffebee" },
-                  ]}
-                  onPress={() =>
-                    navigation.navigate("(pages)/projectTeam/ProjectDetails", {
-                      projectData: project,
-                    })
-                  }
-                >
-                  <View style={styles.projectCardContent}>
-                    {/* Project Name and Description */}
-                    <Text style={styles.projectTitle}>
-                      {project.attributes.name}
-                    </Text>
-                    <Text style={styles.projectDescription}>
-                      {project.attributes.description}
-                    </Text>
+              projectDetails.map((project) => {
+                const endDate = new Date(project.attributes.end_date);
+                const today = new Date();
+                const isDelayed = today > endDate;
+                const projectStatus = getProjectStatus(project);
 
-                    {/* Project Status */}
-                    <Text style={styles.projectStatus}>
-                      ●{" "}
-                      {project.attributes.project_status
-                        ? "Status"
-                        : "Status unknown"}
-                      : {project.attributes.project_status || "N/A"}
-                    </Text>
-
-                    {/* Additional Project Info */}
-                    <View style={styles.projectStatusContainer}>
-                      <Icon
-                        name={
-                          project.attributes.update_status === "ahead"
-                            ? "check-circle"
-                            : "error"
+                return (
+                  <TouchableOpacity
+                    key={project.id}
+                    style={[
+                      styles.projectCard,
+                      isDelayed
+                        ? { backgroundColor: "#ffebee" }
+                        : { backgroundColor: "#e8f5e9" },
+                    ]}
+                    onPress={() =>
+                      navigation.navigate(
+                        "(pages)/projectTeam/ProjectDetails",
+                        {
+                          projectData: project,
                         }
-                        size={16}
-                        color={
-                          project.attributes.update_status === "ahead"
-                            ? "green"
-                            : "red"
-                        }
-                      />
-                      <Text style={styles.projectStatusText}>
-                        {project.attributes.update_status === "ahead"
-                          ? "Ahead of Schedule"
-                          : "Delayed"}
+                      )
+                    }
+                  >
+                    <View style={styles.projectCardContent}>
+                      <Text style={styles.projectCardTitle}>
+                        {project.attributes.name}
                       </Text>
+                      <Text style={styles.projectCardDescription}>
+                        {project.attributes.description || "No description"}
+                      </Text>
+
+                      <View style={styles.statusContainer}>
+                        <View>
+                          <View
+                            style={[
+                              styles.projectStatusBadge,
+                              {
+                                backgroundColor: "#FFFFFF",
+                                alignSelf: "flex-start",
+                                marginBottom: 8,
+                              },
+                            ]}
+                          >
+                            <View style={styles.statusBadgeContent}>
+                              <View
+                                style={[
+                                  styles.statusDot,
+                                  {
+                                    backgroundColor: isDelayed
+                                      ? "#ff5252"
+                                      : "#4caf50",
+                                  },
+                                ]}
+                              />
+                              <Text style={styles.projectStatusText}>
+                                {projectStatus.text}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.statusIndicator}>
+                            <Icon
+                              name={isDelayed ? "error" : "check-circle"}
+                              size={16}
+                              color={isDelayed ? "#ff5252" : "#4caf50"}
+                            />
+                            <Text
+                              style={[
+                                styles.statusText,
+                                { color: isDelayed ? "#ff5252" : "#4caf50" },
+                              ]}
+                            >
+                              {isDelayed ? "Delayed" : "On Schedule"}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      <View style={styles.dateContainer}>
+                        <Icon name="event" size={16} color="#666" />
+                        <Text style={styles.dateText}>
+                          End Date:{" "}
+                          {project.attributes.end_date
+                            ? new Date(
+                                project.attributes.end_date
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Not set"}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                );
+              })
             ) : (
               <View style={styles.noProjectsContainer}>
                 <Text style={styles.noProjectsText}>No projects available</Text>
@@ -379,27 +445,47 @@ const ProjectTeam = () => {
           <TouchableOpacity
             onPress={() => navigation.navigate("(pages)/Request")}
           >
-            <Text style={styles.seeAll}>See all</Text>
+            <Text style={styles.seeAllButton}>See all</Text>
           </TouchableOpacity>
         </View>
-
         {requests.map((request) => (
-          <View key={request.id} style={styles.requestItem}>
+          <TouchableOpacity
+            key={request?.id}
+            style={styles.requestItem}
+            onPress={() => {
+              navigation.navigate("(pages)/TaskRequestDetails", {
+                requestData: request,
+              });
+            }}
+          >
             <View>
               <Text style={styles.requestTitle}>
-                Submitted{" "}
-                {
-                  request.attributes.task.data.attributes.project.data
-                    .attributes.name
-                }{" "}
-                Work
+                Submission for{" "}
+                {request?.attributes?.task?.data?.attributes?.standard_task
+                  ?.data?.attributes?.Name || "task"}{" "}
+                in{" "}
+                {request?.attributes?.task?.data?.attributes?.project?.data
+                  ?.attributes?.name || "Project"}
               </Text>
               <Text style={styles.requestDescription}>
-                {request.attributes.description || "No description available."}
+                {request?.attributes?.comment || "No comments available."}
               </Text>
+
               <View style={styles.requestStatusContainer}>
-                <Text style={styles.requestStatusPending}>
-                  {request.attributes.status || "Pending"}
+                <Text
+                  style={[
+                    styles.statusBold,
+                    request?.attributes?.status === "approved"
+                      ? styles.requestStatusApproved
+                      : request?.attributes?.status === "rejected"
+                      ? styles.requestStatusRejected
+                      : request?.attributes?.status === "pending"
+                      ? styles.requestStatusPendingText
+                      : {},
+                  ]}
+                >
+                  {request?.attributes?.status.charAt(0).toUpperCase() +
+                    request?.attributes?.status?.slice(1).toLowerCase()}
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -412,112 +498,42 @@ const ProjectTeam = () => {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
 
         <View style={styles.container1}>
           <View style={styles.milestoneContainer}>
             <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
           </View>
-          {/* <View style={styles.iconContainer}>
-            <Icon
-              name="tune"
-              size={24}
-              color="#333"
-              style={styles.filterIcon}
-            />
-          </View> */}
         </View>
 
-        {/* {projectDetails.map((projectItem, projectIndex) => {
-          const project = projectItem.attributes;
-          console.log("project", project);
-          const tasks = projectItem.taskDetails || [];
-
-          return (
-            <View key={projectIndex}>
-              <Text style={styles.projectTitle}>
-                {project.name || "Project"}
-              </Text>
-
-              <View style={styles.headerContainer}>
-                <Text style={styles.taskStatus}>
-                  {tasks.length}{" "}
-                  {tasks.length === 1 ? "Task Pending" : "Tasks Pending"}
-                </Text>
-              </View>
-
-              {tasks.length > 0 ? (
-                tasks.map((taskDetail, taskIndex) => {
-                  const task = taskDetail.data.attributes;
-                  const standardTask =
-                    task.standard_task?.data?.attributes || {};
-                  const statusText = task.task_status || "Pending";
-                  const statusStyle = getStatusStyle(task.task_status);
-
-                  const taskImageUrl = task.documents?.data?.[0]?.attributes
-                    ?.url
-                    ? `${MEDIA_BASE_URL}${task.documents.data[0].attributes.url}`
-                    : "https://via.placeholder.com/150";
-
-                  return (
-                    <View key={taskIndex} style={styles.milestoneCard}>
-                      <View style={styles.milestoneCard}>
-                        <Image
-                          source={{ uri: taskImageUrl }}
-                          style={styles.milestoneImage}
-                        />
-                        <View style={styles.milestoneContent}>
-                          <View style={styles.milestoneHeaderContainer}>
-                            <Text style={styles.milestoneTitle}>
-                              {standardTask.Name || "Task"}
-                            </Text>
-                            <View style={styles.substituteButton}>
-                              <Text style={styles.substituteText}>
-                                Substructure
-                              </Text>
-                            </View>
-                          </View>
-                          <Text style={styles.milestoneDescription}>
-                            {standardTask.Description ||
-                              "No description available."}
-                          </Text>
-                          <View style={styles.divider} />
-                          <Text style={styles.deadlineText}>
-                            <FontAwesome
-                              name="calendar"
-                              size={16}
-                              color="#333"
-                            />{" "}
-                            Deadline: {task.due_date || "No deadline specified"}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })
-              ) : (
-                <View style={styles.noTasksContainer}>
-                  <Text style={styles.noTasksText}>No tasks available</Text>
-                </View>
-              )}
-            </View>
-          );
-        })} */}
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
         {projectDetails.map((projectItem, projectIndex) => {
           const project = projectItem.attributes;
-
-          // Filter tasks that are not completed
           const tasks = (projectItem.taskDetails || []).filter(
             (taskDetail) =>
               taskDetail.data.attributes.task_status !== "completed"
           );
 
-          // Only display project if it has non-completed tasks and is not completed itself
           if (tasks.length === 0 || project.project_status === "completed") {
             return null;
           }
+
+          const filteredTasksList = filteredTasks(tasks);
 
           return (
             <View key={projectIndex}>
@@ -527,56 +543,83 @@ const ProjectTeam = () => {
 
               <View style={styles.headerContainer}>
                 <Text style={styles.taskStatus}>
-                  {tasks.length}{" "}
-                  {tasks.length === 1 ? "Task Pending" : "Tasks Pending"}
+                  {filteredTasksList.length}{" "}
+                  {filteredTasksList.length === 1
+                    ? "Task Pending"
+                    : "Tasks Pending"}
                 </Text>
               </View>
 
-              {tasks.length > 0 ? (
-                tasks.map((taskDetail, taskIndex) => {
-                  const task = taskDetail.data.attributes;
+              {filteredTasksList.length > 0 ? (
+                filteredTasksList.map((taskDetail, taskIndex) => {
+                  const task = taskDetail.data;
                   const standardTask =
-                    task.standard_task?.data?.attributes || {};
+                    task.attributes.standard_task?.data?.attributes || {};
                   const statusText = task.task_status || "Pending";
                   const statusStyle = getStatusStyle(task.task_status);
 
-                  const taskImageUrl = task.documents?.data?.[0]?.attributes
-                    ?.url
-                    ? `${MEDIA_BASE_URL}${task.documents.data[0].attributes.url}`
-                    : "https://via.placeholder.com/150";
+                  // const taskImageUrl = task.attributes?.documents?.data?.[0]
+                  //   ?.attributes?.url
+                  //   ? `${BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
+                  //   : "https://via.placeholder.com/150";
+
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                    ?.attributes?.url
+                    ? `${URL}${task.attributes.documents.data[0].attributes.url}`
+                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
                   return (
                     <View key={taskIndex} style={styles.milestoneCard}>
-                      <View style={styles.milestoneCard}>
-                        <Image
-                          source={{ uri: taskImageUrl }}
-                          style={styles.milestoneImage}
-                        />
-                        <View style={styles.milestoneContent}>
-                          <View style={styles.milestoneHeaderContainer}>
-                            <Text style={styles.milestoneTitle}>
-                              {standardTask.Name || "Task"}
+                      <Image
+                        source={{ uri: taskImageUrl }}
+                        style={styles.milestoneImage}
+                      />
+                      <View style={styles.milestoneContent}>
+                        <View style={styles.milestoneHeaderContainer}>
+                          <Text style={styles.milestoneTitle}>
+                            {standardTask.Name || "Task"}
+                          </Text>
+                          <View style={styles.substituteButton}>
+                            <Text style={styles.substituteText}>
+                              Substructure
                             </Text>
-                            <View style={styles.substituteButton}>
-                              <Text style={styles.substituteText}>
-                                Substructure
-                              </Text>
-                            </View>
                           </View>
-                          <Text style={styles.milestoneDescription}>
-                            {standardTask.Description ||
-                              "No description available."}
-                          </Text>
-                          <View style={styles.divider} />
-                          <Text style={styles.deadlineText}>
-                            <FontAwesome
-                              name="calendar"
-                              size={16}
-                              color="#333"
-                            />{" "}
-                            Deadline: {task.due_date || "No deadline specified"}
-                          </Text>
                         </View>
+                        <Text style={styles.milestoneDescription}>
+                          {standardTask.Description ||
+                            "No description available."}
+                        </Text>
+                        <View style={styles.divider} />
+                        <Text style={styles.deadlineText}>
+                          <FontAwesome name="calendar" size={16} color="#333" />{" "}
+                          Deadline:{" "}
+                          {task?.attributes?.due_date
+                            ? new Date(task.attributes.due_date)
+                                .toLocaleDateString("en-GB", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })
+                                .replace(/\//g, "-")
+                            : "No deadline specified"}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.uploadProofButton}
+                          onPress={() =>
+                            navigation.navigate("(pages)/taskDetails", {
+                              taskData: task,
+                            })
+                          }
+                        >
+                          <Ionicons
+                            name="cloud-upload-outline"
+                            size={20}
+                            color="#fff"
+                          />
+                          <Text style={styles.uploadProofText}>
+                            Upload your Proof of work
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   );
@@ -633,6 +676,7 @@ const styles = StyleSheet.create({
   userInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 20,
   },
   profileImage: {
@@ -644,10 +688,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
   },
   userRole: {
     fontSize: 14,
     color: "#888",
+    textAlign: "center",
   },
   searchIcon: {
     marginLeft: "auto",
@@ -664,7 +710,7 @@ const styles = StyleSheet.create({
   },
   overviewItem: {
     alignItems: "center",
-    height: 70,
+    height: 60,
     width: 90,
     // borderWidth:1,
     borderRadius: 10,
@@ -707,76 +753,55 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   projectCard: {
-    width: 250,
-    padding: 15,
-    borderRadius: 10,
-    // elevation: 3,
+    width: 280,
+    padding: 16,
+    borderRadius: 8,
     marginRight: 15,
-  },
-  projectTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  projectDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 5,
-  },
-  projectStatus: {
-    fontSize: 14,
-    color: "#ff5252",
-    marginBottom: 10,
-  },
-  projectStatusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  projectStatusText: {
-    marginLeft: 5,
-    fontSize: 14,
-    color: "green",
-  },
-  requestsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  seeAll: {
-    fontSize: 14,
-    color: "#1e90ff",
-  },
-  requestItem: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
     elevation: 2,
   },
-  requestTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+  projectCardContent: {
+    gap: 8,
   },
-  requestDescription: {
+  projectCardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  projectCardDescription: {
     fontSize: 14,
     color: "#666",
-    marginVertical: 5,
+    marginBottom: 4,
   },
-  requestStatusContainer: {
+  statusRow: {
+    marginTop: 8,
+  },
+  statusIndicator: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
+    alignItems: "center",
+    gap: 6,
   },
-  requestStatusPending: {
-    color: "#ff5252",
-    fontWeight: "bold",
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  viewLink: {
-    color: "#1e90ff",
+  statusText: {
+    fontSize: 14,
+    color: "#666",
   },
-
-  //   !-----------===============================================
-
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 8,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#666",
+  },
   projectTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -874,21 +899,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   statusContainer: {
+    marginVertical: 8,
+  },
+  statusIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 5,
+    gap: 6,
   },
-  statusText: {
-    fontSize: 14,
-    marginLeft: 5,
-    color: "#666",
+  projectStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
   },
-  pendingDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: "#888",
-    borderRadius: 4,
-    marginRight: 5,
+  statusBadgeContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  projectStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#333",
   },
 
   //   ~==================================================================================
@@ -944,6 +985,95 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     color: "#333",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 45,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
+  uploadProofButton: {
+    backgroundColor: "#2196F3",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  uploadProofText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  statusApproved: {
+    color: "#4CAF50", // green
+  },
+  statusPending: {
+    color: "#FF9800", // orange
+  },
+  statusRejected: {
+    color: "#F44336", // red
+  },
+  requestItem: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  requestTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  requestDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginVertical: 5,
+  },
+  requestStatusContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  requestStatusApproved: {
+    color: "#38A169",
+  },
+  requestStatusRejected: {
+    color: "#E53E3E",
+  },
+  requestStatusPendingText: {
+    color: "red",
+  },
+  statusBold: {
+    fontWeight: "bold",
+  },
+  viewLink: {
+    color: "#1e90ff",
+  },
+  requestsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  seeAllButton: {
+    color: "#2196F3",
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
 

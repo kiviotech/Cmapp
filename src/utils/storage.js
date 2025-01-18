@@ -10,13 +10,17 @@ export async function saveToken(token) {
 }
 
 // Retrieve the token securely
-export async function getToken() {
+export const getToken = async () => {
   try {
-    return await AsyncStorage.getItem("userToken");
+    const token = await AsyncStorage.getItem("token");
+    // Add some logging to debug token retrieval
+    // console.log('Retrieved token:', token ? 'Token exists' : 'No token found');
+    return token;
   } catch (error) {
-    console.error("Error retrieving token", error);
+    console.error("Error getting token:", error);
+    return null;
   }
-}
+};
 
 // Save the id securely
 export async function saveUserId(id) {
