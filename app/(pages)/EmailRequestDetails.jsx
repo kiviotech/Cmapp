@@ -171,11 +171,14 @@ const RequestDetails = () => {
           },
         });
 
+        // Call the onStatusUpdate callback if it exists
+        if (route.params?.onStatusUpdate) {
+          await route.params.onStatusUpdate(newStatus);
+        }
+
         if (newStatus === "approved") {
           await handleCreateUser();
         }
-
-        navigation.goBack();
       }
     } catch (error) {
       console.error("Error updating request:", error);

@@ -67,7 +67,7 @@ const Notification = () => {
   const markAsRead = async (item) => {
     try {
       const isRegistration = !!item.attributes.email;
-      const payload = { data: { notification_status: "read" } }; // Updated payload structure
+      const payload = { data: { notification_status: "read" } };
 
       if (isRegistration) {
         await updateExistingRegistration(item.id, payload);
@@ -75,17 +75,36 @@ const Notification = () => {
         await updateExistingSubmission(item.id, payload);
       }
 
-      // Update the state to reflect the change
+      // Update the local state immediately
       setUnreadNotifications((prev) =>
         prev.filter((notification) => notification.id !== item.id)
       );
       setReadNotifications((prev) => [
-        ...prev,
         {
           ...item,
-          attributes: { ...item.attributes, notification_status: "read" },
+          attributes: {
+            ...item.attributes,
+            notification_status: "read",
+            status: item.attributes.status, // Preserve the existing status
+          },
         },
+        ...prev,
       ]);
+
+      // Navigate to the appropriate details screen
+      navigation.navigate(
+        isRegistration
+          ? "(pages)/EmailRequestDetails"
+          : "(pages)/TaskRequestDetails",
+        {
+          requestData: item,
+          source: "notification",
+          onStatusUpdate: async (newStatus) => {
+            // This callback will be called when the status is updated in the details screen
+            await fetchData(); // Refresh the data when returning
+          },
+        }
+      );
     } catch (error) {
       console.error("Error updating notification status:", error);
     }
@@ -220,18 +239,22 @@ const Notification = () => {
     </Animated.View>
   );
 
-  // Update the useFocusEffect to use the new custom toast
+  // Modify the useFocusEffect to handle both status updates and notification status
   useFocusEffect(
     React.useCallback(() => {
-      const checkStatusUpdate = async () => {
+      const checkUpdates = async () => {
         try {
-          await fetchData();
+          // Get status update from navigation params
           const statusUpdate = navigation
             .getState()
             ?.routes?.find(
               (route) => route.name === "(pages)/projectTeam/Notification"
             )?.params?.statusUpdate;
 
+          // Fetch fresh data
+          await fetchData();
+
+          // Show toast if there's a status update
           if (statusUpdate) {
             showToast({
               title: "Status Updated",
@@ -240,11 +263,11 @@ const Notification = () => {
             navigation.setParams({ statusUpdate: null });
           }
         } catch (error) {
-          console.error("Error checking status update:", error);
+          console.error("Error checking updates:", error);
         }
       };
 
-      checkStatusUpdate();
+      checkUpdates();
     }, [navigation])
   );
 

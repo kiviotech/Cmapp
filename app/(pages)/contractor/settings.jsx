@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -17,6 +17,7 @@ import BottomNavigation from "./BottomNavigation ";
 import { logout } from "../../../src/utils/auth";
 import useAuthStore from "../../../useAuthStore";
 import { useNavigation, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,7 +26,31 @@ const Settings = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+
+  useEffect(() => {
+    // Load the saved notification state when component mounts
+    loadNotificationState();
+  }, []);
+
+  const loadNotificationState = async () => {
+    try {
+      const savedState = await AsyncStorage.getItem("pushNotifications");
+      setIsEnabled(savedState === "true");
+    } catch (error) {
+      console.error("Error loading notification state:", error);
+    }
+  };
+
+  const toggleSwitch = async () => {
+    try {
+      const newState = !isEnabled;
+      setIsEnabled(newState);
+      await AsyncStorage.setItem("pushNotifications", String(newState));
+    } catch (error) {
+      console.error("Error saving notification state:", error);
+    }
+  };
+
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const navigation = useNavigation();

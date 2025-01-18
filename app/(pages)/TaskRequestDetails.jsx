@@ -211,6 +211,11 @@ const RequestDetails = () => {
               timestamp: new Date().toISOString(),
             },
           });
+
+          // Call the onStatusUpdate callback if it exists
+          if (route.params?.onStatusUpdate) {
+            await route.params.onStatusUpdate(newStatus);
+          }
         }
       } catch (error) {
         console.error("Error updating request or task:", error);
