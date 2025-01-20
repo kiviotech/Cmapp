@@ -56,20 +56,54 @@ const Contractor = () => {
     fetchContractors();
   }, [designation, user?.id]); // More specific dependency
 
-  // Fetch tasks for the selected page
+  // Modify fetchAllProjects to use a separate API call if available
+  const fetchAllProjects = async () => {
+    const idToUse = contractorId !== 0 ? contractorId : user?.id;
+    if (!idToUse) return;
+
+    try {
+      // First try to get all tasks without pagination
+      const response = await fetchTasks(
+        idToUse,
+        1,
+        1000, // Use a large number to get all tasks
+        designation.charAt(0).toLowerCase() + designation.slice(1)
+      );
+
+      if (response?.data) {
+        // Extract and filter unique projects, ensuring we keep non-null projects
+        const projectsData = response.data
+          .map((task) => task?.attributes?.project?.data)
+          .filter((project) => project !== null && project !== undefined)
+          .reduce((unique, project) => {
+            // Check if project already exists in unique array
+            const exists = unique.some((p) => p.id === project.id);
+            if (!exists) {
+              unique.push(project);
+            }
+            return unique;
+          }, []);
+
+        console.log("Found projects:", projectsData.length); // Debug log
+        setProjects(projectsData);
+      }
+    } catch (error) {
+      console.error("Error fetching all projects:", error);
+      setProjects([]);
+    }
+  };
+
+  // Modify handlePageChange to maintain task pagination without affecting projects
   const handlePageChange = async (newPage) => {
     if (newPage < 1) return;
-
-    // Reset data and update page
-    setTasks([]);
-    setProjects([]);
-    setCurrentPage(newPage);
 
     const idToUse = contractorId !== 0 ? contractorId : user?.id;
     if (!idToUse) return;
 
     try {
       setIsLoading(true);
+      setTasks([]); // Clear existing tasks only
+
       const response = await fetchTasks(
         idToUse,
         newPage,
@@ -80,33 +114,43 @@ const Contractor = () => {
       if (response?.data) {
         setTasks(response.data);
 
-        // Update total pages from response metadata
+        // Update pagination data from meta
         if (response.meta?.pagination) {
+          setCurrentPage(response.meta.pagination.page);
           setTotalPages(response.meta.pagination.pageCount);
         }
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setTasks([]);
-      setProjects([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Initial data fetch
+  // Update useEffect to ensure projects are fetched first
   useEffect(() => {
-    if (user?.id && (contractorId !== 0 || designation !== "Contractor")) {
-      handlePageChange(1);
-    }
+    const initializeData = async () => {
+      if (user?.id && (contractorId !== 0 || designation !== "Contractor")) {
+        await fetchAllProjects(); // Wait for projects to be fetched
+        handlePageChange(1); // Then fetch first page of tasks
+      }
+    };
+
+    initializeData();
   }, [contractorId, user?.id]);
+
+  // Add debug logging in the render method
+  useEffect(() => {
+    console.log("Current projects:", projects.length); // Debug log
+  }, [projects]);
 
   // Update pagination render function
   const renderPagination = () => {
-    if (totalPages <= 1) return null;
+    if (!totalPages || totalPages <= 1) return null;
 
     const getPageNumbers = () => {
-      const delta = 2; // Number of pages to show before and after current page
+      const delta = 2;
       const range = [];
       const rangeWithDots = [];
 
@@ -126,7 +170,7 @@ const Contractor = () => {
 
       // Add dots and numbers to final array
       let l;
-      for (let i of range) {
+      for (const i of range) {
         if (l) {
           if (i - l === 2) {
             rangeWithDots.push(l + 1);
@@ -143,13 +187,12 @@ const Contractor = () => {
 
     return (
       <View style={styles.paginationContainer}>
-        {/* Previous button */}
         <TouchableOpacity
           style={[
             styles.pageButton,
             currentPage === 1 && styles.disabledPageButton,
           ]}
-          onPress={() => handlePageChange(currentPage - 1)}
+          onPress={() => currentPage > 1 && handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
           <Text
@@ -162,7 +205,6 @@ const Contractor = () => {
           </Text>
         </TouchableOpacity>
 
-        {/* Page numbers */}
         {getPageNumbers().map((item, index) => (
           <TouchableOpacity
             key={index}
@@ -186,13 +228,14 @@ const Contractor = () => {
           </TouchableOpacity>
         ))}
 
-        {/* Next button */}
         <TouchableOpacity
           style={[
             styles.pageButton,
             currentPage === totalPages && styles.disabledPageButton,
           ]}
-          onPress={() => handlePageChange(currentPage + 1)}
+          onPress={() =>
+            currentPage < totalPages && handlePageChange(currentPage + 1)
+          }
           disabled={currentPage === totalPages}
         >
           <Text
