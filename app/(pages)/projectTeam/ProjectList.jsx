@@ -12,6 +12,7 @@ import {
 import { getProjects } from "../../../src/api/repositories/projectRepository";
 import BottomNavigation from "./BottomNavigation";
 import { useNavigation } from "@react-navigation/native";
+import useAuthStore from "../../../useAuthStore";
 
 const { width, height } = Dimensions.get("window");
 
@@ -19,6 +20,7 @@ const ProjectList = () => {
   const [projectsDetail, setProjectsDetail] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     let isMounted = true;
@@ -61,7 +63,8 @@ const ProjectList = () => {
         navigation.navigate("(pages)/projectTeam/ProjectDetails", {
           projectId: item.id,
           projectData: item,
-          contractorId: item.attributes.contractors?.data?.[0]?.id,
+          userId: user.id,
+          // tasksData: tasks
         })
       }
     >
@@ -69,14 +72,14 @@ const ProjectList = () => {
         style={[styles.colorBar, { backgroundColor: item.color || "#4A90E2" }]}
       />
       <View style={styles.projectDetails}>
-        <Text numberOfLines={1} style={styles.username}>
-          {item.attributes.user?.data?.attributes?.username || "Unknown User"}
-        </Text>
         <Text
           numberOfLines={2}
           style={[styles.projectName, { color: item.color || "#4A90E2" }]}
         >
           {item.attributes.name || "Unnamed Project"}
+        </Text>
+        <Text numberOfLines={1} style={styles.username}>
+          {item.attributes?.location || "Unknown Location"}
         </Text>
         <View style={styles.dateContainer}>
           <Text style={styles.startDate}>

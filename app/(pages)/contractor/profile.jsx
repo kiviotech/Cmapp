@@ -23,6 +23,7 @@ const profile = () => {
   const { user, designation } = useAuthStore();
   const router = useRouter();
   const navigation = useNavigation();
+  const pageSize = 5; // Number of tasks per page
 
   const [projectsDetail, setProjectsDetail] = useState([]); // to store all user project
   const [tasks, setTasks] = useState([]); // to store tasks per project
@@ -33,11 +34,11 @@ const profile = () => {
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    const loadContractorData = async () => {
+    const loadContractorData = async (page=1) => {
       if (user && user.id) {
         try {
           setIsLoading(true); // Start loading  
-          const data = await fetchTasks(user.id);
+          const data = await fetchTasks(user.id, page, pageSize);
           const projectsData = data.data
             .map((taskData) => taskData?.attributes?.project?.data) // Map to project data
             .filter(
@@ -201,7 +202,6 @@ const profile = () => {
                 <View key={index} style={styles.submissionContainer}>
                   <TouchableOpacity
                     onPress={() => {
-                      console.log("Project Task Data:", task);
                       navigation.navigate("(pages)/taskDetails", {
                         taskData: task,
                         refresh: false,

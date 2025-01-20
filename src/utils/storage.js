@@ -12,12 +12,12 @@ export async function saveToken(token) {
 // Retrieve the token securely
 export const getToken = async () => {
   try {
-    const token = await AsyncStorage.getItem('token');
+    const token = await AsyncStorage.getItem("token");
     // Add some logging to debug token retrieval
     // console.log('Retrieved token:', token ? 'Token exists' : 'No token found');
     return token;
   } catch (error) {
-    console.error('Error getting token:', error);
+    console.error("Error getting token:", error);
     return null;
   }
 };

@@ -64,7 +64,6 @@ const PersonalDetails = () => {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Name</Text>
             <TextInput style={styles.input} value={name} editable={false} />
-            {/* {console.log(user.user)} */}
           </View>
 
           <View style={styles.inputContainer}>

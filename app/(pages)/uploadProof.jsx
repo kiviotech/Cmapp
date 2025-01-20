@@ -100,7 +100,6 @@ const UploadProof = ({}) => {
       const data = response.data;
 
       if (response.status === 200) {
-        console.log("Files uploaded successfully:", data);
         const fileIds = data.map((file) => file.id);
         return fileIds;
       } else {
@@ -185,16 +184,13 @@ const UploadProof = ({}) => {
         return;
       }
 
-      // Get file IDs from FileUpload component
-      const fileIds = await fileUploadRef.current?.handleSubmit();
-
-      if (!fileIds || fileIds.length === 0) {
-        // FileUpload component will set its own error
+      // Instead of trying to call handleSubmit on the ref, use the uploadedFileIds
+      if (!uploadedFileIds || uploadedFileIds.length === 0) {
+        setErrors("Please upload at least one file");
         return;
       }
 
-      const submission = await createSubmission(fileIds, id);
-      console.log("Submission created successfully:", submission);
+      const submission = await createSubmission(uploadedFileIds, id);
 
       // Clear form
       setComment("");
@@ -202,6 +198,7 @@ const UploadProof = ({}) => {
         fileUploadRef.current.clearFiles();
       }
       setErrors("");
+      setUploadedFileIds([]); // Clear the uploaded file IDs
 
       // Show success message
       setToastMessage("Submission successful!");
@@ -333,9 +330,7 @@ const UploadProof = ({}) => {
       });
 
       if (response.status === 200) {
-        console.log("File uploaded successfully:", response.data);
       } else {
-        console.log("Failed to upload file");
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -367,7 +362,6 @@ const UploadProof = ({}) => {
 
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds((prevIds) => [...prevIds, ...fileIds]);
-    console.log("Uploaded file IDs:", uploadedFileIds);
   };
 
   const handleBackNavigation = () => {

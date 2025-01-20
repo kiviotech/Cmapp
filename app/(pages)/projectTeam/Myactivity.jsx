@@ -28,6 +28,7 @@ import { fetchProjectDetailsByApproverId } from "../../../src/services/projectSe
 import apiClient, { MEDIA_BASE_URL } from "../../../src/api/apiClient";
 import { icons } from "../../../constants";
 import colors from "../../../constants/colors";
+import { fetchTasks } from "../../../src/services/taskService";
 
 const renderCard = ({ item }) => (
   <View style={styles.card}>
@@ -61,8 +62,12 @@ const Myactivity = () => {
   const [projectTeamId, setProjectTeamId] = useState(null);
   const [projectDetails, setProjectDetails] = useState([]);
   const [taskDetails, setTaskDetails] = useState([]);
-  const { user, designation, role, projects, permissions } = useAuthStore();
+  const { user, designation, role, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true); // Flag to check if there are more tasks to load
+    const [page, setPage] = useState(1); // Current page
+    const pageSize = 1; // Number of tasks per page
+    const [projects, setProjects] = useState([]);
 
   const ongoingProjectsCount = projectDetails.filter(
     (item) => item.attributes.project_status === "ongoing"
@@ -76,169 +81,28 @@ const Myactivity = () => {
     const fetchProjectTeamId = async () => {
       if (user && user.id) {
         try {
-          const response = await fetchProjectTeamIdByUserId(user.id);
-          const [{ id }] = response.data;
-          setProjectTeamId(id);
+          setIsLoading(true); // Start loading
+          const response = await fetchTasks(user.id, page, pageSize); // Use page state for pagination
+          const data = response.data;
+          // Extract unique projects
+          const projectsData = data
+            .map((taskData) => taskData?.attributes?.project?.data)
+            .filter(
+              (project, index, self) =>
+                project && self.findIndex((p) => p?.id === project.id) === index
+            );
+          setTasks(data); // Append tasks to the existing ones
+          setProjects(projectsData); // Append unique projects
+          // setHasMore(data.length === pageSize);
         } catch (error) {
           console.error("Error fetching project team ID:", error);
-        }
-      }
-    };
-    fetchProjectTeamId();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const projectResponse = await fetchProjectDetailsByApproverId(
-            projectTeamId
-          );
-          const projects = projectResponse.data;
-
-          const projectsWithTasks = await Promise.all(
-            projects.map(async (project) => {
-              const tasks = project.attributes.tasks.data;
-              const taskDetails = await Promise.all(
-                tasks.map(async (task) => {
-                  const taskResponse = await apiClient.get(
-                    `/tasks/${task.id}?populate=*`
-                  );
-
-                  return { id: task.id, ...taskResponse.data };
-                })
-              );
-              return { ...project, taskDetails };
-            })
-          );
-
-          setProjectDetails(projectsWithTasks);
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
-
-    fetchProjectDetails();
-  }, [projectTeamId]);
-
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const response = await fetchProjectDetailsByApproverId(projectTeamId);
-          setProjectDetails(response.data); // Store project details with tasks
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
-    fetchProjectDetails();
-  }, [projectTeamId]);
-
-  useEffect(() => {
-    const fetchTaskDetails = async () => {
-      const allTaskDetails = [];
-
-      for (const project of projectDetails) {
-        const tasks = project.attributes.tasks.data;
-        for (const task of tasks) {
-          try {
-            const taskResponse = await apiClient.get(
-              `https://cmappapi.kivio.in/api/tasks/${task.id}?populate=*`
-            );
-            allTaskDetails.push(taskResponse.data);
-          } catch (error) {
-            console.error(
-              `Error fetching details for task ID ${task.id}:`,
-              error
-            );
-          }
-        }
-      }
-
-      setTaskDetails(allTaskDetails);
-    };
-
-    if (projectDetails.length > 0) {
-      fetchTaskDetails();
-    }
-  }, [projectDetails]);
-
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     try {
-  //       const userResponse = await getAuthenticatedUserWithPopulate(
-  //         "job_profile"
-  //       );
-  //       setJobProfile(userResponse.data.job_profile.name);
-  //     } catch (error) {
-  //       console.log("error");
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      try {
-        const projectData = await getProjects();
-        if (isMounted && projectData?.data?.data) {
-          const uniqueProjects = Array.from(
-            new Map(
-              projectData.data.data.map((item) => [item.id, item])
-            ).values()
-          );
-          setProjectsDetail(uniqueProjects);
-          if (uniqueProjects.length > 0) {
-            setSelectedProjectId(uniqueProjects[0]?.id);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        if (isMounted) {
-          setProjectsDetail([]);
-        }
-      } finally {
-        if (isMounted) {
+        } finally {
           setIsLoading(false);
         }
       }
     };
-
-    fetchProjects();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchRequests = async () => {
-  //       try {
-  //         const response = await fetchSubmissions();
-  //         const submissions = response?.data || [];
-  //         const recentRequests = submissions
-  //           .sort(
-  //             (a, b) =>
-  //               new Date(b.attributes.createdAt) -
-  //               new Date(a.attributes.createdAt)
-  //           )
-  //           .slice(0, 5);
-
-  //         setRequests(recentRequests);
-  //       } catch (error) {
-  //         console.error("Error fetching submissions:", error);
-  //       }
-  //     };
-
-  //     fetchRequests();
-  //   }, [])
-  // );
+    fetchProjectTeamId();
+  }, [user, page]);
 
   useFocusEffect(
     useCallback(() => {
@@ -292,59 +156,80 @@ const Myactivity = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScrollContainer}
           >
-            {projectDetails.length > 0 ? (
-              projectDetails.map((project) => (
+            {projects.length > 0 ? (
+              projects.map((project) => (
                 <TouchableOpacity
                   key={project.id}
                   style={[
                     styles.projectCard,
-                    project.attributes.project_status === "ongoing"
-                      ? { backgroundColor: "#e8f5e9" }
-                      : { backgroundColor: "#ffebee" },
+                    (() => {
+                      const endDate = new Date(project.attributes.end_date);
+                      const today = new Date();
+                      const isDelayed = today > endDate;
+
+                      return isDelayed
+                        ? { backgroundColor: "#ffebee" } // Light red for delayed
+                        : { backgroundColor: "#e8f5e9" }; // Light green for on schedule
+                    })(),
                   ]}
                   onPress={() =>
                     navigation.navigate("(pages)/projectTeam/ProjectDetails", {
-                      projectData: project,
+                      projectId: project.id,
+                        projectData: project,
+                        userId: user.id,
+                        tasksData: tasks
                     })
                   }
                 >
                   <View style={styles.projectCardContent}>
-                    {/* Project Name and Description */}
-                    <Text style={styles.projectTitle}>
+                    <Text style={styles.projectCardTitle}>
                       {project.attributes.name}
                     </Text>
-                    <Text style={styles.projectDescription}>
-                      {project.attributes.description}
+                    <Text style={styles.projectCardDescription}>
+                      {project.attributes.description || "No description"}
                     </Text>
 
-                    {/* Project Status */}
-                    <Text style={styles.projectStatus}>
-                      ●{" "}
-                      {project.attributes.project_status
-                        ? "Status"
-                        : "Status unknown"}
-                      : {project.attributes.project_status || "N/A"}
-                    </Text>
+                    <View style={styles.statusRow}>
+                      <View style={styles.statusIndicator}>
+                        {(() => {
+                          const endDate = new Date(project.attributes.end_date);
+                          const today = new Date();
+                          const isDelayed = today > endDate;
 
-                    {/* Additional Project Info */}
-                    <View style={styles.projectStatusContainer}>
-                      <Icon
-                        name={
-                          project.attributes.update_status === "ahead"
-                            ? "check-circle"
-                            : "error"
-                        }
-                        size={16}
-                        color={
-                          project.attributes.update_status === "ahead"
-                            ? "green"
-                            : "red"
-                        }
-                      />
-                      <Text style={styles.projectStatusText}>
-                        {project.attributes.update_status === "ahead"
-                          ? "Ahead of Schedule"
-                          : "Delayed"}
+                          return (
+                            <>
+                              <Icon
+                                name={isDelayed ? "error" : "check-circle"}
+                                size={16}
+                                color={isDelayed ? "#ff5252" : "#4caf50"}
+                              />
+                              <Text
+                                style={[
+                                  styles.statusText,
+                                  { color: isDelayed ? "#ff5252" : "#4caf50" },
+                                ]}
+                              >
+                                {isDelayed ? "Delayed" : "On Schedule"}
+                              </Text>
+                            </>
+                          );
+                        })()}
+                      </View>
+                    </View>
+
+                    <View style={styles.dateContainer}>
+                      <Icon name="event" size={16} color="#666" />
+                      <Text style={styles.dateText}>
+                        End Date:{" "}
+                        {project.attributes.end_date
+                          ? new Date(
+                              project.attributes.end_date
+                            ).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Not set"}
                       </Text>
                     </View>
                   </View>
@@ -477,33 +362,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   projectCard: {
-    width: 250,
-    padding: 15,
-    borderRadius: 10,
+    width: 280,
+    padding: 16,
+    borderRadius: 8,
     marginRight: 15,
+    elevation: 2,
   },
-  projectTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+  projectCardContent: {
+    gap: 8,
   },
-  projectDescription: {
+  projectCardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  projectCardDescription: {
     fontSize: 14,
     color: "#666",
-    marginVertical: 5,
+    marginBottom: 4,
   },
-  projectStatus: {
-    fontSize: 14,
-    color: "#ff5252",
-    marginBottom: 10,
+  statusRow: {
+    marginTop: 8,
   },
-  projectStatusContainer: {
+  statusIndicator: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
-  projectStatusText: {
-    marginLeft: 5,
+  statusText: {
     fontSize: 14,
-    color: "green",
+    fontWeight: "500",
+  },
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 8,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  noProjectsContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  noProjectsText: {
+    fontSize: 14,
+    color: "#666",
   },
   requestItem: {
     backgroundColor: "#fff",

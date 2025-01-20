@@ -259,13 +259,18 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
       finalCtx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
       finalCtx.drawImage(canvas, 0, 0);
 
-      // Convert to blob and save
+      // Get original image format from URI
+      const imageFormat = imageUri.toLowerCase().endsWith(".png")
+        ? "image/png"
+        : "image/jpeg";
+
+      // Convert to blob and save with appropriate format and maximum quality
       finalCanvas.toBlob(
         (blob) => {
           onSave(URL.createObjectURL(blob));
         },
-        "image/jpeg",
-        0.95
+        imageFormat,
+        1.0 // Maximum quality (1.0 instead of 0.95)
       );
     }
   };

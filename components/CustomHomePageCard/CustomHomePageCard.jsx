@@ -135,7 +135,6 @@ const CustomHomePageCard = ({ cardValue, cardColor }) => {
                     : "Upload your Proof of work"
                 }
                 handlePress={() => {
-                  console.log("Button Pressed");
                   navigation.navigate("(pages)/uploadProof");
                 }}
               />

@@ -22,10 +22,8 @@ const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { projectId, projectData: routeProjectData, userId, tasksData } = route.params || {};
-
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
-  // const [tasks, setTasks] = useState(tasksData);
   const [jobRole, setJobRole] = useState('')
 
   useEffect(() => {
@@ -35,21 +33,20 @@ const ProjectDetails = () => {
     }
     const approverId = routeProjectData?.attributes?.approvers?.data[0]?.id;
     const fetchManagerDetails = async () => {
-      console.log('approverId', routeProjectData.attributes)
-      if (approverId) {
+      // console.log('approverId', routeProjectData.attributes)
+      // if (approverId) {
         try {
-          const response = await fetchProjectTeamById(approverId);         
+          const response = await fetchProjectTeamById("1");
           const names = response?.data?.attributes?.users?.data.map(
             (item) => item?.attributes?.username
           );
           setManagerNames(names[0]); // Store manager names in state
-          setJobRole(response?.data?.attributes?.job_role)
+          setJobRole(response?.data?.attributes?.job_role);
         } catch (error) {
           console.error("Error fetching manager details:", error);
         }
-      }
+      // }
     };
-
     fetchManagerDetails();
     // }, [routeProjectData, setProjectData]);
   }, []);
@@ -149,12 +146,11 @@ const ProjectDetails = () => {
 
         <Text style={styles.label}>All Tasks</Text>
 
-        {tasksData.length > 0 ? (
-          tasksData.map((task, index) => {
-            console.log('task', task)
+        {tasksData?.length > 0 ? (
+          tasksData?.map((task, index) => {
             const taskData = task?.attributes || {};
             const standardTask =
-              taskData?.attributes?.standard_task?.data?.attributes || {};
+              taskData?.standard_task?.data?.attributes || {};
             const status = taskData.task_status;
 
             return (
@@ -257,7 +253,7 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     marginLeft: 12,
-    gap: 5
+    gap: 5,
   },
   dueDateText: {
     fontSize: 14,
@@ -299,7 +295,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     marginVertical: 10,
     paddingVertical: 5,
   },
