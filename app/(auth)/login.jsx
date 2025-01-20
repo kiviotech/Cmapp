@@ -31,7 +31,6 @@ import fonts from "../../constants/fonts";
 import { login } from "../../src/utils/auth";
 import { Modal } from "react-native";
 import useAuthStore from "../../useAuthStore";
-// import { icons } from "../../constants/icons";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 
 NativeWindStyleSheet.setOutput({
@@ -170,9 +169,7 @@ const Login = () => {
         <View style={styles.content}>
           <View style={styles.container}>
             <Image
-              source={{
-                uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
-              }}
+              source={icons.loginlogo}
               // source={icons.logo}
               style={styles.image}
               resizeMode="contain" // Adjusts the image to fit within the specified dimensions

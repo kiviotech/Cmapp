@@ -11,6 +11,7 @@ import bell from "../assets/icons/png/bell.png";
 import search from "../assets/icons/png/search.png";
 import filters from "../assets/icons/png/filters.png";
 import home from "../assets/icons/png/home.png";
+import loginlogo from "../assets/images/loginlogo.png";
 import user from "../assets/icons/png/user.png";
 import settings from "../assets/icons/png/settings.png";
 import logout from "../assets/icons/png/logout.png";
@@ -74,4 +75,5 @@ export default {
   loginLogo,
   loginHouse,
   title,
+  loginlogo,
 };
