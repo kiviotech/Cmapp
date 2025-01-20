@@ -58,6 +58,23 @@ const SignUp = () => {
     if (errors[field]) {
       setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
     }
+
+    // For name field, only allow letters and spaces
+    if (field === "name") {
+      // Remove any non-letter and non-space characters
+      const sanitizedValue = value.replace(/[^a-zA-Z\s]/g, "");
+      setForm({ ...form, [field]: sanitizedValue });
+      return;
+    }
+
+    // Handle other fields normally
+    if (field === "password" && value.length > 0 && value.length < 8) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 8 characters long",
+      }));
+    }
+
     setForm({ ...form, [field]: value });
 
     // Add immediate password validation
@@ -77,14 +94,27 @@ const SignUp = () => {
     }
   };
 
-  const validate = () => {
+  const validate = async () => {
     const newErrors = {};
-    if (!form.name.trim()) newErrors.name = "Full name is required";
-    else if (!/^[a-zA-Z]+$/.test(form.name.trim()))
-      newErrors.name = "Only alphabets are allowed";
+
+    // Basic validations
+    if (!form.name.trim()) {
+      newErrors.name = "Full name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(form.name.trim())) {
+      newErrors.name = "Only alphabets and spaces are allowed";
+    }
     if (!form.email) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       newErrors.email = "Enter a valid email address";
+    else {
+      // Check for existing email
+      const users = await fetchUsers();
+      const emailExists = users.some((user) => user.email === form.email);
+      if (emailExists) {
+        newErrors.email =
+          "Email already exists. Please use a different email address";
+      }
+    }
     if (!form.password) newErrors.password = "Password is required";
     else if (form.password.length < 8)
       newErrors.password = "Password must be at least 8 characters long";
@@ -100,27 +130,14 @@ const SignUp = () => {
   };
 
   const submit = async () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     try {
-      const { name, email, password, socialSecurity } = form;
-      const users = await fetchUsers();
-
-      // Check if the email already exists in the system
-      const emailExists = users.some((user) => user.email === email);
-
-      if (emailExists) {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          email: "User is already registered with this email", // Set email error in the errors object
-        }));
+      const newErrors = await validate();
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         return;
       }
 
+      const { name, email, password, socialSecurity } = form;
       const res = await signup(
         name,
         email,
