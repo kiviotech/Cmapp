@@ -105,50 +105,111 @@ const Contractor = () => {
     fetchTasksWithPagination(); // Fetch data for the new page
   };
 
-  // Render pagination buttons
+  // Update pagination render function
   const renderPagination = () => {
-    if (!totalPages || totalPages <= 1) return null; // Handle edge cases
+    if (totalPages <= 1) return null;
 
-    const renderPageButton = (pageNum, isActive = false, key = pageNum) => (
-      <TouchableOpacity
-        key={key}
-        style={[styles.pageButton, isActive && styles.activePageButton]}
-        onPress={() => !isActive && handlePageChange(pageNum)}
-        disabled={isActive}
-        accessibilityLabel={`Page ${pageNum} ${
-          isActive ? "(current page)" : ""
-        }`}
-      >
-        <Text style={[styles.pageText, isActive && styles.activePageText]}>
-          {pageNum}
-        </Text>
-      </TouchableOpacity>
+    const getPageNumbers = () => {
+      const delta = 2; // Number of pages to show before and after current page
+      const range = [];
+      const rangeWithDots = [];
+
+      // Always include first page
+      range.push(1);
+
+      for (let i = currentPage - delta; i <= currentPage + delta; i++) {
+        if (i > 1 && i < totalPages) {
+          range.push(i);
+        }
+      }
+
+      // Always include last page
+      if (totalPages > 1) {
+        range.push(totalPages);
+      }
+
+      // Add dots and numbers to final array
+      let l;
+      for (let i of range) {
+        if (l) {
+          if (i - l === 2) {
+            rangeWithDots.push(l + 1);
+          } else if (i - l !== 1) {
+            rangeWithDots.push("...");
+          }
+        }
+        rangeWithDots.push(i);
+        l = i;
+      }
+
+      return rangeWithDots;
+    };
+
+    return (
+      <View style={styles.paginationContainer}>
+        {/* Previous button */}
+        <TouchableOpacity
+          style={[
+            styles.pageButton,
+            currentPage === 1 && styles.disabledPageButton,
+          ]}
+          onPress={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <Text
+            style={[
+              styles.pageText,
+              currentPage === 1 && styles.disabledPageText,
+            ]}
+          >
+            {"<"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Page numbers */}
+        {getPageNumbers().map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.pageButton,
+              currentPage === item && styles.activePageButton,
+              item === "..." && styles.dotsButton,
+            ]}
+            onPress={() => item !== "..." && handlePageChange(item)}
+            disabled={item === "..."}
+          >
+            <Text
+              style={[
+                styles.pageText,
+                currentPage === item && styles.activePageText,
+                item === "..." && styles.dotsText,
+              ]}
+            >
+              {item}
+            </Text>
+          </TouchableOpacity>
+        ))}
+
+        {/* Next button */}
+        <TouchableOpacity
+          style={[
+            styles.pageButton,
+            currentPage === totalPages && styles.disabledPageButton,
+          ]}
+          onPress={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          <Text
+            style={[
+              styles.pageText,
+              currentPage === totalPages && styles.disabledPageText,
+            ]}
+          >
+            {">"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     );
-
-    const renderEllipsis = (key) => (
-      <Text key={key} style={styles.ellipsis} accessibilityLabel="More pages">
-        ...
-      </Text>
-    );
-
-    let pages = [];
-
-    // Always show first 5 pages
-    for (let i = 1; i <= Math.min(5, totalPages); i++) {
-      pages.push(renderPageButton(i, i === currentPage));
-    }
-
-    // Show ellipsis if there are more than 5 pages and the last page is not shown yet
-    if (totalPages > 5) {
-      pages.push(renderEllipsis("ellipsis"));
-    }
-
-    // Always show last page if it's not already included
-    if (totalPages > 5) {
-      pages.push(renderPageButton(totalPages, currentPage === totalPages));
-    }
-
-    return <View style={styles.paginationContainer}>{pages}</View>;
   };
 
   return (
@@ -283,33 +344,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
     flexWrap: "wrap",
-    gap: 10,
+    gap: 8,
     paddingBottom: 20,
-    marginTop: -10,
   },
   pageButton: {
-    paddingVertical: "8px",
-    paddingHorizontal: "12px",
-    border: "1px solid #A5A5A5",
-    borderRadius: "5px",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#A5A5A5",
+    borderRadius: 5,
     backgroundColor: "#FFFFFF",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "500",
-    minWidth: "40px",
-    height: 30,
-    display: "flex",
+    minWidth: 40,
+    height: 36,
     justifyContent: "center",
     alignItems: "center",
   },
   activePageButton: {
     backgroundColor: "#007bff",
+    borderColor: "#007bff",
+  },
+  disabledPageButton: {
+    backgroundColor: "#f5f5f5",
+    borderColor: "#ddd",
+  },
+  dotsButton: {
+    borderColor: "transparent",
+    backgroundColor: "transparent",
   },
   pageText: {
-    color: "#000",
+    color: "#333",
+    fontSize: 14,
+    fontWeight: "500",
   },
   activePageText: {
     color: "#fff",
+  },
+  disabledPageText: {
+    color: "#999",
+  },
+  dotsText: {
+    color: "#666",
   },
   AreaContainer: {
     flex: 1,

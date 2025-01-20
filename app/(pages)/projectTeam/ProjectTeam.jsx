@@ -118,10 +118,9 @@ const ProjectTeam = () => {
     try {
       const response = await fetchTasks(userId, page, pageSize);
       const data = response.data;
-      const meta = response.meta?.pagination;
 
       if (data) {
-        // Extract unique projects from tasks
+        // Extract unique projects from the current page of tasks
         const projectsData = data
           .map((taskData) => taskData?.attributes?.project?.data)
           .filter(
@@ -129,13 +128,15 @@ const ProjectTeam = () => {
               project && self.findIndex((p) => p?.id === project.id) === index
           );
 
+        // Update tasks for the current page only (don't append)
         setTasks(data);
+
+        // Update projects
         setProjects(projectsData);
 
-        // Update pagination state
-        if (meta) {
-          setTotalPages(meta.pageCount);
-          setCurrentPage(meta.page);
+        // Update total pages from pagination metadata
+        if (response.meta?.pagination) {
+          setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
         }
       }
     } catch (error) {
@@ -156,7 +157,7 @@ const ProjectTeam = () => {
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
       setCurrentPage(newPage);
-      fetchTasksWithPagination(user.id, newPage);
+      // fetchTasksWithPagination will be triggered by the useEffect
     }
   };
 
@@ -164,62 +165,107 @@ const ProjectTeam = () => {
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
-    const renderPageButton = (pageNum) => (
-      <TouchableOpacity
-        key={pageNum}
-        style={[
-          styles.pageButton,
-          currentPage === pageNum && styles.activePageButton,
-        ]}
-        onPress={() => handlePageChange(pageNum)}
-        disabled={currentPage === pageNum}
-      >
-        <Text
-          style={[
-            styles.pageText,
-            currentPage === pageNum && styles.activePageText,
-          ]}
-        >
-          {pageNum}
-        </Text>
-      </TouchableOpacity>
-    );
+    const getPageNumbers = () => {
+      const delta = 2; // Number of pages to show before and after current page
+      const range = [];
+      const rangeWithDots = [];
 
-    let pages = [];
+      // Always include first page
+      range.push(1);
 
-    // Show maximum 5 pages
-    const maxVisiblePages = 5;
-    let startPage, endPage;
-
-    if (totalPages <= maxVisiblePages) {
-      // If total pages are less than or equal to max visible pages, show all pages
-      startPage = 1;
-      endPage = totalPages;
-    } else {
-      // Calculate start and end pages to show current page in the middle when possible
-      const middlePoint = Math.floor(maxVisiblePages / 2);
-
-      if (currentPage <= middlePoint + 1) {
-        // Near the start
-        startPage = 1;
-        endPage = maxVisiblePages;
-      } else if (currentPage >= totalPages - middlePoint) {
-        // Near the end
-        startPage = totalPages - maxVisiblePages + 1;
-        endPage = totalPages;
-      } else {
-        // In the middle
-        startPage = currentPage - middlePoint;
-        endPage = currentPage + middlePoint;
+      for (let i = currentPage - delta; i <= currentPage + delta; i++) {
+        if (i > 1 && i < totalPages) {
+          range.push(i);
+        }
       }
-    }
 
-    // Add pages
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(renderPageButton(i));
-    }
+      // Always include last page
+      if (totalPages > 1) {
+        range.push(totalPages);
+      }
 
-    return <View style={styles.paginationContainer}>{pages}</View>;
+      // Add dots and numbers to final array
+      let l;
+      for (let i of range) {
+        if (l) {
+          if (i - l === 2) {
+            rangeWithDots.push(l + 1);
+          } else if (i - l !== 1) {
+            rangeWithDots.push("...");
+          }
+        }
+        rangeWithDots.push(i);
+        l = i;
+      }
+
+      return rangeWithDots;
+    };
+
+    return (
+      <View style={styles.paginationContainer}>
+        {/* Previous button */}
+        <TouchableOpacity
+          style={[
+            styles.pageButton,
+            currentPage === 1 && styles.disabledPageButton,
+          ]}
+          onPress={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <Text
+            style={[
+              styles.pageText,
+              currentPage === 1 && styles.disabledPageText,
+            ]}
+          >
+            {"<"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Page numbers */}
+        {getPageNumbers().map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.pageButton,
+              currentPage === item && styles.activePageButton,
+              item === "..." && styles.dotsButton,
+            ]}
+            onPress={() => item !== "..." && handlePageChange(item)}
+            disabled={item === "..."}
+          >
+            <Text
+              style={[
+                styles.pageText,
+                currentPage === item && styles.activePageText,
+                item === "..." && styles.dotsText,
+              ]}
+            >
+              {item}
+            </Text>
+          </TouchableOpacity>
+        ))}
+
+        {/* Next button */}
+        <TouchableOpacity
+          style={[
+            styles.pageButton,
+            currentPage === totalPages && styles.disabledPageButton,
+          ]}
+          onPress={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          <Text
+            style={[
+              styles.pageText,
+              currentPage === totalPages && styles.disabledPageText,
+            ]}
+          >
+            {">"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
   };
 
   const ongoingProjectsCount = projects.filter(
@@ -749,35 +795,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 20,
+    marginTop: 16,
+    flexWrap: "wrap",
     gap: 8,
+    paddingBottom: 20,
   },
   pageButton: {
-    minWidth: 32,
-    height: 32,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#A5A5A5",
     borderRadius: 5,
     backgroundColor: "#FFFFFF",
+    minWidth: 40,
+    height: 36,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
   },
   activePageButton: {
     backgroundColor: "#007bff",
     borderColor: "#007bff",
   },
+  disabledPageButton: {
+    backgroundColor: "#f5f5f5",
+    borderColor: "#ddd",
+  },
+  dotsButton: {
+    borderColor: "transparent",
+    backgroundColor: "transparent",
+  },
   pageText: {
+    color: "#333",
     fontSize: 14,
-    color: "#333333",
     fontWeight: "500",
   },
   activePageText: {
-    color: "#FFFFFF",
+    color: "#fff",
   },
-  ellipsis: {
-    fontSize: 14,
-    color: "#666666",
-    paddingHorizontal: 8,
+  disabledPageText: {
+    color: "#999",
+  },
+  dotsText: {
+    color: "#666",
   },
   AreaContainer: {
     flex: 1,
@@ -1047,6 +1106,105 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  projectStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#333",
+  },
+
+  //   ~==================================================================================
+
+  heading: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1e1e1e",
+    marginBottom: 16,
+  },
+  carousel: {
+    paddingHorizontal: 8,
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    width: Dimensions.get("window").width * 0.75, // 75% of screen width for each card
+    marginRight: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#576CE4",
+  },
+  projectName: {
+    fontSize: 16,
+    color: "#333",
+    marginBottom: 12,
+  },
+  divider: {
+    borderBottomColor: "#ddd",
+    borderBottomWidth: 1,
+    marginVertical: 8,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 16,
+    marginLeft: 8,
+    color: "#333",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 45,
+    elevation: 2,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
+  uploadProofButton: {
+    backgroundColor: "#2196F3",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  uploadProofText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  statusApproved: {
+    color: "#4CAF50", // green
+  },
+  statusPending: {
+    color: "#FF9800", // orange
+  },
+  statusRejected: {
+    color: "#F44336", // red
+  },
   requestItem: {
     backgroundColor: "#fff",
     padding: 15,
@@ -1068,9 +1226,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 10,
   },
-  requestStatus: {
-    color: "#333",
-    fontSize: 14,
+  requestStatusApproved: {
+    color: "#38A169",
+  },
+  requestStatusRejected: {
+    color: "#E53E3E",
+  },
+  requestStatusPendingText: {
+    color: "red",
+  },
+  statusBold: {
+    fontWeight: "bold",
   },
   viewLink: {
     color: "#1e90ff",
