@@ -172,6 +172,7 @@ const AssignProjectTeam = () => {
                 projectManagerTasks.map((task, index) => (
                   <Text key={index} style={styles.taskText}>
                     - {task.attributes.Name}
+                    {console.log(task)}
                   </Text>
                 ))
               ) : (

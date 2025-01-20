@@ -38,3 +38,6 @@ export const getRoleById = (id) => apiClient.get(userEndpoints.getRoleById(id));
 
 export const updateUserRole = (id, data) =>
   apiClient.put(userEndpoints.updateUserRole(id), data);
+
+export const getRegistrationByEmail = (email) =>
+  apiClient.get(userEndpoints.getRegistrationByEmail(email));

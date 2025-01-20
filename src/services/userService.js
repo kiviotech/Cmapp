@@ -5,6 +5,7 @@ import {
   updateUser,
   deleteUser,
   getAuthenticatedUserWithPopulate,
+  getRegistrationByEmail,
 } from "../api/repositories/userRepository";
 
 // Fetch all users
@@ -72,6 +73,17 @@ export const fetchAuthenticatedUserWithPopulate = async (fields) => {
       "Error fetching authenticated user with populated fields:",
       error
     );
+    throw error;
+  }
+};
+
+// Fetch registration by email
+export const fetchRegistrationByEmail = async (email) => {
+  try {
+    const response = await getRegistrationByEmail(email);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching registration for email ${email}:`, error);
     throw error;
   }
 };

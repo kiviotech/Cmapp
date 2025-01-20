@@ -13,6 +13,8 @@ const userEndpoints = {
   updateUserRole: (id) => `/users/${id}/roles`,
   getRoles: "/users-permissions/roles",
   getRoleById: (id) => `/users-permissions/roles/${id}`,
+  getRegistrationByEmail: (email) =>
+    `/registrations?filters[email][$eq]=${email}&populate=*`,
 };
 
 export default userEndpoints;

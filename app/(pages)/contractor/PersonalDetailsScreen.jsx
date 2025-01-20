@@ -16,6 +16,7 @@ import { useNavigation } from "expo-router";
 import { fetchProjectsByContractorEmail } from "../../../src/services/projectService";
 import { URL } from "../../../src/api/apiClient";
 import BottomNavigation from "./BottomNavigation ";
+import { fetchRegistrationByEmail } from "../../../src/services/userService";
 
 const PersonalDetailsScreen = () => {
   const [name, setName] = useState("");
@@ -25,6 +26,7 @@ const PersonalDetailsScreen = () => {
   const [documents, setDocuments] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [registrationDocs, setRegistrationDocs] = useState([]);
 
   const navigation = useNavigation();
   const { user } = useAuthStore();
@@ -51,8 +53,27 @@ const PersonalDetailsScreen = () => {
       }
     };
 
+    const fetchRegistrationData = async () => {
+      try {
+        const registrationData = await fetchRegistrationByEmail(user.email);
+        console.log("Registration Data:", registrationData);
+        if (registrationData.data[0]?.attributes?.documents?.data) {
+          const docs = registrationData.data[0].attributes.documents.data.map(
+            (doc) => ({
+              url: `${URL}${doc.attributes.url}`,
+              name: doc.attributes.name,
+            })
+          );
+          setRegistrationDocs(docs);
+        }
+      } catch (error) {
+        console.error("Error fetching registration data:", error);
+      }
+    };
+
     if (user?.email) {
       getProjects();
+      fetchRegistrationData();
     }
   }, [user.email]);
 
@@ -153,6 +174,28 @@ const PersonalDetailsScreen = () => {
                 />
                 <Text style={styles.documentName} numberOfLines={1}>
                   {`Document name ${index + 1}`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.sectionTitle}>Registration Documents</Text>
+          <View style={styles.documentsGrid}>
+            {registrationDocs.map((doc, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.documentItem}
+                onPress={() => handleImagePress(doc.url)}
+              >
+                <Image
+                  source={{ uri: doc.url }}
+                  style={styles.documentPreview}
+                  defaultSource={{
+                    uri: "https://placehold.co/200x200/png?text=Preview",
+                  }}
+                />
+                <Text style={styles.documentName} numberOfLines={1}>
+                  {doc.name || `Document ${index + 1}`}
                 </Text>
               </TouchableOpacity>
             ))}
