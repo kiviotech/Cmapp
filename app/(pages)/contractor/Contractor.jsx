@@ -56,54 +56,50 @@ const Contractor = () => {
     fetchContractors();
   }, [designation, user?.id]); // More specific dependency
 
-  // Fetch tasks only after contractorId is updated
-  const fetchTasksWithPagination = async () => {
-    if (!user?.id) return; // Early return if no user ID
+  // Fetch tasks for the selected page
+  const handlePageChange = async (newPage) => {
+    if (newPage < 1) return;
 
-    const idToUse = contractorId !== 0 ? contractorId : user.id;
+    // Reset data and update page
+    setTasks([]);
+    setProjects([]);
+    setCurrentPage(newPage);
+
+    const idToUse = contractorId !== 0 ? contractorId : user?.id;
+    if (!idToUse) return;
+
     try {
       setIsLoading(true);
       const response = await fetchTasks(
         idToUse,
-        currentPage,
+        newPage,
         pageSize,
         designation.charAt(0).toLowerCase() + designation.slice(1)
       );
 
-      const data = response.data;
-      if (data && data.length > 0) {
-        const projectsData = data
-          .map((taskData) => taskData?.attributes?.project?.data)
-          .filter(
-            (project, index, self) =>
-              project && self.findIndex((p) => p?.id === project.id) === index
-          );
+      if (response?.data) {
+        setTasks(response.data);
 
-        setProjects(projectsData);
-        setTasks(data);
-        setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
+        // Update total pages from response metadata
+        if (response.meta?.pagination) {
+          setTotalPages(response.meta.pagination.pageCount);
+        }
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
+      setTasks([]);
+      setProjects([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Combined useEffect for fetching tasks
+  // Initial data fetch
   useEffect(() => {
-    // Only fetch if we have either a contractorId or userId
     if (user?.id && (contractorId !== 0 || designation !== "Contractor")) {
-      fetchTasksWithPagination();
+      handlePageChange(1);
     }
-  }, [contractorId, currentPage, user?.id]); // Simplified dependencies
-
-  // Fetch tasks for the selected page
-  const handlePageChange = (page) => {
-    if (page < 1 || page > totalPages) return; // Do not fetch if page is out of range
-    setCurrentPage(page); // Update the current page
-    fetchTasksWithPagination(); // Fetch data for the new page
-  };
+  }, [contractorId, user?.id]);
 
   // Update pagination render function
   const renderPagination = () => {
@@ -259,11 +255,7 @@ const Contractor = () => {
         ) : (
           <>
             <FlatList
-              data={tasks.filter((task) =>
-                task?.attributes?.project?.data?.attributes?.name
-                  .toLowerCase()
-                  .includes(searchQuery.toLowerCase())
-              )}
+              data={tasks}
               renderItem={({ item: task }) => {
                 const taskImageUrl = task?.attributes?.documents?.data?.[0]
                   ?.attributes?.url
@@ -274,7 +266,7 @@ const Contractor = () => {
                   <View key={task.id} style={styles.milestoneCard}>
                     <Text style={styles.milestoneTitle}>
                       {task?.attributes?.project?.data?.attributes?.name ||
-                        "Project"}
+                        "Unassigned Project"}
                     </Text>
                     <Image
                       source={{ uri: taskImageUrl }}
@@ -290,7 +282,7 @@ const Contractor = () => {
                         </View>
                         <View style={styles.substituteButton}>
                           <Text style={styles.substituteText}>
-                            Substructure
+                            {task?.attributes?.task_status || "Status"}
                           </Text>
                         </View>
                       </View>
@@ -322,11 +314,9 @@ const Contractor = () => {
                 );
               }}
               keyExtractor={(item) => item.id.toString()}
-              ListFooterComponent={
-                isLoading ? (
-                  <ActivityIndicator size="small" color="#0000ff" />
-                ) : null
-              }
+              ListEmptyComponent={() => (
+                <Text style={styles.noTasksText}>No tasks found</Text>
+              )}
             />
             {totalPages > 1 && renderPagination()}
           </>
@@ -743,6 +733,12 @@ const styles = StyleSheet.create({
   projectEndDate: {
     fontSize: 14,
     color: "#666",
+  },
+  noTasksText: {
+    textAlign: "center",
+    padding: 20,
+    color: "#666",
+    fontSize: 16,
   },
 });
 
