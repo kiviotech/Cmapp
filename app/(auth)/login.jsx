@@ -186,7 +186,7 @@ const Login = () => {
                 placeholder="Your email or phone"
                 value={form.mobile}
                 handleChangeText={(value) => handleChangeText("mobile", value)}
-                keyboardType="email-address"
+                inputMode="email-address"
                 style={styles.loginField}
               />
               {errors.mobile ? (
@@ -216,7 +216,7 @@ const Login = () => {
                     placeholder="OTP"
                     value={form.otp}
                     handleChangeText={(value) => handleChangeText("otp", value)}
-                    keyboardType="number-pad"
+                    inputMode="number-pad"
                     style={styles.loginField}
                   />
                   {errors.otp ? (

@@ -21,10 +21,15 @@ const { width, height } = Dimensions.get("window");
 const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { projectId, projectData: routeProjectData, userId, tasksData } = route.params || {};
+  const {
+    projectId,
+    projectData: routeProjectData,
+    userId,
+    tasksData,
+  } = route.params || {};
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
-  const [jobRole, setJobRole] = useState('')
+  const [jobRole, setJobRole] = useState("");
 
   useEffect(() => {
     if (routeProjectData) {
@@ -35,16 +40,16 @@ const ProjectDetails = () => {
     const fetchManagerDetails = async () => {
       // console.log('approverId', routeProjectData.attributes)
       // if (approverId) {
-        try {
-          const response = await fetchProjectTeamById("1");
-          const names = response?.data?.attributes?.users?.data.map(
-            (item) => item?.attributes?.username
-          );
-          setManagerNames(names[0]); // Store manager names in state
-          setJobRole(response?.data?.attributes?.job_role);
-        } catch (error) {
-          console.error("Error fetching manager details:", error);
-        }
+      try {
+        const response = await fetchProjectTeamById("4");
+        const names = response?.data?.attributes?.users?.data.map(
+          (item) => item?.attributes?.username
+        );
+        setManagerNames(names[0]); // Store manager names in state
+        setJobRole(response?.data?.attributes?.job_role);
+      } catch (error) {
+        console.error("Error fetching manager details:", error);
+      }
       // }
     };
     fetchManagerDetails();

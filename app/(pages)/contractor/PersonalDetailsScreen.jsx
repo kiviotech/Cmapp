@@ -135,7 +135,7 @@ const PersonalDetailsScreen = () => {
               value={user.email}
               onChangeText={validateEmail}
               editable={false}
-              keyboardType="email-address"
+              inputMode="email-address"
             />
             {/* <TouchableOpacity style={styles.buttonContainer}>
                             <Text style={styles.actionText}>verify</Text>

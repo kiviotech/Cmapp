@@ -735,7 +735,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: height * 0.015,
     height: height * 0.15,
-    textAlignVertical: "top",
+    verticalAlign: "top",
     marginBottom: height * 0.02,
     backgroundColor: "#FFFFFF",
     fontSize: width * 0.04,

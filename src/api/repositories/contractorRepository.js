@@ -10,6 +10,9 @@ export const getContractorById = (id) =>
 export const getContractorsByUserId = (userId) =>
   apiClient.get(contractorEndpoints.getContractorsByUserId(userId));
 
+export const getContractorsIdByUserId = (userId) =>
+  apiClient.get(contractorEndpoints.getContractorsIdByUserId(userId));
+
 export const createContractor = (data) =>
   apiClient.post(contractorEndpoints.createContractor, data);
 

@@ -18,6 +18,8 @@ import useAuthStore from "../../../useAuthStore";
 import BottomNavigation from "./BottomNavigation ";
 import SelectYourProject from "./SelectYourProject";
 import { fetchTasks } from "../../../src/services/taskService";
+import { fetchContractorsByUserId } from "../../../src/services/contractorService";
+import { fetchContractorsIdByUserId } from "../../../src/services/contractorService";
 
 const validateImageURL = (url) => {
   return url && (url.startsWith("http://") || url.startsWith("https://"));
@@ -34,17 +36,42 @@ const Contractor = () => {
   const { user, designation } = useAuthStore();
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [contractorId, setContractorId] = useState(0); // State for contractor ID
 
-  // Function to fetch tasks for a specific page
-  const fetchTasksWithPagination = async (userId, page) => {
-    // if (isLoading) return; // Prevent multiple calls if already loading
-    setIsLoading(true); // Start loading
+  // Fetch contractor ID based on designation and user ID
+  useEffect(() => {
+    const fetchContractors = async () => {
+      if (designation === "Contractor" && user?.id) {
+        try {
+          const response = await fetchContractorsIdByUserId(user.id);
+          if (response?.data?.length > 0) {
+            setContractorId(response.data[0]?.id);
+          }
+        } catch (error) {
+          console.error("Error fetching contractors:", error);
+        }
+      }
+    };
+
+    fetchContractors();
+  }, [designation, user?.id]); // More specific dependency
+
+  // Fetch tasks only after contractorId is updated
+  const fetchTasksWithPagination = async () => {
+    if (!user?.id) return; // Early return if no user ID
+
+    const idToUse = contractorId !== 0 ? contractorId : user.id;
     try {
-      const response = await fetchTasks(userId, page, pageSize);
-      const data = response.data;
+      setIsLoading(true);
+      const response = await fetchTasks(
+        idToUse,
+        currentPage,
+        pageSize,
+        designation.charAt(0).toLowerCase() + designation.slice(1)
+      );
 
+      const data = response.data;
       if (data && data.length > 0) {
-        // Extract unique projects
         const projectsData = data
           .map((taskData) => taskData?.attributes?.project?.data)
           .filter(
@@ -52,32 +79,30 @@ const Contractor = () => {
               project && self.findIndex((p) => p?.id === project.id) === index
           );
 
-        setProjects(projectsData); // Append unique projects
-        // Append tasks and projects while ensuring no duplicates
+        setProjects(projectsData);
         setTasks(data);
-        // Set total pages based on the response
         setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
     } finally {
-      setIsLoading(false); // End loading
+      setIsLoading(false);
     }
   };
 
-  // Initial fetch on page load
+  // Combined useEffect for fetching tasks
   useEffect(() => {
-    if (user && user.id) {
-      fetchTasksWithPagination(user.id, 1); // Load the first page
-      setCurrentPage(1); // Reset the page to 1
+    // Only fetch if we have either a contractorId or userId
+    if (user?.id && (contractorId !== 0 || designation !== "Contractor")) {
+      fetchTasksWithPagination();
     }
-  }, [user]);
+  }, [contractorId, currentPage, user?.id]); // Simplified dependencies
 
   // Fetch tasks for the selected page
   const handlePageChange = (page) => {
     if (page < 1 || page > totalPages) return; // Do not fetch if page is out of range
     setCurrentPage(page); // Update the current page
-    fetchTasksWithPagination(user.id, page); // Fetch data for the new page
+    fetchTasksWithPagination(); // Fetch data for the new page
   };
 
   // Render pagination buttons
@@ -106,80 +131,6 @@ const Contractor = () => {
     }
     return <View style={styles.paginationContainer}>{pages}</View>;
   };
-
-  // const fetchTasksWithPagination = async (userId, page) => {
-  //   try {
-  //     setIsLoading(true); // Start loading
-  //     const response = await fetchTasks(userId, page, pageSize); // Use page state for pagination
-  //     const data = response.data;
-
-  //     // Extract unique projects
-  //     const projectsData = data
-  //       .map((taskData) => taskData?.attributes?.project?.data)
-  //       .filter(
-  //         (project, index, self) =>
-  //           project && self.findIndex((p) => p?.id === project.id) === index
-  //       );
-
-  //     setTasks((prevTasks) => [...prevTasks, ...data]); // Append tasks to the existing ones
-  //     setProjects((prevProjects) => [...prevProjects, ...projectsData]); // Append unique projects
-  //     setHasMore(data.length === pageSize); // Check if more tasks are available
-  //   } catch (error) {
-  //     console.error('Error fetching contractor data:', error);
-  //   } finally {
-  //     setIsLoading(false); // End loading
-  //   }
-  // };
-
-  // const debounce = (func, delay) => {
-  //   let timeout;
-  //   return (...args) => {
-  //     if (timeout) clearTimeout(timeout);
-  //     timeout = setTimeout(() => func(...args), delay);
-  //   };
-  // };
-  // // Debounced version of fetchTasksWithPagination
-  // const debouncedFetchTasks = debounce((userId, page) => {
-  //   fetchTasksWithPagination(userId, page);
-  // }, 500); // Adjust delay as necessary
-
-  // useEffect(() => {
-  //   if (user && user.id) {
-  //     debouncedFetchTasks(user.id, page); // Trigger debounced fetch
-  //   }
-  // }, [user, page]);
-
-  // const loadMoreTasks = () => {
-  //   if (!isLoading && hasMore) {
-  //     setPage((prevPage) => prevPage + 1); // Increment page for the next batch of tasks
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   const loadContractorData = async () => {
-  //     if (user && user.id) {
-  //       try {
-  //         setIsLoading(true); // Start loading
-  //         const data = await fetchTasks(user.id);
-  //         const projectsData = data.data
-  //           .map((taskData) => taskData?.attributes?.project?.data) // Map to project data
-  //           .filter(
-  //             (project, index, self) =>
-  //               project && // Ensure project is not null or undefined
-  //               self.findIndex((p) => p?.id === project.id) === index // Ensure unique projects
-  //           );
-  //         setTasks(data.data); // Set tasks
-  //         setProjects(projectsData); // Set unique projects
-  //       } catch (error) {
-  //         console.error('Error fetching contractor data:', error);
-  //       } finally {
-  //         setIsLoading(false); // End loading
-  //       }
-  //     }
-  //   };
-
-  //   loadContractorData();
-  // }, [user]);
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -318,7 +269,8 @@ const styles = StyleSheet.create({
     marginTop: -10,
   },
   pageButton: {
-    padding: "8px 12px",
+    paddingVertical: "8px",
+    paddingHorizontal: "12px",
     border: "1px solid #A5A5A5",
     borderRadius: "5px",
     backgroundColor: "#FFFFFF",

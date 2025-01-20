@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     width: "100%",
     minHeight: 100, // Adjust to make the text input larger
-    textAlignVertical: "top", // Align text to the top in multiline mode
+    verticalAlign: "top", // Align text to the top in multiline mode
   },
   uploadContainer: {
     borderStyle: "dashed",

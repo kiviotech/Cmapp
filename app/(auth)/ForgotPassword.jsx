@@ -342,7 +342,7 @@ const ForgotPasswordScreen = () => {
               value={email}
               onChangeText={setEmail}
               placeholder="Enter your email"
-              keyboardType="email-address"
+              inputMode="email-address"
               autoCapitalize="none"
               autoCorrect={false}
               placeholderTextColor="#666"

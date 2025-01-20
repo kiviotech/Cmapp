@@ -112,15 +112,15 @@ const ProjectTeam = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Function to fetch tasks for a specific page
+  // Update the fetch function to handle pagination properly
   const fetchTasksWithPagination = async (userId, page) => {
-    // if (isLoading) return; // Prevent multiple calls if already loading
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
     try {
       const response = await fetchTasks(userId, page, pageSize);
       const data = response.data;
 
-      if (data && data.length > 0) {
+      if (data) {
+        // Extract unique projects from the current page of tasks
         const projectsData = data
           .map((taskData) => taskData?.attributes?.project?.data)
           .filter(
@@ -128,36 +128,43 @@ const ProjectTeam = () => {
               project && self.findIndex((p) => p?.id === project.id) === index
           );
 
-        setProjects(projectsData); // Append unique projects
-        // Append tasks and projects while ensuring no duplicates
+        // Update tasks for the current page only (don't append)
         setTasks(data);
-        // Set total pages based on the response
-        setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
+
+        // Update projects
+        setProjects(projectsData);
+
+        // Update total pages from pagination metadata
+        if (response.meta?.pagination) {
+          setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
+        }
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
     } finally {
-      setIsLoading(false); // End loading
+      setIsLoading(false);
     }
   };
 
-  // Initial fetch on page load
+  // Initial fetch on component mount
   useEffect(() => {
-    if (user && user.id) {
-      fetchTasksWithPagination(user.id, 1); // Load the first page
-      setCurrentPage(1); // Reset the page to 1
+    if (user?.id) {
+      fetchTasksWithPagination(user.id, currentPage);
     }
-  }, [user]);
+  }, [user, currentPage]); // Add currentPage as dependency
 
-  // Fetch tasks for the selected page
-  const handlePageChange = (page) => {
-    if (page < 1 || page > totalPages) return; // Do not fetch if page is out of range
-    setCurrentPage(page); // Update the current page
-    fetchTasksWithPagination(user.id, page); // Fetch data for the new page
+  // Update page change handler
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+      setCurrentPage(newPage);
+      // fetchTasksWithPagination will be triggered by the useEffect
+    }
   };
 
-  // Render pagination buttons
+  // Update pagination render function
   const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
     const pages = [];
     for (let i = 1; i <= totalPages; i++) {
       pages.push(
@@ -612,11 +619,7 @@ const ProjectTeam = () => {
         </View>
         <>
           <FlatList
-            data={tasks.filter((task) =>
-              task?.attributes?.project?.data?.attributes?.name
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-            )}
+            data={filteredTasks(tasks)}
             renderItem={({ item: task }) => {
               const taskImageUrl = task?.attributes?.documents?.data?.[0]
                 ?.attributes?.url
@@ -680,11 +683,13 @@ const ProjectTeam = () => {
             }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.noProjectsText}>No tasks available.</Text>
+                <Text style={styles.noProjectsText}>
+                  {isLoading ? "Loading..." : "No tasks available."}
+                </Text>
               </View>
             }
           />
-          {totalPages > 1 && renderPagination()}
+          {renderPagination()}
         </>
       </ScrollView>
       <BottomNavigation />
@@ -719,7 +724,8 @@ const styles = StyleSheet.create({
     marginTop: -10,
   },
   pageButton: {
-    padding: "8px 12px",
+    paddingVertical: "8px",
+    paddingHorizontal: "12px",
     border: "1px solid #A5A5A5",
     borderRadius: "5px",
     backgroundColor: "#FFFFFF",

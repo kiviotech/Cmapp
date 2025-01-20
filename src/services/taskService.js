@@ -12,9 +12,9 @@ import {
 } from "../api/repositories/taskRepository";
 
 // Fetch all tasks
-export const fetchTasks = async (userId, page, pageSize) => {
+export const fetchTasks = async (userId, page, pageSize, designation_value) => {
   try {
-    const response = await getTasks(userId, page, pageSize);
+    const response = await getTasks(userId, page, pageSize, designation_value);
     return response.data;
   } catch (error) {
     throw error;

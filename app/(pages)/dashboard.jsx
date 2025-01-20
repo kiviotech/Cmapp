@@ -17,8 +17,6 @@ const useRoleComponent = (designation) => {
       return <ProjectTeam />;
     case "Site Supervisor":
       return <ProjectTeam />;
-    default:
-      return <NotFound />;
   }
 };
 

@@ -230,7 +230,7 @@ const SignUp = () => {
               placeholder="Your email or phone"
               value={form.email}
               handleChangeText={(e) => handleChangeText("email", e)}
-              keyboardType="email-address"
+              inputMode="email-address"
               style={{ marginBottom: 16 }}
             />
             {errors.email && (

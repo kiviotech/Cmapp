@@ -1,7 +1,15 @@
 const taskEndpoints = {
-  getTasks: (userId, page, pageSize) =>
-    `/tasks?filters[project_team_member][id][$eq]=${userId}&populate[standard_task]=*&populate[documents]=true&populate[submissions][populate]=proofOfWork&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
-  
+  getTasks: (
+    userId,
+    page,
+    pageSize,
+    designation_value = "project_team_member"
+  ) =>
+    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task]=*&populate[documents]=true&populate[submissions][populate]=proofOfWork&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+
+  getContractorTasks: (userId, page, pageSize) =>
+    `/tasks?filters[contractor][id][$eq]=${userId}&populate[standard_task]=*&populate[documents]=true&populate[submissions][populate]=proofOfWork&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+
   getTaskById: (id) => `/tasks/${id}?populate=*`,
   getTaskDetailsById: (id) =>
     `tasks?populate[0]=assigned_to&populate[1]=project&filters[assigned_to][id][$eq]=${id}`,

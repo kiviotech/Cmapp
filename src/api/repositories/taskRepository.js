@@ -1,7 +1,10 @@
 import apiClient from "../apiClient";
 import taskEndpoints from "../endpoints/taskEndpoints";
 
-export const getTasks = (userId, page, pageSize) => apiClient.get(taskEndpoints.getTasks(userId, page, pageSize));
+export const getTasks = (userId, page, pageSize, designation_value) =>
+  apiClient.get(
+    taskEndpoints.getTasks(userId, page, pageSize, designation_value)
+  );
 
 export const getTaskById = (id) => apiClient.get(taskEndpoints.getTaskById(id));
 

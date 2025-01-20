@@ -8,7 +8,7 @@ const LoginField = ({
   placeholder,
   handleChangeText,
   secureTextEntry = false,
-  keyboardType = "default",
+  inputMode = "default",
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showSecurityPassword, setShowSecurityPassword] = useState(false);
@@ -24,7 +24,7 @@ const LoginField = ({
           (placeholder === "Password" && !showPassword) ||
           (placeholder === "Social Security" && !showSecurityPassword)
         }
-        keyboardType={keyboardType}
+        inputMode={inputMode}
       />
 
       {(placeholder === "Password" ||

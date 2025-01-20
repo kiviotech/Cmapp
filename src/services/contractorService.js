@@ -5,6 +5,7 @@ import {
   createContractor,
   updateContractor,
   deleteContractor,
+  getContractorsIdByUserId,
 } from "../api/repositories/contractorRepository";
 
 export const fetchContractors = async () => {
@@ -29,6 +30,15 @@ export const fetchContractorsByUserId = async (userId) => {
   try {
     const response = await getContractorsByUserId(userId);
     return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchContractorsIdByUserId = async (userId) => {
+  try {
+    const response = await getContractorsIdByUserId(userId);
+    return response?.data;
   } catch (error) {
     throw error;
   }
