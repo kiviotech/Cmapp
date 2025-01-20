@@ -76,6 +76,14 @@ const SignUp = () => {
     }
 
     setForm({ ...form, [field]: value });
+
+    // Add immediate password validation
+    if (field === "password" && value.length > 0 && value.length < 8) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 8 characters long",
+      }));
+    }
   };
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds(fileIds);
