@@ -61,8 +61,6 @@ apiClient.interceptors.request.use(
       }
     } catch (error) {
       console.error("Error fetching token:", error); // Log any error in fetching the token
-    }
-
     return config;
   },
   (error) => Promise.reject(error)
