@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-} from "react-native";
+import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { icons } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 
@@ -60,10 +54,7 @@ const SubtaskCard = ({ cardValue, cardColor = "#EEF7E0" }) => {
         <View style={styles.deadlineContainer}>
           <View style={styles.deadlineWrapper}>
             {icons?.clockFilled && (
-              <Image
-                source={icons.clockFilled}
-                style={styles.clockIcon}
-              />
+              <Image source={icons.clockFilled} style={styles.clockIcon} />
             )}
             <Text style={styles.deadlineText}>{deadline}</Text>
           </View>
@@ -119,7 +110,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     letterSpacing: 0.06,
   },
-  
 });
 
 export default SubtaskCard;

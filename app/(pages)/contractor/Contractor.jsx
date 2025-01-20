@@ -170,10 +170,9 @@ const Contractor = () => {
                       <View style={styles.milestoneContent}>
                         <View style={styles.milestoneHeaderContainer}>
                           <View style={styles.projectTaskName}>
-
                             <Text style={styles.milestoneTitle}>
-                              {task.attributes.standard_task.data.attributes.Name ||
-                                "Task"}
+                              {task.attributes.standard_task.data.attributes
+                                .Name || "Task"}
                             </Text>
                           </View>
                           <View style={styles.substituteButton}>
@@ -479,7 +478,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   projectTaskName: {
-    display: 'flex',
+    display: "flex",
   },
   milestoneTitle: {
     fontSize: 16,

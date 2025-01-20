@@ -40,7 +40,7 @@ const ChangePassword = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       setErrors("Please fill in all the fields.");
     } else if (newPassword != confirmPassword) {
-      setErrors("Current password and Confirm password should be same");
+      setErrors("New password and Confirm password should be same");
     } else {
       setErrors(""); // Clear error if all fields are filled
     }
@@ -86,7 +86,7 @@ const ChangePassword = () => {
 
         if (response.status === 200) {
           alert("Password updated successfully!");
-          navigation.navigate("(pages)/contractor/settings");
+          navigation.goBack();
         } else {
           alert(response.data.error?.message || "Failed to update password.");
         }

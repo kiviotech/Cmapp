@@ -17,14 +17,15 @@ const SelectYourProjectCard = ({ cardValue }) => {
     desc = "No description available",
     update = "Status unavailable",
     deadline = "No deadline set",
-    id = "1"
+    id = "1",
   } = cardValue;
 
   return (
-    <TouchableOpacity style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}
-    // onPress={() => navigation.navigate("(pages)/contractor/ProjectDetails", {
-    //   projectId: cardValue.id,
-    // })}
+    <TouchableOpacity
+      style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}
+      // onPress={() => navigation.navigate("(pages)/contractor/ProjectDetails", {
+      //   projectId: cardValue.id,
+      // })}
     >
       <Text style={styles.projectName}>{name}</Text>
       <Text style={styles.projectDescription}>{desc}</Text>
@@ -35,10 +36,7 @@ const SelectYourProjectCard = ({ cardValue }) => {
       <View style={[styles.deadlineContainer]}>
         <View style={styles.deadlineWrapper}>
           {icons?.clockFilled && (
-            <Image
-              source={icons.clockFilled}
-              style={styles.clockIcon}
-            />
+            <Image source={icons.clockFilled} style={styles.clockIcon} />
           )}
           <Text style={styles.deadlineText}>{deadline}</Text>
         </View>
