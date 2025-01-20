@@ -21,25 +21,22 @@ const { width, height } = Dimensions.get("window");
 const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { projectId, projectData: routeProjectData } = route.params || {};
-
+  const { projectId, projectData: routeProjectData, userId, tasksData } = route.params || {};
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [jobRole, setJobRole] = useState("");
+  const [jobRole, setJobRole] = useState('')
 
   useEffect(() => {
     if (routeProjectData) {
       setProjectData(routeProjectData);
-      fetchProjectTasks();
+      // fetchProjectTasks();
     }
-
     const approverId = routeProjectData?.attributes?.approvers?.data[0]?.id;
-
     const fetchManagerDetails = async () => {
-      if (approverId) {
+      // console.log('approverId', routeProjectData.attributes)
+      // if (approverId) {
         try {
-          const response = await fetchProjectTeamById(approverId);
+          const response = await fetchProjectTeamById("1");
           const names = response?.data?.attributes?.users?.data.map(
             (item) => item?.attributes?.username
           );
@@ -48,28 +45,27 @@ const ProjectDetails = () => {
         } catch (error) {
           console.error("Error fetching manager details:", error);
         }
-      }
+      // }
     };
-
     fetchManagerDetails();
     // }, [routeProjectData, setProjectData]);
   }, []);
 
-  const fetchProjectTasks = async () => {
-    try {
-      const taskIds =
-        routeProjectData?.attributes?.tasks?.data?.map((task) => task.id) || [];
-      const taskPromises = taskIds.map(async (taskId) => {
-        const response = await fetchTaskById(taskId);
-        return response;
-      });
+  // const fetchProjectTasks = async () => {
+  //   try {
+  //     const taskIds =
+  //       routeProjectData?.attributes?.tasks?.data?.map((task) => task.id) || [];
+  //     const taskPromises = taskIds.map(async (taskId) => {
+  //       const response = await fetchTaskById(taskId);
+  //       return response;
+  //     });
 
-      const taskResults = await Promise.all(taskPromises);
-      setTasks(taskResults);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    }
-  };
+  //     const taskResults = await Promise.all(taskPromises);
+  //     setTasks(taskResults);
+  //   } catch (error) {
+  //     console.error("Error fetching tasks:", error);
+  //   }
+  // };
 
   const project = projectData?.attributes || {};
 
@@ -150,9 +146,9 @@ const ProjectDetails = () => {
 
         <Text style={styles.label}>All Tasks</Text>
 
-        {tasks.length > 0 ? (
-          tasks.map((task, index) => {
-            const taskData = task?.data?.attributes || {};
+        {tasksData?.length > 0 ? (
+          tasksData?.map((task, index) => {
+            const taskData = task?.attributes || {};
             const standardTask =
               taskData?.standard_task?.data?.attributes || {};
             const status = taskData.task_status;

@@ -24,7 +24,7 @@ const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const [tasks, setTasks] = useState([]);
-  const { projectId, projectData, contractorId } = route.params || {};
+  const { projectId, projectData, userId } = route.params || {};
   const [projectDetails, setProjectDetails] = useState([]);
   const [progress, setProgress] = useState(0); // Track progress percentage
   const [projectMangerName, setProjectManagerName] = useState("");
@@ -32,10 +32,11 @@ const ProjectDetails = () => {
 
   useEffect(() => {
     const fetchProjectTasks = async () => {
-      if (projectId && contractorId) {
+      if (projectId && userId) {
         try {
           const allTasks = [];
-          const taskData = await getTaskByContractorId(projectId, contractorId);
+          const taskData = await getTaskByContractorId(projectId, userId);
+          console.log('taskData', taskData)
           allTasks.push(...taskData.data.data); // Accumulate tasks for each project
 
           setTasks(allTasks); // Set tasks state with accumulated tasks

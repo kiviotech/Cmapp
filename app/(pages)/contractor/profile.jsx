@@ -12,84 +12,48 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "./BottomNavigation ";
 import colors from "../../../constants/colors";
-import { icons } from "../../../constants";
-import fonts from "../../../constants/fonts";
-import UploadedFileHIstory from "../../../components/UploadedFileHIstory";
-import { getProjects } from "../../../src/api/repositories/projectRepository";
-import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  getTaskByContractorId,
-  getTasks,
-} from "../../../src/api/repositories/taskRepository";
 import useAuthStore from "../../../useAuthStore";
-import { fetchContractorsByUserId } from "../../../src/services/contractorService";
-import { fetchProjectsByContractorEmail } from "../../../src/services/projectService";
-import { URL } from "../../../src/api/apiClient";
-import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import SelectYourProject from "./SelectYourProject";
+import { fetchTasks } from "../../../src/services/taskService";
 
 const profile = () => {
   const { user, designation } = useAuthStore();
   const router = useRouter();
   const navigation = useNavigation();
+  const pageSize = 5; // Number of tasks per page
 
   const [projectsDetail, setProjectsDetail] = useState([]); // to store all user project
   const [tasks, setTasks] = useState([]); // to store tasks per project
   // const [contractorsDetails, setContractorsDetails] = useState([])
   const [uploadedHistory, setUploadedHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [contractorsData, setContractorsData] = useState([]);
+  // const [contractorsData, setContractorsData] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    const loadContractorData = async () => {
+    const loadContractorData = async (page=1) => {
       if (user && user.id) {
         try {
-          setIsLoading(true); // Start loading
-
-          // Fetch contractor data by user ID
-          const data = await fetchContractorsByUserId(user.id);
-          setContractorsData(data.data); // Set entire array of contractors
-
-          if (data.data.length > 0) {
-            const contractorId = data.data[0].id;
-            const projectData = data.data.flatMap(
-              (contractor) => contractor.attributes.projects.data
+          setIsLoading(true); // Start loading  
+          const data = await fetchTasks(user.id, page, pageSize);
+          const projectsData = data.data
+            .map((taskData) => taskData?.attributes?.project?.data) // Map to project data
+            .filter(
+              (project, index, self) =>
+                project && // Ensure project is not null or undefined
+                self.findIndex((p) => p?.id === project.id) === index // Ensure unique projects
             );
-
-            if (projectData.length > 0) {
-              // Fetch all tasks in a single batch using Promise.all
-              const allTasks = await Promise.all(
-                projectData.map(async (project) => {
-                  try {
-                    const taskData = await getTaskByContractorId(
-                      project.id,
-                      contractorId
-                    );
-                    // Filter ongoing tasks
-                    return taskData.data.data.filter(
-                      (task) => task.attributes.task_status === "ongoing"
-                    );
-                  } catch (taskError) {
-                    console.error(
-                      `Error fetching tasks for project ${project.id}:`,
-                      taskError
-                    );
-                    return []; // Return an empty array if task fetch fails
-                  }
-                })
-              );
-
-              // Flatten the tasks array and update state
-              setTasks(allTasks.flat());
-            } else {
-              setTasks([]); // No projects, set tasks to an empty array
-            }
-          }
+          const tasksWithSubmissions = data.data.filter(
+            (task) => task.attributes.submissions.data.length > 0
+          );
+          setTasks(data.data); // Set tasks
+          setProjects(projectsData)
+          setUploadedHistory(tasksWithSubmissions);
         } catch (error) {
-          console.error("Error fetching contractor data:", error);
+          console.error('Error fetching contractor data:', error);
         } finally {
           setIsLoading(false); // End loading
         }
@@ -98,54 +62,6 @@ const profile = () => {
 
     loadContractorData();
   }, [user]);
-
-  useEffect(() => {
-    const ContractorData = async () => {
-      if (user && user.id) {
-        try {
-          const data = await fetchContractorsByUserId(user.id);
-
-          var filteredData = [];
-          if (data.data.length > 0) {
-            const contractorId = data.data[0].id; // Assuming one contractor per user
-            const projectData = data.data.map(
-              (project) => (filteredData = project.attributes.projects.data)
-            );
-            setProjectsDetail(filteredData);
-
-            // Fetch tasks for each project ID in selectedProjectId
-            const allTasks = [];
-            for (const projectId of filteredData) {
-              const taskData = await getTaskByContractorId(
-                projectId.id,
-                contractorId
-              );
-              const ongoingTasks = taskData.data.data.filter(
-                (task) => task.attributes.task_status === "ongoing"
-              );
-              allTasks.push(...ongoingTasks); // Accumulate tasks for each project
-            }
-            setTasks(allTasks); // Update tasks state with all fetched tasks
-
-            // Filter tasks with submissions.data > 0
-            const tasksWithSubmissions = allTasks.filter(
-              (task) => task.attributes.submissions.data.length > 0
-            );
-            const submissionData = tasksWithSubmissions.map(
-              (task) => task.attributes.submissions.data
-            );
-
-            setUploadedHistory(tasksWithSubmissions); // Store submission data
-          }
-        } catch (error) {
-          console.error("Error fetching contractor data:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    ContractorData();
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -271,12 +187,11 @@ const profile = () => {
             </View>
           );
         })}
-        {/* <UploadedFileHIstory historyData={uploadedHistory} /> */}
 
         <View style={{ marginTop: 20 }}>
           <SelectYourProject
             isLoading={isLoading}
-            contractorsData={contractorsData}
+            projects={projects}
           />
         </View>
 

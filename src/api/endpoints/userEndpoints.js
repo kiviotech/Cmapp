@@ -1,6 +1,6 @@
 const userEndpoints = {
   getUsers: "/users?populate=*",
-  getUserById: (id) => `/users/${id}?populate=*`,
+  getUserById: (id) => `/users/${id}?populate[tasks][populate]=*`,
   createUser: "/auth/local/register",
   loginUser: "/auth/local",
   updateUser: (id) => `/users/${id}`,

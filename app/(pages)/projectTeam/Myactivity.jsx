@@ -28,6 +28,7 @@ import { fetchProjectDetailsByApproverId } from "../../../src/services/projectSe
 import apiClient, { MEDIA_BASE_URL } from "../../../src/api/apiClient";
 import { icons } from "../../../constants";
 import colors from "../../../constants/colors";
+import { fetchTasks } from "../../../src/services/taskService";
 
 const renderCard = ({ item }) => (
   <View style={styles.card}>
@@ -61,8 +62,12 @@ const Myactivity = () => {
   const [projectTeamId, setProjectTeamId] = useState(null);
   const [projectDetails, setProjectDetails] = useState([]);
   const [taskDetails, setTaskDetails] = useState([]);
-  const { user, designation, role, projects, permissions } = useAuthStore();
+  const { user, designation, role, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true); // Flag to check if there are more tasks to load
+    const [page, setPage] = useState(1); // Current page
+    const pageSize = 1; // Number of tasks per page
+    const [projects, setProjects] = useState([]);
 
   const ongoingProjectsCount = projectDetails.filter(
     (item) => item.attributes.project_status === "ongoing"
@@ -76,168 +81,28 @@ const Myactivity = () => {
     const fetchProjectTeamId = async () => {
       if (user && user.id) {
         try {
-          const response = await fetchProjectTeamIdByUserId(user.id);
-          const [{ id }] = response.data;
-          setProjectTeamId(id);
+          setIsLoading(true); // Start loading
+          const response = await fetchTasks(user.id, page, pageSize); // Use page state for pagination
+          const data = response.data;
+          // Extract unique projects
+          const projectsData = data
+            .map((taskData) => taskData?.attributes?.project?.data)
+            .filter(
+              (project, index, self) =>
+                project && self.findIndex((p) => p?.id === project.id) === index
+            );
+          setTasks(data); // Append tasks to the existing ones
+          setProjects(projectsData); // Append unique projects
+          // setHasMore(data.length === pageSize);
         } catch (error) {
           console.error("Error fetching project team ID:", error);
-        }
-      }
-    };
-    fetchProjectTeamId();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const projectResponse = await fetchProjectDetailsByApproverId(
-            projectTeamId
-          );
-          const projects = projectResponse.data;
-
-          const projectsWithTasks = await Promise.all(
-            projects.map(async (project) => {
-              const tasks = project.attributes.tasks.data;
-              const taskDetails = await Promise.all(
-                tasks.map(async (task) => {
-                  const taskResponse = await apiClient.get(
-                    `/tasks/${task.id}?populate=*`
-                  );
-
-                  return { id: task.id, ...taskResponse.data };
-                })
-              );
-              return { ...project, taskDetails };
-            })
-          );
-
-          setProjectDetails(projectsWithTasks);
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
-
-    fetchProjectDetails();
-  }, [projectTeamId]);
-
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const response = await fetchProjectDetailsByApproverId(projectTeamId);
-          setProjectDetails(response.data); // Store project details with tasks
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
-    fetchProjectDetails();
-  }, [projectTeamId]);
-
-  useEffect(() => {
-    const fetchTaskDetails = async () => {
-      const allTaskDetails = [];
-
-      for (const project of projectDetails) {
-        const tasks = project.attributes.tasks.data;
-        for (const task of tasks) {
-          try {
-            const taskResponse = await apiClient.get(
-              `https://cmappapi.kivio.in/api/tasks/${task.id}?populate=*`
-            );
-            allTaskDetails.push(taskResponse.data);
-          } catch (error) {
-            console.error(
-              `Error fetching details for task ID ${task.id}:`,
-              error
-            );
-          }
-        }
-      }
-
-      setTaskDetails(allTaskDetails);
-    };
-
-    if (projectDetails.length > 0) {
-      fetchTaskDetails();
-    }
-  }, [projectDetails]);
-
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     try {
-  //       const userResponse = await getAuthenticatedUserWithPopulate(
-  //         "job_profile"
-  //       );
-  //       setJobProfile(userResponse.data.job_profile.name);
-  //     } catch (error) {
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      try {
-        const projectData = await getProjects();
-        if (isMounted && projectData?.data?.data) {
-          const uniqueProjects = Array.from(
-            new Map(
-              projectData.data.data.map((item) => [item.id, item])
-            ).values()
-          );
-          setProjectsDetail(uniqueProjects);
-          if (uniqueProjects.length > 0) {
-            setSelectedProjectId(uniqueProjects[0]?.id);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        if (isMounted) {
-          setProjectsDetail([]);
-        }
-      } finally {
-        if (isMounted) {
+        } finally {
           setIsLoading(false);
         }
       }
     };
-
-    fetchProjects();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchRequests = async () => {
-  //       try {
-  //         const response = await fetchSubmissions();
-  //         const submissions = response?.data || [];
-  //         const recentRequests = submissions
-  //           .sort(
-  //             (a, b) =>
-  //               new Date(b.attributes.createdAt) -
-  //               new Date(a.attributes.createdAt)
-  //           )
-  //           .slice(0, 5);
-
-  //         setRequests(recentRequests);
-  //       } catch (error) {
-  //         console.error("Error fetching submissions:", error);
-  //       }
-  //     };
-
-  //     fetchRequests();
-  //   }, [])
-  // );
+    fetchProjectTeamId();
+  }, [user, page]);
 
   useFocusEffect(
     useCallback(() => {
@@ -291,8 +156,8 @@ const Myactivity = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScrollContainer}
           >
-            {projectDetails.length > 0 ? (
-              projectDetails.map((project) => (
+            {projects.length > 0 ? (
+              projects.map((project) => (
                 <TouchableOpacity
                   key={project.id}
                   style={[
@@ -309,7 +174,10 @@ const Myactivity = () => {
                   ]}
                   onPress={() =>
                     navigation.navigate("(pages)/projectTeam/ProjectDetails", {
-                      projectData: project,
+                      projectId: project.id,
+                        projectData: project,
+                        userId: user.id,
+                        tasksData: tasks
                     })
                   }
                 >

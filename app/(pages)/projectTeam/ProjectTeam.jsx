@@ -10,6 +10,7 @@ import {
   Dimensions,
   FlatList,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -17,7 +18,6 @@ import useAuthStore from "../../../useAuthStore";
 import { getProjects } from "../../../src/api/repositories/projectRepository";
 import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import BottomNavigation from "./BottomNavigation";
-import { fetchSubcategories } from "../../../src/services/subcategoryService";
 import { fetchSubmissions } from "../../../src/services/submissionService";
 import {
   Ionicons,
@@ -31,6 +31,7 @@ import apiClient, {
   MEDIA_BASE_URL,
   URL,
 } from "../../../src/api/apiClient";
+import { fetchTasks } from "../../../src/services/taskService";
 
 const data = [
   {
@@ -76,7 +77,7 @@ const renderCard = ({ item }) => (
 );
 
 const getProjectStatus = (project) => {
-  const status = project.attributes.project_status;
+  const status = project?.attributes?.project_status;
   switch (status) {
     case "completed":
       return { text: "Completed", color: "#4CAF50" };
@@ -92,119 +93,180 @@ const getProjectStatus = (project) => {
 const ProjectTeam = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const navigation = useNavigation();
-  const [projectsDetail, setProjectsDetail] = useState([]);
-  const [tasksDetail, setTasksDetail] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
-  const [jobProfile, setJobProfile] = useState("");
-  const [subcategories, setSubcategories] = useState([]);
+  // const [projectsDetail, setProjectsDetail] = useState([]);
+  // const [tasksDetail, setTasksDetail] = useState([]);
+  // const [selectedProjectId, setSelectedProjectId] = useState(null);
+  // const [jobProfile, setJobProfile] = useState("");
+  // const [subcategories, setSubcategories] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [projectTeamId, setProjectTeamId] = useState(null);
+  // const [projectTeamId, setProjectTeamId] = useState(null);
   const [projectDetails, setProjectDetails] = useState([]);
-  const [taskDetails, setTaskDetails] = useState([]);
-  const { user, designation, role, projects, permissions } = useAuthStore();
+  // const [taskDetails, setTaskDetails] = useState([]);
+  const { user, designation, role, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1); // Current page
+  const pageSize = 5; // Number of tasks per page
+  const [projects, setProjects] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const ongoingProjectsCount = projectDetails.filter(
-    (item) => item.attributes.project_status === "ongoing"
-  ).length;
+  // Function to fetch tasks for a specific page
+  const fetchTasksWithPagination = async (userId, page) => {
+    // if (isLoading) return; // Prevent multiple calls if already loading
+    setIsLoading(true); // Start loading
+    try {
+      const response = await fetchTasks(userId, page, pageSize);
+      const data = response.data;
 
-  const completedProjectsCount = projectDetails.filter(
-    (item) => item.attributes.project_status === "completed"
-  ).length;
+      if (data && data.length > 0) {
+        const projectsData = data
+          .map((taskData) => taskData?.attributes?.project?.data)
+          .filter(
+            (project, index, self) =>
+              project && self.findIndex((p) => p?.id === project.id) === index
+          );
 
-  useEffect(() => {
-    const fetchProjectTeamId = async () => {
-      if (user && user.id) {
-        try {
-          const response = await fetchProjectTeamIdByUserId(user.id);
-          const [{ id }] = response?.data;
-          setProjectTeamId(id);
-        } catch (error) {
-          console.error("Error fetching project team ID:", error);
-        }
+        setProjects(projectsData); // Append unique projects
+        // Append tasks and projects while ensuring no duplicates
+        setTasks(data);
+        // Set total pages based on the response
+        setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
       }
-    };
-    fetchProjectTeamId();
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setIsLoading(false); // End loading
+    }
+  };
+
+  // Initial fetch on page load
+  useEffect(() => {
+    if (user && user.id) {
+      fetchTasksWithPagination(user.id, 1); // Load the first page
+      setCurrentPage(1); // Reset the page to 1
+    }
   }, [user]);
 
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const projectResponse = await fetchProjectDetailsByApproverId(
-            projectTeamId
-          );
-          const projects = projectResponse.data;
-          const projectsWithTasks = await Promise.all(
-            projects.map(async (project) => {
-              const tasks = project.attributes.tasks.data;
-              const taskDetails = await Promise.all(
-                tasks.map(async (task) => {
-                  const taskResponse = await apiClient.get(
-                    `/tasks/${task.id}?populate=*`
-                  );
+  // Fetch tasks for the selected page
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages) return; // Do not fetch if page is out of range
+    setCurrentPage(page); // Update the current page
+    fetchTasksWithPagination(user.id, page); // Fetch data for the new page
+  };
 
-                  return { id: task.id, ...taskResponse.data };
-                })
-              );
-              return { ...project, taskDetails };
-            })
-          );
-
-          setProjectDetails(projectsWithTasks);
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
-
-    fetchProjectDetails();
-  }, [projectTeamId]);
-
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (projectTeamId) {
-        try {
-          const response = await fetchProjectDetailsByApproverId(projectTeamId);
-          setProjectDetails(response.data); // Store project details with tasks
-        } catch (error) {
-          console.error("Error fetching project details:", error);
-        }
-      }
-    };
-    fetchProjectDetails();
-  }, [projectTeamId]);
-
-  useEffect(() => {
-    const fetchTaskDetails = async () => {
-      const allTaskDetails = [];
-
-      for (const project of projectDetails) {
-        const tasks = project.attributes.tasks.data;
-        for (const task of tasks) {
-          try {
-            const taskResponse = await apiClient.get(
-              `${BASE_URL}/tasks/${task.id}?populate=*`
-            );
-            allTaskDetails.push(taskResponse.data);
-          } catch (error) {
-            console.error(
-              `Error fetching details for task ID ${task.id}:`,
-              error
-            );
-          }
-        }
-      }
-
-      setTaskDetails(allTaskDetails);
-    };
-
-    if (projectDetails.length > 0) {
-      fetchTaskDetails();
+  // Render pagination buttons
+  const renderPagination = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <TouchableOpacity
+          key={i}
+          style={[
+            styles.pageButton,
+            currentPage === i && styles.activePageButton,
+          ]}
+          onPress={() => handlePageChange(i)}
+        >
+          <Text
+            style={[
+              styles.pageText,
+              currentPage === i && styles.activePageText,
+            ]}
+          >
+            {i}
+          </Text>
+        </TouchableOpacity>
+      );
     }
-  }, [projectDetails]);
+    return <View style={styles.paginationContainer}>{pages}</View>;
+  };
+
+  const ongoingProjectsCount = projects.filter(
+    (item) => item?.attributes?.project_status === "ongoing"
+  ).length;
+
+  const completedProjectsCount = projects.filter(
+    (item) => item?.attributes?.project_status === "completed"
+  ).length;
+
+  // useEffect(() => {
+  //   const fetchProjectDetails = async () => {
+  //     if (projectTeamId) {
+  //       try {
+  //         const projectResponse = await fetchProjectDetailsByApproverId(
+  //           projectTeamId
+  //         );
+  //         const projects = projectResponse.data;
+  //         const projectsWithTasks = await Promise.all(
+  //           projects.map(async (project) => {
+  //             const tasks = project.attributes.tasks.data;
+  //             const taskDetails = await Promise.all(
+  //               tasks.map(async (task) => {
+  //                 const taskResponse = await apiClient.get(
+  //                   `/tasks/${task.id}?populate=*`
+  //                 );
+
+  //                 return { id: task.id, ...taskResponse.data };
+  //               })
+  //             );
+  //             return { ...project, taskDetails };
+  //           })
+  //         );
+
+  //         setProjectDetails(projectsWithTasks);
+  //       } catch (error) {
+  //         console.error("Error fetching project details:", error);
+  //       }
+  //     }
+  //   };
+
+  //   fetchProjectDetails();
+  // }, [projectTeamId]);
+
+  // useEffect(() => {
+  //   const fetchProjectDetails = async () => {
+  //     if (projectTeamId) {
+  //       try {
+  //         const response = await fetchProjectDetailsByApproverId(projectTeamId);
+  //         setProjectDetails(response.data); // Store project details with tasks
+  //       } catch (error) {
+  //         console.error("Error fetching project details:", error);
+  //       }
+  //     }
+  //   };
+  //   fetchProjectDetails();
+  // }, [projectTeamId]);
+
+  // useEffect(() => {
+  //   const fetchTaskDetails = async () => {
+  //     const allTaskDetails = [];
+
+  //     for (const project of projectDetails) {
+  //       const tasks = project.attributes.tasks.data;
+  //       for (const task of tasks) {
+  //         try {
+  //           const taskResponse = await apiClient.get(
+  //             `${BASE_URL}/tasks/${task.id}?populate=*`
+  //           );
+  //           allTaskDetails.push(taskResponse.data);
+  //         } catch (error) {
+  //           console.error(
+  //             `Error fetching details for task ID ${task.id}:`,
+  //             error
+  //           );
+  //         }
+  //       }
+  //     }
+
+  //     setTaskDetails(allTaskDetails);
+  //   };
+
+  //   if (projectDetails.length > 0) {
+  //     fetchTaskDetails();
+  //   }
+  // }, [projectDetails]);
 
   // useEffect(() => {
   //   const fetchUserData = async () => {
@@ -219,42 +281,42 @@ const ProjectTeam = () => {
   //   fetchUserData();
   // }, []);
 
-  useEffect(() => {
-    let isMounted = true;
+  // useEffect(() => {
+  //   let isMounted = true;
 
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      try {
-        const projectData = await getProjects();
-        if (isMounted && projectData?.data?.data) {
-          const uniqueProjects = Array.from(
-            new Map(
-              projectData.data.data.map((item) => [item.id, item])
-            ).values()
-          );
-          setProjectsDetail(uniqueProjects);
-          if (uniqueProjects.length > 0) {
-            setSelectedProjectId(uniqueProjects[0]?.id);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        if (isMounted) {
-          setProjectsDetail([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
+  //   const fetchProjects = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       const projectData = await getProjects();
+  //       if (isMounted && projectData?.data?.data) {
+  //         const uniqueProjects = Array.from(
+  //           new Map(
+  //             projectData.data.data.map((item) => [item.id, item])
+  //           ).values()
+  //         );
+  //         setProjectsDetail(uniqueProjects);
+  //         if (uniqueProjects.length > 0) {
+  //           setSelectedProjectId(uniqueProjects[0]?.id);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching projects:", error);
+  //       if (isMounted) {
+  //         setProjectsDetail([]);
+  //       }
+  //     } finally {
+  //       if (isMounted) {
+  //         setIsLoading(false);
+  //       }
+  //     }
+  //   };
 
-    fetchProjects();
+  //   fetchProjects();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -265,11 +327,10 @@ const ProjectTeam = () => {
           const recentRequests = submissions
             .sort(
               (a, b) =>
-                new Date(b.attributes.createdAt) -
-                new Date(a.attributes.createdAt)
+                new Date(b?.attributes?.createdAt) -
+                new Date(a?.attributes?.createdAt)
             )
             .slice(0, 2);
-
           setRequests(recentRequests);
         } catch (error) {
           console.error("Error fetching submissions:", error);
@@ -282,7 +343,7 @@ const ProjectTeam = () => {
 
   const filteredTasks = (tasks) => {
     return tasks.filter((taskDetail) =>
-      taskDetail.data.attributes.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
+      taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
         searchQuery.toLowerCase()
       )
     );
@@ -324,6 +385,7 @@ const ProjectTeam = () => {
         </View>
 
         <Text style={styles.sectionHeader}>Select Your Project</Text>
+
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <Text>Loading projects...</Text>
@@ -334,19 +396,24 @@ const ProjectTeam = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScrollContainer}
           >
-            {projectDetails.length > 0 ? (
-              projectDetails.map((project) => {
-                const endDate = new Date(project.attributes.end_date);
-                const today = new Date();
-                const isDelayed = today > endDate;
-                const projectStatus = getProjectStatus(project);
+            {projects.length > 0 ? (
+              projects.map((project) => {
+                const isDelayed =
+                  project?.attributes?.project_status === "delayed"; // Define isDelayed based on status
+                const projectStatus = {
+                  text:
+                    project?.attributes?.project_status
+                      ?.charAt(0)
+                      ?.toUpperCase() +
+                    project?.attributes?.project_status?.slice(1),
+                }; // Define projectStatus
 
                 return (
                   <TouchableOpacity
                     key={project.id}
                     style={[
                       styles.projectCard,
-                      isDelayed
+                      project?.attributes?.project_status === "pending"
                         ? { backgroundColor: "#ffebee" }
                         : { backgroundColor: "#e8f5e9" },
                     ]}
@@ -354,19 +421,31 @@ const ProjectTeam = () => {
                       navigation.navigate(
                         "(pages)/projectTeam/ProjectDetails",
                         {
+                          projectId: project.id,
                           projectData: project,
+                          userId: user.id,
+                          // tasksData: tasks
                         }
                       )
                     }
                   >
                     <View style={styles.projectCardContent}>
-                      <Text style={styles.projectCardTitle}>
-                        {project.attributes.name}
+                      {/* Project Name and Description */}
+                      <Text style={styles.projectTitle}>
+                        {project?.attributes?.name || "No Project Name"}
                       </Text>
-                      <Text style={styles.projectCardDescription}>
-                        {project.attributes.description || "No description"}
+                      <Text style={styles.projectDescription}>
+                        {project?.attributes?.description
+                          ? project?.attributes?.description?.length > 50
+                            ? `${project?.attributes?.description?.slice(
+                                0,
+                                50
+                              )}...`
+                            : project?.attributes?.description
+                          : "No description available"}
                       </Text>
 
+                      {/* Project Status */}
                       <View style={styles.statusContainer}>
                         <View>
                           <View
@@ -391,7 +470,7 @@ const ProjectTeam = () => {
                                 ]}
                               />
                               <Text style={styles.projectStatusText}>
-                                {projectStatus.text}
+                                {projectStatus.text || "Unknown"}
                               </Text>
                             </View>
                           </View>
@@ -413,13 +492,14 @@ const ProjectTeam = () => {
                         </View>
                       </View>
 
+                      {/* Project End Date */}
                       <View style={styles.dateContainer}>
                         <Icon name="event" size={16} color="#666" />
                         <Text style={styles.dateText}>
                           End Date:{" "}
-                          {project.attributes.end_date
+                          {project?.attributes?.end_date
                             ? new Date(
-                                project.attributes.end_date
+                                project?.attributes?.end_date
                               ).toLocaleDateString("en-US", {
                                 year: "numeric",
                                 month: "short",
@@ -448,6 +528,7 @@ const ProjectTeam = () => {
             <Text style={styles.seeAllButton}>See all</Text>
           </TouchableOpacity>
         </View>
+
         {requests.map((request) => (
           <TouchableOpacity
             key={request?.id}
@@ -468,24 +549,32 @@ const ProjectTeam = () => {
                   ?.attributes?.name || "Project"}
               </Text>
               <Text style={styles.requestDescription}>
-                {request?.attributes?.comment || "No comments available."}
+                {request?.attributes?.comment
+                  ? request?.attributes?.comment?.charAt(0).toUpperCase() +
+                    request?.attributes?.comment?.slice(1)
+                  : "No description available."}
               </Text>
 
               <View style={styles.requestStatusContainer}>
                 <Text
                   style={[
-                    styles.statusBold,
-                    request?.attributes?.status === "approved"
-                      ? styles.requestStatusApproved
-                      : request?.attributes?.status === "rejected"
-                      ? styles.requestStatusRejected
-                      : request?.attributes?.status === "pending"
-                      ? styles.requestStatusPendingText
-                      : {},
+                    styles.requestStatus,
+                    {
+                      color:
+                        request?.attributes?.status === "approved"
+                          ? "#4CAF50" // green
+                          : request?.attributes?.status === "pending"
+                          ? "#FF9800" // orange
+                          : request?.attributes?.status === "rejected"
+                          ? "#F44336" // red
+                          : "black", // default color
+                    },
                   ]}
                 >
-                  {request?.attributes?.status.charAt(0).toUpperCase() +
-                    request?.attributes?.status?.slice(1).toLowerCase()}
+                  {request?.attributes?.status
+                    ? request?.attributes?.status.charAt(0).toUpperCase() +
+                      request?.attributes?.status.slice(1).toLowerCase()
+                    : "Pending"}
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -521,117 +610,82 @@ const ProjectTeam = () => {
             onChangeText={setSearchQuery}
           />
         </View>
+        <>
+          <FlatList
+            data={tasks.filter((task) =>
+              task?.attributes?.project?.data?.attributes?.name
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+            )}
+            renderItem={({ item: task }) => {
+              const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                ?.attributes?.url
+                ? `${URL}${task?.attributes?.documents?.data[0]?.attributes?.url}`
+                : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
-        {projectDetails.map((projectItem, projectIndex) => {
-          const project = projectItem.attributes;
-          const tasks = (projectItem.taskDetails || []).filter(
-            (taskDetail) =>
-              taskDetail.data.attributes.task_status !== "completed"
-          );
-
-          if (tasks.length === 0 || project.project_status === "completed") {
-            return null;
-          }
-
-          const filteredTasksList = filteredTasks(tasks);
-
-          return (
-            <View key={projectIndex}>
-              <Text style={styles.projectTitle}>
-                {project.name || "Project"}
-              </Text>
-
-              <View style={styles.headerContainer}>
-                <Text style={styles.taskStatus}>
-                  {filteredTasksList.length}{" "}
-                  {filteredTasksList.length === 1
-                    ? "Task Pending"
-                    : "Tasks Pending"}
-                </Text>
-              </View>
-
-              {filteredTasksList.length > 0 ? (
-                filteredTasksList.map((taskDetail, taskIndex) => {
-                  const task = taskDetail.data;
-                  const standardTask =
-                    task.attributes.standard_task?.data?.attributes || {};
-                  const statusText = task.task_status || "Pending";
-                  const statusStyle = getStatusStyle(task.task_status);
-
-                  // const taskImageUrl = task.attributes?.documents?.data?.[0]
-                  //   ?.attributes?.url
-                  //   ? `${BASE_URL}${task?.attributes?.documents?.data[0].attributes?.url}`
-                  //   : "https://via.placeholder.com/150";
-
-                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
-                    ?.attributes?.url
-                    ? `${URL}${task.attributes.documents.data[0].attributes.url}`
-                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
-
-                  return (
-                    <View key={taskIndex} style={styles.milestoneCard}>
-                      <Image
-                        source={{ uri: taskImageUrl }}
-                        style={styles.milestoneImage}
-                      />
-                      <View style={styles.milestoneContent}>
-                        <View style={styles.milestoneHeaderContainer}>
-                          <Text style={styles.milestoneTitle}>
-                            {standardTask.Name || "Task"}
-                          </Text>
-                          <View style={styles.substituteButton}>
-                            <Text style={styles.substituteText}>
-                              Substructure
-                            </Text>
-                          </View>
-                        </View>
-                        <Text style={styles.milestoneDescription}>
-                          {standardTask.Description ||
-                            "No description available."}
+              return (
+                <View key={task.id} style={styles.milestoneCard}>
+                  <Text style={styles.milestoneTitle}>
+                    {/* {task?.attributes?.project?.data?.attributes?.name ||
+                      "Project"} */}
+                  </Text>
+                  <Image
+                    source={{ uri: taskImageUrl }}
+                    style={styles.milestoneImage}
+                  />
+                  <View style={styles.milestoneContent}>
+                    <View style={styles.milestoneHeaderContainer}>
+                      <View style={styles.projectTaskName}>
+                        <Text style={styles.milestoneTitle}>
+                          {task?.attributes?.standard_task?.data?.attributes
+                            ?.Name || "Task"}
                         </Text>
-                        <View style={styles.divider} />
-                        <Text style={styles.deadlineText}>
-                          <FontAwesome name="calendar" size={16} color="#333" />{" "}
-                          Deadline:{" "}
-                          {task?.attributes?.due_date
-                            ? new Date(task.attributes.due_date)
-                                .toLocaleDateString("en-GB", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                })
-                                .replace(/\//g, "-")
-                            : "No deadline specified"}
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.uploadProofButton}
-                          onPress={() =>
-                            navigation.navigate("(pages)/taskDetails", {
-                              taskData: task,
-                            })
-                          }
-                        >
-                          <Ionicons
-                            name="cloud-upload-outline"
-                            size={20}
-                            color="#fff"
-                          />
-                          <Text style={styles.uploadProofText}>
-                            Upload your Proof of work
-                          </Text>
-                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.substituteButton}>
+                        <Text style={styles.substituteText}>Substructure</Text>
                       </View>
                     </View>
-                  );
-                })
-              ) : (
-                <View style={styles.noTasksContainer}>
-                  <Text style={styles.noTasksText}>No tasks available</Text>
+                    <Text style={styles.milestoneDescription}>
+                      {task?.attributes?.standard_task?.data?.attributes
+                        .Description ||
+                        "No description available for this task."}
+                    </Text>
+                    <View style={styles.divider} />
+                    <Text style={styles.deadlineText}>
+                      <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                      {task?.attributes?.due_date || "No deadline specified"}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={() =>
+                        navigation.navigate("(pages)/taskDetails", {
+                          taskData: task,
+                        })
+                      }
+                    >
+                      <Icon name="file-upload" size={16} color="#fff" />
+                      <Text style={styles.uploadButtonText}>
+                        Upload your Proof of work
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              )}
-            </View>
-          );
-        })}
+              );
+            }}
+            keyExtractor={(item) => item.id.toString()}
+            ListFooterComponent={
+              isLoading ? (
+                <ActivityIndicator size="small" color="#0000ff" />
+              ) : null
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.noProjectsText}>No tasks available.</Text>
+              </View>
+            }
+          />
+          {totalPages > 1 && renderPagination()}
+        </>
       </ScrollView>
       <BottomNavigation />
     </SafeAreaView>
@@ -654,6 +708,39 @@ const getStatusStyle = (status) => {
 };
 
 const styles = StyleSheet.create({
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 16,
+    flexWrap: "wrap",
+    gap: 10,
+    paddingBottom: 20,
+    marginTop: -10,
+  },
+  pageButton: {
+    padding: "8px 12px",
+    border: "1px solid #A5A5A5",
+    borderRadius: "5px",
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "500",
+    minWidth: "40px",
+    height: 30,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activePageButton: {
+    backgroundColor: "#007bff",
+  },
+  pageText: {
+    color: "#000",
+  },
+  activePageText: {
+    color: "#fff",
+  },
   AreaContainer: {
     flex: 1,
     padding: 5,
@@ -661,6 +748,12 @@ const styles = StyleSheet.create({
     // backgroundColor: "#fff",
     width: "100%",
     paddingBottom: 80,
+  },
+  noProjectsText: {
+    color: "red",
+    paddingBottom: "20px",
+    fontSize: "18px",
+    // textAlign: "center",
   },
   container: {
     flex: 1,
