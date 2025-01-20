@@ -43,9 +43,8 @@ const SubmissionDetail = () => {
     const fetchSubmission = async () => {
       try {
         const response = await fetchSubmissionById(submissionData.id);
-        const imageUrl = `${URL}${response?.data?.attributes?.proofOfWork?.data?.[0]?.attributes?.formats?.large?.url}`;
+        const imageUrl = `${URL}${response?.data?.attributes?.proofOfWork?.data?.[0]?.attributes?.url}`;
         setProofImageUrl(imageUrl);
-        console.log("Fetched Submission Data:", imageUrl);
       } catch (error) {
         console.error("Error fetching submission:", error);
       }
@@ -59,15 +58,8 @@ const SubmissionDetail = () => {
   const handleViewProof = () => {
     if (proofImageUrl) {
       setImageModalVisible(true);
-      console.log("Opening image URL:", proofImageUrl);
     }
   };
-
-  console.log("Submission Details:", {
-    submissionData,
-    taskName,
-    projectName,
-  });
 
   return (
     <SafeAreaView style={styles.container}>

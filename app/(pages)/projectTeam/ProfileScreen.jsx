@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,19 +16,43 @@ import BottomNavigation from "./BottomNavigation";
 import { logout } from "../../../src/utils/auth";
 import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../../useAuthStore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
 const ProfileScreen = () => {
   const [isEnabled, setIsEnabled] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
   const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
   const [errorTitle, setErrorTitle] = useState("");
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const navigation = useNavigation();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  useEffect(() => {
+    // Load the saved notification state when component mounts
+    loadNotificationState();
+  }, []);
+
+  const loadNotificationState = async () => {
+    try {
+      const savedState = await AsyncStorage.getItem("pushNotifications");
+      setIsEnabled(savedState === "true");
+    } catch (error) {
+      console.error("Error loading notification state:", error);
+    }
+  };
+
+  const toggleSwitch = async () => {
+    try {
+      const newState = !isEnabled;
+      setIsEnabled(newState);
+      await AsyncStorage.setItem("pushNotifications", String(newState));
+    } catch (error) {
+      console.error("Error saving notification state:", error);
+    }
+  };
 
   const showLogoutPopup = () => {
     setIsModalVisible(true);
@@ -47,7 +71,6 @@ const ProfileScreen = () => {
   };
 
   const showErrorModal = (title) => {
-    console.log("error title", errorTitle);
     setErrorTitle(title); // Set the specific title passed in
     setIsErrorModalVisible(true);
   };
@@ -88,9 +111,7 @@ const ProfileScreen = () => {
           />
           <ProfileItem
             title="Change password"
-            onPress={() =>
-              navigation.navigate("(pages)/ChangePassword")
-            }
+            onPress={() => navigation.navigate("(pages)/ChangePassword")}
           />
           <ProfileItem
             title="My Activity"
@@ -103,7 +124,9 @@ const ProfileScreen = () => {
         <Text style={styles.sectionHeader}>Settings</Text>
         <View style={styles.sectionContainer}>
           <View style={styles.itemContainer}>
-            <Text style={styles.itemText}>Push notifications</Text>
+            <Text style={styles.itemText}>
+              Notifications {isEnabled ? "On" : "Off"}
+            </Text>
             <Switch
               trackColor={{ false: "#767577", true: "#81b0ff" }}
               thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}

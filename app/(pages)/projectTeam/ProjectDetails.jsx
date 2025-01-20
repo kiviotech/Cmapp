@@ -26,7 +26,7 @@ const ProjectDetails = () => {
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [jobRole, setJobRole] = useState('')
+  const [jobRole, setJobRole] = useState("");
 
   useEffect(() => {
     if (routeProjectData) {
@@ -39,13 +39,12 @@ const ProjectDetails = () => {
     const fetchManagerDetails = async () => {
       if (approverId) {
         try {
-          const response = await fetchProjectTeamById(approverId);         
+          const response = await fetchProjectTeamById(approverId);
           const names = response?.data?.attributes?.users?.data.map(
             (item) => item?.attributes?.username
           );
-          console.log('names', names)
           setManagerNames(names[0]); // Store manager names in state
-          setJobRole(response?.data?.attributes?.job_role)
+          setJobRole(response?.data?.attributes?.job_role);
         } catch (error) {
           console.error("Error fetching manager details:", error);
         }
@@ -258,7 +257,7 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     marginLeft: 12,
-    gap: 5
+    gap: 5,
   },
   dueDateText: {
     fontSize: 14,
@@ -300,7 +299,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     marginVertical: 10,
     paddingVertical: 5,
   },

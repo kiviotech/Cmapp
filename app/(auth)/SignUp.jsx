@@ -70,7 +70,6 @@ const SignUp = () => {
   };
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds(fileIds);
-    console.log("Uploaded file IDs:", fileIds);
 
     // Clear the error message for contractorLicense when a file is uploaded
     if (errors.contractorLicense) {
@@ -121,15 +120,6 @@ const SignUp = () => {
         }));
         return;
       }
-      console.log("Data being sent to signup:", {
-        name,
-        email,
-        password,
-        socialSecurity,
-        uploadedFileIds,
-        selectedProject,
-        selectedSubContractor,
-      });
 
       const res = await signup(
         name,
@@ -178,6 +168,18 @@ const SignUp = () => {
       }
     };
     loadSubContractors();
+  }, []);
+
+  useEffect(() => {
+    const logUsers = async () => {
+      try {
+        const users = await fetchUsers();
+        console.log("Fetched users:", users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    logUsers();
   }, []);
 
   return (

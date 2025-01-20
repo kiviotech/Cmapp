@@ -203,12 +203,12 @@ const RequestsScreen = () => {
 const styles = StyleSheet.create({
   safeAreaContainer: {
     flex: 1,
-    backgroundColor: "#FFF",
+    backgroundColor: "#F8F8F8",
   },
   fixedHeader: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#F8F8F8",
     paddingHorizontal: 16,
-    paddingTop: 35,
+    paddingTop: 30,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E5",
   },
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   },
   requestContainer: {
     padding: 16,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
     marginBottom: 16,
   },
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFF",
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 16,

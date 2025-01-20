@@ -100,7 +100,6 @@ const UploadProof = ({}) => {
       const data = response.data;
 
       if (response.status === 200) {
-        console.log("Files uploaded successfully:", data);
         const fileIds = data.map((file) => file.id);
         return fileIds;
       } else {
@@ -172,37 +171,42 @@ const UploadProof = ({}) => {
   };
 
   const handleSubmit = async () => {
-    const validationError = validateSubmission();
-
-    if (validationError) {
-      setErrors(validationError);
-      return;
-    }
-
     try {
-      const fileIds = uploadedFileIds.filter((id) => typeof id === "number");
-      const submission = await createSubmission(fileIds, id);
-      console.log("Submission created successfully:", submission);
+      // Validate comment first
+      if (!comment.trim()) {
+        setErrors("Comment is required");
+        return;
+      }
 
-      // Clear all uploaded files and reset states
-      setUploadedFiles([]);
-      setUploadedFileIds([]);
+      const hasAlphabet = /[a-zA-Z]/.test(comment);
+      if (!hasAlphabet) {
+        setErrors("Comment must contain at least one letter");
+        return;
+      }
+
+      // Instead of trying to call handleSubmit on the ref, use the uploadedFileIds
+      if (!uploadedFileIds || uploadedFileIds.length === 0) {
+        setErrors("Please upload at least one file");
+        return;
+      }
+
+      const submission = await createSubmission(uploadedFileIds, id);
+
+      // Clear form
       setComment("");
-      clearFiles();
-      setErrors(""); // Clear any existing errors
-
       if (fileUploadRef.current) {
         fileUploadRef.current.clearFiles();
       }
+      setErrors("");
+      setUploadedFileIds([]); // Clear the uploaded file IDs
 
-      // Show success toast message
+      // Show success message
       setToastMessage("Submission successful!");
       setToastVisible(true);
 
-      // Hide toast after 3 seconds
+      // Navigate after delay
       setTimeout(() => {
         setToastVisible(false);
-        // Navigate after showing toast
         navigation.navigate("(pages)/taskDetails", {
           taskData: { id },
           refresh: true,
@@ -326,9 +330,7 @@ const UploadProof = ({}) => {
       });
 
       if (response.status === 200) {
-        console.log("File uploaded successfully:", response.data);
       } else {
-        console.log("Failed to upload file");
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -360,7 +362,6 @@ const UploadProof = ({}) => {
 
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds((prevIds) => [...prevIds, ...fileIds]);
-    console.log("Uploaded file IDs:", uploadedFileIds);
   };
 
   const handleBackNavigation = () => {
@@ -412,9 +413,11 @@ const UploadProof = ({}) => {
           <View style={styles.uploadContainer}>
             <FileUpload
               ref={fileUploadRef}
-              uploadedFiles={uploadedFileIds}
-              setUploadedFiles={setUploadedFileIds}
-              onFileUploadSuccess={handleFileUploadSuccess}
+              onFileUploadSuccess={(fileIds) => setUploadedFileIds(fileIds)}
+              message="Upload your proof of work"
+              comment={comment}
+              setErrors={setErrors}
+              id={id}
             />
 
             {uploadedFiles

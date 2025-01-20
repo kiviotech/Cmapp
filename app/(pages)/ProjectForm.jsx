@@ -15,6 +15,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import CrossPlatformDatePicker from "./CrossPlatformDatePicker";
 import { fetchUsers } from "../../src/services/userService";
 import { createNewProject } from "../../src/services/projectService";
+// import FileUploadProjectForm from "../../components/FileUploadProjectForm/FileUploadProjectForm";
 import FileUpload from "../../components/FileUploading/FileUpload";
 import { useNavigation } from "@react-navigation/native";
 import apiClient from "../../src/api/apiClient";
@@ -60,10 +61,9 @@ const ProjectForm = () => {
   const [coordinator, setCoordinator] = useState(null);
   const [coordinatorOpen, setCoordinatorOpen] = useState(false);
   const [coordinatorItems, setCoordinatorItems] = useState([]);
-  const [projectManagerTeamId, setProjectManagerTeamId] = useState('');
-  const [projectSupervisorTeamId, setProjectSupervisorTeamId] = useState('');
-  const [siteCoordTeamId, setsiteCoordTeamId] = useState('');
-
+  const [projectManagerTeamId, setProjectManagerTeamId] = useState("");
+  const [projectSupervisorTeamId, setProjectSupervisorTeamId] = useState("");
+  const [siteCoordTeamId, setsiteCoordTeamId] = useState("");
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -72,7 +72,7 @@ const ProjectForm = () => {
         const managersResponse = await fetchProjectTeamManager(
           "Project Manager"
         );
-        setProjectManagerTeamId(managersResponse?.data[0]?.id)
+        setProjectManagerTeamId(managersResponse?.data[0]?.id);
         const managersList = managersResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
             label: user.attributes?.username,
@@ -85,8 +85,7 @@ const ProjectForm = () => {
         const supervisorsResponse = await fetchProjectTeamManager(
           "Project Supervisor"
         );
-        console.log('supervisorsResponse', supervisorsResponse.data)
-        setProjectSupervisorTeamId(supervisorsResponse?.data[0]?.id)
+        setProjectSupervisorTeamId(supervisorsResponse?.data[0]?.id);
         const supervisorsList = supervisorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
             label: user.attributes?.username,
@@ -99,7 +98,7 @@ const ProjectForm = () => {
         const coordinatorsResponse = await fetchProjectTeamManager(
           "Site Coordinator"
         );
-        setsiteCoordTeamId(coordinatorsResponse?.data[0]?.id)
+        setsiteCoordTeamId(coordinatorsResponse?.data[0]?.id);
         const coordinatorsList = coordinatorsResponse.data.flatMap((team) =>
           team.attributes.users.data.map((user) => ({
             label: user.attributes?.username,
@@ -124,12 +123,13 @@ const ProjectForm = () => {
     if (!value) {
       setErrors((prev) => ({
         ...prev,
-        [fieldName]: `${fieldName.charAt(0).toUpperCase() +
+        [fieldName]: `${
+          fieldName.charAt(0).toUpperCase() +
           fieldName
             .slice(1)
             .replace(/([A-Z])/g, " $1")
             .trim()
-          } is required`,
+        } is required`,
       }));
     } else {
       setErrors((prev) => ({
@@ -165,6 +165,9 @@ const ProjectForm = () => {
       newErrors.projectAddress = "Project address is required";
     if (!startDate) newErrors.startDate = "Start date is required";
     if (!endDate) newErrors.endDate = "End date is required";
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      newErrors.endDate = "End date must be after start date";
+    }
     if (!uploadedFiles) newErrors.uploadedFiles = "Document is required";
     if (!projectManager)
       newErrors.projectManager = "Project manager selection is required";
@@ -177,6 +180,14 @@ const ProjectForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleFileUploadSuccess = (fileIds) => {
+    // Ensure fileIds is a flat array of numbers
+    const uniqueIds = Array.isArray(fileIds)
+      ? fileIds.map((id) => Number(id))
+      : [];
+    setDocumentIds(uniqueIds);
+  };
+
   const handleProjectCreation = async () => {
     if (!validate()) return;
 
@@ -187,7 +198,6 @@ const ProjectForm = () => {
       const formattedEndDate = endDate
         ? endDate.toISOString().slice(0, 10)
         : null;
-      console.log(documentIds.flat());
 
       const projectData = {
         data: {
@@ -197,12 +207,17 @@ const ProjectForm = () => {
           start_date: formattedStartDate,
           project_type: projectType,
           location: projectAddress,
-          approvers: [projectSupervisorTeamId, projectManagerTeamId, siteCoordTeamId],
+          approvers: [
+            projectSupervisorTeamId,
+            projectManagerTeamId,
+            siteCoordTeamId,
+          ],
           project_manager: projectManager,
           project_supervisor: supervisor,
           site_coordinator: coordinator,
           project_status: "ongoing",
-          documents: documentIds.flat(),
+          // Ensure documents is properly formatted as an array of numbers
+          documents: documentIds,
         },
       };
 
@@ -253,18 +268,6 @@ const ProjectForm = () => {
     setProjectDescription("");
     setUploadedFiles([]);
     setDocumentIds([]);
-  };
-
-  const handleFileUploadSuccess = (id) => {
-    console.log("File uploaded with ID:", id);
-    setDocumentIds((prevIds) => [...prevIds, id]);
-  };
-
-  const closeModal = () => {
-    setIsSuccessModalVisible(false);
-    navigation.navigate("(pages)/AssignContractors", {
-      projectId: projectData.id,
-    });
   };
 
   const handleProjectNameChange = (text) => {
@@ -391,7 +394,15 @@ const ProjectForm = () => {
               value={supervisor}
               items={supervisorItems}
               setOpen={setSupervisorOpen}
-              setValue={setSupervisor}
+              setValue={(value) => {
+                setSupervisor(value);
+                if (value) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    supervisor: null,
+                  }));
+                }
+              }}
               setItems={setSupervisorItems}
               placeholder="Select Project Supervisor"
               style={styles.dropdown}
@@ -411,7 +422,15 @@ const ProjectForm = () => {
               value={projectManager}
               items={projectManagerItems}
               setOpen={setProjectManagerOpen}
-              setValue={setProjectManager}
+              setValue={(value) => {
+                setProjectManager(value);
+                if (value) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    projectManager: null,
+                  }));
+                }
+              }}
               setItems={setProjectManagerItems}
               placeholder="Select Project Manager"
               style={styles.dropdown}
@@ -431,7 +450,15 @@ const ProjectForm = () => {
               value={coordinator}
               items={coordinatorItems}
               setOpen={setCoordinatorOpen}
-              setValue={setCoordinator}
+              setValue={(value) => {
+                setCoordinator(value);
+                if (value) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    coordinator: null,
+                  }));
+                }
+              }}
               setItems={setCoordinatorItems}
               placeholder="Select Site Coordinator"
               style={styles.dropdown}
@@ -455,16 +482,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                      ? "Select Project Supervisor"
-                      : "Select Site Coordinator"}
+                    ? "Select Project Supervisor"
+                    : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                        ? projectSupervisors
-                        : siteCoordinators
+                      ? projectSupervisors
+                      : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
@@ -472,11 +499,6 @@ const ProjectForm = () => {
                       onPress={() => {
                         setSelectedUser(item.username);
                         setDropdownVisible(false);
-                        // Handle specific selection if needed
-                        console.log(
-                          `Selected ${selectedDropdown}:`,
-                          item.username
-                        );
                       }}
                       style={styles.modalItem}
                     >
@@ -533,16 +555,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                      ? "Select Project Supervisor"
-                      : "Select Site Coordinator"}
+                    ? "Select Project Supervisor"
+                    : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                        ? projectSupervisors
-                        : siteCoordinators
+                      ? projectSupervisors
+                      : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
@@ -556,10 +578,6 @@ const ProjectForm = () => {
                           setSiteCoordinators(item.username);
                         }
                         setDropdownVisible(false);
-                        console.log(
-                          `Selected ${selectedDropdown}:`,
-                          item.username
-                        );
                       }}
                       style={styles.modalItem}
                     >

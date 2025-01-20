@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   TextInput,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -19,6 +20,7 @@ import {
   fetchSubmissions,
   updateExistingSubmission,
 } from "../../../src/services/submissionService";
+import { useFocusEffect } from "@react-navigation/native";
 
 const Notification = () => {
   const [activeTab, setActiveTab] = useState("Unread");
@@ -26,40 +28,46 @@ const Notification = () => {
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
   const navigation = useNavigation();
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ title: "", message: "" });
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [registrationsResponse, submissionsResponse] = await Promise.all([
-          fetchRegistrations(),
-          fetchSubmissions(),
-        ]);
+  const fetchData = async () => {
+    try {
+      const [registrationsResponse, submissionsResponse] = await Promise.all([
+        fetchRegistrations(),
+        fetchSubmissions(),
+      ]);
 
-        const registrations = registrationsResponse?.data || [];
-        const submissions = submissionsResponse?.data || [];
-        const combinedNotifications = [...registrations, ...submissions];
+      const registrations = registrationsResponse?.data || [];
+      const submissions = submissionsResponse?.data || [];
+      const combinedNotifications = [...registrations, ...submissions];
 
-        const unread = combinedNotifications.filter(
-          (item) => item.attributes.notification_status === "unread"
-        );
-        const read = combinedNotifications.filter(
-          (item) => item.attributes.notification_status === "read"
-        );
+      const unread = combinedNotifications.filter(
+        (item) => item.attributes.notification_status === "unread"
+      );
+      const read = combinedNotifications.filter(
+        (item) => item.attributes.notification_status === "read"
+      );
 
-        setUnreadNotifications(unread);
-        setReadNotifications(read);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      }
-    };
-    fetchData();
-  }, []);
+      setUnreadNotifications(unread);
+      setReadNotifications(read);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   // Function to update notification status to "read"
   const markAsRead = async (item) => {
     try {
       const isRegistration = !!item.attributes.email;
-      const payload = { data: { notification_status: "read" } }; // Updated payload structure
+      const payload = { data: { notification_status: "read" } };
 
       if (isRegistration) {
         await updateExistingRegistration(item.id, payload);
@@ -67,17 +75,36 @@ const Notification = () => {
         await updateExistingSubmission(item.id, payload);
       }
 
-      // Update the state to reflect the change
+      // Update the local state immediately
       setUnreadNotifications((prev) =>
         prev.filter((notification) => notification.id !== item.id)
       );
       setReadNotifications((prev) => [
-        ...prev,
         {
           ...item,
-          attributes: { ...item.attributes, notification_status: "read" },
+          attributes: {
+            ...item.attributes,
+            notification_status: "read",
+            status: item.attributes.status, // Preserve the existing status
+          },
         },
+        ...prev,
       ]);
+
+      // Navigate to the appropriate details screen
+      navigation.navigate(
+        isRegistration
+          ? "(pages)/EmailRequestDetails"
+          : "(pages)/TaskRequestDetails",
+        {
+          requestData: item,
+          source: "notification",
+          onStatusUpdate: async (newStatus) => {
+            // This callback will be called when the status is updated in the details screen
+            await fetchData(); // Refresh the data when returning
+          },
+        }
+      );
     } catch (error) {
       console.error("Error updating notification status:", error);
     }
@@ -168,8 +195,85 @@ const Notification = () => {
     });
   };
 
+  const showToast = ({ title, message }) => {
+    setToastMessage({ title, message });
+    setToastVisible(true);
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2700),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setToastVisible(false);
+    });
+  };
+
+  const CustomToast = () => (
+    <Animated.View
+      style={[
+        toastStyles.container,
+        {
+          opacity: fadeAnim,
+          transform: [
+            {
+              translateY: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-20, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <View style={toastStyles.content}>
+        <Text style={toastStyles.title}>{toastMessage.title}</Text>
+        <Text style={toastStyles.message}>{toastMessage.message}</Text>
+      </View>
+    </Animated.View>
+  );
+
+  // Modify the useFocusEffect to handle both status updates and notification status
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkUpdates = async () => {
+        try {
+          // Get status update from navigation params
+          const statusUpdate = navigation
+            .getState()
+            ?.routes?.find(
+              (route) => route.name === "(pages)/projectTeam/Notification"
+            )?.params?.statusUpdate;
+
+          // Fetch fresh data
+          await fetchData();
+
+          // Show toast if there's a status update
+          if (statusUpdate) {
+            showToast({
+              title: "Status Updated",
+              message: `Request has been ${statusUpdate.status}`,
+            });
+            navigation.setParams({ statusUpdate: null });
+          }
+        } catch (error) {
+          console.error("Error checking updates:", error);
+        }
+      };
+
+      checkUpdates();
+    }, [navigation])
+  );
+
   return (
     <SafeAreaView style={styles.areaContainer}>
+      {toastVisible && <CustomToast />}
       <View style={styles.headerContainer}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Notifications</Text>
@@ -223,7 +327,10 @@ const Notification = () => {
       <FlatList
         data={filteredNotifications(
           activeTab === "Unread" ? unreadNotifications : readNotifications
-        ).reverse()}
+        ).sort(
+          (a, b) =>
+            new Date(b.attributes.createdAt) - new Date(a.attributes.createdAt)
+        )}
         keyExtractor={(item, index) => {
           const prefix = item.attributes.email ? "reg" : "sub";
           return `${activeTab.toLowerCase()}-${prefix}-${item.id}-${index}`;
@@ -383,6 +490,42 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 2,
+  },
+});
+
+const toastStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    top: 10,
+    left: 16,
+    right: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderLeftWidth: 5,
+    borderLeftColor: "#4CAF50",
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 9999,
+  },
+  content: {
+    flexDirection: "column",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  message: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

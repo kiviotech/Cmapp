@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -17,6 +17,7 @@ import BottomNavigation from "./BottomNavigation ";
 import { logout } from "../../../src/utils/auth";
 import useAuthStore from "../../../useAuthStore";
 import { useNavigation, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,7 +26,31 @@ const Settings = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+
+  useEffect(() => {
+    // Load the saved notification state when component mounts
+    loadNotificationState();
+  }, []);
+
+  const loadNotificationState = async () => {
+    try {
+      const savedState = await AsyncStorage.getItem("pushNotifications");
+      setIsEnabled(savedState === "true");
+    } catch (error) {
+      console.error("Error loading notification state:", error);
+    }
+  };
+
+  const toggleSwitch = async () => {
+    try {
+      const newState = !isEnabled;
+      setIsEnabled(newState);
+      await AsyncStorage.setItem("pushNotifications", String(newState));
+    } catch (error) {
+      console.error("Error saving notification state:", error);
+    }
+  };
+
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const navigation = useNavigation();
@@ -100,7 +125,9 @@ const Settings = () => {
 
         <View style={styles.innerContainer}>
           <View style={styles.item}>
-            <Text style={styles.itemText}>Push notifications</Text>
+            <Text style={styles.itemText}>
+              Notifications {isEnabled ? "On" : "Off"}
+            </Text>
             <Switch
               trackColor={{ false: "#767577", true: "#0066FF" }}
               thumbColor={colors.whiteColor}
@@ -222,6 +249,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingHorizontal: 5,
   },
   section: {
     backgroundColor: colors.whiteColor,
@@ -267,6 +295,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FF3B30",
     marginLeft: 8,
+    fontWeight: "600",
   },
   switch: {
     transform: [{ scale: 0.8 }],
@@ -336,14 +365,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   header: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
-    marginTop: 10,
+    marginTop: 20,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     color: colors.blackColor,
   },

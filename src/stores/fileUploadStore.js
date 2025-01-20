@@ -54,22 +54,11 @@ const useFileUploadStore = create((set, get) => ({
 
   // Remove file from state only
   removeFile: (fileName) => {
-    set((state) => {
-      // Get current fileIdMap and uploadedFiles
-      const newFileIdMap = { ...state.fileIdMap };
-      delete newFileIdMap[fileName]; // Remove from fileIdMap
-
-      return {
-        // Remove from uploadedFiles array
-        uploadedFiles: state.uploadedFiles.filter(
-          (file) => file.name !== fileName
-        ),
-        // Update fileIdMap without the removed file
-        fileIdMap: newFileIdMap,
-        // Keep uploading state unchanged
-        uploading: state.uploading,
-      };
-    });
+    set((state) => ({
+      uploadedFiles: state.uploadedFiles.filter(
+        (file) => file.name !== fileName
+      ),
+    }));
   },
 
   // API Actions
@@ -182,8 +171,12 @@ const useFileUploadStore = create((set, get) => ({
 
   // Get all current file IDs
   getAllFileIds: () => {
-    const { fileIdMap } = get();
-    return Object.values(fileIdMap).map((f) => f.id);
+    const { uploadedFiles } = get();
+    // Only return IDs of successfully uploaded files
+    return uploadedFiles
+      .filter((file) => file.status === "success")
+      .map((file) => file.fileId)
+      .filter((id) => typeof id === "number");
   },
 
   // Reset store

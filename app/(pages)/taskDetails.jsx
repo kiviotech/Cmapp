@@ -104,7 +104,6 @@ const TaskDetails = () => {
         const submissionIds = taskData?.attributes?.submissions?.data?.map(
           (item) => item.id
         );
-        console.log("taskId", submissionIds);
         if (submissionIds && submissionIds.length > 0) {
           const submissionPromises = submissionIds.map((id) =>
             fetchSubmissionById(id)

@@ -173,7 +173,6 @@ const Myactivity = () => {
   //       );
   //       setJobProfile(userResponse.data.job_profile.name);
   //     } catch (error) {
-  //       console.log("error");
   //     }
   //   };
   //   fetchUserData();
@@ -298,9 +297,15 @@ const Myactivity = () => {
                   key={project.id}
                   style={[
                     styles.projectCard,
-                    project.attributes.project_status === "ongoing"
-                      ? { backgroundColor: "#e8f5e9" }
-                      : { backgroundColor: "#ffebee" },
+                    (() => {
+                      const endDate = new Date(project.attributes.end_date);
+                      const today = new Date();
+                      const isDelayed = today > endDate;
+
+                      return isDelayed
+                        ? { backgroundColor: "#ffebee" } // Light red for delayed
+                        : { backgroundColor: "#e8f5e9" }; // Light green for on schedule
+                    })(),
                   ]}
                   onPress={() =>
                     navigation.navigate("(pages)/projectTeam/ProjectDetails", {
@@ -309,42 +314,54 @@ const Myactivity = () => {
                   }
                 >
                   <View style={styles.projectCardContent}>
-                    {/* Project Name and Description */}
-                    <Text style={styles.projectTitle}>
+                    <Text style={styles.projectCardTitle}>
                       {project.attributes.name}
                     </Text>
-                    <Text style={styles.projectDescription}>
-                      {project.attributes.description}
+                    <Text style={styles.projectCardDescription}>
+                      {project.attributes.description || "No description"}
                     </Text>
 
-                    {/* Project Status */}
-                    <Text style={styles.projectStatus}>
-                      ●{" "}
-                      {project.attributes.project_status
-                        ? "Status"
-                        : "Status unknown"}
-                      : {project.attributes.project_status || "N/A"}
-                    </Text>
+                    <View style={styles.statusRow}>
+                      <View style={styles.statusIndicator}>
+                        {(() => {
+                          const endDate = new Date(project.attributes.end_date);
+                          const today = new Date();
+                          const isDelayed = today > endDate;
 
-                    {/* Additional Project Info */}
-                    <View style={styles.projectStatusContainer}>
-                      <Icon
-                        name={
-                          project.attributes.update_status === "ahead"
-                            ? "check-circle"
-                            : "error"
-                        }
-                        size={16}
-                        color={
-                          project.attributes.update_status === "ahead"
-                            ? "green"
-                            : "red"
-                        }
-                      />
-                      <Text style={styles.projectStatusText}>
-                        {project.attributes.update_status === "ahead"
-                          ? "Ahead of Schedule"
-                          : "Delayed"}
+                          return (
+                            <>
+                              <Icon
+                                name={isDelayed ? "error" : "check-circle"}
+                                size={16}
+                                color={isDelayed ? "#ff5252" : "#4caf50"}
+                              />
+                              <Text
+                                style={[
+                                  styles.statusText,
+                                  { color: isDelayed ? "#ff5252" : "#4caf50" },
+                                ]}
+                              >
+                                {isDelayed ? "Delayed" : "On Schedule"}
+                              </Text>
+                            </>
+                          );
+                        })()}
+                      </View>
+                    </View>
+
+                    <View style={styles.dateContainer}>
+                      <Icon name="event" size={16} color="#666" />
+                      <Text style={styles.dateText}>
+                        End Date:{" "}
+                        {project.attributes.end_date
+                          ? new Date(
+                              project.attributes.end_date
+                            ).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Not set"}
                       </Text>
                     </View>
                   </View>
@@ -477,33 +494,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   projectCard: {
-    width: 250,
-    padding: 15,
-    borderRadius: 10,
+    width: 280,
+    padding: 16,
+    borderRadius: 8,
     marginRight: 15,
+    elevation: 2,
   },
-  projectTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+  projectCardContent: {
+    gap: 8,
   },
-  projectDescription: {
+  projectCardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  projectCardDescription: {
     fontSize: 14,
     color: "#666",
-    marginVertical: 5,
+    marginBottom: 4,
   },
-  projectStatus: {
-    fontSize: 14,
-    color: "#ff5252",
-    marginBottom: 10,
+  statusRow: {
+    marginTop: 8,
   },
-  projectStatusContainer: {
+  statusIndicator: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
   },
-  projectStatusText: {
-    marginLeft: 5,
+  statusText: {
     fontSize: 14,
-    color: "green",
+    fontWeight: "500",
+  },
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 8,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  noProjectsContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  noProjectsText: {
+    fontSize: 14,
+    color: "#666",
   },
   requestItem: {
     backgroundColor: "#fff",

@@ -147,9 +147,6 @@ const Login = () => {
       //   await AsyncStorage.setItem("username", response.user.username);
       //   await AsyncStorage.setItem("id", response.user.id.toString());
 
-      //   console.log("Username stored in AsyncStorage:", response.user.username);
-      //   console.log("User ID stored in AsyncStorage:", response.user.id);
-
       //   // Navigate to the dashboard using the router
       // }
       router.replace("/dashboard");
