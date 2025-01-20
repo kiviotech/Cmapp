@@ -199,7 +199,7 @@ const Contractor = () => {
           <>
             <FlatList
               data={tasks.filter((task) =>
-                task?.attributes?.project?.data?.attributes?.name
+                task?.attributes?.standard_task?.data?.attributes?.Name
                   .toLowerCase()
                   .includes(searchQuery.toLowerCase())
               )}
