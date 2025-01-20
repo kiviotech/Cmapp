@@ -1,354 +1,441 @@
-import { View, Text, Alert, StyleSheet, ScrollView, Button } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown'; // Import the Dropdown component
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomButton from '../../components/CustomButton';
-import LoginField from '../../components/LoginField';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Alert,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+} from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
+import { useRouter } from "expo-router";
 import { NativeWindStyleSheet } from "nativewind";
-import FileUpload from '../../components/FileUploading/FileUpload';
-import fonts from '../../constants/fonts';
-import { signup } from '../../src/utils/auth';  // Import the signup function
-import colors from '../../constants/colors';
-import { useToast } from '../ToastContext';
-import Toast from '../Toast';
-import { getProjects } from '../../src/api/repositories/projectRepository';
+import CustomButton from "../../components/CustomButton";
+import LoginField from "../../components/LoginField";
+import FileUpload from "../../components/FileUploading/FileUpload";
+import { signup } from "../../src/utils/auth";
+import colors from "../../constants/colors";
+import { useToast } from "../ToastContext";
+import Toast from "../Toast";
+import { getProjects } from "../../src/api/repositories/projectRepository";
+import { fetchSubContractors } from "../../src/services/subContractorService";
+import useAuthStore from "../../useAuthStore";
+import { fetchUsers } from "../../src/services/userService";
+import useFileUploadStore from "../../src/stores/fileUploadStore";
 
 NativeWindStyleSheet.setOutput({
-    default: "native",
+  default: "native",
 });
 
 const SignUp = () => {
-    const [selectedProject, setSelectedProject] = useState(''); // State for dropdown selection
-    const [projectsDetail, setProjectsDetail] = useState([]);
-    const [uploadedFiles, setUploadedFiles] = useState([]);
-    const [isDropdownFocused, setIsDropdownFocused] = useState(false); // Add state for dropdown focus
-    const { toast, showToast } = useToast();
-    const [form, setForm] = useState({
-        name: '',
-        email: '',
-        password: '',
-        socialSecurity: '',
-        contractorLicense: null
-    });
+  const [selectedProject, setSelectedProject] = useState("");
+  const [projectsDetail, setProjectsDetail] = useState([]);
+  const [subContractors, setSubContractors] = useState([]);
+  const [selectedSubContractor, setSelectedSubContractor] = useState("");
+  const [uploadedFileIds, setUploadedFileIds] = useState([]);
+  const [isDropdownFocused, setIsDropdownFocused] = useState(false);
+  const { toast, showToast } = useToast();
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    socialSecurity: "",
+    subContractor: "",
+  });
+  const [errors, setErrors] = useState({});
+  const router = useRouter();
+  const token = useAuthStore((state) => state.token);
+  const resetFileUploadStore = useFileUploadStore((state) => state.reset);
 
-    const [errors, setErrors] = useState({});
-    const router = useRouter();
+  useEffect(() => {
+    if (token) {
+      router.replace("/");
+    }
+  }, [token, router]);
 
-    // const cardDataArray = [
-    //     {
-    //         projectId: 1,
-    //         projectName: "Survey and Marking",
-    //         projectDescription: "Ensure survey accuracy by cross-referencing multiple points. Verify site layout against survey plans.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Task Completed",
-    //         taskStatusColor: "#A3D65C",
-    //         cardColor: "#EEF7E0",
-    //         status: "",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    //     {
-    //         projectId: 2,
-    //         projectName: "Verification & Inspection",
-    //         projectDescription: "Regular site walkthroughs to ensure compliance with safety regulations and quality standards.",
-    //         deadline: Date.now(),
-    //         taskStatus: "Rejected",
-    //         taskStatusColor: "#FC5275",
-    //         cardColor: "#FED5DD",
-    //         status: "rejected",
-    //     },
-    // ];
+  const handleChangeText = (field, value) => {
+    // Clear the specific error message for the field when the user starts typing
+    if (errors[field]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
+    }
 
-    // useEffect(() => {
-    //     setProjectsDetail(cardDataArray);
-    // }, []);
+    // For name field, only allow letters and spaces
+    if (field === "name") {
+      // Remove any non-letter and non-space characters
+      const sanitizedValue = value.replace(/[^a-zA-Z\s]/g, "");
+      setForm({ ...form, [field]: sanitizedValue });
+      return;
+    }
 
-    const handleChangeText = (field, value) => {
-        setForm({ ...form, [field]: value });
+    // Handle other fields normally
+    if (field === "password" && value.length > 0 && value.length < 8) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 8 characters long",
+      }));
+    }
+
+    setForm({ ...form, [field]: value });
+
+    // Add immediate password validation
+    if (field === "password" && value.length > 0 && value.length < 8) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 8 characters long",
+      }));
+    }
+  };
+  const handleFileUploadSuccess = (fileIds) => {
+    setUploadedFileIds(fileIds);
+
+    // Clear the error message for contractorLicense when a file is uploaded
+    if (errors.contractorLicense) {
+      setErrors((prevErrors) => ({ ...prevErrors, contractorLicense: "" }));
+    }
+  };
+
+  const validate = async () => {
+    const newErrors = {};
+
+    // Basic validations
+    if (!form.name.trim()) {
+      newErrors.name = "Full name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(form.name.trim())) {
+      newErrors.name = "Only alphabets and spaces are allowed";
+    }
+    if (!form.email) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      newErrors.email = "Enter a valid email address";
+    else {
+      // Check for existing email
+      const users = await fetchUsers();
+      const emailExists = users.some((user) => user.email === form.email);
+      if (emailExists) {
+        newErrors.email =
+          "Email already exists. Please use a different email address";
+      }
+    }
+    if (!form.password) newErrors.password = "Password is required";
+    else if (form.password.length < 8)
+      newErrors.password = "Password must be at least 8 characters long";
+    if (!form.socialSecurity)
+      newErrors.socialSecurity = "Social Security Number is required";
+    else if (form.socialSecurity.length < 6)
+      newErrors.socialSecurity = "Enter a valid 6-digit Social Security Number";
+    if (!selectedSubContractor)
+      newErrors.subContractor = "Subcontractor selection is required";
+    if (!uploadedFileIds.length)
+      newErrors.contractorLicense = "File is required";
+    return newErrors;
+  };
+
+  const submit = async () => {
+    try {
+      const newErrors = await validate();
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+
+      const { name, email, password, socialSecurity } = form;
+      const res = await signup(
+        name,
+        email,
+        password,
+        socialSecurity,
+        uploadedFileIds,
+        selectedProject,
+        selectedSubContractor
+      );
+
+      if (res) {
+        resetFileUploadStore();
+        showToast("Request for new account sent", "success");
+        router.replace("/Wait");
+      }
+    } catch (error) {
+      console.error("Error during signup:", error);
+      Alert.alert("Error", error.response?.data?.message || error.message);
+    }
+  };
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const projectData = await getProjects();
+        setProjectsDetail(projectData.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
+    fetchProjects();
+  }, []);
 
-    const validate = () => {
-        const newErrors = {};
-
-        if (!form.name) newErrors.name = 'Full name is required';
-        if (!form.email) newErrors.email = 'Email is required';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email address';
-        if (!form.password) newErrors.password = 'Password is required';
-        else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
-        if (!form.socialSecurity) newErrors.socialSecurity = 'Social Security Number is required';
-        else if (form.socialSecurity.length < 6) newErrors.socialSecurity = 'Enter a valid 6-digit Social Security Number';
-        if (!uploadedFiles && !form.contractorLicense) newErrors.contractorLicense = 'File is required';
-
-        return newErrors;
+  useEffect(() => {
+    const loadSubContractors = async () => {
+      try {
+        const response = await fetchSubContractors();
+        const contractors = response.data.map((contractor) => ({
+          label: contractor.attributes.name,
+          value: contractor.id,
+        }));
+        setSubContractors(contractors);
+      } catch (error) {
+        console.error("Error fetching subcontractors:", error);
+      }
     };
+    loadSubContractors();
+  }, []);
 
-   const submit = async () => {
-     const newErrors = validate();
-     if (Object.keys(newErrors).length > 0) {
-       setErrors(newErrors);
-       return;
-     }
+  useEffect(() => {
+    const logUsers = async () => {
+      try {
+        const users = await fetchUsers();
+        console.log("Fetched users:", users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    logUsers();
+  }, []);
 
-     try {
-       const { name, email, password, socialSecurity } = form;
-       const contractorLicense = uploadedFiles || form.contractorLicense;
-       const res = await signup(
-         name,
-         email,
-         password,
-         socialSecurity,
-         contractorLicense,
-         selectedProject
-       );
+  return (
+    <SafeAreaView style={styles.container}>
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+      />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={{ fontSize: 24 }}>Sign Up</Text>
+          </View>
 
-       if (res) {
-         showToast("Request for new account sent", "success");
-        //  router.replace("/Wait");
-       }
-     } catch (error) {
-       Alert.alert("Error", error.response?.data?.message || error.message);
-     }
-   };
+          <View style={styles.inputContainer}>
+            <Text style={styles.labelText}>Full name</Text>
+            <LoginField
+              placeholder="Your full name"
+              value={form.name}
+              handleChangeText={(e) => handleChangeText("name", e)}
+              style={{ marginBottom: 16 }}
+            />
+            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
-    useEffect(() => {
-        const fetchProjects = async () => {
-            try {
-                const projectData = await getProjects();
+            <Text style={[styles.labelText, { marginTop: 32 }]}>E-mail</Text>
+            <LoginField
+              placeholder="Your email or phone"
+              value={form.email}
+              handleChangeText={(e) => handleChangeText("email", e)}
+              keyboardType="email-address"
+              style={{ marginBottom: 16 }}
+            />
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            )}
 
-                setProjectsDetail(projectData.data.data);
+            <View style={styles.passwordContainer}>
+              <Text style={styles.labelText}>Password</Text>
+              <LoginField
+                placeholder="Password"
+                value={form.password}
+                handleChangeText={(e) => handleChangeText("password", e)}
+                secureTextEntry={true}
+              />
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
+            </View>
 
-                const taskData = await getTasks();
-                setTasksDetail(taskData.data.data);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
+            <View style={styles.passwordContainer}>
+              <Text style={styles.labelText}>Social Security Number</Text>
+              <LoginField
+                placeholder="Social Security"
+                value={form.socialSecurity}
+                handleChangeText={(e) => handleChangeText("socialSecurity", e)}
+                secureTextEntry={true}
+              />
+              {errors.socialSecurity && (
+                <Text style={styles.errorText}>{errors.socialSecurity}</Text>
+              )}
+            </View>
+          </View>
 
-        fetchProjects();
-    }, []);
+          <View style={styles.subContractorContainer}>
+            <Text style={styles.labelText}>Subcontractor</Text>
+            <Dropdown
+              data={subContractors}
+              labelField="label"
+              valueField="value"
+              placeholder={!isDropdownFocused ? "Select subcontractor" : ""}
+              search
+              searchPlaceholder="Search your subcontractor"
+              value={selectedSubContractor}
+              onFocus={() => setIsDropdownFocused(true)}
+              onBlur={() => setIsDropdownFocused(false)}
+              onChange={(item) => {
+                setSelectedSubContractor(item.value);
+                setIsDropdownFocused(false);
 
-    
+                // Ensure errors are not null or undefined before updating
+                if (errors && errors.subContractor) {
+                  setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    subContractor: "",
+                  }));
+                }
+              }}
+              style={styles.dropdown}
+              containerStyle={styles.dropdownContainerStyle}
+              searchStyle={styles.searchBox}
+              showsVerticalScrollIndicator={false}
+            />
+            {errors.subContractor && (
+              <Text style={styles.errorText}>{errors.subContractor}</Text>
+            )}
+          </View>
 
-    return (
+          {/* <View style={styles.projectSelectionContainer}>
+            <Text style={styles.labelText}>Project Selection</Text>
+            <Dropdown
+              data={projectsDetail.map((project) => ({
+                label: project.attributes.name,
+                value: project.id,
+              }))}
+              labelField="label"
+              valueField="value"
+              placeholder={!isDropdownFocused ? "Select project" : "..."}
+              search
+              searchPlaceholder="Search your project"
+              value={selectedProject}
+              onFocus={() => setIsDropdownFocused(true)}
+              onBlur={() => setIsDropdownFocused(false)}
+              onChange={(item) => {
+                setSelectedProject(item.value);
+                setIsDropdownFocused(false);
+              }}
+              style={styles.dropdown}
+              containerStyle={styles.dropdownContainerStyle}
+              searchStyle={styles.searchBox}
+            />
+            {errors.project && (
+              <Text style={styles.errorText}>{errors.project}</Text>
+            )}
+          </View> */}
 
-        <SafeAreaView style={styles.container}>
-            <Toast visible={toast.visible} message={toast.message} type={toast.type} />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View>
+            <FileUpload
+              uploadedFiles={uploadedFileIds}
+              setUploadedFiles={setUploadedFileIds}
+              onFileUploadSuccess={handleFileUploadSuccess}
+              message={"Upload your ID proof here in .png or .jpeg format"}
+            />
+            {errors.contractorLicense && (
+              <Text style={styles.errorText}>{errors.contractorLicense}</Text>
+            )}
+          </View>
 
+          <View style={styles.buttonContainer}>
+            <CustomButton
+              buttonStyle={{
+                backgroundColor: "#577CFF",
+                fontSize: 13,
+                width: 140,
+                letterSpacing: 1,
+              }}
+              textStyle={{ color: "#FFFFFF" }}
+              text="SIGNUP"
+              handlePress={submit}
+            />
+          </View>
 
-                <View style={styles.content}>
-                    <View style={styles.header}>
-                        <Text className="font-pbold text-3xl font-inter600">Sign Up</Text>
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text className="font-inter400" style={styles.labelText}>Full name</Text>
-                        <LoginField
-                            placeholder="Your full name"
-                            value={form.name}
-                            handleChangeText={(e) => handleChangeText('name', e)}
-                            className="mb-4"
-                        />
-                        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
-
-                        <Text className="font-inter400 mt-8" style={styles.labelText}>E-mail</Text>
-                        <LoginField
-                            placeholder="Your email or phone"
-                            value={form.email}
-                            handleChangeText={(e) => handleChangeText('email', e)}
-                            keyboardType='email-address'
-                            className="mb-4"
-                        />
-                        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-
-                        <View style={styles.passwordContainer}>
-                            <Text className="font-inter400" style={styles.labelText}>Password</Text>
-                            <LoginField
-                                style={styles.loginField}
-                                placeholder="Password"
-                                value={form.password}
-                                handleChangeText={(e) => handleChangeText('password', e)}
-                                secureTextEntry={true}
-                            />
-                            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-                        </View>
-
-                        <View style={styles.passwordContainer}>
-                            <Text className="font-inter400" style={styles.labelText}>Social Security Number</Text>
-                            <LoginField
-                                placeholder="Social Security"
-                                value={form.socialSecurity}
-                                handleChangeText={(e) => handleChangeText('socialSecurity', e)}
-                                secureTextEntry={true}
-                            />
-                            {errors.socialSecurity && <Text style={styles.errorText}>{errors.socialSecurity}</Text>}
-                        </View>
-                    </View>
-
-                    {/* Project Selection Dropdown with search */}
-                    <View style={styles.projectSelectionContainer}>
-                        <Text className="font-inter400" style={styles.labelText}>Project Selection</Text>
-                        <View style={styles.dropdownContainer}>
-                            <Dropdown
-                                data={projectsDetail.map(project => ({
-                                    label: project.attributes.name,
-                                    value: project.id,
-                                }))}
-                                labelField="label"
-                                valueField="value"
-                                placeholder={!isDropdownFocused ? 'Select project' : '...'}
-                                search
-                                searchPlaceholder="Search your project"
-                                value={selectedProject}
-
-                                onFocus={() => setIsDropdownFocused(true)}
-                                onBlur={() => setIsDropdownFocused(false)}
-                                onChange={item => {
-                                    setSelectedProject(item.value);
-                                    setIsDropdownFocused(false);
-                                }}
-                                style={styles.dropdown}
-                                containerStyle={styles.dropdownContainerStyle} // Apply style for dropdown list container
-                                searchStyle={styles.searchBox} // Apply style for search box
-                            />
-                        </View>
-                        {errors.project && <Text style={styles.errorText}>{errors.project}</Text>}
-                    </View>
-
-                    <View>
-                        <FileUpload uploadedFiles={uploadedFiles} setUploadedFiles={setUploadedFiles} />
-                        {errors.contractorLicense && <Text style={styles.errorText}>{errors.contractorLicense}</Text>}
-                    </View>
-
-                    <View style={styles.buttonContainer}>
-                        <CustomButton
-                            buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
-                            textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
-                            text='SIGNUP'
-                            handlePress={submit}
-                        />
-                    </View>
-
-                    <View style={styles.SignUpContainer}>
-                        <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
-                            Already have an account? <Text className="text-[#577CFF]" onPress={() => router.replace('/login')}>Login</Text>
-                        </Text>
-                    </View>
-                </View>
-
-
-
-
-            </ScrollView>
-        </SafeAreaView>
-    );
+          <View style={styles.SignUpContainer}>
+            <Text style={{ fontSize: 16, color: "#9C9C9C" }}>
+              Already have an account?{" "}
+              <Text
+                style={{ color: "#577CFF" }}
+                onPress={() => router.replace("/login")}
+              >
+                Login
+              </Text>
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 };
 
 export default SignUp;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    content: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 24,
-    },
-    inputContainer: {
-        marginVertical: 20,
-    },
-    passwordContainer: {
-        marginTop: 20,
-    },
-    buttonContainer: {
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    labelText: {
-        marginBottom: 5,
-        fontFamily: fonts.inter400,
-        color: colors.loginSignUpLabelColor,
-        fontSize: 14
-    },
-    loginField: {
-        marginBottom: 10,
-    },
-
-    dropdown: {
-        height: 50,
-        borderColor: 'gray',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 8,
-
-    },
-    dropdownContainerStyle: {
-        maxHeight: 200, // Maximum height for the dropdown list
-        overflow: 'scroll',
-        marginTop: 10,
-        borderRadius: 10,
-        borderWidth: 1, // Set the border width
-        borderColor: '#B3B3B3', // Set the border color
-        backgroundColor: '#FFF', // Set the background color
-        shadowColor: 'rgba(211, 209, 216, 0.25)', // Set the shadow color
-        shadowOffset: { width: 15, height: 15 }, // Offset for the shadow
-        shadowOpacity: 1, // Set the shadow opacity
-        shadowRadius: 30, // Set the shadow radius
-        elevation: 5, // Needed for Android to apply shadow
-    },
-    searchBox: {
-        borderRadius: 5, // Border radius for search box
-        borderColor: 'transparent', // Make the border disappear while typing
-        padding: 8,
-        padding: 10,
-        backgroundColor: '#F0F0F0', // Add a background color if needed
-        borderRadius: 8, // Optional: for rounded corners
-        fontSize: 16, // Optional: Adjust font size
-
-    },
-    errorText: {
-        color: 'red',
-        marginTop: 5,
-        fontFamily: fonts.inter400,
-    },
-    buttonContainer: {
-        marginTop: 20,
-        alignItems: 'center',
-    },
-
-    SignUpContainer: {
-        marginTop: 50,
-        alignItems: 'center',
-    },
-
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 24,
+  },
+  inputContainer: {
+    marginVertical: 20,
+  },
+  passwordContainer: {
+    marginTop: 20,
+  },
+  buttonContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  labelText: {
+    marginBottom: 5,
+    color: colors.loginSignUpLabelColor,
+    fontSize: 14,
+  },
+  dropdown: {
+    height: 50,
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+  },
+  dropdownContainerStyle: {
+    maxHeight: 200,
+    marginTop: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#B3B3B3",
+  },
+  searchBox: {
+    height: 40,
+    borderColor: "#B3B3B3",
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: "red",
+    marginTop: 5,
+    fontSize: 12,
+  },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  SignUpContainer: {
+    marginTop: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingBottom: 20,
+  },
+  projectSelectionContainer: {
+    marginTop: 32,
+  },
 });

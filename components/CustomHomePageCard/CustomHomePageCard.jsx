@@ -53,7 +53,7 @@ const CustomHomePageCard = ({ cardValue, cardColor }) => {
               height: 25,
             }}
             textStyle={{
-              fontFamily: "WorkSans_500Medium",
+              // fontFamily: "WorkSans_500Medium",
               color: "#577CFF",
               fontSize: 9,
               letterSpacing: 0,
@@ -124,7 +124,7 @@ const CustomHomePageCard = ({ cardValue, cardColor }) => {
                   alignSelf: "flex-end",
                 }}
                 textStyle={{
-                  fontFamily: "WorkSans_500Medium",
+                  // fontFamily: "WorkSans_500Medium",
                   color: "#FFF",
                   fontSize: 12,
                   letterSpacing: 0,
@@ -135,7 +135,6 @@ const CustomHomePageCard = ({ cardValue, cardColor }) => {
                     : "Upload your Proof of work"
                 }
                 handlePress={() => {
-                  console.log("Button Pressed");
                   navigation.navigate("(pages)/uploadProof");
                 }}
               />
@@ -160,7 +159,7 @@ const styles = StyleSheet.create({
   },
   projectName: {
     color: "#000B23",
-    fontFamily: "WorkSans_500Medium",
+    // fontFamily: "WorkSans_500Medium",
     fontSize: 18,
     fontWeight: "600", // Corrected to string
     lineHeight: 30,
@@ -168,7 +167,7 @@ const styles = StyleSheet.create({
   },
   projectDescription: {
     color: "#7B7B7B",
-    fontFamily: "WorkSans_500Medium",
+    // fontFamily: "WorkSans_500Medium",
     fontSize: 12,
     fontWeight: "300",
     lineHeight: 15,
@@ -186,7 +185,7 @@ const styles = StyleSheet.create({
 
   deadlineText: {
     color: "#7B7B7B",
-    fontFamily: "WorkSans_400Regular",
+    // fontFamily: "WorkSans_400Regular",
     fontSize: 14,
     fontWeight: "400",
     letterSpacing: 0.06,
@@ -195,7 +194,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   taskStatus: {
-    fontFamily: "WorkSans_500Medium",
+    // fontFamily: "WorkSans_500Medium",
     fontSize: 14,
     fontWeight: "400",
     lineHeight: 15,

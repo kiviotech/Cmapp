@@ -1,54 +1,66 @@
 import React from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { icons } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
-const MyProjectCard = ({ cardValue, cardColor}) => {
+
+const SubtaskCard = ({ cardValue, cardColor = "#EEF7E0" }) => {
   const navigation = useNavigation();
-  const wrapTextAfterWords = (text, wordsPerLine) => {
+
+  // Add safety check for cardValue
+  if (!cardValue || !cardValue.attributes) {
+    return (
+      <View style={[styles.cardContainer, { backgroundColor: cardColor }]}>
+        <Text style={styles.projectName}>Loading...</Text>
+      </View>
+    );
+  }
+
+  const wrapTextAfterWords = (text = "", wordsPerLine = 5) => {
+    if (!text) return "";
     const words = text.split(" ");
-    let wrappedText = "";
+    const lines = [];
     for (let i = 0; i < words.length; i += wordsPerLine) {
-      wrappedText += words.slice(i, i + wordsPerLine).join(" ") + "\n";
+      lines.push(words.slice(i, i + wordsPerLine).join(" "));
     }
-    return wrappedText.trim();
+    return lines.join("\n");
   };
+
+  const {
+    id,
+    attributes: {
+      name = "Untitled Task",
+      description = "No description available",
+      deadline = "No deadline set",
+    } = {},
+  } = cardValue;
+
+  const handlePress = () => {
+    if (id) {
+      navigation.navigate("(pages)/taskDetails", { id });
+    }
+  };
+
   return (
-    <ScrollView>
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate("(pages)/taskDetails", { id: cardValue.id })
-        }
-      >
-        <View style={[styles.cardContainer, { backgroundColor: "#EEF7E0" }]}>
-          <Text style={styles.projectName}>{cardValue.attributes.name}</Text>
-          <Text style={styles.projectDescription}>
-            {wrapTextAfterWords(cardValue.attributes.description, 5)}
-          </Text>
-          <View
-            style={[
-              styles.deadlineContainer,
-              { borderTopColor: "#DFDFDF", borderTopWidth: 1 },
-            ]}
-          >
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-            >
-              <Image source={icons.clockFilled}></Image>
-              <Text style={styles.deadlineText}>
-                {cardValue.attributes.deadline}
-              </Text>
-            </View>
+    <TouchableOpacity onPress={handlePress}>
+      <View style={[styles.cardContainer, { backgroundColor: cardColor }]}>
+        <Text style={styles.projectName} numberOfLines={2}>
+          {name}
+        </Text>
+
+        <Text style={styles.projectDescription}>
+          {wrapTextAfterWords(description)}
+        </Text>
+
+        <View style={styles.deadlineContainer}>
+          <View style={styles.deadlineWrapper}>
+            {icons?.clockFilled && (
+              <Image source={icons.clockFilled} style={styles.clockIcon} />
+            )}
+            <Text style={styles.deadlineText}>{deadline}</Text>
           </View>
         </View>
-      </TouchableOpacity>
-    </ScrollView>
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -59,49 +71,45 @@ const styles = StyleSheet.create({
     height: "auto",
     marginVertical: 10,
     marginRight: 10,
+    minWidth: 200, // Add minimum width
+    maxWidth: 300, // Add maximum width
   },
   projectName: {
     color: "#577CFF",
-    fontFamily: "WorkSans_500Medium",
     fontSize: 18,
-    fontWeight: 600,
+    fontWeight: "600",
     lineHeight: 40,
     letterSpacing: 0.09,
   },
   projectDescription: {
     color: "#577CFF",
-    fontFamily: "WorkSans_500Medium",
     fontSize: 12,
-    fontStyle: "normal",
     fontWeight: "300",
-    lineHeight: 15, // Adjust as needed
+    lineHeight: 15,
     letterSpacing: -0.06,
-    whiteSpace: "pre-wrap", // Ensure newlines are respected
   },
   deadlineContainer: {
     marginTop: 30,
     paddingTop: 10,
-    paddingBottom: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    borderTopColor: "#DFDFDF",
+    borderTopWidth: 1,
   },
-
-  dateICon: {
-    width: 28,
-    height: 28,
-    position: "relative",
-    top: 9,
-    marginRight: 10,
+  deadlineWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  clockIcon: {
+    width: 20,
+    height: 20,
   },
   deadlineText: {
     color: "#A3D65C",
-    fontFamily: "WorkSans_400Regular",
     fontSize: 14,
-    fontStyle: "normal",
     fontWeight: "400",
-    lineHeight: 12, // Adjust as needed
+    lineHeight: 16,
     letterSpacing: 0.06,
   },
 });
 
-export default MyProjectCard;
+export default SubtaskCard;

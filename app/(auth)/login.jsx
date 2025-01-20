@@ -1,60 +1,110 @@
-import { View, Text, TouchableOpacity, Alert, Image, StyleSheet } from 'react-native';
-import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomButton from '../../components/CustomButton';
-import LoginField from '../../components/LoginField';
-import { useRouter } from 'expo-router';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ScrollView,
+} from "react-native";
+
+const { width } = Dimensions.get("window");
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import {
+  WorkSans_400Regular,
+  WorkSans_500Medium,
+  WorkSans_600SemiBold,
+  WorkSans_700Bold,
+} from "@expo-google-fonts/work-sans";
+import CustomButton from "../../components/CustomButton";
+import LoginField from "../../components/LoginField";
+import { useRouter } from "expo-router";
 import { NativeWindStyleSheet } from "nativewind";
-import { icons } from '../../constants';
-import { useNavigation } from '@react-navigation/native';
-import colors from '../../constants/colors';
-import fonts from '../../constants/fonts';
-import { login } from '../../src/utils/auth';
-import { saveToken, deleteToken } from '../../src/utils/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { icons } from "../../constants";
+import { useNavigation } from "@react-navigation/native";
+import colors from "../../constants/colors";
+import fonts from "../../constants/fonts";
+import { login } from "../../src/utils/auth";
+import { Modal } from "react-native";
+import useAuthStore from "../../useAuthStore";
+// import { icons } from "../../constants/icons";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
 
 NativeWindStyleSheet.setOutput({
   default: "native",
 });
 
+SplashScreen.preventAutoHideAsync();
+
 const Login = () => {
-  const [usePassword, setUsePassword] = useState(true);
-  const [form, setForm] = useState({
-    mobile: '',
-    password: '',
-    otp: '',
-  });
-  const [errors, setErrors] = useState({
-    mobile: '',
-    password: '',
-    otp: '',
+  const [fontsLoaded] = useFonts({
+    WorkSans_400Regular,
+    WorkSans_500Medium,
+    WorkSans_600SemiBold,
+    WorkSans_700Bold,
   });
 
+  React.useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  const token = useAuthStore((state) => state.token);
   const router = useRouter();
+
+  React.useEffect(() => {
+    if (token) {
+      router.replace("/dashboard");
+    }
+  }, [token, router]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  const [usePassword, setUsePassword] = useState(true);
+  const [form, setForm] = useState({
+    mobile: "",
+    password: "",
+    otp: "",
+  });
+  const [errors, setErrors] = useState({
+    mobile: "",
+    password: "",
+    otp: "",
+  });
+
+  const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
+
   const navigation = useNavigation();
 
   const validateField = (name, value) => {
-    let error = '';
-    if (name === 'mobile') {
+    let error = "";
+    if (name === "mobile") {
       const mobileRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!value) {
-        error = 'Email is required';
+        error = "Email is required";
       } else if (!mobileRegex.test(value)) {
-        error = 'Invalid email';
+        error = "Invalid email";
       }
     }
-    if (usePassword && name === 'password') {
+    if (usePassword && name === "password") {
       if (!value) {
-        error = 'Password is required';
+        error = "Password is required";
       } else if (value.length < 6) {
-        error = 'Password must be at least 6 characters';
+        error = "Password must be at least 6 characters";
       }
     }
-    if (!usePassword && name === 'otp') {
+    if (!usePassword && name === "otp") {
       if (!value) {
-        error = 'OTP is required';
+        error = "OTP is required";
       } else if (value.length !== 6) {
-        error = 'OTP must be 6 digits';
+        error = "OTP must be 6 digits";
       }
     }
     return error;
@@ -66,131 +116,170 @@ const Login = () => {
     setForm({ ...form, [name]: value });
   };
 
-  
-  
-const handleLogin = async () => {
-  try {
-    const mobileError = validateField("mobile", form.mobile);
-    const passwordError = usePassword
-      ? validateField("password", form.password)
-      : "";
-    const otpError = !usePassword ? validateField("otp", form.otp) : "";
+  const handleLogin = async () => {
+    try {
+      // Validate form fields based on the login method (password or OTP)
+      const mobileError = validateField("mobile", form.mobile);
+      const passwordError = usePassword
+        ? validateField("password", form.password)
+        : "";
+      const otpError = !usePassword ? validateField("otp", form.otp) : "";
 
-    if (mobileError || passwordError || otpError) {
-      setErrors({
-        mobile: mobileError,
-        password: passwordError,
-        otp: otpError,
-      });
-      return;
-    }
+      if (mobileError || passwordError || otpError) {
+        // Set errors if any validation fails and return early
+        setErrors({
+          mobile: mobileError,
+          password: passwordError,
+          otp: otpError,
+        });
+        return;
+      }
 
-    // Attempt to log in with the provided mobile and password/otp
-    const response = await login(
-      form.mobile,
-      usePassword ? form.password : form.otp
-    );
+      // Attempt to log in using the appropriate credential (password or OTP)
+      const response = await login(
+        form.mobile,
+        usePassword ? form.password : form.otp
+      );
 
-    if (response && response.user && response.user.username) {
-      // Store the username in AsyncStorage
-      await AsyncStorage.setItem("username", response.user.username);
-      console.log("Username stored in AsyncStorage:", response.user.username);
+      // If login is successful and user data is returned
+      // if (response && response.user && response.user.username) {
+      //   // Store the username and user ID in AsyncStorage
+      //   await AsyncStorage.setItem("username", response.user.username);
+      //   await AsyncStorage.setItem("id", response.user.id.toString());
 
-      // Navigate to the dashboard after successful login
+      //   // Navigate to the dashboard using the router
+      // }
       router.replace("/dashboard");
+    } catch (error) {
+      console.error("Error during login:", error.message);
+      // Handle the error, such as displaying an error message to the user
+      setIsErrorModalVisible(true);
     }
-  } catch (error) {
-    console.error("Error", error.message);
-    // Handle error, such as showing an error message to the user
-  }
-};
+  };
+
+  const closeErrorModal = () => {
+    setIsErrorModalVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View>
-          <View style={styles.header}>
-            <Text className="font-pbold text-3xl font-inter600">Login</Text>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.labelText}>E-mail</Text>
-            <LoginField
-              placeholder="Your email or phone"
-              value={form.mobile}
-              handleChangeText={(value) => handleChangeText('mobile', value)}
-              keyboardType='email-address'
-              className="mb-4"
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        <View style={styles.content}>
+          <View style={styles.container}>
+            <Image
+              source={{
+                uri: "https://netzehomes.com/wp-content/uploads/2024/09/cropped-logo-n-white.png",
+              }}
+              // source={icons.logo}
+              style={styles.image}
+              resizeMode="contain" // Adjusts the image to fit within the specified dimensions
             />
-            {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
+          </View>
+          <View>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Login</Text>
+            </View>
 
-            {usePassword ? (
-              <View style={styles.passwordContainer}>
-                <Text style={styles.labelText}>Password</Text>
-                <LoginField
-                  style={styles.loginField}
-                  placeholder="Password"
-                  value={form.password}
-                  handleChangeText={(value) => handleChangeText('password', value)}
-                  secureTextEntry={true}
-                />
-                {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-              </View>
-            ) : (
-              <View style={styles.otpContainer}>
-                <Text className="font-pbold">OTP</Text>
-                <LoginField
-                  placeholder="OTP"
-                  value={form.otp}
-                  handleChangeText={(value) => handleChangeText('otp', value)}
-                  keyboardType='number-pad'
-                  className="mb-4"
-                />
-                {errors.otp ? <Text style={styles.errorText}>{errors.otp}</Text> : null}
-              </View>
-            )}
+            <View style={styles.inputContainer}>
+              <Text style={styles.labelText}>E-mail</Text>
+              <LoginField
+                placeholder="Your email or phone"
+                value={form.mobile}
+                handleChangeText={(value) => handleChangeText("mobile", value)}
+                keyboardType="email-address"
+                style={styles.loginField}
+              />
+              {errors.mobile ? (
+                <Text style={styles.errorText}>{errors.mobile}</Text>
+              ) : null}
 
-            <TouchableOpacity activeOpacity={0.8}>
-              <Text className="font-pmedium text-sm text-left text-[#577CFF] font-inter400" style={styles.forgotPasswordText}>Forgot password?</Text>
+              {usePassword ? (
+                <View style={styles.passwordContainer}>
+                  <Text style={styles.labelText}>Password</Text>
+                  <LoginField
+                    style={styles.loginField}
+                    placeholder="Password"
+                    value={form.password}
+                    handleChangeText={(value) =>
+                      handleChangeText("password", value)
+                    }
+                    secureTextEntry={true}
+                  />
+                  {errors.password ? (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  ) : null}
+                </View>
+              ) : (
+                <View style={styles.otpContainer}>
+                  <Text style={styles.labelText}>OTP</Text>
+                  <LoginField
+                    placeholder="OTP"
+                    value={form.otp}
+                    handleChangeText={(value) => handleChangeText("otp", value)}
+                    keyboardType="number-pad"
+                    style={styles.loginField}
+                  />
+                  {errors.otp ? (
+                    <Text style={styles.errorText}>{errors.otp}</Text>
+                  ) : null}
+                </View>
+              )}
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate("(auth)/ForgotPassword")}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <CustomButton
+              buttonStyle={styles.loginButton}
+              textStyle={styles.loginButtonText}
+              text="LOGIN"
+              handlePress={() => handleLogin("login")}
+            />
+          </View>
+
+          <View style={styles.signUpContainer}>
+            <Text style={styles.signUpText}>
+              Don’t have an account?
+              <TouchableOpacity
+                onPress={() => navigation.navigate("(auth)/SignUp")}
+              >
+                <Text style={styles.signUpLink}> Sign Up</Text>
+              </TouchableOpacity>
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+
+      <Modal
+        transparent={true}
+        visible={isErrorModalVisible}
+        animationType="fade"
+        onRequestClose={closeErrorModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Invalid Credentials</Text>
+            <Text style={styles.modalMessage}>
+              Please check your email and password and try again.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={closeErrorModal}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
-
-        <View style={styles.buttonContainer}>
-          <CustomButton
-            buttonStyle={{ backgroundColor: '#577CFF', fontSize: 13, width: 140, letterSpacing: 1 }}
-            textStyle={{ fontFamily: 'font-inter400', color: '#FFFFFF' }}
-            text='LOGIN'
-            handlePress={() => handleLogin('login')}
-          />
-        </View>
-
-        <View style={styles.signUpContainer}>
-          <Text className="font-pmedium text-sm text-[#9C9C9C] font-inter400">
-            Don’t have an account?
-            <TouchableOpacity onPress={() => navigation.navigate('(auth)/SignUp')}>
-              <Text className="text-[#577CFF]"> Sign Up</Text>
-            </TouchableOpacity>
-          </Text>
-
-          {/* <View style={styles.separatorContainer}>
-            <View style={styles.separator} />
-            <Text className="mx-4 font-pmedium text-sm text-[#9C9C9C] font-inter400">Sign up with</Text>
-            <View style={styles.separator} />
-          </View> */}
-
-          {/* <View style={styles.socialButtonsContainer}>
-            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full shadow flex flex-row justify-center items-center space-x-2" style={styles.socialButton}>
-              <Image source={icons.facebook} className="w-6 h-6" />
-              <Text className="font-inter400" style={styles.socialButtonText}>FACEBOOK</Text>
-            </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.8} className="bg-[#FFFFFF] rounded-full p-4 shadow flex flex-row justify-center items-center space-x-2" style={styles.socialButton}>
-              <Image source={icons.google} className="w-6 h-6" />
-              <Text className="font-inter400" style={styles.socialButtonText}>GOOGLE</Text>
-            </TouchableOpacity>
-          </View> */}
-        </View>
-      </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -201,17 +290,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
   },
   content: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     paddingHorizontal: 16,
   },
   header: {
     marginBottom: 32,
+  },
+  headerText: {
+    // fontFamily: fonts.WorkSans600,
+    fontSize: 24,
+    fontWeight: "bold",
   },
   inputContainer: {
     marginBottom: 16,
@@ -225,50 +316,91 @@ const styles = StyleSheet.create({
   labelText: {
     color: colors.loginSignUpLabelColor,
     fontSize: 13,
-    fontFamily: fonts.WorkSans400,
     paddingBottom: 2,
   },
   forgotPasswordText: {
     marginTop: 5,
+    fontSize: 14,
+    color: "#577CFF",
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: 12,
     marginTop: 4,
   },
   buttonContainer: {
     marginTop: 32,
-    alignItems: 'center',
+    alignItems: "center",
+  },
+  loginButton: {
+    backgroundColor: "#577CFF",
+    fontSize: 13,
+    width: 140,
+    letterSpacing: 1,
+  },
+  loginButtonText: {
+    // fontFamily: fonts.WorkSans400,
+    color: "#FFFFFF",
   },
   signUpContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 32,
   },
-  separatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
+  signUpText: {
+    fontSize: 16,
+    color: "#9C9C9C",
   },
-  // separator: {
-  //   borderColor: colors.borderColor,
-  //   borderWidth: 1,
-  //   width: 100,
-  // },
-  // socialButtonsContainer: {
-  //   flexDirection: 'row',
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   marginTop: 24,
-  //   spaceX: 16,
-  // },
-  // socialButton: {
-  //   width: 147,
-  //   height: 50,
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   marginRight: 10
-  // },
-  // socialButtonText: {
-  //   fontSize: 13,
-  // },
+  signUpLink: {
+    color: "#577CFF",
+  },
+  loginField: {
+    marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: "white",
+  },
+  container: {
+    flex: 1,
+    alignItems: "center", // Centers the image horizontally
+    justifyContent: "center", // Centers the image vertically
+  },
+  image: {
+    width: width * 0.8, // Sets the image width to 80% of the screen width
+    height: width * 0.8, // Sets the image height to maintain aspect ratio
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    marginBottom: 40,
+  },
 });

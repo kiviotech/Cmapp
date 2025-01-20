@@ -1,521 +1,456 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  FlatList,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
+  SafeAreaView,
+  TextInput,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import CustomButton from "../../components/CustomButton";
-import { FontAwesome } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import fonts from "../../constants/fonts";
-import colors from "../../constants/colors";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import { getRegistrations, updateRegistration } from "../../src/api/repositories/registrationRepository";
-import { getSubmissions, updateSubmission } from "../../src/api/repositories/submissionRepository";
-import { createUser } from "../../src/api/repositories/userRepository";
+import BottomNavigation from "./contractor/BottomNavigation ";
+import { getTaskByContractorId } from "../../src/api/repositories/taskRepository";
+import { fetchContractorsByUserId } from "../../src/services/contractorService";
+import useAuthStore from "../../useAuthStore";
+import { updateExistingSubmission } from "../../src/services/submissionService";
 
-
-const UploadProof = () => {
+const Notification = () => {
+  const [activeTab, setActiveTab] = useState("Unread");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [unreadNotifications, setUnreadNotifications] = useState([]);
+  const [readNotifications, setReadNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tasks, setTasks] = useState([]);
   const navigation = useNavigation();
-  const [registrationDetail, setRegistrationsDetail] = useState([]);
-  const [submissionDetail, setSubmissionDetail] = useState([]);
-  const [selectedTab, setSelectedTab] = useState("joinRequests");
+  const { user } = useAuthStore();
 
-    useEffect(() => {
-      if (selectedTab === "joinRequests") {
-        const fetchRegistration = async () => {
-          try {
-            const registrationData = await getRegistrations();
-            setRegistrationsDetail(registrationData?.data?.data);
-          } catch (error) {
-            console.error("Error fetching registrations:", error);
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (user && user.id) {
+  //       try {
+  //         setIsLoading(true);
+  //         const data = await fetchContractorsByUserId(user.id);
+  //         var filteredData = [];
+  //         if (data.data.length > 0) {
+  //           const contractorId = data.data[0].id;
+  //           const projectData = data.data.map(
+  //             (project) => (filteredData = project.attributes.projects.data)
+  //           );
+
+  //           const allTasks = [];
+  //           let unread = [];
+  //           let read = [];
+
+  //           for (const projectId of filteredData) {
+  //             const taskData = await getTaskByContractorId(
+  //               projectId.id,
+  //               contractorId
+  //             );
+  //             const ongoingTasks = taskData.data.data.filter(
+  //               (task) => task.attributes.task_status === "ongoing"
+  //             );
+  //             allTasks.push(...ongoingTasks);
+  //           }
+
+  //           for (const task of allTasks) {
+  //             const submissions = task.attributes.submissions.data;
+  //             unread = unread.concat(
+  //               submissions?.filter(
+  //                 (sub) => sub.attributes.notification_status === "unread"
+  //               )
+  //             );
+  //             read = read.concat(
+  //               submissions?.filter(
+  //                 (sub) => sub.attributes.notification_status === "read"
+  //               )
+  //             );
+  //           }
+
+  //           setTasks(allTasks);
+  //           setUnreadNotifications(unread);
+  //           setReadNotifications(read);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error fetching notifications:", error);
+  //       } finally {
+  //         setIsLoading(false);
+  //       }
+  //     }
+  //   };
+  //   fetchData();
+  // }, [user]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user && user.id) {
+        try {
+          setIsLoading(true);
+
+          // Fetch contractor data by user ID
+          const data = await fetchContractorsByUserId(user.id);
+
+          if (data.data.length > 0) {
+            const contractorId = data.data[0].id;
+
+            // Extract and flatten project IDs
+            const projectIds = data.data.flatMap(
+              (contractor) => contractor.attributes.projects.data || []
+            );
+
+            // Fetch tasks for all projects in parallel using Promise.all
+            const taskPromises = projectIds.map((project) =>
+              getTaskByContractorId(project.id, contractorId)
+            );
+
+            const taskResults = await Promise.all(taskPromises);
+
+            // Collect all ongoing tasks
+            const allTasks = taskResults.flatMap(
+              (taskResult) => taskResult?.data?.data
+            );
+
+            // Process notifications
+            const unread = [];
+            const read = [];
+            allTasks.forEach((task) => {
+              const submissions = task.attributes.submissions.data || [];
+              unread.push(
+                ...submissions.filter(
+                  (sub) => sub.attributes.notification_status === "unread"
+                )
+              );
+              read.push(
+                ...submissions.filter(
+                  (sub) => sub.attributes.notification_status === "read"
+                )
+              );
+            });
+
+            // Update state with tasks and notifications
+            setTasks(allTasks);
+            setUnreadNotifications(unread);
+            setReadNotifications(read);
           }
-        };
-        fetchRegistration();
-      } else if (selectedTab === "uploadedProofs") {
-        const fetchSubmissions = async () => {
-          try {
-            const submissionData = await getSubmissions();
-            setSubmissionDetail(submissionData?.data?.data);
-          } catch (error) {
-            console.error("Error fetching submissions:", error);
-          }
-        };
-        fetchSubmissions();
+        } catch (error) {
+          console.error("Error fetching notifications:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }, [selectedTab]);
-  const handleRejectSubmission = async (submissionId) => {
+    };
+
+    fetchData();
+  }, [user]);
+
+  const markAsRead = async (item) => {
     try {
-      const selectedSubmission = submissionDetail.find(
-        (submission) => submission.id === submissionId
-      );
+      // Only update the notification status if it's currently unread
+      if (item.attributes.notification_status === "unread") {
+        // Update the notification status using the submission service
+        await updateExistingSubmission(item.id, {
+          data: {
+            notification_status: "read",
+          },
+        });
 
-      if (!selectedSubmission) {
-        console.error("Submission not found!");
-        return;
+        // Update local state
+        setUnreadNotifications((prev) =>
+          prev.filter((notification) => notification.id !== item.id)
+        );
+        setReadNotifications((prev) => [
+          ...prev,
+          {
+            ...item,
+            attributes: { ...item.attributes, notification_status: "read" },
+          },
+        ]);
       }
-
-      const payload = {
-        data: {
-          status: "rejected", // Update status to rejected
-          taskName: selectedSubmission.attributes.task.data.attributes.name,
-          userId: selectedSubmission.attributes.user.data.id,
-        },
-      };
-
-      await updateSubmission(submissionId, payload); // Call your API
-
-      // Remove the rejected submission from the state
-      setSubmissionDetail((prevSubmissions) =>
-        prevSubmissions.filter((submission) => submission.id !== submissionId)
-      );
     } catch (error) {
-      console.error("Error rejecting submission:", error);
+      console.error("Error updating notification status:", error);
     }
   };
 
-  
-  const handleApproveSubmission = async (submissionId) => {
-    try {
-      // Find the submission object that matches the selected submissionId
-      const selectedSubmission = submissionDetail.find(
-        (submission) => submission.id === submissionId
-      );
+  const renderNotificationItem = ({ item }) => {
+    const task = tasks.find((t) =>
+      t.attributes.submissions.data.some((s) => s.id === item.id)
+    );
 
-      if (!selectedSubmission) {
-        console.error("Submission not found!");
-        return;
-      }
+    console.log("Notification Item:", item.id);
 
-      // Construct the payload using data from the selected submission
-      const payload = {
-        data: {
-          status: "approved", // Update status to approved
-          task: selectedSubmission.attributes.task.data.attributes.id,
-          submissionDate: selectedSubmission.attributes.submissionDate,
-          comment: selectedSubmission.attributes.comment,
-          count: 0,
-          proofOfWork : []
-        },
-      };
+    const createdAt = new Date(item.attributes.createdAt);
+    const formattedTime = createdAt.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-//       Example Value
-// Schema
-// {
-//   "data": {
-//     "comment": "string",
-//     "proofOfWork": [
-//       "string or id",
-//       "string or id"
-//     ],
-//     "count": 0,
-//     "status": "pending",
-//     "task": "string or id"
-//   }
+    const status = item.attributes.status || "pending";
+    const statusColor =
+      {
+        approved: "#4CAF50",
+        rejected: "#FF4444",
+        pending: "#FFA500",
+      }[status.toLowerCase()] || "#6C757D";
 
-      // Send the payload to update the submission
-      const response = await updateSubmission(submissionId, payload); // Assuming updateSubmission is a function from your repository to update the submission
-
-      // Update the state to remove the approved submission from the list
-      setSubmissionDetail((prevSubmissions) =>
-        prevSubmissions.map((submission) =>
-          submission.id === submissionId
-            ? {
-                ...submission,
-                attributes: { ...submission.attributes, status: "approved" },
-              }
-            : submission
-        )
-      );
-
-      if (response.status === 200) {
-        console.log("Submission approved successfully!");
-      }
-    } catch (error) {
-      console.error("Error approving submission:", error);
-    }
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          markAsRead(item);
+          navigation.navigate("(pages)/notificationDetails", {
+            notification: JSON.stringify(item),
+            task: JSON.stringify(task),
+            formattedTime,
+            statusColor,
+          });
+        }}
+      >
+        <View style={styles.notificationContainer}>
+          <Ionicons
+            name="document-text-outline"
+            size={24}
+            color="#4CAF50"
+            style={styles.icon}
+          />
+          <View style={styles.textContainer}>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>
+                Submission for{" "}
+                {task?.attributes?.project?.data?.attributes?.name}
+              </Text>
+              <Text style={styles.time}>{formattedTime}</Text>
+            </View>
+            <View style={styles.bottomRow}>
+              <Text style={styles.message}>
+                {item.attributes.comment || "No additional information"}
+              </Text>
+              <Text style={[styles.status, { color: statusColor }]}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
   };
 
-
-  // Existing handleApprove and handleReject functions for registrations
-  const handleApprove = async (registrationId) => {
-    try {
-      // Find the registration object that matches the selected registrationId
-      const selectedRegistration = registrationDetail.find(
-        (registration) => registration.id === registrationId
+  const filteredNotifications = (notifications) => {
+    const searchText = searchQuery.toLowerCase();
+    return notifications.filter((item) => {
+      const comment = item.attributes.comment?.toLowerCase() || "";
+      const task = tasks.find((t) =>
+        t.attributes.submissions.data.some((s) => s.id === item.id)
       );
+      const projectName =
+        task?.attributes?.project?.data?.attributes?.name?.toLowerCase() || "";
 
-      if (!selectedRegistration) {
-        console.error("Registration not found!");
-        return;
-      }
-
-      // Construct the payload using data from the selected registration
-      const payload = {
-        data: {
-          status: "approved", // Update status to approved
-          socialSecurityNumber:
-            selectedRegistration.attributes.socialSecurityNumber,
-          fullName: selectedRegistration.attributes.fullName,
-          email: selectedRegistration.attributes.email, // Assuming email is part of the registration data
-        },
-      };
-
-      const response = await updateRegistration(registrationId, payload); // Send the correct payload
-
-      // Update the state to remove the approved registration from the list
-       setRegistrationsDetail((prevRegistrations) =>
-         prevRegistrations.map((registration) =>
-           registration.id === registrationId
-             ? {
-                 ...registration,
-                 attributes: { ...registration.attributes, status: "approved" },
-               }
-             : registration
-         )
-       );
-
-      // Construct user data from the registration data
-      const userData = {
-        username: selectedRegistration.attributes.fullName, // Full name as username
-        email: selectedRegistration.attributes.email, // Email from registration
-        password: selectedRegistration.attributes.password, // You can generate a strong default password here
-      };
-
-      if (response.status == 200) {
-        await createUser(userData);
-      }
-    } catch (error) {
-      console.error("Error approving registration:", error);
-    }
+      return (
+        searchText === "" ||
+        comment.includes(searchText) ||
+        projectName.includes(searchText)
+      );
+    });
   };
 
-  const handleReject = async (registrationId) => {
-    try {
-      // Find the registration object that matches the selected registrationId
-      const selectedRegistration = registrationDetail.find(
-        (registration) => registration.id === registrationId
-      );
-
-      if (!selectedRegistration) {
-        console.error("Registration not found!");
-        return;
-      }
-
-      // Construct the payload using data from the selected registration
-      const payload = {
-        data: {
-          status: "rejected", // Update status to approved
-          socialSecurityNumber:
-            selectedRegistration.attributes.socialSecurityNumber,
-          fullName: selectedRegistration.attributes.fullName,
-          email: selectedRegistration.attributes.email,
-        },
-      };
-
-      await updateRegistration(registrationId, payload); // Send the correct payload
-
-      // Update the state to remove the rejected registration from the list
-      setRegistrationsDetail((prevRegistrations) =>
-        prevRegistrations.filter(
-          (registration) => registration.id !== registrationId
-        )
-      );
-    } catch (error) {
-      console.error("Error rejecting registration:", error);
-    }
-  };
-
+  if (isLoading) {
+    return (
+      <View style={styles.areaContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.border}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("(pages)/dashboard")}
-        >
-          <Ionicons name="arrow-back" size={24} color="black" />
-          {/* Back Icon */}
-        </TouchableOpacity>
-        <Text style={styles.instructions}>Notifications</Text>
-      </View>
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[
-            styles.tabItem,
-            selectedTab === "joinRequests" && styles.activeTab,
-          ]}
-          onPress={() => setSelectedTab("joinRequests")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              selectedTab === "joinRequests" && styles.activeTabText,
-            ]}
-          >
-            Registrant
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabItem,
-            selectedTab === "uploadedProofs" && styles.activeTab,
-          ]}
-          onPress={() => setSelectedTab("uploadedProofs")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              selectedTab === "uploadedProofs" && styles.activeTabText,
-            ]}
-          >
-            Submissions
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView>
-        <View style={styles.mainContainer}>
-          {/* Registration Notifications */}
-          {selectedTab === "joinRequests" &&
-            registrationDetail
-              .filter(
-                (registration) => registration.attributes.status === "pending"
-              )
-              .map((registration) => (
-                <View
-                  key={registration.id}
-                  style={styles.notificationContainer}
-                >
-                  <Text style={styles.paragraph}>
-                    {registration.attributes?.fullName} has requested to verify
-                    the project details...
-                  </Text>
-
-                  <View
-                    style={{
-                      justifyContent: "flex-end",
-                      alignItems: "flex-end",
-                    }}
-                  >
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate("(pages)/notificationDetails", {
-                          registrationId: registration.id,
-                        })
-                      }
-                      style={styles.seeMoreButton}
-                    >
-                      <Text style={[styles.paragraph, styles.seeMore]}>
-                        See more
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.buttonContainer}>
-                    <CustomButton
-                      buttonStyle={styles.approveButton}
-                      textStyle={styles.buttonText}
-                      text="Approve Request"
-                      handlePress={() => handleApprove(registration.id)}
-                    />
-                    <CustomButton
-                      buttonStyle={styles.rejectButton}
-                      textStyle={styles.buttonText}
-                      text="Reject Request"
-                      handlePress={() => handleReject(registration.id)}
-                    />
-                  </View>
-                </View>
-              ))}
-
-          {/* Submission Notifications */}
-          {selectedTab === "uploadedProofs" &&
-            submissionDetail.map((submission) => (
-              <View key={submission.id} style={styles.notificationContainer}>
-                <Text style={styles.paragraph}>
-                  {submission?.id} has submitted proof of{" "}
-                  {submission?.attributes.task.data.attributes.name}
-                </Text>
-
-                <View
-                  style={{ justifyContent: "flex-end", alignItems: "flex-end" }}
-                >
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("(pages)/submissionDetails", {
-                        submissionId: submission.id,
-                      })
-                    }
-                    style={styles.seeMoreButton}
-                  >
-                    <Text style={[styles.paragraph, styles.seeMore]}>
-                      See more
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.buttonContainer}>
-                  <CustomButton
-                    buttonStyle={styles.approveSubmission}
-                    textStyle={styles.buttonText}
-                    text="Approve Submission"
-                    handlePress={() => handleApproveSubmission(submission.id)}
-                  />
-                  <CustomButton
-                    buttonStyle={styles.rejectSubmission}
-                    textStyle={styles.buttonText}
-                    text="Reject Submission"
-                    handlePress={() => handleRejectSubmission(submission.id)}
-                  />
-                </View>
-              </View>
-            ))}
+    <SafeAreaView style={styles.areaContainer}>
+      <View style={styles.headerContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Notifications</Text>
         </View>
-      </ScrollView>
+
+        <View style={styles.categoryTabsContainer}>
+          {["Unread", "Read"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.categoryTab,
+                activeTab === tab && styles.activeCategoryTab,
+              ]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text
+                style={[
+                  styles.categoryTabText,
+                  activeTab === tab && styles.activeCategoryText,
+                ]}
+              >
+                {tab} (
+                {tab === "Unread"
+                  ? unreadNotifications.length
+                  : readNotifications.length}
+                )
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search notifications..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+      </View>
+
+      <FlatList
+        data={filteredNotifications(
+          activeTab === "Unread" ? unreadNotifications : readNotifications
+        ).sort(
+          (a, b) =>
+            new Date(b.attributes.createdAt) - new Date(a.attributes.createdAt)
+        )}
+        keyExtractor={(item, index) => `notification-${item.id}-${index}`}
+        renderItem={renderNotificationItem}
+        contentContainerStyle={styles.listContent}
+        style={styles.flatList}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <BottomNavigation />
     </SafeAreaView>
   );
 };
 
-export default UploadProof;
-
 const styles = StyleSheet.create({
-  mainContainer: {
+  areaContainer: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingBottom: 10,
-  },
-  instructions: {
-    fontSize: 24,
-    fontFamily: fonts.WorkSans600,
-    paddingLeft: 100,
-  },
-  pagraph: {
-    color: colors.blackColor,
-    fontSize: 16,
     padding: 5,
-    fontFamily: fonts.WorkSans400,
+    marginTop: 20,
+    width: "100%",
   },
-  seeMore: {
-    textAlign: "center",
-    color: colors.primary,
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+    zIndex: 1,
   },
-  border: {
-    borderColor: colors.borderColor,
-    borderBottomWidth: 1,
-    height: 70,
+  header: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    margin: 10
+    paddingBottom: 18,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1C1C1E",
+  },
+  flatList: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   notificationContainer: {
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: colors.borderColor,
-    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     padding: 15,
-    backgroundColor: "#F9F9F9",
+    borderRadius: 10,
+    marginBottom: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 5,
-    elevation: 5,
-    gap: 10// Adds a subtle shadow effect
+    shadowOffset: { width: 0, height: 1 },
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 10,
-    marginTop: 20,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#DFDFDF", // Border line between content and buttons
+  icon: {
+    marginRight: 10,
   },
-  approveButton: {
-    backgroundColor: colors.greenessColor,
-    fontSize: 10,
-    width: 150,
-    letterSpacing: 1,
+  textContainer: {
+    flex: 1,
+  },
+  titleRow: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 8,
   },
-  approveSubmission: {
-    backgroundColor: colors.greenessColor,
-    fontSize: 10,
-    width: 160,
-    letterSpacing: 0,
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1C1C1E",
+    flex: 1,
+    marginRight: 8,
+  },
+  time: {
+    fontSize: 12,
+    color: "#A0A0A0",
+  },
+  message: {
+    fontSize: 14,
+    color: "#6C757D",
+    flex: 1,
+    marginRight: 8,
+  },
+  status: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  listContent: {
+    paddingBottom: 80,
+  },
+  searchContainer: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 10,
+    backgroundColor: "#FFF",
     borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    height: 40,
   },
-  rejectButton: {
-    backgroundColor: colors.radiusColor,
-    fontSize: 10,
-    width: 150,
-    letterSpacing: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 8,
+  searchIcon: {
+    marginRight: 8,
   },
-  rejectSubmission: {
-    backgroundColor: colors.radiusColor,
-    fontSize: 10,
-    width: 160,
-    letterSpacing: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 8,
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
   },
-  buttonText: {
-    fontFamily: fonts.WorkSans600,
-    color: colors.whiteColor,
-  },
-  seeMoreButton: {
-    // backgroundColor: "#000",
-    backgroundColor: "#ffffff",
-    padding: 3,
-    borderRadius: 100,
-    shadowColor: "#000", // Shadow color
-    shadowOffset: { width: 0, height: 2 }, // Shadow offset (x and y)
-    shadowOpacity: 0.25, // Shadow opacity
-    shadowRadius: 3.84, // Shadow blur radius
-    elevation: 5, // Shadow for Android
-    justifyContent: "flex-end",
-    width: 120,
-  },
-  tabBar: {
+  categoryTabsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderColor,
+    marginBottom: 16,
   },
-  tabItem: {
-    paddingVertical: 10,
-    flex: 1,
+  categoryTab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    width: "50%",
+  },
+  activeCategoryTab: {
+    borderColor: "#577CFF",
+    borderBottomWidth: 6,
+    borderBottomColor: "#577CFF",
+  },
+  categoryTabText: {
+    color: "#1C1C1E",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  activeCategoryText: {
+    color: "#577CFF",
+  },
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-  },
-  tabText: {
-    fontSize: 16,
-    color: colors.blackColor,
-    fontFamily: fonts.WorkSans400,
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
-  },
-  activeTabText: {
-    color: colors.primary,
-    fontFamily: fonts.WorkSans600,
+    marginTop: 2,
   },
 });
+
+export default Notification;

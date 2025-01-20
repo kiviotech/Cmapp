@@ -1,5 +1,3 @@
-// submissionService.js
-
 import {
   getSubmissions,
   getSubmissionById,

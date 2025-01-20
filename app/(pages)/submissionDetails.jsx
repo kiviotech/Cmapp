@@ -16,7 +16,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import colors from "../../constants/colors";
 import fonts from "../../constants/fonts";
 import Swiper from "react-native-swiper";
-import { WebView } from "react-native-webview";
+// import { WebView } from "react-native-webview";
 import { getSubmissionById } from "../../src/api/repositories/submissionRepository";
 import { useRoute } from "@react-navigation/native";
 import submissionEndpoints from "../../src/api/endpoints/submissionEndpoints";
@@ -32,7 +32,7 @@ const SubmissionDetails = () => {
   const route = useRoute();
   const id = route.params.submissionId || 0;
   const navigation = useNavigation();
-  const baseURL = "http://localhost:1338"; // Base URL for localhost
+  const baseURL = "https://cmappapi.kivio.in"; // Base URL for localhost
 
   const proofs = [
     {
@@ -235,10 +235,10 @@ const SubmissionDetails = () => {
                     style={styles.fullScreenModal}
                     onPress={() => setModalVisible(false)}
                   >
-                    <WebView
+                    {/* <WebView
                       source={{ uri: selectedDocument.url }}
                       style={styles.fullSizeImage}
-                    />
+                    /> */}
                   </TouchableOpacity>
                 )
               )
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: fonts.WorkSans700,
+    // fontFamily: fonts.WorkSans700,
     color: colors.blackColor,
     textAlign: "center",
     flex: 1,
@@ -279,14 +279,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 16,
     color: colors.blackColor,
     marginTop: 10,
     marginBottom: 5,
   },
   value: {
-    fontFamily: fonts.WorkSans400,
+    // fontFamily: fonts.WorkSans400,
     fontSize: 16,
     color: colors.grayColor,
     marginBottom: 15,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   pdfText: {
     marginTop: 10,
     fontSize: 16,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     color: colors.blackColor,
   },
   buttonContainer: {
@@ -340,14 +340,14 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: colors.whiteColor,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 14,
     letterSpacing: 0.5,
   },
   rejectButtonText: {
     color: colors.whiteColor,
     fontSize: 14,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
   },
   popup: {
     position: "absolute",
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   },
   popupText: {
     color: colors.whiteColor,
-    fontFamily: fonts.WorkSans600,
+    // fontFamily: fonts.WorkSans600,
     fontSize: 16,
   },
   fullScreenModal: {
