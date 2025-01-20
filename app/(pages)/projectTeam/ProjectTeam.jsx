@@ -371,7 +371,7 @@ const ProjectTeam = () => {
         <Text style={styles.sectionHeader}>Project Overview</Text>
         <View style={styles.overviewContainer}>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewNumber1}>{projectDetails.length}</Text>
+            <Text style={styles.overviewNumber1}>{projects.length}</Text>
             <Text style={styles.overviewLabel1}>Total Projects</Text>
           </View>
           <View style={styles.overviewItem}>
@@ -424,7 +424,7 @@ const ProjectTeam = () => {
                           projectId: project.id,
                           projectData: project,
                           userId: user.id,
-                          // tasksData: tasks
+                          tasksData: tasks,
                         }
                       )
                     }

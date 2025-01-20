@@ -36,7 +36,7 @@ const ProjectDetails = () => {
         try {
           const allTasks = [];
           const taskData = await getTaskByContractorId(projectId, userId);
-          console.log('taskData', taskData)
+          // console.log('taskData', taskData)
           allTasks.push(...taskData.data.data); // Accumulate tasks for each project
 
           setTasks(allTasks); // Set tasks state with accumulated tasks
