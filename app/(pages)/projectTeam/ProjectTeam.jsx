@@ -112,6 +112,23 @@ const ProjectTeam = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
 
+  useEffect(() => {
+    const fetchContractors = async () => {
+      // if (designation === "Contractor" && user?.id) {
+      try {
+        const response = await fetchProjectTeamIdByUserId(user.id);
+        if (response?.data?.length > 0) {
+          setProjects(response?.data[0]?.attributes?.projects?.data);
+        }
+      } catch (error) {
+        console.error("Error fetching contractors:", error);
+      }
+      // }
+    };
+
+    fetchContractors();
+  }, [designation, user?.id]);
+
   // Update the fetch function to handle pagination properly
   const fetchTasksWithPagination = async (userId, page) => {
     setIsLoading(true);
@@ -122,15 +139,15 @@ const ProjectTeam = () => {
 
       if (data) {
         // Extract unique projects from tasks
-        const projectsData = data
-          .map((taskData) => taskData?.attributes?.project?.data)
-          .filter(
-            (project, index, self) =>
-              project && self.findIndex((p) => p?.id === project.id) === index
-          );
+        // const projectsData = data
+        //   .map((taskData) => taskData?.attributes?.project?.data)
+        //   .filter(
+        //     (project, index, self) =>
+        //       project && self.findIndex((p) => p?.id === project.id) === index
+        //   );
 
         setTasks(data);
-        setProjects(projectsData);
+        // setProjects(projectsData);
 
         // Update pagination state
         if (meta) {
@@ -187,37 +204,67 @@ const ProjectTeam = () => {
 
     let pages = [];
 
+    // Add previous page button
+    pages.push(
+      <TouchableOpacity
+        key="prev"
+        style={[styles.pageButton, currentPage === 1 && styles.disabledButton]}
+        onPress={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        <Icon
+          name="chevron-left"
+          size={20}
+          color={currentPage === 1 ? "#ccc" : "#333"}
+        />
+      </TouchableOpacity>
+    );
+
     // Show maximum 5 pages
     const maxVisiblePages = 5;
     let startPage, endPage;
 
     if (totalPages <= maxVisiblePages) {
-      // If total pages are less than or equal to max visible pages, show all pages
       startPage = 1;
       endPage = totalPages;
     } else {
-      // Calculate start and end pages to show current page in the middle when possible
       const middlePoint = Math.floor(maxVisiblePages / 2);
 
       if (currentPage <= middlePoint + 1) {
-        // Near the start
         startPage = 1;
         endPage = maxVisiblePages;
       } else if (currentPage >= totalPages - middlePoint) {
-        // Near the end
         startPage = totalPages - maxVisiblePages + 1;
         endPage = totalPages;
       } else {
-        // In the middle
         startPage = currentPage - middlePoint;
         endPage = currentPage + middlePoint;
       }
     }
 
-    // Add pages
+    // Add page numbers
     for (let i = startPage; i <= endPage; i++) {
       pages.push(renderPageButton(i));
     }
+
+    // Add next page button
+    pages.push(
+      <TouchableOpacity
+        key="next"
+        style={[
+          styles.pageButton,
+          currentPage === totalPages && styles.disabledButton,
+        ]}
+        onPress={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        <Icon
+          name="chevron-right"
+          size={20}
+          color={currentPage === totalPages ? "#ccc" : "#333"}
+        />
+      </TouchableOpacity>
+    );
 
     return <View style={styles.paginationContainer}>{pages}</View>;
   };
@@ -325,9 +372,15 @@ const ProjectTeam = () => {
                     key={project.id}
                     style={[
                       styles.projectCard,
-                      project?.attributes?.project_status === "pending"
-                        ? { backgroundColor: "#ffebee" }
-                        : { backgroundColor: "#e8f5e9" },
+                      (() => {
+                        const endDate = new Date(project?.attributes?.end_date);
+                        const today = new Date();
+                        const isDelayed = today > endDate;
+
+                        return isDelayed
+                          ? { backgroundColor: "#ffebee" } // Light red for delayed
+                          : { backgroundColor: "#e8f5e9" }; // Light green for on schedule
+                      })(),
                     ]}
                     onPress={() =>
                       navigation.navigate(
@@ -359,48 +412,46 @@ const ProjectTeam = () => {
 
                       {/* Project Status */}
                       <View style={styles.statusContainer}>
-                        <View>
-                          <View
-                            style={[
-                              styles.projectStatusBadge,
-                              {
-                                backgroundColor: "#FFFFFF",
-                                alignSelf: "flex-start",
-                                marginBottom: 8,
-                              },
-                            ]}
-                          >
-                            <View style={styles.statusBadgeContent}>
-                              <View
-                                style={[
-                                  styles.statusDot,
-                                  {
-                                    backgroundColor: isDelayed
-                                      ? "#ff5252"
-                                      : "#4caf50",
-                                  },
-                                ]}
-                              />
-                              <Text style={styles.projectStatusText}>
-                                {projectStatus.text || "Unknown"}
-                              </Text>
-                            </View>
-                          </View>
-                          <View style={styles.statusIndicator}>
-                            <Icon
-                              name={isDelayed ? "error" : "check-circle"}
-                              size={16}
-                              color={isDelayed ? "#ff5252" : "#4caf50"}
-                            />
-                            <Text
+                        <View
+                          style={[
+                            styles.projectStatusBadge,
+                            {
+                              backgroundColor: "#FFFFFF",
+                              alignSelf: "flex-start",
+                              marginBottom: 8,
+                            },
+                          ]}
+                        >
+                          <View style={styles.statusBadgeContent}>
+                            <View
                               style={[
-                                styles.statusText,
-                                { color: isDelayed ? "#ff5252" : "#4caf50" },
+                                styles.statusDot,
+                                {
+                                  backgroundColor: isDelayed
+                                    ? "#ff5252"
+                                    : "#4caf50",
+                                },
                               ]}
-                            >
-                              {isDelayed ? "Delayed" : "On Schedule"}
+                            />
+                            <Text style={styles.projectStatusText}>
+                              {projectStatus.text || "Unknown"}
                             </Text>
                           </View>
+                        </View>
+                        <View style={styles.statusIndicator}>
+                          <Icon
+                            name={isDelayed ? "error" : "check-circle"}
+                            size={16}
+                            color={isDelayed ? "#ff5252" : "#4caf50"}
+                          />
+                          <Text
+                            style={[
+                              styles.statusText,
+                              { color: isDelayed ? "#ff5252" : "#4caf50" },
+                            ]}
+                          >
+                            {isDelayed ? "Delayed" : "On Schedule"}
+                          </Text>
                         </View>
                       </View>
 
@@ -644,6 +695,13 @@ const getStatusStyle = (status) => {
 };
 
 const styles = StyleSheet.create({
+  status_container: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   searchContainer: {
     position: "relative",
     marginBottom: 20,
@@ -969,6 +1027,40 @@ const styles = StyleSheet.create({
     color: "#2196F3",
     fontSize: 14,
     fontWeight: "500",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+    gap: 8,
+  },
+  pageButton: {
+    minWidth: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    elevation: 2,
+  },
+  activePageButton: {
+    backgroundColor: "#1e90ff",
+    borderColor: "#1e90ff",
+  },
+  disabledButton: {
+    backgroundColor: "#f5f5f5",
+    borderColor: "#e0e0e0",
+  },
+  pageText: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  activePageText: {
+    color: "#fff",
   },
 });
 

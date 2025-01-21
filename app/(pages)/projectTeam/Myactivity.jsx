@@ -64,10 +64,10 @@ const Myactivity = () => {
   const [taskDetails, setTaskDetails] = useState([]);
   const { user, designation, role, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
-    const [hasMore, setHasMore] = useState(true); // Flag to check if there are more tasks to load
-    const [page, setPage] = useState(1); // Current page
-    const pageSize = 1; // Number of tasks per page
-    const [projects, setProjects] = useState([]);
+  const [hasMore, setHasMore] = useState(true); // Flag to check if there are more tasks to load
+  const [page, setPage] = useState(1); // Current page
+  const pageSize = 1; // Number of tasks per page
+  const [projects, setProjects] = useState([]);
 
   const ongoingProjectsCount = projectDetails.filter(
     (item) => item.attributes.project_status === "ongoing"
@@ -81,21 +81,16 @@ const Myactivity = () => {
     const fetchProjectTeamId = async () => {
       if (user && user.id) {
         try {
-          setIsLoading(true); // Start loading
-          const response = await fetchTasks(user.id, page, pageSize); // Use page state for pagination
-          const data = response.data;
-          // Extract unique projects
-          const projectsData = data
-            .map((taskData) => taskData?.attributes?.project?.data)
-            .filter(
-              (project, index, self) =>
-                project && self.findIndex((p) => p?.id === project.id) === index
-            );
-          setTasks(data); // Append tasks to the existing ones
-          setProjects(projectsData); // Append unique projects
-          // setHasMore(data.length === pageSize);
+          setIsLoading(true);
+          const response = await fetchProjectTeamIdByUserId(user.id);
+          if (response?.data?.length > 0) {
+            setProjects(response?.data[0]?.attributes?.projects?.data);
+          }
+
+          const tasksResponse = await fetchTasks(user.id, page, pageSize);
+          setTasks(tasksResponse.data);
         } catch (error) {
-          console.error("Error fetching project team ID:", error);
+          console.error("Error fetching projects:", error);
         } finally {
           setIsLoading(false);
         }
@@ -175,9 +170,9 @@ const Myactivity = () => {
                   onPress={() =>
                     navigation.navigate("(pages)/projectTeam/ProjectDetails", {
                       projectId: project.id,
-                        projectData: project,
-                        userId: user.id,
-                        tasksData: tasks
+                      projectData: project,
+                      userId: user.id,
+                      tasksData: tasks,
                     })
                   }
                 >
