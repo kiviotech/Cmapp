@@ -257,6 +257,12 @@ const profile = () => {
           const totalSubmissions =
             history?.attributes?.submissions?.data?.length || 0;
 
+          console.log("Submission Data:", {
+            firstSubmission,
+            totalSubmissions,
+            history: history?.attributes,
+          });
+
           return (
             <View key={historyIndex} style={styles.submissionSection}>
               <View style={styles.sectionHeader}>

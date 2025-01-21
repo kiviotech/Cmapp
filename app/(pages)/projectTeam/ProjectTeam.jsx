@@ -663,63 +663,27 @@ const getStatusStyle = (status) => {
 };
 
 const styles = StyleSheet.create({
+  searchContainer: {
+    position: "relative",
+    marginBottom: 20,
+    paddingHorizontal: 0,
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 15,
+    top: 12,
+    zIndex: 1,
+  },
   searchInput: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    paddingLeft: 25,
-    width: "100%",
+    paddingLeft: 45,
+    paddingRight: 15,
     height: 45,
     borderWidth: 1,
-    borderColor: "#f2f2f2",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    height: 45,
-    elevation: 2,
-  },
-  status_container: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  paginationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 20,
-    gap: 8,
-  },
-  pageButton: {
-    minWidth: 32,
-    height: 32,
-    borderRadius: 5,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
-  activePageButton: {
-    backgroundColor: "#007bff",
-    borderColor: "#007bff",
-  },
-  pageText: {
+    borderColor: "#e0e0e0",
     fontSize: 14,
-    color: "#333333",
-    fontWeight: "500",
-  },
-  activePageText: {
-    color: "#FFFFFF",
-  },
-  ellipsis: {
-    fontSize: 14,
-    color: "#666666",
-    paddingHorizontal: 8,
+    color: "#333",
   },
   AreaContainer: {
     flex: 1,
@@ -767,9 +731,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888",
     textAlign: "center",
-  },
-  searchIcon: {
-    position: "absolute",
   },
   sectionHeader: {
     fontSize: 18,

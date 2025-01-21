@@ -266,10 +266,10 @@ const Contractor = () => {
                 )
               )}
               renderItem={({ item: task }) => {
-                console.log(
-                  "tmp",
-                  task?.attributes?.standard_task?.data?.attributes
-                );
+                // console.log(
+                //   "tmp",
+                //   task?.attributes?.standard_task?.data?.attributes
+                // );
                 const taskImageUrl =
                   task?.attributes?.standard_task?.data?.attributes?.image
                     ?.data?.[0]?.attributes?.url || null;
@@ -290,16 +290,32 @@ const Contractor = () => {
                 }
 
                 return (
-                  <View key={task.id} style={styles.milestoneCard}>
-                    <Text style={styles.milestoneTitle}>
-                      {task?.attributes?.project?.data?.attributes?.name ||
-                        "Project"}
-                    </Text>
+                  <View
+                    key={task.id}
+                    style={[
+                      styles.milestoneCard,
+                      {
+                        backgroundColor:
+                          task?.attributes?.task_status === "completed"
+                            ? "#E8F5E9"
+                            : task?.attributes?.task_status === "ongoing"
+                            ? "#fff" // Light green background for ongoing tasks
+                            : task?.attributes?.task_status === "rejected"
+                            ? "#FED5DD"
+                            : "#fff",
+                      },
+                    ]}
+                  >
                     <Image
                       source={{ uri: imageUrl }}
                       style={styles.milestoneImage}
                     />
                     <View style={styles.milestoneContent}>
+                      <Text style={styles.milestoneTitle}>
+                        Project:{" "}
+                        {task?.attributes?.project?.data?.attributes?.name ||
+                          "Project"}
+                      </Text>
                       <View style={styles.milestoneHeaderContainer}>
                         <View style={styles.projectTaskName}>
                           <Text style={styles.milestoneTitle}>
@@ -319,10 +335,16 @@ const Contractor = () => {
                           "No description available for this task."}
                       </Text>
                       <View style={styles.divider} />
-                      <Text style={styles.deadlineText}>
-                        <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                        {task?.attributes?.due_date || "No deadline specified"}
-                      </Text>
+                      <View style={styles.deadlineContainer}>
+                        <Text style={styles.deadlineText}>
+                          <Icon name="event" size={16} color="#333" /> Deadline:{" "}
+                          {task?.attributes?.due_date ||
+                            "No deadline specified"}
+                        </Text>
+                        <Text style={[styles.statusText]}>
+                          {task?.attributes?.task_status || "pending"}
+                        </Text>
+                      </View>
                       <TouchableOpacity
                         style={styles.uploadButton}
                         onPress={() =>
@@ -590,7 +612,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
-    marginBottom: 20,
+    marginBottom: 10,
     elevation: 3,
   },
   milestoneImage: {
@@ -640,13 +662,23 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ddd",
     marginVertical: 10,
   },
+  deadlineContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
   deadlineText: {
     fontSize: 14,
     color: "#333",
     padding: 5,
-    marginBottom: 15,
     display: "flex",
     alignItems: "center",
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: "500",
+    textTransform: "capitalize",
   },
   uploadButton: {
     backgroundColor: "#1e90ff",
@@ -664,11 +696,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 5,
-  },
-  statusText: {
-    fontSize: 14,
-    marginLeft: 5,
-    color: "#666",
   },
   pendingDot: {
     width: 8,
