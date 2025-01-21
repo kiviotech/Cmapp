@@ -202,20 +202,11 @@ const RequestDetails = () => {
               );
             }
           } else {
-            console.warn("Task data is missing or invalid.");
-            Alert.alert(
-              "Warning",
-              "Request updated, but task data is missing."
-            );
+            Alert.alert("Success", `Request ${newStatus} successfully!`);
           }
 
-          // Navigate back with status update info
-          navigation.navigate("(pages)/projectTeam/Notification", {
-            statusUpdate: {
-              status: newStatus,
-              timestamp: new Date().toISOString(),
-            },
-          });
+          // Simply navigate back instead of going to notifications
+          navigation.goBack();
 
           // Call the onStatusUpdate callback if it exists
           if (route.params?.onStatusUpdate) {

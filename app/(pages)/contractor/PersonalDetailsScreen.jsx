@@ -23,7 +23,6 @@ const PersonalDetailsScreen = () => {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
-  const [documents, setDocuments] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [registrationDocs, setRegistrationDocs] = useState([]);
@@ -32,31 +31,9 @@ const PersonalDetailsScreen = () => {
   const { user } = useAuthStore();
 
   useEffect(() => {
-    const getProjects = async () => {
-      try {
-        const projects = await fetchProjectsByContractorEmail(user.email);
-
-        // Collect all document URLs from all projects
-        const allDocuments = [];
-        projects.data.forEach((project) => {
-          const documents = project.attributes.documents.data;
-          documents.forEach((doc) => {
-            allDocuments.push({
-              url: `${URL}${doc.attributes.url}`,
-              name: doc.attributes.name || "Document",
-            });
-          });
-        });
-        setDocuments(allDocuments);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      }
-    };
-
     const fetchRegistrationData = async () => {
       try {
         const registrationData = await fetchRegistrationByEmail(user.email);
-        console.log("Registration Data:", registrationData);
         if (registrationData.data[0]?.attributes?.documents?.data) {
           const docs = registrationData.data[0].attributes.documents.data.map(
             (doc) => ({
@@ -72,7 +49,6 @@ const PersonalDetailsScreen = () => {
     };
 
     if (user?.email) {
-      getProjects();
       fetchRegistrationData();
     }
   }, [user.email]);
@@ -156,28 +132,6 @@ const PersonalDetailsScreen = () => {
                             <Text style={styles.actionText}>update</Text>
                         </TouchableOpacity>
                     </View> */}
-
-          <Text style={styles.sectionTitle}>Documents</Text>
-          <View style={styles.documentsGrid}>
-            {documents.map((doc, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.documentItem}
-                onPress={() => handleImagePress(doc.url)}
-              >
-                <Image
-                  source={{ uri: doc.url }}
-                  style={styles.documentPreview}
-                  defaultSource={{
-                    uri: "https://placehold.co/200x200/png?text=Preview",
-                  }}
-                />
-                <Text style={styles.documentName} numberOfLines={1}>
-                  {`Document name ${index + 1}`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           <Text style={styles.sectionTitle}>Registration Documents</Text>
           <View style={styles.documentsGrid}>

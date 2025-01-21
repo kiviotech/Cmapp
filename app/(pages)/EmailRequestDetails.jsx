@@ -163,13 +163,8 @@ const RequestDetails = () => {
       if (response.data) {
         Alert.alert("Success", `Request ${newStatus} successfully!`);
 
-        // Navigate back with status update info
-        navigation.navigate("(pages)/projectTeam/Notification", {
-          statusUpdate: {
-            status: newStatus,
-            timestamp: new Date().toISOString(),
-          },
-        });
+        // Simply navigate back instead of going to notifications
+        navigation.goBack();
 
         // Call the onStatusUpdate callback if it exists
         if (route.params?.onStatusUpdate) {
@@ -289,7 +284,13 @@ const RequestDetails = () => {
           color="#333"
         />
         <View style={styles.documentText}>
-          <Text style={styles.documentName}>{docs.attributes.name}</Text>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={styles.documentName}
+          >
+            {docs.attributes.name}
+          </Text>
           <Text style={styles.documentSize}>
             {`${docs.attributes.size} kb`}
           </Text>
@@ -469,29 +470,29 @@ const styles = StyleSheet.create({
     marginTop: height * 0.02,
   },
   documentContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "column",
     padding: height * 0.015,
     backgroundColor: "#fff",
     borderRadius: 8,
     marginBottom: height * 0.01,
-    justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    flexWrap: "wrap",
   },
   documentInfo: {
     flexDirection: "row",
     alignItems: "center",
-    maxWidth: "70%", // Restricts width to avoid overflow
+    width: "100%",
+    marginBottom: 8,
   },
   documentText: {
     marginLeft: width * 0.03,
+    flex: 1,
   },
   documentName: {
     fontSize: width * 0.04,
     fontWeight: "500",
-    flexShrink: 1, // Allows text to shrink if too long
+    numberOfLines: 1,
+    ellipsizeMode: "tail",
   },
   documentSize: {
     fontSize: width * 0.03,
@@ -602,6 +603,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    marginTop: 8,
   },
   actionButton: {
     paddingVertical: 6,

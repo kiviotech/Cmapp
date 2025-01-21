@@ -137,10 +137,12 @@ const TaskDetails = () => {
               refresh: false,
             };
             setTaskStatus(updatedTaskData.data.attributes?.task_status);
+
             const submissionIds =
               updatedTaskData.data?.attributes?.submissions?.data?.map(
                 (item) => item.id
               );
+
             if (submissionIds && submissionIds.length > 0) {
               const submissionPromises = submissionIds.map((id) =>
                 fetchSubmissionById(id)
@@ -156,10 +158,8 @@ const TaskDetails = () => {
       }
     };
 
-    if (refresh) {
-      fetchTaskDetails();
-    }
-  }, [refresh, taskData?.id]);
+    fetchTaskDetails();
+  }, [taskData?.id, refresh]);
 
   // Optionally add a check to handle missing taskData gracefully
   if (!taskData) {

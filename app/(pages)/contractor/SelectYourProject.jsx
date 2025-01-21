@@ -13,7 +13,7 @@ import useAuthStore from "../../../useAuthStore";
 
 const SelectYourProject = ({ isLoading, projects }) => {
   const navigation = useNavigation();
-  const { user } = useAuthStore()
+  const { user } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -32,108 +32,108 @@ const SelectYourProject = ({ isLoading, projects }) => {
         contentContainerStyle={styles.horizontalScrollContainer}
       >
         {projects.length > 0 ? (
-          projects.map((project) =>
-              <TouchableOpacity
-                key={project.id}
-                style={[
-                  styles.projectCard,
-                  (() => {
+          projects.map((project) => (
+            <TouchableOpacity
+              key={project.id}
+              style={[
+                styles.projectCard,
+                (() => {
+                  const endDate = new Date(project.attributes.end_date);
+                  const today = new Date();
+                  const isDelayed = today > endDate;
+
+                  return isDelayed
+                    ? { backgroundColor: "#ffebee" }
+                    : { backgroundColor: "#e8f5e9" };
+                })(),
+              ]}
+              onPress={() =>
+                navigation.navigate("(pages)/contractor/ProjectDetails", {
+                  projectId: project.id,
+                  projectData: project,
+                  userId: user.id,
+                })
+              }
+            >
+              <View style={styles.projectCardContent}>
+                <Text style={styles.projectTitle}>
+                  {project.attributes.name}
+                </Text>
+                <Text style={styles.projectDescription}>
+                  {project.attributes.description}
+                </Text>
+
+                <View
+                  style={[
+                    styles.statusBadge,
+                    project.attributes.project_status.toLowerCase() ===
+                      "pending" && styles.pendingStatusBadge,
+                  ]}
+                >
+                  <View style={styles.statusDot} />
+                  <Text style={styles.statusText}>
+                    {project.attributes.project_status}
+                  </Text>
+                </View>
+
+                <Text
+                  style={[
+                    styles.projectStatus,
+                    {
+                      color: (() => {
+                        const endDate = new Date(project.attributes.end_date);
+                        const today = new Date();
+                        return today > endDate ? "#ff5252" : "#4caf50";
+                      })(),
+                    },
+                  ]}
+                >
+                  {(() => {
                     const endDate = new Date(project.attributes.end_date);
                     const today = new Date();
                     const isDelayed = today > endDate;
 
-                    return isDelayed
-                      ? { backgroundColor: "#ffebee" }
-                      : { backgroundColor: "#e8f5e9" };
-                  })(),
-                ]}
-                onPress={() =>
-                  navigation.navigate("(pages)/contractor/ProjectDetails", {
-                    projectId: project.id,
-                    projectData: project,
-                    userId: user.id,
-                  })
-                }
-              >
-                <View style={styles.projectCardContent}>
-                  <Text style={styles.projectTitle}>
-                    {project.attributes.name}
-                  </Text>
-                  <Text style={styles.projectDescription}>
-                    {project.attributes.description}
-                  </Text>
-
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      project.attributes.project_status.toLowerCase() ===
-                        "pending" && styles.pendingStatusBadge,
-                    ]}
-                  >
-                    <View style={styles.statusDot} />
-                    <Text style={styles.statusText}>
-                      {project.attributes.project_status}
-                    </Text>
-                  </View>
-
-                  <Text
-                    style={[
-                      styles.projectStatus,
+                    return (
+                      <>
+                        <Icon
+                          name={isDelayed ? "error" : "check-circle"}
+                          size={16}
+                          color={isDelayed ? "red" : "green"}
+                        />
+                        <Text
+                          style={[
+                            styles.projectStatusText,
+                            { color: isDelayed ? "red" : "green" },
+                          ]}
+                        >
+                          {isDelayed ? "Delayed" : "On Schedule"}
+                        </Text>
+                      </>
+                    );
+                  })()}
+                </Text>
+                <View style={styles.projectEndDateContainer}>
+                  <Icon
+                    name="event"
+                    size={16}
+                    color="#666"
+                    style={styles.endDateIcon}
+                  />
+                  <Text style={styles.projectEndDate}>
+                    End Date:{" "}
+                    {new Date(project.attributes.end_date).toLocaleDateString(
+                      "en-US",
                       {
-                        color: (() => {
-                          const endDate = new Date(project.attributes.end_date);
-                          const today = new Date();
-                          return today > endDate ? "#ff5252" : "#4caf50";
-                        })(),
-                      },
-                    ]}
-                  >
-                    {(() => {
-                      const endDate = new Date(project.attributes.end_date);
-                      const today = new Date();
-                      const isDelayed = today > endDate;
-
-                      return (
-                        <>
-                          <Icon
-                            name={isDelayed ? "error" : "check-circle"}
-                            size={16}
-                            color={isDelayed ? "red" : "green"}
-                          />
-                          <Text
-                            style={[
-                              styles.projectStatusText,
-                              { color: isDelayed ? "red" : "green" },
-                            ]}
-                          >
-                            {isDelayed ? "Delayed" : "On Schedule"}
-                          </Text>
-                        </>
-                      );
-                    })()}
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      }
+                    )}
                   </Text>
-                  <View style={styles.projectEndDateContainer}>
-                    <Icon
-                      name="event"
-                      size={16}
-                      color="#666"
-                      style={styles.endDateIcon}
-                    />
-                    <Text style={styles.projectEndDate}>
-                      End Date:{" "}
-                      {new Date(project.attributes.end_date).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        }
-                      )}
-                    </Text>
-                  </View>
                 </View>
-              </TouchableOpacity>
-          )
+              </View>
+            </TouchableOpacity>
+          ))
         ) : (
           <View>
             <Text style={styles.noProjectsText}>No projects available</Text>

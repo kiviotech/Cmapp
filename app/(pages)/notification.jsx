@@ -90,14 +90,17 @@ const Notification = () => {
 
           // Fetch contractor data by user ID
           const data = await fetchContractorsByUserId(user.id);
+          console.log("Contractor Data:", data);
 
           if (data.data.length > 0) {
             const contractorId = data.data[0].id;
+            console.log("Contractor ID:", contractorId);
 
             // Extract and flatten project IDs
             const projectIds = data.data.flatMap(
               (contractor) => contractor.attributes.projects.data || []
             );
+            console.log("Project IDs:", projectIds);
 
             // Fetch tasks for all projects in parallel using Promise.all
             const taskPromises = projectIds.map((project) =>
@@ -105,17 +108,21 @@ const Notification = () => {
             );
 
             const taskResults = await Promise.all(taskPromises);
+            console.log("Task Results:", taskResults);
 
             // Collect all ongoing tasks
             const allTasks = taskResults.flatMap(
               (taskResult) => taskResult?.data?.data
             );
+            console.log("All Tasks:", allTasks);
 
             // Process notifications
             const unread = [];
             const read = [];
             allTasks.forEach((task) => {
               const submissions = task.attributes.submissions.data || [];
+              console.log("Task Submissions:", submissions);
+
               unread.push(
                 ...submissions.filter(
                   (sub) => sub.attributes.notification_status === "unread"
@@ -127,6 +134,9 @@ const Notification = () => {
                 )
               );
             });
+
+            console.log("Unread Notifications:", unread);
+            console.log("Read Notifications:", read);
 
             // Update state with tasks and notifications
             setTasks(allTasks);
@@ -253,14 +263,6 @@ const Notification = () => {
       );
     });
   };
-
-  if (isLoading) {
-    return (
-      <View style={styles.areaContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.areaContainer}>

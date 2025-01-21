@@ -106,8 +106,8 @@ const ProjectTeam = () => {
   const { user, designation, role, permissions } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1); // Current page
-  const pageSize = 5; // Number of tasks per page
+  const [page, setPage] = useState(1);
+  const pageSize = 5; // Explicitly set to show 5 tasks per page
   const [projects, setProjects] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -129,29 +129,20 @@ const ProjectTeam = () => {
     fetchContractors();
   }, [designation, user?.id]);
 
-  // Update the fetch function to handle pagination properly
+  // Update the fetch function to use the pageSize
   const fetchTasksWithPagination = async (userId, page) => {
     setIsLoading(true);
     try {
+      // Pass pageSize parameter to API call
       const response = await fetchTasks(userId, page, pageSize);
       const data = response.data;
       const meta = response.meta?.pagination;
 
       if (data) {
-        // Extract unique projects from tasks
-        // const projectsData = data
-        //   .map((taskData) => taskData?.attributes?.project?.data)
-        //   .filter(
-        //     (project, index, self) =>
-        //       project && self.findIndex((p) => p?.id === project.id) === index
-        //   );
-
-        setTasks(data);
-        // setProjects(projectsData);
-
-        // Update pagination state
+        // Ensure we only show pageSize number of tasks
+        setTasks(data.slice(0, pageSize));
         if (meta) {
-          setTotalPages(meta.pageCount);
+          setTotalPages(Math.ceil(meta.total / pageSize));
           setCurrentPage(meta.page);
         }
       }
@@ -162,7 +153,7 @@ const ProjectTeam = () => {
     }
   };
 
-  // Initial fetch on component mount
+  // Update useEffect to respond to currentPage changes
   useEffect(() => {
     if (user?.id) {
       fetchTasksWithPagination(user.id, currentPage);
@@ -301,11 +292,14 @@ const ProjectTeam = () => {
   );
 
   const filteredTasks = (tasks) => {
-    return tasks.filter((taskDetail) =>
-      taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
-        searchQuery.toLowerCase()
+    // Apply search filter but maintain pageSize limit
+    return tasks
+      .filter((taskDetail) =>
+        taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
+          searchQuery.toLowerCase()
+        )
       )
-    );
+      .slice(0, pageSize);
   };
 
   return (
@@ -521,17 +515,14 @@ const ProjectTeam = () => {
               <View style={styles.requestStatusContainer}>
                 <Text
                   style={[
-                    styles.requestStatus,
-                    {
-                      color:
-                        request?.attributes?.status === "approved"
-                          ? "#4CAF50" // green
-                          : request?.attributes?.status === "pending"
-                          ? "#FF9800" // orange
-                          : request?.attributes?.status === "rejected"
-                          ? "#F44336" // red
-                          : "black", // default color
-                    },
+                    styles.statusBold,
+                    request?.attributes?.status === "approved"
+                      ? styles.requestStatusApproved
+                      : request?.attributes?.status === "rejected"
+                      ? styles.requestStatusRejected
+                      : request?.attributes?.status === "pending"
+                      ? styles.requestStatusPendingText
+                      : {},
                   ]}
                 >
                   {request?.attributes?.status
@@ -638,7 +629,39 @@ const ProjectTeam = () => {
                         Deadline:{" "}
                         {task?.attributes?.due_date || "No deadline specified"}
                       </Text>
-                      <Text>{task?.attributes?.task_status}</Text>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor:
+                              task?.attributes?.task_status === "completed"
+                                ? "#E8F5E9"
+                                : task?.attributes?.task_status === "ongoing"
+                                ? "#FFF3E0"
+                                : task?.attributes?.task_status === "rejected"
+                                ? "#FFEBEE"
+                                : "#F5F5F5",
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusText,
+                            {
+                              color:
+                                task?.attributes?.task_status === "completed"
+                                  ? "#2E7D32"
+                                  : task?.attributes?.task_status === "ongoing"
+                                  ? "#EF6C00"
+                                  : task?.attributes?.task_status === "rejected"
+                                  ? "#C62828"
+                                  : "#757575",
+                            },
+                          ]}
+                        >
+                          {task?.attributes?.task_status || "pending"}
+                        </Text>
+                      </View>
                     </View>
                     <TouchableOpacity
                       style={styles.uploadButton}
@@ -659,9 +682,12 @@ const ProjectTeam = () => {
             }}
             keyExtractor={(item) => item.id.toString()}
             ListFooterComponent={
-              isLoading ? (
-                <ActivityIndicator size="small" color="#0000ff" />
-              ) : null
+              <>
+                {isLoading && (
+                  <ActivityIndicator size="small" color="#0000ff" />
+                )}
+                {!isLoading && totalPages > 1 && renderPagination()}
+              </>
             }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
@@ -671,7 +697,6 @@ const ProjectTeam = () => {
               </View>
             }
           />
-          {renderPagination()}
         </>
       </ScrollView>
       <BottomNavigation />
@@ -1061,6 +1086,28 @@ const styles = StyleSheet.create({
   },
   activePageText: {
     color: "#fff",
+  },
+  requestStatusApproved: {
+    color: "#38A169",
+  },
+  requestStatusRejected: {
+    color: "#E53E3E",
+  },
+  requestStatusPendingText: {
+    color: "red",
+  },
+  statusBold: {
+    fontWeight: "bold",
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: "600",
+    textTransform: "capitalize",
   },
 });
 

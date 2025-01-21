@@ -18,7 +18,7 @@ import { fetchProjectAndDocumentByUserId } from "../../../src/services/taskServi
 import { fetchContractorsIdByUserId } from "../../../src/services/contractorService";
 
 const profile = () => {
-  const { user, designation } = useAuthStore();
+  const { user, designation, sub_contractor } = useAuthStore();
   const router = useRouter();
   const pageSize = 5;
   const [totalPages, setTotalPages] = useState(0);
@@ -215,9 +215,6 @@ const profile = () => {
         // Set total pages for pagination
         setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
       } else {
-        // If no data at all, clear the states
-        console.log("No tasks found, clearing states.");
-        // setProjects([]);
         setUploadedHistory([]);
       }
     } catch (error) {
@@ -248,7 +245,7 @@ const profile = () => {
               {user?.username ? user?.username : "Guest"}
             </Text>
             <Text style={[styles.userName, { color: colors.primary }]}>
-              {designation ? designation : ""}
+              {sub_contractor}
             </Text>
           </View>
         </View>
@@ -258,13 +255,6 @@ const profile = () => {
           const firstSubmission = history?.attributes?.submissions?.data?.[0];
           const totalSubmissions =
             history?.attributes?.submissions?.data?.length || 0;
-
-          console.log("Submission Data:", {
-            firstSubmission,
-            totalSubmissions,
-            history: history?.attributes,
-          });
-
           return (
             <View key={historyIndex} style={styles.submissionSection}>
               <View style={styles.sectionHeader}>

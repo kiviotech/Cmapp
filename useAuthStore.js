@@ -7,6 +7,7 @@ const useAuthStore = create(
       user: null,
       designation: null,
       token: null,
+      sub_contractor: null,
 
       setUser: (userData) =>
         set({
@@ -23,6 +24,7 @@ const useAuthStore = create(
           },
           designation: userData.designation,
           token: userData.token,
+          sub_contractor: userData.sub_contractor,
         }),
 
       clearAuth: () =>
@@ -30,6 +32,7 @@ const useAuthStore = create(
           user: null,
           designation: null,
           token: null,
+          sub_contractor: null,
         }),
     }),
     {

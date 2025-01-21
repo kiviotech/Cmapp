@@ -10,6 +10,7 @@ import {
   Dimensions,
   Platform,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -59,18 +60,24 @@ const AssignContractors = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [popupVisible, setPopupVisible] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ title: "", message: "" });
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   const [jobRole, setJobRole] = useState([]);
   const clearProjectData = useProjectStore((state) => state.clearProjectData);
   const route = useRoute();
   const navigation = useNavigation();
   const { projectId, project_manager, project_supervisor, site_coordinator } =
-    route.params;
+    route.params || {};
 
   // Add this new state for search
   const [searchText, setSearchText] = useState("");
 
-  console.log("projectid", projectId);
+  // Add this new ref
+  const searchInputRef = React.useRef(null);
+
+  // console.log("projectid", projectId);
 
   useEffect(() => {
     const loadContractorTypes = async () => {
@@ -140,7 +147,19 @@ const AssignContractors = () => {
   // }, [contractorTypeItems]);
 
   useEffect(() => {
+    // console.log("Project ID in AssignContractors:", projectId);
+    if (!projectId) {
+      console.warn("No project ID received in AssignContractors");
+    }
+  }, [projectId]);
+
+  useEffect(() => {
     const loadProjectDetails = async () => {
+      if (!projectId) {
+        console.warn("Cannot load project details: No project ID available");
+        return;
+      }
+
       try {
         const response = await fetchProjectById(projectId);
         if (response?.data) {
@@ -154,9 +173,7 @@ const AssignContractors = () => {
       }
     };
 
-    if (projectId) {
-      loadProjectDetails();
-    }
+    loadProjectDetails();
   }, [projectId]);
 
   const validateFields = () => {
@@ -218,6 +235,50 @@ const AssignContractors = () => {
     setIsFinishButtonEnabled(true); // Enable finish button if a contractor is added
   };
 
+  const showToast = ({ title, message }) => {
+    setToastMessage({ title, message });
+    setToastVisible(true);
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2700),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setToastVisible(false);
+    });
+  };
+
+  const CustomToast = () => (
+    <Animated.View
+      style={[
+        toastStyles.container,
+        {
+          opacity: fadeAnim,
+          transform: [
+            {
+              translateY: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-20, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <View style={toastStyles.content}>
+        <Text style={toastStyles.title}>{toastMessage.title}</Text>
+        <Text style={toastStyles.message}>{toastMessage.message}</Text>
+      </View>
+    </Animated.View>
+  );
+
   const handleFinishProjectSetup = async () => {
     if (assignedContractors.length === 0) {
       Alert.alert("Error", "Please add at least one contractor.");
@@ -270,9 +331,10 @@ const AssignContractors = () => {
       };
 
       await updateExistingProject(projectId, projectData);
-      Alert.alert("Success", "Project setup completed and tasks assigned!");
-      setPopupVisible(true);
-      setTimeout(() => setPopupVisible(false), 3000);
+      showToast({
+        title: "Success",
+        message: "Project setup completed and tasks assigned!",
+      });
       setIsLoading(false);
       clearProjectData();
       setAssignedContractors([]);
@@ -281,15 +343,13 @@ const AssignContractors = () => {
       setContractorTypeValue(null);
       setContractorValue(null);
       setDueDate(null);
-      setContractorItems([]); // Clear contractor dropdown options
-
-      // navigation.navigate("(pages)/dashboard");
+      setContractorItems([]);
     } catch (error) {
       console.error("Error creating tasks or updating project:", error);
-      Alert.alert(
-        "Error",
-        "There was an issue saving the project assignments."
-      );
+      showToast({
+        title: "Error",
+        message: "There was an issue saving the project assignments.",
+      });
     }
   };
 
@@ -337,6 +397,7 @@ const AssignContractors = () => {
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
+      {toastVisible && <CustomToast />}
       <ScrollView>
         {isLoading && (
           <View style={styles.loaderContainer}>
@@ -365,7 +426,15 @@ const AssignContractors = () => {
             open={contractorTypeOpen}
             value={contractorTypeValue}
             items={contractorTypeItems}
-            setOpen={setContractorTypeOpen}
+            setOpen={(isOpen) => {
+              setContractorTypeOpen(isOpen);
+              // When dropdown opens, focus the search input after a short delay
+              if (isOpen) {
+                setTimeout(() => {
+                  searchInputRef.current?.focus();
+                }, 100);
+              }
+            }}
             setValue={(value) => {
               setContractorTypeValue(value);
               setShowTypeError(false);
@@ -376,6 +445,9 @@ const AssignContractors = () => {
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
             searchTextInputStyle={{ borderWidth: 0, outline: "none" }}
+            searchTextInputProps={{
+              ref: searchInputRef,
+            }}
             zIndex={6000}
             zIndexInverse={1000}
             searchable={true}
@@ -650,6 +722,42 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 12,
     marginBottom: 10,
+  },
+});
+
+const toastStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    top: 10,
+    left: 16,
+    right: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderLeftWidth: 5,
+    borderLeftColor: "#4CAF50",
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 9999,
+  },
+  content: {
+    flexDirection: "column",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  message: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

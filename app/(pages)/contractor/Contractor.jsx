@@ -20,6 +20,7 @@ import SelectYourProject from "./SelectYourProject";
 import { fetchTasks } from "../../../src/services/taskService";
 import { fetchContractorsByUserId } from "../../../src/services/contractorService";
 import { fetchContractorsIdByUserId } from "../../../src/services/contractorService";
+import { fetchContractorsWithSubContractor } from "../../../src/services/contractorService";
 import { URL } from "../../../src/api/apiClient";
 
 const validateImageURL = (url) => {
@@ -34,7 +35,7 @@ const Contractor = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1); // Current page
   const pageSize = 5; // Number of tasks per page
-  const { user, designation } = useAuthStore();
+  const { user, designation, sub_contractor } = useAuthStore();
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [contractorId, setContractorId] = useState(0); // State for contractor ID
@@ -49,6 +50,22 @@ const Contractor = () => {
             setContractorId(response.data[0]?.id);
             setProjects(response?.data[0]?.attributes?.projects?.data);
           }
+
+          // Fetch and store sub-contractor data
+          const contractorsWithSub = await fetchContractorsWithSubContractor(
+            user.id
+          );
+          const subContractorName =
+            contractorsWithSub?.data?.[0]?.attributes?.sub_contractor?.data
+              ?.attributes?.name;
+
+          // Store the sub_contractor name in the auth store
+          useAuthStore.getState().setUser({
+            ...user,
+            designation,
+            token: user.token,
+            sub_contractor: subContractorName,
+          });
         } catch (error) {
           console.error("Error fetching contractors:", error);
         }
@@ -56,7 +73,7 @@ const Contractor = () => {
     };
 
     fetchContractors();
-  }, [designation, user?.id]); // More specific dependency
+  }, [designation, user?.id]);
 
   // Fetch tasks only after contractorId is updated
   const fetchTasksWithPagination = async () => {
@@ -213,6 +230,14 @@ const Contractor = () => {
     );
   };
 
+  // Update the navigation handler
+  const handleTaskPress = (task) => {
+    navigation.navigate("(pages)/taskDetails", {
+      taskData: task,
+      refresh: true, // Always set refresh to true when navigating from Contractor
+    });
+  };
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -226,7 +251,7 @@ const Contractor = () => {
           />
           <View>
             <Text style={styles.userName}>{user.username}</Text>
-            <Text style={styles.userRole}>{designation}</Text>
+            <Text style={styles.userRole}>{sub_contractor}</Text>
           </View>
         </View>
 
@@ -341,17 +366,45 @@ const Contractor = () => {
                           {task?.attributes?.due_date ||
                             "No deadline specified"}
                         </Text>
-                        <Text style={[styles.statusText]}>
-                          {task?.attributes?.task_status || "pending"}
-                        </Text>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            {
+                              backgroundColor:
+                                task?.attributes?.task_status === "completed"
+                                  ? "#E8F5E9"
+                                  : task?.attributes?.task_status === "ongoing"
+                                  ? "#FFF3E0"
+                                  : task?.attributes?.task_status === "rejected"
+                                  ? "#FFEBEE"
+                                  : "#F5F5F5",
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusText,
+                              {
+                                color:
+                                  task?.attributes?.task_status === "completed"
+                                    ? "#2E7D32"
+                                    : task?.attributes?.task_status ===
+                                      "ongoing"
+                                    ? "#EF6C00"
+                                    : task?.attributes?.task_status ===
+                                      "rejected"
+                                    ? "#C62828"
+                                    : "#757575",
+                              },
+                            ]}
+                          >
+                            {task?.attributes?.task_status || "pending"}
+                          </Text>
+                        </View>
                       </View>
                       <TouchableOpacity
                         style={styles.uploadButton}
-                        onPress={() =>
-                          navigation.navigate("(pages)/taskDetails", {
-                            taskData: task,
-                          })
-                        }
+                        onPress={() => handleTaskPress(task)}
                       >
                         <Icon name="file-upload" size={16} color="#fff" />
                         <Text style={styles.uploadButtonText}>
@@ -387,7 +440,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
     paddingBottom: 20,
-    marginTop: -10,
+    marginTop: 10,
   },
   pageButton: {
     paddingVertical: "8px",
@@ -452,21 +505,25 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingHorizontal: 15,
+    position: "relative",
     marginBottom: 20,
-    height: 45,
-    elevation: 2,
+    paddingHorizontal: 0,
   },
   searchIcon: {
-    marginRight: 10,
+    position: "absolute",
+    left: 15,
+    top: 12,
+    zIndex: 1,
   },
   searchInput: {
-    flex: 1,
-    fontSize: 16,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingLeft: 45,
+    paddingRight: 15,
+    height: 45,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    fontSize: 14,
     color: "#333",
   },
   sectionHeader: {
@@ -675,9 +732,14 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
   },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
   statusText: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
     textTransform: "capitalize",
   },
   uploadButton: {

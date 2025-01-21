@@ -49,19 +49,25 @@ const RequestsScreen = () => {
       (activeCategory === "Submission" && request.attributes.comment);
 
     const searchText = searchQuery.toLowerCase();
-    const username = request.attributes.username?.toLowerCase() || "";
-    const comment = request.attributes.comment?.toLowerCase() || "";
+
+    // For Registration requests - search by username
+    if (activeCategory === "Registration") {
+      const username = request.attributes.username?.toLowerCase() || "";
+      return isStatusMatch && isCategoryMatch && username.includes(searchText);
+    }
+
+    // For Submission requests - search by project name and task name
     const projectName =
       request.attributes.task?.data?.attributes?.project?.data?.attributes.name?.toLowerCase() ||
       "";
+    const taskName =
+      request.attributes.task?.data?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase() ||
+      "";
+    const searchString = `Submission for ${projectName} - ${taskName}`;
 
-    const matchesSearch =
-      searchQuery === "" ||
-      username.includes(searchText) ||
-      comment.includes(searchText) ||
-      projectName.includes(searchText);
-
-    return isStatusMatch && isCategoryMatch && matchesSearch;
+    return (
+      isStatusMatch && isCategoryMatch && searchString.includes(searchText)
+    );
   });
 
   const renderRequestItem = ({ item }) => (
@@ -307,20 +313,25 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    height: 40,
+    position: "relative",
+    marginBottom: 20,
+    paddingHorizontal: 0,
   },
   searchIcon: {
-    marginRight: 8,
+    position: "absolute",
+    left: 15,
+    top: 12,
+    zIndex: 1,
   },
   searchInput: {
-    flex: 1,
-    fontSize: 16,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingLeft: 45,
+    paddingRight: 15,
+    height: 45,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    fontSize: 14,
     color: "#333",
   },
 });

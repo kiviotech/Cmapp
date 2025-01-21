@@ -9,6 +9,7 @@ import {
   Image,
   TextInput,
   Modal,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
@@ -36,8 +37,8 @@ const UploadProof = ({}) => {
   const [uploadedHistory, setUploadedHistory] = useState([]);
   const [rejectionComment, setRejectionComment] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [toastVisible, setToastVisible] = useState(false); // State for showing toast
-  const [toastMessage, setToastMessage] = useState("");
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ title: "", message: "" });
   const [errors, setErrors] = useState("");
   const videoRef = useRef(null);
   const uploadIntervals = useRef({});
@@ -49,6 +50,7 @@ const UploadProof = ({}) => {
   const { id } = route?.params;
   const fileUploadRef = useRef(null);
   const clearFiles = useFileUploadStore((state) => state.clearFiles);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -170,6 +172,50 @@ const UploadProof = ({}) => {
     return errorMessage;
   };
 
+  const showToast = ({ title, message }) => {
+    setToastMessage({ title, message });
+    setToastVisible(true);
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2700),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setToastVisible(false);
+    });
+  };
+
+  const CustomToast = () => (
+    <Animated.View
+      style={[
+        toastStyles.container,
+        {
+          opacity: fadeAnim,
+          transform: [
+            {
+              translateY: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-20, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <View style={toastStyles.content}>
+        <Text style={toastStyles.title}>{toastMessage.title}</Text>
+        <Text style={toastStyles.message}>{toastMessage.message}</Text>
+      </View>
+    </Animated.View>
+  );
+
   const handleSubmit = async () => {
     try {
       // Validate comment first
@@ -198,15 +244,16 @@ const UploadProof = ({}) => {
         fileUploadRef.current.clearFiles();
       }
       setErrors("");
-      setUploadedFileIds([]); // Clear the uploaded file IDs
+      setUploadedFileIds([]);
 
-      // Show success message
-      setToastMessage("Submission successful!");
-      setToastVisible(true);
+      // Show success message with new toast
+      showToast({
+        title: "Success",
+        message: "Your proof of work has been submitted successfully!",
+      });
 
-      // Navigate after delay
+      // Navigate after delay with refresh flag
       setTimeout(() => {
-        setToastVisible(false);
         navigation.navigate("(pages)/taskDetails", {
           taskData: { id },
           refresh: true,
@@ -390,6 +437,7 @@ const UploadProof = ({}) => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
+      {toastVisible && <CustomToast />}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={handleBackNavigation}>
@@ -479,11 +527,6 @@ const UploadProof = ({}) => {
             >
               <Text style={styles.buttonText}>Submit</Text>
             </TouchableOpacity>
-            {toastVisible && (
-              <View style={styles.toast}>
-                <Text style={styles.toastText}>{toastMessage}</Text>
-              </View>
-            )}
 
             {/* Modal */}
             <Modal
@@ -494,7 +537,7 @@ const UploadProof = ({}) => {
             >
               <View style={styles.modalBackground}>
                 <View style={styles.modalContent}>
-                  <Text style={styles.modalText}>{toastMessage}</Text>
+                  <Text style={styles.modalText}>{toastMessage.message}</Text>
                   <TouchableOpacity
                     style={styles.closeButton}
                     onPress={() => setModalVisible(false)}
@@ -685,5 +728,41 @@ const styles = StyleSheet.create({
     color: "#FC5275",
     fontSize: 14,
     textAlign: "center",
+  },
+});
+
+const toastStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    top: 10,
+    left: 16,
+    right: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderLeftWidth: 5,
+    borderLeftColor: "#4CAF50",
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 9999,
+  },
+  content: {
+    flexDirection: "column",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  message: {
+    fontSize: 14,
+    color: "#666",
   },
 });

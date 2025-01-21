@@ -28,7 +28,10 @@ import { fetchProjectDetailsByApproverId } from "../../../src/services/projectSe
 import apiClient, { MEDIA_BASE_URL } from "../../../src/api/apiClient";
 import { icons } from "../../../constants";
 import colors from "../../../constants/colors";
-import { fetchTasks } from "../../../src/services/taskService";
+import {
+  fetchTasks,
+  fetchTasksByUserIdAndImage,
+} from "../../../src/services/taskService";
 
 const renderCard = ({ item }) => (
   <View style={styles.card}>
@@ -50,54 +53,55 @@ const renderCard = ({ item }) => (
 );
 
 const Myactivity = () => {
-  const [isSearchVisible, setSearchVisible] = useState(false);
   const navigation = useNavigation();
-  const [projectsDetail, setProjectsDetail] = useState([]);
-  const [tasksDetail, setTasksDetail] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
-  const [jobProfile, setJobProfile] = useState("");
-  const [subcategories, setSubcategories] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [projectTeamId, setProjectTeamId] = useState(null);
   const [projectDetails, setProjectDetails] = useState([]);
-  const [taskDetails, setTaskDetails] = useState([]);
-  const { user, designation, role, permissions } = useAuthStore();
+  const { user, designation } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true); // Flag to check if there are more tasks to load
   const [page, setPage] = useState(1); // Current page
   const pageSize = 1; // Number of tasks per page
   const [projects, setProjects] = useState([]);
+  const [allTasks, setAllTasks] = useState([]);
 
-  const ongoingProjectsCount = projectDetails.filter(
-    (item) => item.attributes.project_status === "ongoing"
+  const ongoingProjectsCount = projects.filter(
+    (item) => item?.attributes?.project_status === "ongoing"
   ).length;
 
-  const completedProjectsCount = projectDetails.filter(
-    (item) => item.attributes.project_status === "completed"
+  const completedProjectsCount = projects.filter(
+    (item) => item?.attributes?.project_status === "completed"
   ).length;
 
   useEffect(() => {
-    const fetchProjectTeamId = async () => {
-      if (user && user.id) {
+    const fetchData = async () => {
+      if (user?.id) {
         try {
           setIsLoading(true);
-          const response = await fetchProjectTeamIdByUserId(user.id);
-          if (response?.data?.length > 0) {
-            setProjects(response?.data[0]?.attributes?.projects?.data);
+          // Fetch tasks with pagination
+          const tasksResponse = await fetchTasks(user.id, page, pageSize);
+          if (tasksResponse?.data) {
+            setTasks(tasksResponse.data.data);
           }
 
-          const tasksResponse = await fetchTasks(user.id, page, pageSize);
-          setTasks(tasksResponse.data);
+          // Fetch project team data
+          const response = await fetchProjectTeamIdByUserId(user.id);
+          if (response?.data?.length > 0) {
+            setProjects(response.data[0]?.attributes?.projects?.data);
+          }
+
+          // Fetch all tasks with specific pagination
+          const allTasksResponse = await fetchTasks(user.id, 1, 5);
+          setAllTasks(allTasksResponse.data);
         } catch (error) {
-          console.error("Error fetching projects:", error);
+          console.error("Error fetching data:", error);
         } finally {
           setIsLoading(false);
         }
       }
     };
-    fetchProjectTeamId();
-  }, [user, page]);
+
+    fetchData();
+  }, [user?.id, page]);
 
   useFocusEffect(
     useCallback(() => {
@@ -124,7 +128,7 @@ const Myactivity = () => {
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.profileImageContainer}>
           <Image
             style={styles.userImage}
@@ -140,7 +144,7 @@ const Myactivity = () => {
           </Text>
         </View>
 
-        <Text style={styles.sectionHeader}>Your Project</Text>
+        <Text style={styles.sectionHeader}>Select Your Project</Text>
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <Text>Loading projects...</Text>
@@ -152,84 +156,117 @@ const Myactivity = () => {
             contentContainerStyle={styles.horizontalScrollContainer}
           >
             {projects.length > 0 ? (
-              projects.map((project) => (
-                <TouchableOpacity
-                  key={project.id}
-                  style={[
-                    styles.projectCard,
-                    (() => {
-                      const endDate = new Date(project.attributes.end_date);
-                      const today = new Date();
-                      const isDelayed = today > endDate;
+              projects.map((project) => {
+                const endDate = new Date(project?.attributes?.end_date);
+                const today = new Date();
+                const isDelayed = today > endDate;
+                const projectStatus = {
+                  text:
+                    project?.attributes?.project_status
+                      ?.charAt(0)
+                      ?.toUpperCase() +
+                    project?.attributes?.project_status?.slice(1),
+                };
 
-                      return isDelayed
-                        ? { backgroundColor: "#ffebee" } // Light red for delayed
-                        : { backgroundColor: "#e8f5e9" }; // Light green for on schedule
-                    })(),
-                  ]}
-                  onPress={() =>
-                    navigation.navigate("(pages)/projectTeam/ProjectDetails", {
-                      projectId: project.id,
-                      projectData: project,
-                      userId: user.id,
-                      tasksData: tasks,
-                    })
-                  }
-                >
-                  <View style={styles.projectCardContent}>
-                    <Text style={styles.projectCardTitle}>
-                      {project.attributes.name}
-                    </Text>
-                    <Text style={styles.projectCardDescription}>
-                      {project.attributes.description || "No description"}
-                    </Text>
+                return (
+                  <TouchableOpacity
+                    key={project.id}
+                    style={[
+                      styles.projectCard,
+                      {
+                        backgroundColor: isDelayed ? "#ffebee" : "#e8f5e9",
+                      },
+                    ]}
+                    onPress={() =>
+                      navigation.navigate(
+                        "(pages)/projectTeam/ProjectDetails",
+                        {
+                          projectId: project.id,
+                          projectData: project,
+                          userId: user.id,
+                          tasksData: allTasks,
+                        }
+                      )
+                    }
+                  >
+                    <View style={styles.projectCardContent}>
+                      <Text style={styles.projectTitle}>
+                        {project?.attributes?.name || "No Project Name"}
+                      </Text>
+                      <Text style={styles.projectDescription}>
+                        {project?.attributes?.description
+                          ? project?.attributes?.description?.length > 50
+                            ? `${project?.attributes?.description?.slice(
+                                0,
+                                50
+                              )}...`
+                            : project?.attributes?.description
+                          : "No description available"}
+                      </Text>
 
-                    <View style={styles.statusRow}>
-                      <View style={styles.statusIndicator}>
-                        {(() => {
-                          const endDate = new Date(project.attributes.end_date);
-                          const today = new Date();
-                          const isDelayed = today > endDate;
+                      <View style={styles.statusContainer}>
+                        <View
+                          style={[
+                            styles.projectStatusBadge,
+                            {
+                              backgroundColor: "#FFFFFF",
+                              alignSelf: "flex-start",
+                              marginBottom: 8,
+                            },
+                          ]}
+                        >
+                          <View style={styles.statusBadgeContent}>
+                            <View
+                              style={[
+                                styles.statusDot,
+                                {
+                                  backgroundColor: isDelayed
+                                    ? "#ff5252"
+                                    : "#4caf50",
+                                },
+                              ]}
+                            />
+                            <Text style={styles.projectStatusText}>
+                              {projectStatus.text || "Unknown"}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.statusIndicator}>
+                          <Icon
+                            name={isDelayed ? "error" : "check-circle"}
+                            size={16}
+                            color={isDelayed ? "#ff5252" : "#4caf50"}
+                          />
+                          <Text
+                            style={[
+                              styles.statusText,
+                              { color: isDelayed ? "#ff5252" : "#4caf50" },
+                            ]}
+                          >
+                            {isDelayed ? "Delayed" : "On Schedule"}
+                          </Text>
+                        </View>
+                      </View>
 
-                          return (
-                            <>
-                              <Icon
-                                name={isDelayed ? "error" : "check-circle"}
-                                size={16}
-                                color={isDelayed ? "#ff5252" : "#4caf50"}
-                              />
-                              <Text
-                                style={[
-                                  styles.statusText,
-                                  { color: isDelayed ? "#ff5252" : "#4caf50" },
-                                ]}
-                              >
-                                {isDelayed ? "Delayed" : "On Schedule"}
-                              </Text>
-                            </>
-                          );
-                        })()}
+                      <View style={styles.dateContainer}>
+                        <Icon name="event" size={16} color="#666" />
+                        <Text style={styles.dateText}>
+                          End Date:{" "}
+                          {project?.attributes?.end_date
+                            ? new Date(
+                                project?.attributes?.end_date
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Not set"}
+                        </Text>
                       </View>
                     </View>
-
-                    <View style={styles.dateContainer}>
-                      <Icon name="event" size={16} color="#666" />
-                      <Text style={styles.dateText}>
-                        End Date:{" "}
-                        {project.attributes.end_date
-                          ? new Date(
-                              project.attributes.end_date
-                            ).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "Not set"}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                );
+              })
             ) : (
               <View style={styles.noProjectsContainer}>
                 <Text style={styles.noProjectsText}>No projects available</Text>
@@ -449,6 +486,89 @@ const styles = StyleSheet.create({
   },
   statusBold: {
     fontWeight: "bold",
+  },
+  overviewContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  overviewItem: {
+    alignItems: "center",
+    height: 60,
+    width: 90,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+  },
+  overviewNumber1: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#577CFF",
+  },
+  overviewNumber2: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FB8951",
+  },
+  overviewNumber3: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#A3D65C",
+  },
+  overviewLabel1: {
+    fontSize: 12,
+    color: "#577CFF",
+    top: 8,
+    fontWeight: "bold",
+  },
+  overviewLabel2: {
+    fontSize: 12,
+    color: "#FB8951",
+    top: 8,
+    fontWeight: "bold",
+  },
+  overviewLabel3: {
+    fontSize: 12,
+    color: "#A3D65C",
+    top: 8,
+    fontWeight: "bold",
+  },
+  projectTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  projectDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+  },
+  statusContainer: {
+    marginVertical: 8,
+  },
+  projectStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+  },
+  statusBadgeContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  projectStatusText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
   },
 });
 

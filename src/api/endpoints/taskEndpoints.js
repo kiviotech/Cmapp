@@ -33,8 +33,8 @@ const taskEndpoints = {
 
   getTasksByUser: (userId) =>
     `/tasks?filters[assigned_to][id][$eq]=${userId}&populate=*`,
-  getTaskByContractorId: (projectId, id) =>
-    `/tasks?filters[project][id][$eq]=${projectId}&filters[project_team_member][id][$eq]=${id}&populate=*`,
+  getTaskByContractorId: (projectId, id, designation) =>
+    `/tasks?filters[project][id][$eq]=${projectId}&filters${designation}[id][$eq]=${id}&populate=*`,
   getTasksBySubmissionId: (id) =>
     `/tasks?populate=*&filters[submissions][id][$eq]=${id}`,
 };

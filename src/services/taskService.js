@@ -121,9 +121,9 @@ export const deleteTask = async (id) => {
   }
 };
 
-export const fetchTaskByContractorId = async (projectId, id) => {
+export const fetchTaskByContractorId = async (projectId) => {
   try {
-    const response = await getTaskByContractorId(projectId, id);
+    const response = await getTaskByContractorId(projectId);
     return response.data;
   } catch (error) {
     throw error;

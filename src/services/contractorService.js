@@ -6,6 +6,7 @@ import {
   updateContractor,
   deleteContractor,
   getContractorsIdByUserId,
+  getContractorsWithSubContractor,
 } from "../api/repositories/contractorRepository";
 
 export const fetchContractors = async () => {
@@ -38,6 +39,15 @@ export const fetchContractorsByUserId = async (userId) => {
 export const fetchContractorsIdByUserId = async (userId) => {
   try {
     const response = await getContractorsIdByUserId(userId);
+    return response?.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchContractorsWithSubContractor = async (userId) => {
+  try {
+    const response = await getContractorsWithSubContractor(userId);
     return response?.data;
   } catch (error) {
     throw error;

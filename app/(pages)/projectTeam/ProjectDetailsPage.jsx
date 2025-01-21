@@ -41,7 +41,6 @@ const ProjectDetailsPage = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  console.log("prpject id", projectId);
 
   const userId = user.id;
 
@@ -51,7 +50,6 @@ const ProjectDetailsPage = () => {
       try {
         const response = await getProjectById(projectId);
         setProjectData(response.data);
-        console.log(response.data);
       } catch (error) {
         console.error("Error fetching manager details:", error);
       }
@@ -66,7 +64,6 @@ const ProjectDetailsPage = () => {
     try {
       const response = await fetchTaskByProjectIdAndUserId(projectId, userId);
       const data = response.data;
-      console.log("data", data);
 
       if (data) {
         setTasksData(data);
@@ -174,10 +171,10 @@ const ProjectDetailsPage = () => {
   const project = projectData?.attributes || {};
 
   // Calculate the progress based on task statuses
-  const totalTasks = projectData?.taskDetails?.length || 0;
-  const completedTasks = projectData?.taskDetails?.filter(
-    (taskDetail) => taskDetail.data.attributes.task_status === "completed"
-  ).length;
+  const totalTasks = tasksData?.length || 0;
+  const completedTasks =
+    tasksData?.filter((task) => task?.attributes?.task_status === "completed")
+      .length || 0;
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
 
   return (
@@ -211,7 +208,6 @@ const ProjectDetailsPage = () => {
             </View>
           </View>
           <View>
-            {console.log("tmp", projectData?.data?.id)}
             <TouchableOpacity
               style={styles.assignBtn}
               onPress={() => {
@@ -250,7 +246,6 @@ const ProjectDetailsPage = () => {
         </View>
 
         <Text style={styles.label}>All Tasks</Text>
-        {console.log(tasksData)}
 
         {tasksData?.length > 0 ? (
           tasksData?.map((task, index) => {

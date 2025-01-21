@@ -75,10 +75,10 @@ const ProjectDetails = () => {
   const project = projectData?.attributes || {};
 
   // Calculate the progress based on task statuses
-  const totalTasks = projectData?.taskDetails?.length || 0;
-  const completedTasks = projectData?.taskDetails?.filter(
-    (taskDetail) => taskDetail.data.attributes.task_status === "completed"
-  ).length;
+  const totalTasks = tasksData?.length || 0;
+  const completedTasks =
+    tasksData?.filter((task) => task?.attributes?.task_status === "completed")
+      .length || 0;
   const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
 
   return (
@@ -116,7 +116,10 @@ const ProjectDetails = () => {
               style={styles.assignBtn}
               onPress={() => {
                 navigation.navigate("(pages)/AssignContractors", {
-                  projectId: projectData?.data?.id,
+                  projectId: projectId || projectData?.id,
+                  project_manager: project?.project_manager,
+                  project_supervisor: project?.project_supervisor,
+                  site_coordinator: project?.site_coordinator,
                 });
               }}
             >
@@ -186,7 +189,6 @@ const ProjectDetails = () => {
                 </Text>
                 <View style={styles.assign}>
                   <Text style={styles.dueDate}>
-                    Due:{" "}
                     {taskData.due_date
                       ? new Date(taskData.due_date)
                           .toLocaleDateString("en-GB", {
