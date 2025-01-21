@@ -6,6 +6,21 @@ export const getTasks = (userId, page, pageSize, designation_value) =>
     taskEndpoints.getTasks(userId, page, pageSize, designation_value)
   );
 
+export const getProjectAndDocumentByUserId = (
+  userId,
+  page,
+  pageSize,
+  designation_value
+) =>
+  apiClient.get(
+    taskEndpoints.getProjectAndDocumentByUserId(
+      userId,
+      page,
+      pageSize,
+      designation_value
+    )
+  );
+
 export const getTaskById = (id) => apiClient.get(taskEndpoints.getTaskById(id));
 
 export const getTaskDetailsById = (id) =>

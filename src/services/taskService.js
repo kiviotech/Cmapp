@@ -9,12 +9,32 @@ import {
   getTaskDetailsById,
   getTaskByContractorId,
   getTasksBySubmissionId,
+  getProjectAndDocumentByUserId,
 } from "../api/repositories/taskRepository";
 
 // Fetch all tasks
 export const fetchTasks = async (userId, page, pageSize, designation_value) => {
   try {
     const response = await getTasks(userId, page, pageSize, designation_value);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchProjectAndDocumentByUserId = async (
+  userId,
+  page,
+  pageSize,
+  designation_value
+) => {
+  try {
+    const response = await getProjectAndDocumentByUserId(
+      userId,
+      page,
+      pageSize,
+      designation_value
+    );
     return response.data;
   } catch (error) {
     throw error;

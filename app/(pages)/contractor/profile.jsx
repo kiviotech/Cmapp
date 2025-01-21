@@ -6,8 +6,6 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  TextInput,
-  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomNavigation from "./BottomNavigation ";
@@ -15,53 +13,218 @@ import colors from "../../../constants/colors";
 import useAuthStore from "../../../useAuthStore";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
 import SelectYourProject from "./SelectYourProject";
-import { fetchTasks } from "../../../src/services/taskService";
+import { fetchProjectAndDocumentByUserId } from "../../../src/services/taskService";
+import { fetchContractorsIdByUserId } from "../../../src/services/contractorService";
 
 const profile = () => {
   const { user, designation } = useAuthStore();
   const router = useRouter();
-  const navigation = useNavigation();
-  const pageSize = 5; // Number of tasks per page
-
-  const [projectsDetail, setProjectsDetail] = useState([]); // to store all user project
-  const [tasks, setTasks] = useState([]); // to store tasks per project
-  // const [contractorsDetails, setContractorsDetails] = useState([])
+  const pageSize = 5;
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [contractorId, setContractorId] = useState(0);
   const [uploadedHistory, setUploadedHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  // const [contractorsData, setContractorsData] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [isFetching, setIsFetching] = useState(false); // Prevent duplicate API calls
+
+  const renderPagination = () => {
+    if (!totalPages || totalPages <= 1) return null;
+
+    // const getPageNumbers = () => {
+    //   const delta = 2;
+    //   const range = [];
+    //   const rangeWithDots = [];
+
+    //   // Always include first page
+    //   range.push(1);
+
+    //   for (let i = currentPage - delta; i <= currentPage + delta; i++) {
+    //     if (i > 1 && i < totalPages) {
+    //       range.push(i);
+    //     }
+    //   }
+
+    //   // Always include last page
+    //   if (totalPages > 1) {
+    //     range.push(totalPages);
+    //   }
+
+    //   // Add dots and numbers to final array
+    //   let l;
+    //   for (const i of range) {
+    //     if (l) {
+    //       if (i - l === 2) {
+    //         rangeWithDots.push(l + 1);
+    //       } else if (i - l !== 1) {
+    //         rangeWithDots.push("...");
+    //       }
+    //     }
+    //     rangeWithDots.push(i);
+    //     l = i;
+    //   }
+
+    //   return rangeWithDots;
+    // };
+
+    const getPageNumbers = () => {
+      // Dynamically generate page numbers (e.g., with dots for large ranges)
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+      return pages;
+    };
+
+    return (
+      <View style={styles.paginationContainer}>
+        {/* Previous Button */}
+        <TouchableOpacity
+          style={[
+            styles.pageButton,
+            currentPage === 1 && styles.disabledPageButton,
+          ]}
+          onPress={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <Text
+            style={[
+              styles.pageText,
+              currentPage === 1 && styles.disabledPageText,
+            ]}
+          >
+            {"<"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Page Numbers */}
+        {getPageNumbers().map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.pageButton,
+              currentPage === item && styles.activePageButton,
+            ]}
+            onPress={() => handlePageChange(item)}
+          >
+            <Text
+              style={[
+                styles.pageText,
+                currentPage === item && styles.activePageText,
+              ]}
+            >
+              {item}
+            </Text>
+          </TouchableOpacity>
+        ))}
+
+        {/* Next Button */}
+        <TouchableOpacity
+          style={[
+            styles.pageButton,
+            currentPage === totalPages && styles.disabledPageButton,
+          ]}
+          onPress={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          <Text
+            style={[
+              styles.pageText,
+              currentPage === totalPages && styles.disabledPageText,
+            ]}
+          >
+            {">"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   useEffect(() => {
-    const loadContractorData = async (page=1) => {
-      if (user && user.id) {
+    fetchProjects();
+  }, [currentPage]);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page); // Update the page state
+    }
+  };
+  useEffect(() => {
+    const fetchContractors = async () => {
+      if (designation === "Contractor" && user?.id) {
         try {
-          setIsLoading(true); // Start loading  
-          const data = await fetchTasks(user.id, page, pageSize);
-          const projectsData = data.data
-            .map((taskData) => taskData?.attributes?.project?.data) // Map to project data
-            .filter(
-              (project, index, self) =>
-                project && // Ensure project is not null or undefined
-                self.findIndex((p) => p?.id === project.id) === index // Ensure unique projects
-            );
-          const tasksWithSubmissions = data.data.filter(
-            (task) => task.attributes.submissions.data.length > 0
-          );
-          setTasks(data.data); // Set tasks
-          setProjects(projectsData)
-          setUploadedHistory(tasksWithSubmissions);
+          const response = await fetchContractorsIdByUserId(user.id);
+          if (response?.data?.length > 0) {
+            setContractorId(response.data[0]?.id);
+          }
         } catch (error) {
-          console.error('Error fetching contractor data:', error);
-        } finally {
-          setIsLoading(false); // End loading
+          console.error("Error fetching contractors:", error);
         }
       }
     };
 
-    loadContractorData();
-  }, [user]);
+    fetchContractors();
+  }, [designation, user?.id]);
+
+  useEffect(() => {
+    // Only fetch if we have either a contractorId or userId
+    if (user?.id && (contractorId !== 0 || designation !== "Contractor")) {
+      fetchProjects();
+    }
+  }, [contractorId, user]);
+
+  const fetchProjects = async () => {
+    if (!user?.id) return; // Early return if no user ID
+    const idToUse = contractorId !== 0 ? contractorId : user.id;
+    if (isFetching) return; // Prevent duplicate calls
+    setIsFetching(true);
+    try {
+      const response = await fetchProjectAndDocumentByUserId(
+        idToUse,
+        currentPage,
+        pageSize,
+        designation.charAt(0).toLowerCase() + designation.slice(1)
+      );
+      const data = response.data;
+
+      if (data && data.length > 0) {
+        // Extracting unique project data
+        const projectsData = data
+          .map((taskData) => taskData?.attributes?.project?.data) // Extract project data
+          .filter((project) => project) // Filter out null or undefined
+          .filter(
+            (project, index, self) =>
+              self.findIndex((p) => p?.id === project?.id) === index // Ensure uniqueness
+          );
+
+        // If at least one valid project exists, set it; otherwise, keep the existing state
+
+        setProjects(projectsData);
+
+        console.log("Projects Data:", projectsData);
+
+        // Filtering tasks with submissions
+        const tasksWithSubmissions = data.filter(
+          (task) => task?.attributes?.submissions?.data?.length > 0
+        );
+        setUploadedHistory(tasksWithSubmissions);
+
+        // Set total pages for pagination
+        setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
+      } else {
+        // If no data at all, clear the states
+        console.log("No tasks found, clearing states.");
+        setProjects([]);
+        setUploadedHistory([]);
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    } finally {
+      setIsLoading(false);
+      setIsFetching(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -189,81 +352,9 @@ const profile = () => {
         })}
 
         <View style={{ marginTop: 20 }}>
-          <SelectYourProject
-            isLoading={isLoading}
-            projects={projects}
-          />
+          <SelectYourProject isLoading={isLoading} projects={projects} />
         </View>
-
-        <View style={{ marginTop: 20 }}>
-          {projectsDetail?.map((project) => (
-            <View key={project.id}>
-              {project.attributes.tasks?.data.map((task, index) => (
-                <View key={index} style={styles.submissionContainer}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      navigation.navigate("(pages)/taskDetails", {
-                        taskData: task,
-                        refresh: false,
-                      });
-                    }}
-                  >
-                    <Text style={styles.submissionTitle}>
-                      {task.attributes.Name || `Task ${index + 1}`} for{" "}
-                      {project.attributes.name}
-                    </Text>
-
-                    <View style={styles.documentRow}>
-                      <View style={styles.documentInfo}>
-                        <View style={styles.iconContainer}>
-                          <FontAwesome5
-                            name="file-alt"
-                            size={24}
-                            color="#666"
-                          />
-                        </View>
-                        <View style={styles.documentDetails}>
-                          <Text style={styles.documentName}>
-                            Document_name.png
-                          </Text>
-                          <Text style={styles.submissionDate}>
-                            Submitted on:{" "}
-                            {task.attributes.createdAt?.slice(0, 10)}
-                          </Text>
-                          <Text style={styles.documentDescription}>
-                            Lorem ipsum dolor sit amet consectetur. Augue et non
-                            amet vestibulum
-                          </Text>
-                        </View>
-                      </View>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          {
-                            backgroundColor:
-                              task.attributes.task_status === "completed"
-                                ? "#4CAF50"
-                                : "#FF9800",
-                          },
-                        ]}
-                      >
-                        <Text style={styles.statusText}>
-                          {task.attributes.task_status === "completed"
-                            ? "Approved"
-                            : "Pending"}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <TouchableOpacity style={styles.viewAllButton}>
-                      <Text style={styles.viewAllText}>View all</Text>
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          ))}
-        </View>
+        {totalPages > 1 && renderPagination()}
       </ScrollView>
       <BottomNavigation />
     </SafeAreaView>
@@ -273,6 +364,40 @@ const profile = () => {
 export default profile;
 
 const styles = StyleSheet.create({
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 16,
+    flexWrap: "wrap",
+    gap: 10,
+    paddingBottom: 20,
+    marginTop: 10,
+  },
+  pageButton: {
+    paddingVertical: "8px",
+    paddingHorizontal: "12px",
+    border: "1px solid #A5A5A5",
+    borderRadius: "5px",
+    backgroundColor: "#FFFFFF",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "500",
+    minWidth: "40px",
+    height: 30,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activePageButton: {
+    backgroundColor: "#007bff",
+  },
+  pageText: {
+    color: "#000",
+  },
+  activePageText: {
+    color: "#fff",
+  },
   container: {
     flex: 1,
 
