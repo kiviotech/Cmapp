@@ -89,7 +89,7 @@ const TaskDetails = () => {
     const fetchStandardTaskDetails = async () => {
       if (taskData.id) {
         try {
-          const submissionData = taskData?.attributes?.submissions?.data
+          const submissionData = taskData?.attributes?.submissions?.data;
           const standardTaskId = taskData?.attributes?.standard_task?.data?.id;
           const response = await fetchStandardTaskById(standardTaskId);
           setStandardTaskDetails(response.data);
@@ -231,12 +231,12 @@ const TaskDetails = () => {
             Deadline:{" "}
             {taskData?.attributes?.due_date
               ? new Date(taskData.attributes.due_date)
-                .toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })
-                .replace(/\//g, "-")
+                  .toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })
+                  .replace(/\//g, "-")
               : "N/A"}
           </Text>
         </View>
@@ -399,21 +399,21 @@ const TaskDetails = () => {
                       ?.status === "approved"
                       ? "#D4EDDA"
                       : taskData?.attributes?.submission?.data?.attributes
-                        ?.status === "declined"
-                        ? "#ffebee"
-                        : "rgba(251, 188, 85, 0.3)",
+                          ?.status === "declined"
+                      ? "#ffebee"
+                      : "rgba(251, 188, 85, 0.3)",
                 },
               ]}
             >
               <Image
                 source={
                   taskData?.attributes?.submission?.data?.attributes?.status ===
-                    "approved"
+                  "approved"
                     ? icons.approved
                     : taskData?.attributes?.submission?.data?.attributes
-                      ?.status === "declined"
-                      ? icons.reject
-                      : icons.uploadApproval
+                        ?.status === "declined"
+                    ? icons.reject
+                    : icons.uploadApproval
                 }
               />
               <Text
@@ -423,9 +423,9 @@ const TaskDetails = () => {
                       ?.status === "approved"
                       ? "#28A745"
                       : taskData?.attributes?.submission?.data?.attributes
-                        ?.status === "declined"
-                        ? "#DC3545"
-                        : "#FBBC55",
+                          ?.status === "declined"
+                      ? "#DC3545"
+                      : "#FBBC55",
                 }}
               >
                 {taskData?.attributes?.submission?.data?.attributes?.status ||

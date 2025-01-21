@@ -230,133 +230,6 @@ const ProjectTeam = () => {
     (item) => item?.attributes?.project_status === "completed"
   ).length;
 
-  // useEffect(() => {
-  //   const fetchProjectDetails = async () => {
-  //     if (projectTeamId) {
-  //       try {
-  //         const projectResponse = await fetchProjectDetailsByApproverId(
-  //           projectTeamId
-  //         );
-  //         const projects = projectResponse.data;
-  //         const projectsWithTasks = await Promise.all(
-  //           projects.map(async (project) => {
-  //             const tasks = project.attributes.tasks.data;
-  //             const taskDetails = await Promise.all(
-  //               tasks.map(async (task) => {
-  //                 const taskResponse = await apiClient.get(
-  //                   `/tasks/${task.id}?populate=*`
-  //                 );
-
-  //                 return { id: task.id, ...taskResponse.data };
-  //               })
-  //             );
-  //             return { ...project, taskDetails };
-  //           })
-  //         );
-
-  //         setProjectDetails(projectsWithTasks);
-  //       } catch (error) {
-  //         console.error("Error fetching project details:", error);
-  //       }
-  //     }
-  //   };
-
-  //   fetchProjectDetails();
-  // }, [projectTeamId]);
-
-  // useEffect(() => {
-  //   const fetchProjectDetails = async () => {
-  //     if (projectTeamId) {
-  //       try {
-  //         const response = await fetchProjectDetailsByApproverId(projectTeamId);
-  //         setProjectDetails(response.data); // Store project details with tasks
-  //       } catch (error) {
-  //         console.error("Error fetching project details:", error);
-  //       }
-  //     }
-  //   };
-  //   fetchProjectDetails();
-  // }, [projectTeamId]);
-
-  // useEffect(() => {
-  //   const fetchTaskDetails = async () => {
-  //     const allTaskDetails = [];
-
-  //     for (const project of projectDetails) {
-  //       const tasks = project.attributes.tasks.data;
-  //       for (const task of tasks) {
-  //         try {
-  //           const taskResponse = await apiClient.get(
-  //             `${BASE_URL}/tasks/${task.id}?populate=*`
-  //           );
-  //           allTaskDetails.push(taskResponse.data);
-  //         } catch (error) {
-  //           console.error(
-  //             `Error fetching details for task ID ${task.id}:`,
-  //             error
-  //           );
-  //         }
-  //       }
-  //     }
-
-  //     setTaskDetails(allTaskDetails);
-  //   };
-
-  //   if (projectDetails.length > 0) {
-  //     fetchTaskDetails();
-  //   }
-  // }, [projectDetails]);
-
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     try {
-  //       const userResponse = await getAuthenticatedUserWithPopulate(
-  //         "job_profile"
-  //       );
-  //       setJobProfile(userResponse.data.job_profile.name);
-  //     } catch (error) {
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, []);
-
-  // useEffect(() => {
-  //   let isMounted = true;
-
-  //   const fetchProjects = async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       const projectData = await getProjects();
-  //       if (isMounted && projectData?.data?.data) {
-  //         const uniqueProjects = Array.from(
-  //           new Map(
-  //             projectData.data.data.map((item) => [item.id, item])
-  //           ).values()
-  //         );
-  //         setProjectsDetail(uniqueProjects);
-  //         if (uniqueProjects.length > 0) {
-  //           setSelectedProjectId(uniqueProjects[0]?.id);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching projects:", error);
-  //       if (isMounted) {
-  //         setProjectsDetail([]);
-  //       }
-  //     } finally {
-  //       if (isMounted) {
-  //         setIsLoading(false);
-  //       }
-  //     }
-  //   };
-
-  //   fetchProjects();
-
-  //   return () => {
-  //     isMounted = false;
-  //   };
-  // }, []);
-
   useFocusEffect(
     useCallback(() => {
       const fetchRequests = async () => {
@@ -659,16 +532,33 @@ const ProjectTeam = () => {
                 : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
               return (
-                <View key={task.id} style={styles.milestoneCard}>
-                  <Text style={styles.milestoneTitle}>
-                    {/* {task?.attributes?.project?.data?.attributes?.name ||
-                      "Project"} */}
-                  </Text>
+                <View
+                  key={task.id}
+                  // style={styles.milestoneCard}
+                  style={[
+                    styles.milestoneCard,
+                    {
+                      backgroundColor:
+                        task?.attributes?.task_status === "completed"
+                          ? "#E8F5E9" // green
+                          : task?.attributes?.task_status === "ongoing"
+                          ? "#fff" // orange
+                          : task?.attributes?.task_status === "rejected"
+                          ? "#FED5DD" // red
+                          : "#fff", // default color
+                    },
+                  ]}
+                >
                   <Image
                     source={{ uri: taskImageUrl }}
                     style={styles.milestoneImage}
                   />
                   <View style={styles.milestoneContent}>
+                    <Text style={styles.milestoneTitle}>
+                      Project:{" "}
+                      {task?.attributes?.project?.data?.attributes?.name ||
+                        "Project"}
+                    </Text>
                     <View style={styles.milestoneHeaderContainer}>
                       <View style={styles.projectTaskName}>
                         <Text style={styles.milestoneTitle}>
@@ -686,10 +576,19 @@ const ProjectTeam = () => {
                         "No description available for this task."}
                     </Text>
                     <View style={styles.divider} />
-                    <Text style={styles.deadlineText}>
-                      <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                      {task?.attributes?.due_date || "No deadline specified"}
-                    </Text>
+                    <View style={styles.status_container}>
+                      <Text style={styles.deadlineText}>
+                        <Icon
+                          name="event"
+                          size={16}
+                          color="#333"
+                          style={{ position: "relative", top: "3px" }}
+                        />{" "}
+                        Deadline:{" "}
+                        {task?.attributes?.due_date || "No deadline specified"}
+                      </Text>
+                      <Text>{task?.attributes?.task_status}</Text>
+                    </View>
                     <TouchableOpacity
                       style={styles.uploadButton}
                       onPress={() =>
@@ -745,6 +644,30 @@ const getStatusStyle = (status) => {
 };
 
 const styles = StyleSheet.create({
+  searchInput: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingLeft: 25,
+    width: "100%",
+    height: 45,
+    borderWidth: 1,
+    borderColor: "#f2f2f2",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    height: 45,
+    elevation: 2,
+  },
+  status_container: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
   paginationContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -827,7 +750,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   searchIcon: {
-    marginLeft: "auto",
+    position: "absolute",
   },
   sectionHeader: {
     fontSize: 18,
@@ -1015,7 +938,7 @@ const styles = StyleSheet.create({
   deadlineText: {
     fontSize: 14,
     color: "#333",
-    marginBottom: 15,
+    // marginBottom: 15,
   },
   uploadButton: {
     backgroundColor: "#1e90ff",

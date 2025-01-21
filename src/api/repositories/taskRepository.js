@@ -21,6 +21,9 @@ export const getProjectAndDocumentByUserId = (
     )
   );
 
+export const getTaskByProjectIdAndUserId = (projectId) =>
+  apiClient.get(taskEndpoints.getTaskByProjectIdAndUserId(projectId));
+
 export const getTaskById = (id) => apiClient.get(taskEndpoints.getTaskById(id));
 
 export const getTaskDetailsById = (id) =>

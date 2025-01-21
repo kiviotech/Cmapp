@@ -60,11 +60,9 @@ const ProjectList = () => {
     <TouchableOpacity
       style={styles.projectContainer}
       onPress={() =>
-        navigation.navigate("(pages)/projectTeam/ProjectDetails", {
+        navigation.navigate("(pages)/projectTeam/ProjectDetailsPage", {
           projectId: item.id,
-          projectData: item,
-          userId: user.id,
-          // tasksData: tasks
+          projectName: item?.attributes?.name,
         })
       }
     >

@@ -10,6 +10,7 @@ import {
   getTaskByContractorId,
   getTasksBySubmissionId,
   getProjectAndDocumentByUserId,
+  getTaskByProjectIdAndUserId,
 } from "../api/repositories/taskRepository";
 
 // Fetch all tasks
@@ -35,6 +36,15 @@ export const fetchProjectAndDocumentByUserId = async (
       pageSize,
       designation_value
     );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchTaskByProjectIdAndUserId = async (projectId) => {
+  try {
+    const response = await getTaskByProjectIdAndUserId(projectId);
     return response.data;
   } catch (error) {
     throw error;
