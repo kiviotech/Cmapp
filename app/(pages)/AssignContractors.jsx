@@ -67,6 +67,9 @@ const AssignContractors = () => {
   const { projectId, project_manager, project_supervisor, site_coordinator } =
     route.params;
 
+  // Add this new state for search
+  const [searchText, setSearchText] = useState("");
+
   console.log("projectid", projectId);
 
   useEffect(() => {
@@ -78,6 +81,7 @@ const AssignContractors = () => {
           value: contractor.id,
         }));
         setContractorTypeItems(types);
+        // Store original items in a ref or state if needed for reset
       } catch (error) {
         console.error("Error fetching contractor types:", error);
       }
@@ -321,6 +325,16 @@ const AssignContractors = () => {
     }
   };
 
+  // Add this function to handle search
+  const handleSearch = (text) => {
+    setSearchText(text);
+    // Filter contractor types based on search text
+    const filteredItems = contractorTypeItems.filter((item) =>
+      item.label.toLowerCase().includes(text.toLowerCase())
+    );
+    setContractorTypeItems(filteredItems);
+  };
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView>
@@ -355,15 +369,18 @@ const AssignContractors = () => {
             setValue={(value) => {
               setContractorTypeValue(value);
               setShowTypeError(false);
-              // fetchStandardTasks(contractorTypeValue);
             }}
-            onChangeValue={fetchStandardTasks} // Trigger the function on selection
+            onChangeValue={fetchStandardTasks}
             setItems={setContractorTypeItems}
             placeholder="Select the contractor type"
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
+            searchTextInputStyle={{ borderWidth: 0, outline: "none" }}
             zIndex={6000}
             zIndexInverse={1000}
+            searchable={true}
+            searchPlaceholder="Search contractor type..."
+            onChangeSearchText={handleSearch}
           />
           {validationErrors.contractorType && (
             <Text style={styles.errorText}>

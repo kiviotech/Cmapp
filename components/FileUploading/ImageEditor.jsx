@@ -9,9 +9,9 @@ import {
 import { FontAwesome } from "@expo/vector-icons";
 
 const ImageEditor = ({ imageUri, onSave, onCancel }) => {
-  const [brightness, setBrightness] = useState(100);
-  const [contrast, setContrast] = useState(100);
-  const [saturation, setSaturation] = useState(100);
+  const [brightness, setBrightness] = useState(50);
+  const [contrast, setContrast] = useState(50);
+  const [saturation, setSaturation] = useState(50);
   const [selectedColor, setSelectedColor] = useState("#FF0000");
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingContext, setDrawingContext] = useState(null);
@@ -48,7 +48,8 @@ const ImageEditor = ({ imageUri, onSave, onCancel }) => {
         img.crossOrigin = "anonymous";
 
         img.onload = () => {
-          const containerWidth = canvas.parentElement.clientWidth;
+          // Calculate dimensions at 50% of container width
+          const containerWidth = canvas.parentElement.clientWidth * 0.5; // 50% of container width
           const scale = containerWidth / img.width;
           const scaledHeight = img.height * scale;
 
@@ -476,6 +477,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F1F1F1",
     padding: 16,
+    maxHeight: "100vh",
+    overflow: "hidden",
   },
   canvas: {
     width: "100%",
@@ -484,11 +487,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
     touchAction: "none",
+    maxHeight: "50vh",
+    objectFit: "contain",
   },
   controls: {
     backgroundColor: "#FFFFFF",
     padding: 16,
     borderRadius: 10,
+    overflow: "auto",
+    maxHeight: "35vh",
   },
   colorPicker: {
     marginBottom: 16,
