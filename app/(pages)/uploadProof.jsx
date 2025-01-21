@@ -27,6 +27,7 @@ import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
 import colors from "../../constants/colors";
 import useFileUploadStore from "../../src/stores/fileUploadStore";
+import { Camera, CameraType } from 'expo-camera';
 
 const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -49,6 +50,9 @@ const UploadProof = ({}) => {
   const { id } = route?.params;
   const fileUploadRef = useRef(null);
   const clearFiles = useFileUploadStore((state) => state.clearFiles);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [cameraRef, setCameraRef] = useState(null);
+  const [type, setType] = useState(CameraType.back); // Default to back camera
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -75,6 +79,14 @@ const UploadProof = ({}) => {
     };
     fetchTasks();
   }, [id]);
+
+  // Request camera permissions when component mounts
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
 
   const toBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -388,6 +400,88 @@ const UploadProof = ({}) => {
     };
   }, []);
 
+  // Function to handle taking a picture
+  const takePicture = async () => {
+    if (cameraRef) {
+      try {
+        const photo = await cameraRef.takePictureAsync();
+        // Create a file object from the photo
+        const photoFile = {
+          uri: photo.uri,
+          name: `photo_${Date.now()}.jpg`,
+          type: 'image/jpeg',
+        };
+        
+        // Add the photo to uploaded files
+        setUploadedFiles((prevFiles) => [...prevFiles, {
+          ...photoFile,
+          status: 'uploading',
+          progress: 0
+        }]);
+
+        // Start the upload process
+        startFileUpload(photoFile);
+        
+        // Close camera after taking picture
+        setIsCameraActive(false);
+      } catch (error) {
+        console.error('Error taking picture:', error);
+        alert('Failed to take picture');
+      }
+    }
+  };
+
+  // Camera component
+  const renderCamera = () => {
+    if (hasPermission === null) {
+      return <View />;
+    }
+    if (hasPermission === false) {
+      return <Text>No access to camera</Text>;
+    }
+    return (
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={isCameraActive}
+        onRequestClose={() => setIsCameraActive(false)}
+      >
+        <View style={styles.cameraContainer}>
+          <Camera
+            ref={(ref) => setCameraRef(ref)}
+            type={type}
+            style={styles.camera}
+          >
+            <View style={styles.cameraButtonContainer}>
+              <TouchableOpacity 
+                style={styles.flipButton}
+                onPress={() => {
+                  setType(type === CameraType.back ? CameraType.front : CameraType.back);
+                }}
+              >
+                <Text style={styles.flipText}>Flip</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.captureButton}
+                onPress={takePicture}
+              >
+                <Text style={styles.captureText}>Take Photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setIsCameraActive(false)}
+              >
+                <Text style={styles.closeText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </Camera>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.header}>
@@ -507,6 +601,7 @@ const UploadProof = ({}) => {
           </View>
         </View>
       </ScrollView>
+      {renderCamera()}
       {/* <BottomNavigation /> */}
     </SafeAreaView>
   );
@@ -685,5 +780,55 @@ const styles = StyleSheet.create({
     color: "#FC5275",
     fontSize: 14,
     textAlign: "center",
+  },
+  cameraContainer: {
+    flex: 1,
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraButtonContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    margin: 20,
+  },
+  flipButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  captureButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 5,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  flipText: {
+    fontSize: 18,
+    color: 'white',
+  },
+  captureText: {
+    fontSize: 18,
+    color: 'black',
+  },
+  closeText: {
+    fontSize: 18,
+    color: 'white',
+  },
+  uploadOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 10,
+  },
+  cameraOption: {
+    padding: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
   },
 });
