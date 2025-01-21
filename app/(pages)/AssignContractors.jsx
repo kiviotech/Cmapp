@@ -67,6 +67,8 @@ const AssignContractors = () => {
   const { projectId, project_manager, project_supervisor, site_coordinator } =
     route.params;
 
+  console.log("projectid", projectId);
+
   useEffect(() => {
     const loadContractorTypes = async () => {
       try {
@@ -262,6 +264,7 @@ const AssignContractors = () => {
           project_status: "pending",
         },
       };
+
       await updateExistingProject(projectId, projectData);
       Alert.alert("Success", "Project setup completed and tasks assigned!");
       setPopupVisible(true);
@@ -425,7 +428,7 @@ const AssignContractors = () => {
             style={styles.addButton}
             onPress={handleAddContractor}
           >
-            <Text style={styles.addButtonText}>+ Add Contractor</Text>
+            <Text style={styles.addButtonText}>+ Map Tasks</Text>
           </TouchableOpacity>
 
           {assignedContractors.map((contractor, index) => (
@@ -475,7 +478,7 @@ const AssignContractors = () => {
               onMouseLeave={() => setShowTooltip(false)}
               disabled={!isFinishButtonEnabled}
             >
-              <Text style={styles.finishButtonText}>Finish Project Setup</Text>
+              <Text style={styles.finishButtonText}>Assign Tasks</Text>
             </TouchableOpacity>
             {showTooltip && !isFinishButtonEnabled && (
               <View style={styles.tooltip}>

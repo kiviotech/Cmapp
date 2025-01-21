@@ -211,11 +211,12 @@ const ProjectDetailsPage = () => {
             </View>
           </View>
           <View>
+            {console.log("tmp", projectData?.data?.id)}
             <TouchableOpacity
               style={styles.assignBtn}
               onPress={() => {
                 navigation.navigate("(pages)/AssignContractors", {
-                  projectId: projectData.id,
+                  projectId: projectData?.data?.id,
                 });
               }}
             >
