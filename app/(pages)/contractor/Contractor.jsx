@@ -47,6 +47,7 @@ const Contractor = () => {
           const response = await fetchContractorsIdByUserId(user.id);
           if (response?.data?.length > 0) {
             setContractorId(response.data[0]?.id);
+            setProjects(response?.data[0]?.attributes?.projects?.data);
           }
         } catch (error) {
           console.error("Error fetching contractors:", error);
@@ -73,14 +74,14 @@ const Contractor = () => {
 
       const data = response.data;
       if (data && data.length > 0) {
-        const projectsData = data
-          .map((taskData) => taskData?.attributes?.project?.data)
-          .filter(
-            (project, index, self) =>
-              project && self.findIndex((p) => p?.id === project.id) === index
-          );
+        // const projectsData = data
+        //   .map((taskData) => taskData?.attributes?.project?.data)
+        //   .filter(
+        //     (project, index, self) =>
+        //       project && self.findIndex((p) => p?.id === project.id) === index
+        //   );
 
-        setProjects(projectsData);
+        // setProjects(projectsData);
         setTasks(data);
         setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
       }

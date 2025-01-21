@@ -5,7 +5,7 @@ const taskEndpoints = {
     pageSize,
     designation_value = "project_team_member"
   ) =>
-    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task][populate]=image&populate[documents]=true&populate[submissions][populate]=proofOfWork&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}
+    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task][populate]=image&pagination[page]=${page}&pagination[pageSize]=${pageSize}
 `,
 
   getProjectAndDocumentByUserId: (

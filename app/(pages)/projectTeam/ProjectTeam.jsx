@@ -112,6 +112,25 @@ const ProjectTeam = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
 
+  
+
+    useEffect(() => {
+      const fetchContractors = async () => {
+        // if (designation === "Contractor" && user?.id) {
+          try {
+            const response = await fetchProjectTeamIdByUserId(user.id);
+            if (response?.data?.length > 0) {
+              setProjects(response?.data[0]?.attributes?.projects?.data);
+            }
+          } catch (error) {
+            console.error("Error fetching contractors:", error);
+          }
+        // }
+      };
+  
+      fetchContractors();
+    }, [designation, user?.id]); 
+
   // Update the fetch function to handle pagination properly
   const fetchTasksWithPagination = async (userId, page) => {
     setIsLoading(true);
@@ -122,15 +141,15 @@ const ProjectTeam = () => {
 
       if (data) {
         // Extract unique projects from tasks
-        const projectsData = data
-          .map((taskData) => taskData?.attributes?.project?.data)
-          .filter(
-            (project, index, self) =>
-              project && self.findIndex((p) => p?.id === project.id) === index
-          );
+        // const projectsData = data
+        //   .map((taskData) => taskData?.attributes?.project?.data)
+        //   .filter(
+        //     (project, index, self) =>
+        //       project && self.findIndex((p) => p?.id === project.id) === index
+        //   );
 
         setTasks(data);
-        setProjects(projectsData);
+        // setProjects(projectsData);
 
         // Update pagination state
         if (meta) {
