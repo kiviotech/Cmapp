@@ -150,6 +150,7 @@ const profile = () => {
       setCurrentPage(page); // Update the page state
     }
   };
+
   useEffect(() => {
     const fetchContractors = async () => {
       if (designation === "Contractor" && user?.id) {
@@ -157,6 +158,7 @@ const profile = () => {
           const response = await fetchContractorsIdByUserId(user.id);
           if (response?.data?.length > 0) {
             setContractorId(response.data[0]?.id);
+            setProjects(response?.data[0]?.attributes?.projects?.data);
           }
         } catch (error) {
           console.error("Error fetching contractors:", error);
@@ -165,7 +167,7 @@ const profile = () => {
     };
 
     fetchContractors();
-  }, [designation, user?.id]);
+  }, [designation, user?.id]); // More specific dependency
 
   useEffect(() => {
     // Only fetch if we have either a contractorId or userId
@@ -190,19 +192,19 @@ const profile = () => {
 
       if (data && data.length > 0) {
         // Extracting unique project data
-        const projectsData = data
-          .map((taskData) => taskData?.attributes?.project?.data) // Extract project data
-          .filter((project) => project) // Filter out null or undefined
-          .filter(
-            (project, index, self) =>
-              self.findIndex((p) => p?.id === project?.id) === index // Ensure uniqueness
-          );
+        // const projectsData = data
+        //   .map((taskData) => taskData?.attributes?.project?.data) // Extract project data
+        //   .filter((project) => project) // Filter out null or undefined
+        //   .filter(
+        //     (project, index, self) =>
+        //       self.findIndex((p) => p?.id === project?.id) === index // Ensure uniqueness
+        //   );
 
-        // If at least one valid project exists, set it; otherwise, keep the existing state
+        // // If at least one valid project exists, set it; otherwise, keep the existing state
 
-        setProjects(projectsData);
+        // setProjects(projectsData);
 
-        console.log("Projects Data:", projectsData);
+        // console.log("Projects Data:", projectsData);
 
         // Filtering tasks with submissions
         const tasksWithSubmissions = data.filter(
@@ -215,7 +217,7 @@ const profile = () => {
       } else {
         // If no data at all, clear the states
         console.log("No tasks found, clearing states.");
-        setProjects([]);
+        // setProjects([]);
         setUploadedHistory([]);
       }
     } catch (error) {
@@ -273,6 +275,7 @@ const profile = () => {
                   for{" "}
                   {history?.attributes?.project?.data?.attributes?.name ||
                     "N/A"}
+                  {/* Submission */}
                 </Text>
                 {totalSubmissions > 1 && (
                   <TouchableOpacity
@@ -378,7 +381,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
     paddingBottom: 20,
-    marginTop: 10,
+    marginTop: 20,
   },
   pageButton: {
     paddingVertical: "8px",
