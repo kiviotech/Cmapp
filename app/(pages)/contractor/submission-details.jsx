@@ -20,8 +20,10 @@ const SubmissionDetail = () => {
   const router = useRouter();
   const { submission, taskName, projectName } = useLocalSearchParams();
   const submissionData = JSON.parse(submission);
+
   const [taskData, setTaskData] = React.useState(null);
-  const [proofImageUrl, setProofImageUrl] = React.useState(null);
+  const [proofImages, setProofImages] = React.useState([]);
+  const [selectedImage, setSelectedImage] = React.useState(null);
   const [imageModalVisible, setImageModalVisible] = React.useState(false);
 
   useEffect(() => {
@@ -43,8 +45,12 @@ const SubmissionDetail = () => {
     const fetchSubmission = async () => {
       try {
         const response = await fetchSubmissionById(submissionData.id);
-        const imageUrl = `${URL}${response?.data?.attributes?.proofOfWork?.data?.[0]?.attributes?.url}`;
-        setProofImageUrl(imageUrl);
+        // Handle multiple images
+        const imageUrls =
+          response?.data?.attributes?.proofOfWork?.data?.map(
+            (image) => `${URL}${image.attributes.url}`
+          ) || [];
+        setProofImages(imageUrls);
       } catch (error) {
         console.error("Error fetching submission:", error);
       }
@@ -55,10 +61,9 @@ const SubmissionDetail = () => {
     }
   }, [submissionData?.id]);
 
-  const handleViewProof = () => {
-    if (proofImageUrl) {
-      setImageModalVisible(true);
-    }
+  const handleViewProof = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setImageModalVisible(true);
   };
 
   return (
@@ -157,22 +162,26 @@ const SubmissionDetail = () => {
         </View>
 
         <View style={styles.proofSection}>
-          <Text style={styles.sectionTitle}>Proof of work:</Text>
-          <View style={styles.documentRow}>
-            <FontAwesome5
-              name={proofImageUrl ? "file-image" : "file-pdf"}
-              size={20}
-              color="#666"
-            />
-            <Text style={styles.documentName}>
-              {proofImageUrl ? "Proof of work image" : "No image available"}
-            </Text>
-            {proofImageUrl && (
-              <TouchableOpacity onPress={handleViewProof}>
+          <Text style={styles.sectionTitle}>
+            Proof of work ({proofImages.length}):
+          </Text>
+          {proofImages.map((imageUrl, index) => (
+            <View key={index} style={styles.documentRow}>
+              <FontAwesome5 name="file-image" size={20} color="#666" />
+              <Text style={styles.documentName}>
+                Proof of work image {index + 1}
+              </Text>
+              <TouchableOpacity onPress={() => handleViewProof(imageUrl)}>
                 <Text style={styles.viewButton}>View</Text>
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
+          ))}
+          {proofImages.length === 0 && (
+            <View style={styles.documentRow}>
+              <FontAwesome5 name="file-pdf" size={20} color="#666" />
+              <Text style={styles.documentName}>No images available</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.commentsSection}>
@@ -196,9 +205,9 @@ const SubmissionDetail = () => {
           >
             <FontAwesome5 name="times" size={24} color="white" />
           </TouchableOpacity>
-          {proofImageUrl && (
+          {selectedImage && (
             <Image
-              source={{ uri: proofImageUrl }}
+              source={{ uri: selectedImage }}
               style={styles.fullScreenImage}
               resizeMode="contain"
             />
@@ -319,6 +328,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 12,
     borderRadius: 8,
+    marginBottom: 10,
   },
   documentName: {
     flex: 1,

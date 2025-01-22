@@ -322,10 +322,16 @@ const AssignContractors = () => {
         throw new Error("No tasks could be created.");
       }
 
+      const projectDetailsById = await fetchProjectById(projectId);
+     
+      // const existingTaskIds = projectDetailsById?.data?.attributes?.tasks?.data || []; // Get current tasks or default to an 
+      const existingTaskIds = projectDetailsById?.data?.attributes?.tasks?.data.map(task => task.id);
+      const updatedTaskIds = [...existingTaskIds, ...taskIds];
+      
       const projectData = {
         data: {
           contractors: contractorIds,
-          tasks: taskIds,
+          tasks: updatedTaskIds,
           project_status: "pending",
         },
       };
@@ -367,21 +373,6 @@ const AssignContractors = () => {
           "Please add at least one contractor first"
         );
       }
-    }
-  };
-
-  const handleMouseEnter = () => {
-    if (!isFinishButtonEnabled) {
-      Alert.alert(
-        "Action Required",
-        "Please add at least one contractor first"
-      );
-    }
-  };
-
-  const handleContractorPress = () => {
-    if (!contractorTypeValue) {
-      setShowTypeError(true);
     }
   };
 

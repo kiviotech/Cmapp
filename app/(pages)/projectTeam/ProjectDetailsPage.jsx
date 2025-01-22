@@ -49,7 +49,7 @@ const ProjectDetailsPage = () => {
     const fetchProjectById = async () => {
       try {
         const response = await getProjectById(projectId);
-        setProjectData(response.data);
+        setProjectData(response?.data?.data?.attributes);
       } catch (error) {
         console.error("Error fetching manager details:", error);
       }
@@ -57,6 +57,25 @@ const ProjectDetailsPage = () => {
     };
     fetchProjectById();
     // }, [routeProjectData, setProjectData]);
+  }, []);
+
+  useEffect(() => {
+    const fetchManagerDetails = async () => {
+      // console.log('approverId', routeProjectData.attributes)
+      // if (approverId) {
+      try {
+        const response = await fetchProjectTeamById("4");
+        const names = response?.data?.attributes?.users?.data.map(
+          (item) => item?.attributes?.username
+        );
+        setManagerNames(names[0]); // Store manager names in state
+        setJobRole(response?.data?.attributes?.job_role);
+      } catch (error) {
+        console.error("Error fetching manager details:", error);
+      }
+      // }
+    };
+    fetchManagerDetails();
   }, []);
 
   const fetchTasksWithPagination = async () => {
@@ -179,131 +198,137 @@ const ProjectDetailsPage = () => {
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Project Details</Text>
-        </View>
+      <View style={styles.mainContainer}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.headerContainer}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
+            <Text style={styles.headerText}>Project Details</Text>
+          </View>
 
-        <View style={styles.projectNameContainer}>
-          <Text style={styles.projectName}>
-            {projectName || "Project Name"}
-          </Text>
-        </View>
+          <View style={styles.projectNameContainer}>
+            <Text style={styles.projectName}>
+              {projectName || "Project Name"}
+            </Text>
+          </View>
 
-        <View style={styles.calendarContainer}>
-          <View style={styles.dueDateContainer}>
-            <FontAwesome name="calendar" size={26} color="#F5C37F" />
-            <View style={styles.dateContainer}>
-              <Text style={styles.dueDateText}>Due Date</Text>
-              <Text style={styles.dateText}>{project.end_date || "N/A"}</Text>
+          <View style={styles.calendarContainer}>
+            <View style={styles.dueDateContainer}>
+              <FontAwesome name="calendar" size={26} color="#F5C37F" />
+              <View style={styles.dateContainer}>
+                <Text style={styles.dueDateText}>Due Date</Text>
+                <Text style={styles.dateText}>
+                  {projectData.end_date || "N/A"}
+                </Text>
+              </View>
+            </View>
+            <View>
+              <TouchableOpacity
+                style={styles.assignBtn}
+                onPress={() => {
+                  navigation.navigate("(pages)/AssignContractors", {
+                    projectId: projectData?.data?.id,
+                  });
+                }}
+              >
+                <Text style={styles.assignText}>Assign Tasks</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          <View>
-            <TouchableOpacity
-              style={styles.assignBtn}
-              onPress={() => {
-                navigation.navigate("(pages)/AssignContractors", {
-                  projectId: projectData?.data?.id,
-                });
-              }}
-            >
-              <Text style={styles.assignText}>Assign Tasks</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        <Text style={styles.label}>
-          {jobRole || "Project Manager"}:{" "}
-          <Text style={styles.text}>{managerNames || "N/A"}</Text>
-        </Text>
-
-        <Text style={styles.label}>Project Details:</Text>
-        <Text style={styles.projectDescription}>
-          {project.description || "No project description provided."}
-        </Text>
-
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressLabel}>Your Progress:</Text>
-          <ProgressBar
-            progress={progress}
-            width={180}
-            height={10}
-            color="#66B8FC"
-            style={styles.progressBarContainer}
-          />
-          <Text style={styles.progressPercentage}>
-            {Math.round(progress * 100)}%
+          <Text style={styles.label}>
+            {jobRole || "Project Manager"}:{" "}
+            <Text style={styles.text}>{managerNames || "N/A"}</Text>
           </Text>
-        </View>
 
-        <Text style={styles.label}>All Tasks</Text>
+          <Text style={styles.label}>Project Details:</Text>
+          <Text style={styles.projectDescription}>
+            {projectData.description || "No project description provided."}
+          </Text>
 
-        {tasksData?.length > 0 ? (
-          tasksData?.map((task, index) => {
-            const taskData = task?.attributes || {};
-            const standardTask =
-              taskData?.standard_task?.data?.attributes || {};
-            const status = taskData.task_status;
-
-            return (
-              <View key={index} style={styles.taskContainer}>
-                <View style={styles.task}>
-                  <Text style={styles.taskName} numberOfLines={1}>
-                    {standardTask.Name || "Task Name"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.statusStyle,
-                      status === "completed"
-                        ? styles.completedStatus
-                        : status === "ongoing"
-                        ? styles.ongoingStatus
-                        : styles.pendingStatus,
-                    ]}
-                  >
-                    {status === "completed"
-                      ? "Completed"
-                      : status === "ongoing"
-                      ? "Ongoing"
-                      : "Pending"}
-                  </Text>
-                </View>
-                <Text style={styles.taskDescription} numberOfLines={2}>
-                  {standardTask.Description || "No description available."}
-                </Text>
-                <View style={styles.assign}>
-                  <Text style={styles.dueDate}>
-                    Due:{" "}
-                    {taskData.due_date
-                      ? new Date(taskData.due_date)
-                          .toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })
-                          .replace(/\//g, "-")
-                      : "N/A"}
-                  </Text>
-                </View>
-              </View>
-            );
-          })
-        ) : (
-          <View style={styles.noTasksContainer}>
-            <Text style={styles.noTasksText}>No tasks available</Text>
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressLabel}>Your Progress:</Text>
+            <ProgressBar
+              progress={progress}
+              width={180}
+              height={10}
+              color="#66B8FC"
+              style={styles.progressBarContainer}
+            />
+            <Text style={styles.progressPercentage}>
+              {Math.round(progress * 100)}%
+            </Text>
           </View>
-        )}
-      </ScrollView>
-      <BottomNavigation />
+
+          <Text style={styles.label}>All Tasks</Text>
+
+          {tasksData?.length > 0 ? (
+            tasksData?.map((task, index) => {
+              const taskData = task?.attributes || {};
+              const standardTask =
+                taskData?.standard_task?.data?.attributes || {};
+              const status = taskData.task_status;
+
+              return (
+                <View key={index} style={styles.taskContainer}>
+                  <View style={styles.task}>
+                    <Text style={styles.taskName} numberOfLines={1}>
+                      {standardTask.Name || "Task Name"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.statusStyle,
+                        status === "completed"
+                          ? styles.completedStatus
+                          : status === "ongoing"
+                          ? styles.ongoingStatus
+                          : styles.pendingStatus,
+                      ]}
+                    >
+                      {status === "completed"
+                        ? "Completed"
+                        : status === "ongoing"
+                        ? "Ongoing"
+                        : "Pending"}
+                    </Text>
+                  </View>
+                  <Text style={styles.taskDescription} numberOfLines={2}>
+                    {standardTask.Description || "No description available."}
+                  </Text>
+                  <View style={styles.assign}>
+                    <Text style={styles.dueDate}>
+                      Due:{" "}
+                      {taskData.due_date
+                        ? new Date(taskData.due_date)
+                            .toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })
+                            .replace(/\//g, "-")
+                        : "N/A"}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <View style={styles.noTasksContainer}>
+              <Text style={styles.noTasksText}>No tasks available</Text>
+            </View>
+          )}
+        </ScrollView>
+        <View style={styles.bottomNavContainer}>
+          <BottomNavigation />
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -313,11 +338,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  mainContainer: {
+    flex: 1,
+    position: "relative",
+  },
+  bottomNavContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    elevation: 8, // for Android shadow
+    shadowColor: "#000", // for iOS shadow
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
   container: {
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 80,
+    paddingBottom: 100, // Increased to prevent content from being hidden behind BottomNavigation
   },
   headerContainer: {
     flexDirection: "row",
