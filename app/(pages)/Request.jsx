@@ -195,13 +195,19 @@ const RequestsScreen = () => {
       </View>
 
       {/* Scrollable Content */}
-      <FlatList
-        data={[...filteredRequests].reverse()}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderRequestItem}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {filteredRequests.length > 0 ? (
+        <FlatList
+          data={[...filteredRequests].reverse()}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderRequestItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No requests found</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -333,6 +339,17 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
     fontSize: 14,
     color: "#333",
+  },
+  noDataContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 });
 
