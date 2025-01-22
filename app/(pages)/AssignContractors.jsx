@@ -323,14 +323,21 @@ const AssignContractors = () => {
       }
 
       const projectDetailsById = await fetchProjectById(projectId);
-     
-      // const existingTaskIds = projectDetailsById?.data?.attributes?.tasks?.data || []; // Get current tasks or default to an 
-      const existingTaskIds = projectDetailsById?.data?.attributes?.tasks?.data.map(task => task.id);
+
+      const existingTaskIds =
+        projectDetailsById?.data?.attributes?.tasks?.data.map(
+          (task) => task.id
+        );
+      const existingContractorIds =
+        projectDetailsById?.data?.attributes?.contractors?.data.map(
+          (contractor) => contractor.id
+        );
       const updatedTaskIds = [...existingTaskIds, ...taskIds];
-      
+      const updatedContractorIds = [...existingContractorIds, ...contractorIds];
+
       const projectData = {
         data: {
-          contractors: contractorIds,
+          contractors: updatedContractorIds,
           tasks: updatedTaskIds,
           project_status: "pending",
         },

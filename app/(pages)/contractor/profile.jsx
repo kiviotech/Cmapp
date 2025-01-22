@@ -141,24 +141,28 @@ const profile = () => {
     );
   };
 
-  useEffect(() => {
-    fetchProjects();
-  }, [currentPage]);
-
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       setCurrentPage(page); // Update the page state
+      fetchProjects();
     }
   };
 
   useEffect(() => {
     const fetchContractors = async () => {
+      // Ensure required data is present before making the API call
       if (designation === "Contractor" && user?.id) {
         try {
           const response = await fetchContractorsIdByUserId(user.id);
           if (response?.data?.length > 0) {
-            setContractorId(response.data[0]?.id);
-            setProjects(response?.data[0]?.attributes?.projects?.data);
+            const contractorData = response.data[0];
+            setContractorId(contractorData?.id);
+            setProjects(contractorData?.attributes?.projects?.data);
+
+            // Fetch projects only after successfully setting the contractorId
+            if (contractorData?.id) {
+              await fetchProjects(contractorData?.id);
+            }
           }
         } catch (error) {
           console.error("Error fetching contractors:", error);
@@ -166,19 +170,15 @@ const profile = () => {
       }
     };
 
-    fetchContractors();
-  }, [designation, user?.id]); // More specific dependency
-
-  useEffect(() => {
-    // Only fetch if we have either a contractorId or userId
-    if (user?.id && (contractorId !== 0 || designation !== "Contractor")) {
-      fetchProjects();
+    // Call fetchContractors only when both designation and user.id are available
+    if (designation && user?.id) {
+      fetchContractors();
     }
-  }, [contractorId, user]);
+  }, [designation, user?.id]); // React to changes in designation and user.id
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (cid = 0) => {
     if (!user?.id) return; // Early return if no user ID
-    const idToUse = contractorId !== 0 ? contractorId : user.id;
+    const idToUse = cid !== 0 ? cid : user.id;
     if (isFetching) return; // Prevent duplicate calls
     setIsFetching(true);
     try {
@@ -191,15 +191,25 @@ const profile = () => {
       const data = response.data;
 
       if (data && data.length > 0) {
-        // Filtering tasks with submissions and ensuring we have valid data
-        const tasksWithSubmissions = data.filter(
-          (task) =>
-            task?.attributes?.submissions?.data?.length > 0 &&
-            task?.attributes?.standard_task?.data &&
-            task?.attributes?.project?.data
-        );
+        // Extracting unique project data
+        // const projectsData = data
+        //   .map((taskData) => taskData?.attributes?.project?.data) // Extract project data
+        //   .filter((project) => project) // Filter out null or undefined
+        //   .filter(
+        //     (project, index, self) =>
+        //       self.findIndex((p) => p?.id === project?.id) === index // Ensure uniqueness
+        //   );
 
-        console.log("Tasks with submissions:", tasksWithSubmissions); // Debug log
+        // // If at least one valid project exists, set it; otherwise, keep the existing state
+
+        // setProjects(projectsData);
+
+        // console.log("Projects Data:", projectsData);
+
+        // Filtering tasks with submissions
+        const tasksWithSubmissions = data.filter(
+          (task) => task?.attributes?.submissions?.data?.length > 0
+        );
         setUploadedHistory(tasksWithSubmissions);
 
         // Set total pages for pagination
@@ -240,116 +250,105 @@ const profile = () => {
           </View>
         </View>
 
-        {uploadedHistory && uploadedHistory.length > 0 ? (
-          uploadedHistory.map((history, historyIndex) => {
-            const firstSubmission = history?.attributes?.submissions?.data?.[0];
-            const totalSubmissions =
-              history?.attributes?.submissions?.data?.length || 0;
-
-            console.log("Processing history item:", history); // Debug log
-
-            return (
-              <View key={historyIndex} style={styles.submissionSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>
-                    Submission for{" "}
-                    {history?.attributes?.standard_task?.data?.attributes
-                      ?.Name || "N/A"}{" "}
-                    for{" "}
-                    {history?.attributes?.project?.data?.attributes?.name ||
-                      "N/A"}
-                  </Text>
-                  {totalSubmissions > 1 && (
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push({
-                          pathname: "/contractor/submission-history",
-                          params: {
-                            submissions: JSON.stringify(
-                              history?.attributes?.submissions?.data
-                            ),
-                            taskName:
-                              history?.attributes?.standard_task?.data
-                                ?.attributes?.Name,
-                            projectName:
-                              history?.attributes?.project?.data?.attributes
-                                ?.name,
-                          },
-                        })
-                      }
-                    >
-                      <Text style={styles.viewAllLink}>
-                        View all ({totalSubmissions})
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {firstSubmission && (
+        {uploadedHistory?.map((history, historyIndex) => {
+          // Get only the first submission from the submissions array
+          const firstSubmission = history?.attributes?.submissions?.data?.[0];
+          const totalSubmissions =
+            history?.attributes?.submissions?.data?.length || 0;
+          return (
+            <View key={historyIndex} style={styles.submissionSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  Submission for{" "}
+                  {history?.attributes?.standard_task?.data?.attributes?.Name ||
+                    "N/A"}{" "}
+                  for{" "}
+                  {history?.attributes?.project?.data?.attributes?.name ||
+                    "N/A"}
+                  {/* Submission */}
+                </Text>
+                {totalSubmissions > 1 && (
                   <TouchableOpacity
-                    style={styles.submissionContainer}
-                    onPress={() => {
+                    onPress={() =>
                       router.push({
-                        pathname: "/contractor/submission-details",
+                        pathname: "/contractor/submission-history",
                         params: {
-                          submission: JSON.stringify(firstSubmission),
+                          submissions: JSON.stringify(
+                            history?.attributes?.submissions?.data
+                          ),
                           taskName:
                             history?.attributes?.standard_task?.data?.attributes
                               ?.Name,
                           projectName:
                             history?.attributes?.project?.data?.attributes
                               ?.name,
-                          allSubmissions: JSON.stringify(
-                            history?.attributes?.submissions?.data
-                          ),
                         },
-                      });
-                    }}
+                      })
+                    }
                   >
-                    <View style={styles.submissionItem}>
-                      <View style={styles.fileIconContainer}>
-                        <FontAwesome5 name="file-alt" size={24} color="#666" />
-                      </View>
-                      <View style={styles.submissionDetails}>
-                        <Text style={styles.documentName}>
-                          Document_name.png
-                        </Text>
-                        <Text style={styles.submissionDate}>
-                          Submitted on:{" "}
-                          {firstSubmission?.attributes?.createdAt?.slice(
-                            0,
-                            10
-                          ) || "N/A"}
-                        </Text>
-                        <Text style={styles.submissionComment}>
-                          {firstSubmission?.attributes?.comment ||
-                            "No comments"}
-                        </Text>
-                      </View>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          {
-                            backgroundColor:
-                              firstSubmission?.attributes?.status === "approved"
-                                ? "#4CAF50"
-                                : "#FF9800",
-                          },
-                        ]}
-                      >
-                        <Text style={styles.statusText}>
-                          {firstSubmission?.attributes?.status || "pending"}
-                        </Text>
-                      </View>
-                    </View>
+                    <Text style={styles.viewAllLink}>
+                      View all ({totalSubmissions})
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
-            );
-          })
-        ) : (
-          <Text style={styles.noSubmissionsText}>No submissions found</Text>
-        )}
+
+              {firstSubmission && (
+                <TouchableOpacity
+                  style={styles.submissionContainer}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/contractor/submission-details",
+                      params: {
+                        submission: JSON.stringify(firstSubmission),
+                        taskName:
+                          history?.attributes?.standard_task?.data?.attributes
+                            ?.Name,
+                        projectName:
+                          history?.attributes?.project?.data?.attributes?.name,
+                        allSubmissions: JSON.stringify(
+                          history?.attributes?.submissions?.data
+                        ),
+                      },
+                    });
+                  }}
+                >
+                  <View style={styles.submissionItem}>
+                    <View style={styles.fileIconContainer}>
+                      <FontAwesome5 name="file-alt" size={24} color="#666" />
+                    </View>
+                    <View style={styles.submissionDetails}>
+                      <Text style={styles.documentName}>Document_name.png</Text>
+                      <Text style={styles.submissionDate}>
+                        Submitted on:{" "}
+                        {firstSubmission?.attributes?.createdAt?.slice(0, 10) ||
+                          "N/A"}
+                      </Text>
+                      <Text style={styles.submissionComment}>
+                        {firstSubmission?.attributes?.comment || "No comments"}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor:
+                            firstSubmission?.attributes?.status === "approved"
+                              ? "#4CAF50"
+                              : "#FF9800",
+                        },
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {firstSubmission?.attributes?.status || "pending"}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        })}
 
         <View style={{ marginTop: 20 }}>
           <SelectYourProject isLoading={isLoading} projects={projects} />
@@ -717,12 +716,5 @@ const styles = StyleSheet.create({
   loadingContainer: {
     padding: 20,
     alignItems: "center",
-  },
-  noSubmissionsText: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    padding: 20,
-    marginTop: 20,
   },
 });
