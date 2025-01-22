@@ -12,6 +12,10 @@ const projectEndpoints = {
   getProjectDetailsById: (id) =>
     `/projects?filters[approvers][id][$eq]=${id}&populate[0]=tasks&populate[1]=approvers`,
 
+  
+  getProjectsByUserId: (id) =>
+    `/projects?filters[approvers][id][$eq]=${id}&populate[1]=approvers`,
+
   createProject: "/projects",
 
   updateProject: (id) => `/projects/${id}`,

@@ -51,8 +51,11 @@ const RequestDetails = () => {
   useEffect(() => {
     setTaskData(requestData?.attributes?.task?.data);
     setRequesterName(
-      requestData?.attributes?.task?.data?.attributes?.contractor?.data
-        ?.attributes?.username
+      requestData?.attributes?.task?.data?.attributes?.contractor?.data 
+      ? 
+      requestData?.attributes?.task?.data?.attributes?.contractor?.data?.attributes?.username 
+      : 
+      requestData?.attributes?.task?.data?.attributes?.project_team_member?.data?.attributes?.username
     );
     setDocuments(requestData?.attributes?.proofOfWork?.data || []);
   }, [requestData]);

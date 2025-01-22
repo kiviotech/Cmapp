@@ -397,9 +397,9 @@ const ProjectTeam = () => {
                         {project?.attributes?.description
                           ? project?.attributes?.description?.length > 50
                             ? `${project?.attributes?.description?.slice(
-                                0,
-                                50
-                              )}...`
+                              0,
+                              50
+                            )}...`
                             : project?.attributes?.description
                           : "No description available"}
                       </Text>
@@ -456,12 +456,12 @@ const ProjectTeam = () => {
                           End Date:{" "}
                           {project?.attributes?.end_date
                             ? new Date(
-                                project?.attributes?.end_date
-                              ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })
+                              project?.attributes?.end_date
+                            ).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
                             : "Not set"}
                         </Text>
                       </View>
@@ -485,64 +485,68 @@ const ProjectTeam = () => {
             <Text style={styles.seeAllButton}>See all</Text>
           </TouchableOpacity>
         </View>
-
-        {requests.map((request) => (
-          <TouchableOpacity
-            key={request?.id}
-            style={styles.requestItem}
-            onPress={() => {
-              navigation.navigate("(pages)/TaskRequestDetails", {
-                requestData: request,
-              });
-            }}
-          >
-            <View>
-              <Text style={styles.requestTitle}>
-                Submission for{" "}
-                {request?.attributes?.task?.data?.attributes?.standard_task
-                  ?.data?.attributes?.Name || "task"}{" "}
-                in{" "}
-                {request?.attributes?.task?.data?.attributes?.project?.data
-                  ?.attributes?.name || "Project"}
-              </Text>
-              <Text style={styles.requestDescription}>
-                {request?.attributes?.comment
-                  ? request?.attributes?.comment?.charAt(0).toUpperCase() +
-                    request?.attributes?.comment?.slice(1)
-                  : "No description available."}
-              </Text>
-
-              <View style={styles.requestStatusContainer}>
-                <Text
-                  style={[
-                    styles.statusBold,
-                    request?.attributes?.status === "approved"
-                      ? styles.requestStatusApproved
-                      : request?.attributes?.status === "rejected"
-                      ? styles.requestStatusRejected
-                      : request?.attributes?.status === "pending"
-                      ? styles.requestStatusPendingText
-                      : {},
-                  ]}
-                >
-                  {request?.attributes?.status
-                    ? request?.attributes?.status.charAt(0).toUpperCase() +
-                      request?.attributes?.status.slice(1).toLowerCase()
-                    : "Pending"}
+        
+        {requests.length > 0 ? (
+          requests.map((request) => (
+            <TouchableOpacity
+              key={request?.id}
+              style={styles.requestItem}
+              onPress={() => {
+                navigation.navigate("(pages)/TaskRequestDetails", {
+                  requestData: request,
+                });
+              }}
+            >
+              <View>
+                <Text style={styles.requestTitle}>
+                  Submission for{" "}
+                  {request?.attributes?.task?.data?.attributes?.standard_task?.data
+                    ?.attributes?.Name || "task"}{" "}
+                  in{" "}
+                  {request?.attributes?.task?.data?.attributes?.project?.data?.attributes?.name || "Project"}
                 </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    navigation.navigate("(pages)/TaskRequestDetails", {
-                      requestData: request,
-                    });
-                  }}
-                >
-                  <Text style={styles.viewLink}>View</Text>
-                </TouchableOpacity>
+                <Text style={styles.requestDescription}>
+                  {request?.attributes?.comment
+                    ? request?.attributes?.comment.charAt(0).toUpperCase() +
+                    request?.attributes?.comment.slice(1)
+                    : "No description available."}
+                </Text>
+
+                <View style={styles.requestStatusContainer}>
+                  <Text
+                    style={[
+                      styles.statusBold,
+                      request?.attributes?.status === "approved"
+                        ? styles.requestStatusApproved
+                        : request?.attributes?.status === "rejected"
+                          ? styles.requestStatusRejected
+                          : request?.attributes?.status === "pending"
+                            ? styles.requestStatusPendingText
+                            : {},
+                    ]}
+                  >
+                    {request?.attributes?.status
+                      ? request?.attributes?.status.charAt(0).toUpperCase() +
+                      request?.attributes?.status.slice(1).toLowerCase()
+                      : "Pending"}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate("(pages)/TaskRequestDetails", {
+                        requestData: request,
+                      });
+                    }}
+                  >
+                    <Text style={styles.viewLink}>View</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={styles.noRequestsText}>No requests available</Text>
+        )}
+
 
         <View style={styles.container1}>
           <View style={styles.milestoneContainer}>
@@ -584,10 +588,10 @@ const ProjectTeam = () => {
                         task?.attributes?.task_status === "completed"
                           ? "#E8F5E9" // green
                           : task?.attributes?.task_status === "ongoing"
-                          ? "#fff" // orange
-                          : task?.attributes?.task_status === "rejected"
-                          ? "#FED5DD" // red
-                          : "#fff", // default color
+                            ? "#fff" // orange
+                            : task?.attributes?.task_status === "rejected"
+                              ? "#FED5DD" // red
+                              : "#fff", // default color
                     },
                   ]}
                 >
@@ -637,10 +641,10 @@ const ProjectTeam = () => {
                               task?.attributes?.task_status === "completed"
                                 ? "#E8F5E9"
                                 : task?.attributes?.task_status === "ongoing"
-                                ? "#FFF3E0"
-                                : task?.attributes?.task_status === "rejected"
-                                ? "#FFEBEE"
-                                : "#F5F5F5",
+                                  ? "#FFF3E0"
+                                  : task?.attributes?.task_status === "rejected"
+                                    ? "#FFEBEE"
+                                    : "#F5F5F5",
                           },
                         ]}
                       >
@@ -652,10 +656,10 @@ const ProjectTeam = () => {
                                 task?.attributes?.task_status === "completed"
                                   ? "#2E7D32"
                                   : task?.attributes?.task_status === "ongoing"
-                                  ? "#EF6C00"
-                                  : task?.attributes?.task_status === "rejected"
-                                  ? "#C62828"
-                                  : "#757575",
+                                    ? "#EF6C00"
+                                    : task?.attributes?.task_status === "rejected"
+                                      ? "#C62828"
+                                      : "#757575",
                             },
                           ]}
                         >
