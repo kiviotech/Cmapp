@@ -22,6 +22,8 @@ const AssignProjectTeam = () => {
   const { projectId, project_manager, project_supervisor, site_coordinator } =
     route.params;
 
+    console.log('project id', projectId)
+
   const [projectManager, setProjectManager] = useState(null);
   const [projectSupervisor, setProjectSupervisor] = useState(null);
   const [siteCoordinator, setSiteCoordinator] = useState(null);

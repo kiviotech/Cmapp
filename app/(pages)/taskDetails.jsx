@@ -294,7 +294,7 @@ const TaskDetails = () => {
                 textStyle={{
                   color: "#577CFF",
                 }}
-                text={taskData.stage?.data?.attributes?.name || "No Stage"}
+                text={taskData.stage?.data?.attributes?.name || "Substructure"}
               />
             </View>
             <Text style={styles.projectDescription}>
