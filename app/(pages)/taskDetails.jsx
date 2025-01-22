@@ -184,10 +184,44 @@ const TaskDetails = () => {
     }
   };
 
-  const openLink = () => {
-    const link = taskData?.attributes?.Urls;
+  // const openLink = () => {
+  //   const link = taskData?.attributes?.standard_task?.data?.attributes?.Urls;
+  //   console.log("task", link);
+  //   if (link) {
+  //     setLinkModalVisible(true);
+  //   } else {
+  //     Alert.alert(
+  //       "No Link Available",
+  //       "No link has been provided for this task.",
+  //       [{ text: "OK" }]
+  //     );
+  //   }
+  // };
+
+  // const handleLinkOpen = () => {
+  //   const link = taskData?.attributes?.standard_task?.data?.attributes?.Urls;
+  //   console.log("link", link);
+  //   if (link) {
+  //     Linking.openURL(link).catch((err) =>
+  //       console.error("Failed to open link:", err)
+  //     );
+  //     setLinkModalVisible(false);
+  //   } else {
+  //     console.error("No link to open");
+  //   }
+  // };
+
+  const handleImagePress = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setImageModalVisible(true);
+  };
+
+  const handleLinkOpen = () => {
+    const link = taskData?.attributes?.standard_task?.data?.attributes?.Urls;
     if (link) {
-      setLinkModalVisible(true);
+      Linking.openURL(link).catch((err) =>
+        console.error("Failed to open link:", err)
+      );
     } else {
       Alert.alert(
         "No Link Available",
@@ -195,21 +229,6 @@ const TaskDetails = () => {
         [{ text: "OK" }]
       );
     }
-  };
-
-  const handleLinkOpen = () => {
-    const link = taskData?.attributes?.Urls;
-    if (link) {
-      Linking.openURL(link).catch((err) =>
-        console.error("Failed to open link:", err)
-      );
-      setLinkModalVisible(false);
-    }
-  };
-
-  const handleImagePress = (imageUrl) => {
-    setSelectedImage(imageUrl);
-    setImageModalVisible(true);
   };
 
   return (
@@ -304,15 +323,23 @@ const TaskDetails = () => {
           </View>
 
           {/* Conditionally render the link button */}
-          {taskData?.attributes?.Urls && (
-            <View>
-              <TouchableOpacity style={styles.linkButton} onPress={openLink}>
-                <Text style={styles.linkButtonText}>
-                  Click here to open Documents
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          {/* {taskData?.attributes?.Urls && ( */}
+          <View>
+            {/* <TouchableOpacity style={styles.linkButton}>
+              <Text style={styles.linkButtonText}>
+                Click here to open Documents
+              </Text>
+            </TouchableOpacity> */}
+            <TouchableOpacity
+              style={styles.linkButton}
+              onPress={handleLinkOpen}
+            >
+              <Text style={styles.linkButtonText}>
+                Click here to open Documents
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {/* )} */}
 
           {/* Table Section */}
           <View style={styles.tableContainer}>
