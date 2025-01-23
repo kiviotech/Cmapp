@@ -1,5 +1,5 @@
 import apiClient from '../apiClient';
-import categoryEndpoints from '../endpoints/categoryEndpoints';
+import { categoryEndpoints } from '../endpoints/getCategoryEndPoints';
 
 export const getCategories = () => apiClient.get(categoryEndpoints.getCategories);
 
