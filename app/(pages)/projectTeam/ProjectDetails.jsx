@@ -84,7 +84,6 @@ const ProjectDetails = () => {
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <View style={styles.mainContainer}>
-        hadsdasddsadasda
         <ScrollView
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
@@ -156,16 +155,20 @@ const ProjectDetails = () => {
 
           <View style={styles.progressContainer}>
             <Text style={styles.progressLabel}>Inspection Form</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.formButton}
-              onPress={() => navigation.navigate('InspectionForm')}
+              onPress={() =>
+                navigation.navigate("(pages)/InspectionForm", {
+                  projectId: projectId || projectData?.id,
+                })
+              }
             >
               <Text style={styles.formButtonText}>Open Form</Text>
             </TouchableOpacity>
           </View>
 
           <Text style={styles.label}>All Tasks</Text>
-
+          {console.log("tasks", tasksData)}
           {tasksData?.length > 0 ? (
             tasksData?.map((task, index) => {
               const taskData = task?.attributes || {};
@@ -409,16 +412,16 @@ const styles = StyleSheet.create({
     color: "#6E6E6E",
   },
   formButton: {
-    backgroundColor: '#66B8FC',
+    backgroundColor: "#66B8FC",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    marginLeft: 'auto',
+    marginLeft: "auto",
   },
   formButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
 
