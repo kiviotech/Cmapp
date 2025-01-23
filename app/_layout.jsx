@@ -127,6 +127,7 @@ const ProjectTeamScreens = () => (
     <Stack.Screen name="(pages)/projectTeam/Myactivity" />
     <Stack.Screen name="(pages)/projectTeam/ProjectDetails" />
     <Stack.Screen name="(pages)/projectTeam/ProjectList" />
+    <Stack.Screen name="(pages)/InspectionForm" />
   </>
 );
 
