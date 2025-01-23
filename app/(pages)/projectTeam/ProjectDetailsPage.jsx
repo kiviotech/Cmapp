@@ -102,74 +102,74 @@ const ProjectDetailsPage = () => {
   }, [userId, projectId]);
 
   // Update page change handler
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
-      setCurrentPage(newPage);
-      fetchTasksWithPagination();
-    }
-  };
+  // const handlePageChange = (newPage) => {
+  //   if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+  //     setCurrentPage(newPage);
+  //     fetchTasksWithPagination();
+  //   }
+  // };
 
   // Update pagination render function
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
+  // const renderPagination = () => {
+  //   if (totalPages <= 1) return null;
 
-    const renderPageButton = (pageNum) => (
-      <TouchableOpacity
-        key={pageNum}
-        style={[
-          styles.pageButton,
-          currentPage === pageNum && styles.activePageButton,
-        ]}
-        onPress={() => handlePageChange(pageNum)}
-        disabled={currentPage === pageNum}
-      >
-        <Text
-          style={[
-            styles.pageText,
-            currentPage === pageNum && styles.activePageText,
-          ]}
-        >
-          {pageNum}
-        </Text>
-      </TouchableOpacity>
-    );
+  //   const renderPageButton = (pageNum) => (
+  //     <TouchableOpacity
+  //       key={pageNum}
+  //       style={[
+  //         styles.pageButton,
+  //         currentPage === pageNum && styles.activePageButton,
+  //       ]}
+  //       onPress={() => handlePageChange(pageNum)}
+  //       disabled={currentPage === pageNum}
+  //     >
+  //       <Text
+  //         style={[
+  //           styles.pageText,
+  //           currentPage === pageNum && styles.activePageText,
+  //         ]}
+  //       >
+  //         {pageNum}
+  //       </Text>
+  //     </TouchableOpacity>
+  //   );
 
-    let pages = [];
+  //   let pages = [];
 
-    // Show maximum 5 pages
-    const maxVisiblePages = 5;
-    let startPage, endPage;
+  //   // Show maximum 5 pages
+  //   const maxVisiblePages = 5;
+  //   let startPage, endPage;
 
-    if (totalPages <= maxVisiblePages) {
-      // If total pages are less than or equal to max visible pages, show all pages
-      startPage = 1;
-      endPage = totalPages;
-    } else {
-      // Calculate start and end pages to show current page in the middle when possible
-      const middlePoint = Math.floor(maxVisiblePages / 2);
+  //   if (totalPages <= maxVisiblePages) {
+  //     // If total pages are less than or equal to max visible pages, show all pages
+  //     startPage = 1;
+  //     endPage = totalPages;
+  //   } else {
+  //     // Calculate start and end pages to show current page in the middle when possible
+  //     const middlePoint = Math.floor(maxVisiblePages / 2);
 
-      if (currentPage <= middlePoint + 1) {
-        // Near the start
-        startPage = 1;
-        endPage = maxVisiblePages;
-      } else if (currentPage >= totalPages - middlePoint) {
-        // Near the end
-        startPage = totalPages - maxVisiblePages + 1;
-        endPage = totalPages;
-      } else {
-        // In the middle
-        startPage = currentPage - middlePoint;
-        endPage = currentPage + middlePoint;
-      }
-    }
+  //     if (currentPage <= middlePoint + 1) {
+  //       // Near the start
+  //       startPage = 1;
+  //       endPage = maxVisiblePages;
+  //     } else if (currentPage >= totalPages - middlePoint) {
+  //       // Near the end
+  //       startPage = totalPages - maxVisiblePages + 1;
+  //       endPage = totalPages;
+  //     } else {
+  //       // In the middle
+  //       startPage = currentPage - middlePoint;
+  //       endPage = currentPage + middlePoint;
+  //     }
+  //   }
 
-    // Add pages
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(renderPageButton(i));
-    }
+  //   // Add pages
+  //   for (let i = startPage; i <= endPage; i++) {
+  //     pages.push(renderPageButton(i));
+  //   }
 
-    return <View style={styles.paginationContainer}>{pages}</View>;
-  };
+  //   return <View style={styles.paginationContainer}>{pages}</View>;
+  // };
 
   // const fetchProjectTasks = async () => {
   //   try {
@@ -186,8 +186,6 @@ const ProjectDetailsPage = () => {
   //     console.error("Error fetching tasks:", error);
   //   }
   // };
-
-  const project = projectData?.attributes || {};
 
   // Calculate the progress based on task statuses
   const totalTasks = tasksData?.length || 0;
@@ -225,7 +223,7 @@ const ProjectDetailsPage = () => {
               <View style={styles.dateContainer}>
                 <Text style={styles.dueDateText}>Due Date</Text>
                 <Text style={styles.dateText}>
-                  {projectData.end_date || "N/A"}
+                  {projectData?.end_date || "N/A"}
                 </Text>
               </View>
             </View>
@@ -250,7 +248,7 @@ const ProjectDetailsPage = () => {
 
           <Text style={styles.label}>Project Details:</Text>
           <Text style={styles.projectDescription}>
-            {projectData.description || "No project description provided."}
+            {projectData?.description || "No project description provided."}
           </Text>
 
           <View style={styles.progressContainer}>
@@ -274,7 +272,7 @@ const ProjectDetailsPage = () => {
               const taskData = task?.attributes || {};
               const standardTask =
                 taskData?.standard_task?.data?.attributes || {};
-              const status = taskData.task_status;
+              const status = taskData?.task_status;
 
               return (
                 <View key={index} style={styles.taskContainer}>
