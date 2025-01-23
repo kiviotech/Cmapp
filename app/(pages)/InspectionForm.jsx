@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import fonts from "../../constants/fonts";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { fetchProjectInspectionsByProjectId } from "../../src/services/projectInspectionService";
+import { fetchProjectWithTaskDetails } from "../../src/services/projectService";
 
 const InspectionForm = () => {
   const route = useRoute();
@@ -22,16 +22,16 @@ const InspectionForm = () => {
   useEffect(() => {
     const fetchInspections = async () => {
       try {
-        const inspectionsData = await fetchProjectInspectionsByProjectId(
-          projectId
-        );
-        console.log(
-          "Project Inspections:",
-          inspectionsData?.data?.[0]?.attributes?.standard_inspection_form?.data
-            ?.attributes?.inspection_sections
-        );
+        const projectData = await fetchProjectWithTaskDetails(projectId);
+        const tasks = projectData?.data?.attributes?.tasks?.data || [];
+        tasks.forEach((task) => {
+          const subcategoryName =
+            task?.attributes?.standard_task?.data?.attributes?.subcategory?.data
+              ?.attributes?.name;
+          console.log("Subcategory Name:", subcategoryName);
+        });
       } catch (error) {
-        console.error("Error fetching inspections:", error);
+        console.error("Error fetching project details:", error);
       }
     };
 
@@ -58,10 +58,10 @@ const InspectionForm = () => {
   // }, [checkedItems]);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("(pages)/projectDetails")}
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="black" />

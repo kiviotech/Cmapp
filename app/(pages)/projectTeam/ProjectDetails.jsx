@@ -15,6 +15,7 @@ import BottomNavigation from "./BottomNavigation";
 import useProjectStore from "../../../projectStore";
 import { fetchProjectTeamById } from "../../../src/services/projectTeamService";
 import { fetchTaskById } from "../../../src/services/taskService";
+import InspectionFormModal from "../InspectionFormModal";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,6 +31,8 @@ const ProjectDetails = () => {
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
   const [jobRole, setJobRole] = useState("");
+  const [isInspectionModalVisible, setIsInspectionModalVisible] =
+    useState(false);
 
   useEffect(() => {
     if (routeProjectData) {
@@ -157,18 +160,13 @@ const ProjectDetails = () => {
             <Text style={styles.progressLabel}>Inspection Form</Text>
             <TouchableOpacity
               style={styles.formButton}
-              onPress={() =>
-                navigation.navigate("(pages)/InspectionForm", {
-                  projectId: projectId || projectData?.id,
-                })
-              }
+              onPress={() => setIsInspectionModalVisible(true)}
             >
               <Text style={styles.formButtonText}>Open Form</Text>
             </TouchableOpacity>
           </View>
 
           <Text style={styles.label}>All Tasks</Text>
-          {console.log("tasks", tasksData)}
           {tasksData?.length > 0 ? (
             tasksData?.map((task, index) => {
               const taskData = task?.attributes || {};
@@ -224,6 +222,16 @@ const ProjectDetails = () => {
             </View>
           )}
         </ScrollView>
+        <InspectionFormModal
+          visible={isInspectionModalVisible}
+          onClose={() => setIsInspectionModalVisible(false)}
+          onOpenForm={() => {
+            setIsInspectionModalVisible(false);
+            navigation.navigate("(pages)/InspectionForm", {
+              projectId: projectId || projectData?.id,
+            });
+          }}
+        />
         <View style={styles.bottomNavContainer}>
           <BottomNavigation />
         </View>

@@ -3,6 +3,9 @@ const projectEndpoints = {
 
   getProjectById: (id) => `/projects/${id}?populate=*`,
 
+  getProjectWithTaskDetails: (projectId) =>
+    `projects/${projectId}?populate[tasks][populate][standard_task][populate][subcategory][populate][category][populate]=*`,
+
   getAssignedProjectById: (id) =>
     `/projects?populate[0]=tasks&populate[tasks][populate][assigned_to]=*&filters[tasks][assigned_to][id][$eq]=${id}`,
 
@@ -12,7 +15,6 @@ const projectEndpoints = {
   getProjectDetailsById: (id) =>
     `/projects?filters[approvers][id][$eq]=${id}&populate[0]=tasks&populate[1]=approvers`,
 
-  
   getProjectsByUserId: (id) =>
     `/projects?filters[approvers][id][$eq]=${id}&populate[1]=approvers`,
 

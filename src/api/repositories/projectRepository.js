@@ -6,6 +6,9 @@ export const getProjects = () => apiClient.get(projectEndpoints.getProjects);
 export const getProjectById = (id) =>
   apiClient.get(projectEndpoints.getProjectById(id));
 
+export const getProjectWithTaskDetails = (projectId) =>
+  apiClient.get(projectEndpoints.getProjectWithTaskDetails(projectId));
+
 export const getAssignedProjectById = (id) =>
   apiClient.get(projectEndpoints.getAssignedProjectById(id));
 

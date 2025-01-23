@@ -7,6 +7,7 @@ import {
   getAssignedProjectById,
   getProjectDetailsById,
   getProjectsByContractorEmail,
+  getProjectWithTaskDetails,
 } from "../api/repositories/projectRepository";
 
 // Fetch all projects
@@ -99,6 +100,20 @@ export const fetchProjectsByContractorEmail = async (email) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching projects for contractor ${email}:`, error);
+    throw error;
+  }
+};
+
+// Fetch project with all task details
+export const fetchProjectWithTaskDetails = async (projectId) => {
+  try {
+    const response = await getProjectWithTaskDetails(projectId);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching project details with ID ${projectId}:`,
+      error
+    );
     throw error;
   }
 };
