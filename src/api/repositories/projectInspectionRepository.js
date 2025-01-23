@@ -16,7 +16,10 @@ export const updateProjectInspection = (id, data) =>
 export const deleteProjectInspection = (id) =>
   apiClient.delete(projectInspectionEndpoints.deleteProjectInspection(id));
 
-export const getProjectInspectionsByProjectId = (projectId) =>
+export const getProjectInspectionsByProjectId = (projectId, subcategory) =>
   apiClient.get(
-    projectInspectionEndpoints.getProjectInspectionsByProjectId(projectId)
+    projectInspectionEndpoints.getProjectInspectionsByProjectId(
+      projectId,
+      subcategory
+    )
   );

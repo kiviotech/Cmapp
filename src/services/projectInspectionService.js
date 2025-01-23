@@ -52,9 +52,15 @@ export const deleteExistingProjectInspection = async (id) => {
   }
 };
 
-export const fetchProjectInspectionsByProjectId = async (projectId) => {
+export const fetchProjectInspectionsByProjectId = async (
+  projectId,
+  subcategory
+) => {
   try {
-    const response = await getProjectInspectionsByProjectId(projectId);
+    const response = await getProjectInspectionsByProjectId(
+      projectId,
+      subcategory
+    );
     return response.data;
   } catch (error) {
     throw error;
