@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   Image,
+  Modal,
 } from "react-native";
 import ProgressBar from "react-native-progress/Bar";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -16,6 +17,7 @@ import { getTaskByContractorId } from "../../../src/api/repositories/taskReposit
 import { icons } from "../../../constants";
 import { fetchProjectById } from "../../../src/services/projectService";
 import { getProjectTeamById } from "../../../src/api/repositories/projectTeamRepository";
+import { fetchCategories, fetchCategoryById } from "../../../src/services/categoryService";
 
 const ProjectDetails = () => {
   const navigation = useNavigation();
@@ -26,8 +28,36 @@ const ProjectDetails = () => {
   const [progress, setProgress] = useState(0); // Track progress percentage
   const [projectMangerName, setProjectManagerName] = useState("");
   const [jobRole, setJobRole] = useState("");
+  const [isFormModalVisible, setIsFormModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [subCategory, setSubCategory] = useState([]);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showSubCategoryPicker, setShowSubCategoryPicker] = useState(false);
 
   useEffect(() => {
+    const fetchAllCategory = async () => {
+
+      try {
+        const categoryData = await fetchCategories();
+        setCategories(categoryData.data);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+
+    };
+
+    fetchAllCategory();
+  }, []);
+
+
+  const fetchCategoryBySelectedCategoryId = async (id) => {
+    const subCategoryData = await fetchCategoryById(id);
+    setSubCategory(subCategoryData.data.attributes.subcategories.data);
+  };
+
+    useEffect(() => {
     const fetchProjectTasks = async () => {
       if (projectId && userId) {
         try {
@@ -139,6 +169,126 @@ const ProjectDetails = () => {
           </Text>
         </View>
 
+        <View style={styles.inspectionFormContainer}>
+          <Text style={styles.inspectionFormLabel}>Inspection Form</Text>
+          <TouchableOpacity
+            style={styles.inspectionFormButton}
+            onPress={() => setIsFormModalVisible(true)}
+          >
+            <Text style={styles.inspectionFormButtonText}>Open Form</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Modal
+          visible={isFormModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setIsFormModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Inspection Form</Text>
+
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={() => {
+                  setShowCategoryPicker(!showCategoryPicker);
+                  setShowSubCategoryPicker(false);
+                }}
+              >
+                <Text style={styles.selectButtonText}>
+                  {selectedCategory?.attributes.name || 'Select Category'}
+                </Text>
+                <Ionicons name="chevron-down" size={24} color="#666" />
+              </TouchableOpacity>
+
+              {showCategoryPicker && (
+                <View style={styles.dropdownContainer}>
+                  <ScrollView style={styles.dropdownList}>
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category.id}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedCategory(category);
+                          setShowCategoryPicker(false);
+                          fetchCategoryBySelectedCategoryId(category.id);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>
+                          {category.attributes.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[
+                  styles.selectButton,
+                  !selectedCategory && styles.disabledButton
+                ]}
+                disabled={!selectedCategory}
+                onPress={() => {
+                  setShowSubCategoryPicker(!showSubCategoryPicker);
+                  setShowCategoryPicker(false);
+                }}
+              >
+                <Text style={[
+                  styles.selectButtonText,
+                  !selectedCategory && styles.disabledText
+                ]}>
+                  {selectedSubCategory?.attributes.name || 'Select Sub-category'}
+                </Text>
+                <Ionicons name="chevron-down" size={24} color={selectedCategory ? "#666" : "#B3B3B3"} />
+              </TouchableOpacity>
+
+              {showSubCategoryPicker && (
+                <View style={[styles.dropdownContainer, { top: 180 }]}>
+                  <ScrollView style={styles.dropdownList}>
+                    {subCategory.map((subCat) => (
+                      <TouchableOpacity
+                        key={subCat.id}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedSubCategory(subCat);
+                          setShowSubCategoryPicker(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>
+                          {subCat.attributes.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[
+                  styles.openFormButton,
+                  !selectedCategory && styles.disabledOpenFormButton
+                ]}
+                disabled={!selectedCategory}
+                onPress={() => {
+                  setIsFormModalVisible(false);
+                  navigation.navigate('(pages)/InspectionForm', {
+                    subCategoryId: selectedSubCategory?.id
+                  });
+                }}
+              >
+                <Text style={[
+                  styles.openFormButtonText,
+                  !selectedCategory && styles.disabledOpenFormText
+                ]}>
+                  Open Form
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
         <Text style={styles.label}>All Tasks</Text>
 
         {tasks?.map((task) => (
@@ -154,8 +304,8 @@ const ProjectDetails = () => {
                   task?.attributes?.task_status === "completed"
                     ? styles.completedStatus
                     : task?.attributes?.task_status === "ongoing"
-                    ? styles.ongoingStatus
-                    : styles.pendingStatus,
+                      ? styles.ongoingStatus
+                      : styles.pendingStatus,
                 ]}
               >
                 {task?.attributes?.task_status}
@@ -190,6 +340,36 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     backgroundColor: "#FFFFFF",
+  },
+
+  inspectionFormContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    paddingRight: 20,
+
+  },
+  inspectionFormLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#192252",
+    marginBottom: 6,
+    marginTop: 16,
+    paddingHorizontal: 15,
+  },
+  inspectionFormButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginLeft: 'auto',
+    borderWidth: 1,
+    borderColor: "#577CFF",
+  },
+  inspectionFormButtonText: {
+    color: '#577CFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
   container: {
     paddingTop: 40,
@@ -355,6 +535,99 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     color: "#FFFFFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#192252', alignSelf: 'center'
+  },
+  selectButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    padding: 10,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#B3B3B3",
+    color: '#7B7B7B',
+  },
+  selectButtonText: {
+    fontSize: 14,
+    color: '#7B7B7B',
+    fontWeight: '500',
+  },
+  openFormButton: {
+    backgroundColor: '#577CFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    marginTop: 10,
+    width: 150,
+    alignSelf: "flex-end",
+  },
+  openFormButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 110,
+    left: 18,
+    right: 0,
+    backgroundColor: 'white',
+    borderRadius: 5,
+    marginTop: 5,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1000,
+    width: '90%',
+    alignSelf: 'center',
+  },
+  dropdownList: {
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  disabledButton: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
+  },
+  disabledText: {
+    color: '#B3B3B3',
+  },
+  disabledOpenFormButton: {
+    backgroundColor: '#B3B3B3',
+  },
+  disabledOpenFormText: {
+    color: '#FFFFFF',
   },
 });
 
