@@ -51,7 +51,6 @@ const UploadProof = ({}) => {
   const fileUploadRef = useRef(null);
   const clearFiles = useFileUploadStore((state) => state.clearFiles);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const [isFileSelected, setIsFileSelected] = useState(false);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -160,12 +159,10 @@ const UploadProof = ({}) => {
     const hasAlphabet = /[a-zA-Z]/.test(comment);
     let errorMessage = "";
 
-    if (!uploadedFileIds || uploadedFileIds.length === 0) {
-      if (!comment) {
-        errorMessage = "Images and comment are required";
-      } else {
-        errorMessage = "Images are required";
-      }
+    if (uploadedFileIds.length === 0 && !comment) {
+      errorMessage = "Images and comment are required";
+    } else if (uploadedFileIds.length === 0) {
+      errorMessage = "Images are required";
     } else if (!comment) {
       errorMessage = "Comment is required";
     } else if (!hasAlphabet) {
@@ -221,9 +218,21 @@ const UploadProof = ({}) => {
 
   const handleSubmit = async () => {
     try {
-      const errorMessage = validateSubmission();
-      if (errorMessage) {
-        setErrors(errorMessage);
+      // Validate comment first
+      if (!comment.trim()) {
+        setErrors("Comment is required");
+        return;
+      }
+
+      const hasAlphabet = /[a-zA-Z]/.test(comment);
+      if (!hasAlphabet) {
+        setErrors("Comment must contain at least one letter");
+        return;
+      }
+
+      // Instead of trying to call handleSubmit on the ref, use the uploadedFileIds
+      if (!uploadedFileIds || uploadedFileIds.length === 0) {
+        setErrors("Please upload at least one file");
         return;
       }
 
@@ -256,135 +265,128 @@ const UploadProof = ({}) => {
     }
   };
 
-  const handleFileSelectionChange = (selected) => {
-    setIsFileSelected(selected);
-    if (selected) {
-      setErrors(""); // Clear error when a file is selected
+  const startFileUpload = (file) => {
+    if (!uploadedFiles.find((f) => f.name === file.name)) {
+      setUploadedFiles((prevFiles) => [
+        ...prevFiles,
+        { ...file, status: "uploading", progress: 0 },
+      ]);
+    }
+
+    setUploading(true);
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+
+      setUploadedFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.name === file.name
+            ? {
+                ...f,
+                progress,
+                status: progress < 100 ? "uploading" : "success",
+              }
+            : f
+        )
+      );
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        setUploading(false);
+
+        setUploadedFiles((prevFiles) =>
+          prevFiles.map((f) =>
+            f.name === file.name
+              ? { ...f, status: "success", progress: 100 }
+              : f
+          )
+        );
+
+        uploadFileToAPI(file);
+      }
+    }, 500);
+
+    uploadIntervals.current[file.name] = interval;
+  };
+
+  const handleCameraUpload = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      alert("Camera permission is required to use this feature.");
+      return;
+    }
+
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const newFile = {
+        uri: result.uri,
+        name: result.uri.split("/").pop(),
+        progress: 0,
+        status: "uploading",
+      };
+      setUploadedFiles([...uploadedFiles, newFile]);
+      setUploading(true);
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setUploadedFiles((prevFiles) =>
+          prevFiles?.map((file) =>
+            file.name === newFile.name ? { ...file, progress } : file
+          )
+        );
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          setUploadedFiles((prevFiles) =>
+            prevFiles?.map((file) =>
+              file.name === newFile.name
+                ? { ...file, status: "success", progress: 100 }
+                : file
+            )
+          );
+          setUploading(false);
+
+          uploadFileToAPI(newFile);
+        }
+      }, 500);
+
+      uploadIntervals.current[newFile.name] = interval;
     }
   };
 
-  // const startFileUpload = (file) => {
-  //   if (!uploadedFiles.find((f) => f.name === file.name)) {
-  //     setUploadedFiles((prevFiles) => [
-  //       ...prevFiles,
-  //       { ...file, status: "uploading", progress: 0 },
-  //     ]);
-  //   }
+  const uploadFileToAPI = async (file) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: file.uri,
+      name: file.name,
+      type: "image/jpeg",
+    });
 
-  //   setUploading(true);
+    try {
+      const response = await apiClient.post("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-  //   let progress = 0;
-  //   const interval = setInterval(() => {
-  //     progress += 10;
+      if (response.status === 200) {
+      } else {
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
 
-  //     setUploadedFiles((prevFiles) =>
-  //       prevFiles.map((f) =>
-  //         f.name === file.name
-  //           ? {
-  //               ...f,
-  //               progress,
-  //               status: progress < 100 ? "uploading" : "success",
-  //             }
-  //           : f
-  //       )
-  //     );
-
-  //     if (progress >= 100) {
-  //       clearInterval(interval);
-  //       setUploading(false);
-
-  //       setUploadedFiles((prevFiles) =>
-  //         prevFiles.map((f) =>
-  //           f.name === file.name
-  //             ? { ...f, status: "success", progress: 100 }
-  //             : f
-  //         )
-  //       );
-
-  //       uploadFileToAPI(file);
-  //     }
-  //   }, 500);
-
-  //   uploadIntervals.current[file.name] = interval;
-  // };
-
-  // const handleCameraUpload = async () => {
-  //   const { status } = await ImagePicker.requestCameraPermissionsAsync();
-  //   if (status !== "granted") {
-  //     alert("Camera permission is required to use this feature.");
-  //     return;
-  //   }
-
-  //   let result = await ImagePicker.launchCameraAsync({
-  //     allowsEditing: true,
-  //     aspect: [4, 3],
-  //     quality: 1,
-  //   });
-
-  //   if (!result.canceled) {
-  //     const newFile = {
-  //       uri: result.uri,
-  //       name: result.uri.split("/").pop(),
-  //       progress: 0,
-  //       status: "uploading",
-  //     };
-  //     setUploadedFiles([...uploadedFiles, newFile]);
-  //     setUploading(true);
-
-  //     let progress = 0;
-  //     const interval = setInterval(() => {
-  //       progress += 10;
-  //       setUploadedFiles((prevFiles) =>
-  //         prevFiles?.map((file) =>
-  //           file.name === newFile.name ? { ...file, progress } : file
-  //         )
-  //       );
-
-  //       if (progress >= 100) {
-  //         clearInterval(interval);
-  //         setUploadedFiles((prevFiles) =>
-  //           prevFiles?.map((file) =>
-  //             file.name === newFile.name
-  //               ? { ...file, status: "success", progress: 100 }
-  //               : file
-  //           )
-  //         );
-  //         setUploading(false);
-
-  //         uploadFileToAPI(newFile);
-  //       }
-  //     }, 500);
-
-  //     uploadIntervals.current[newFile.name] = interval;
-  //   }
-  // };
-
-  // const uploadFileToAPI = async (file) => {
-  //   const formData = new FormData();
-  //   formData.append("file", {
-  //     uri: file.uri,
-  //     name: file.name,
-  //     type: "image/jpeg",
-  //   });
-
-  //   try {
-  //     const response = await apiClient.post("/upload", formData, {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     });
-
-  //     if (response.status === 200) {
-  //     } else {
-  //     }
-  //   } catch (error) {
-  //     console.error("Error uploading file:", error);
-  //   }
-  // };
-
-  // const closeCamera = () => {
-  //   setIsCameraActive(false);
-  // };
+  const closeCamera = () => {
+    setIsCameraActive(false);
+  };
 
   useEffect(() => {
     return () => {
@@ -416,22 +418,10 @@ const UploadProof = ({}) => {
     if (fileUploadRef.current) {
       fileUploadRef.current.clearFiles();
     }
-
-    // First fetch the latest task data
-    fetchTaskById(id)
-      .then((response) => {
-        navigation.navigate("(pages)/taskDetails", {
-          taskData: response.data, // Pass the complete updated task data
-          refresh: true,
-        });
-      })
-      .catch((error) => {
-        console.error("Error fetching task data:", error);
-        navigation.navigate("(pages)/taskDetails", {
-          taskData: { id }, // Fallback to just passing the ID
-          refresh: true,
-        });
-      });
+    navigation.navigate("(pages)/taskDetails", {
+      taskData: { id },
+      refresh: true,
+    });
   };
 
   useEffect(() => {
@@ -458,7 +448,7 @@ const UploadProof = ({}) => {
       </View>
 
       <View>
-        <Text style={{ margin: "auto" }}>
+        <Text>
           {errors ? <Text style={styles.errorText}>{errors}</Text> : null}
         </Text>
       </View>
@@ -476,7 +466,6 @@ const UploadProof = ({}) => {
               comment={comment}
               setErrors={setErrors}
               id={id}
-              onFileSelectionChange={handleFileSelectionChange}
             />
 
             {uploadedFiles
@@ -495,7 +484,7 @@ const UploadProof = ({}) => {
                         />
                       ) : file.status === "uploading" ? (
                         <Text style={{ color: "#838383", fontSize: 10 }}>
-                          ${file.progress}%
+                          `${file.progress}%`
                         </Text>
                       ) : null}
                     </View>
