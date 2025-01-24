@@ -42,7 +42,7 @@ const ProjectDetailsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const userId = user.id;
+  const userId = user?.id;
 
   useEffect(() => {
     // const approverId = routeProjectData?.attributes?.approvers?.data[0]?.id;
