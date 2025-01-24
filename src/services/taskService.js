@@ -25,15 +25,11 @@ export const fetchTasks = async (userId, page, pageSize, designation_value) => {
 
 export const fetchProjectAndDocumentByUserId = async (
   userId,
-  page,
-  pageSize,
   designation_value
 ) => {
   try {
     const response = await getProjectAndDocumentByUserId(
       userId,
-      page,
-      pageSize,
       designation_value
     );
     return response.data;

@@ -5,16 +5,13 @@ const taskEndpoints = {
     pageSize,
     designation_value = "project_team_member"
   ) =>
-    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task][populate]=image&pagination[page]=${page}&pagination[pageSize]=${pageSize}
-`,
+    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task][populate]=image&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
 
   getProjectAndDocumentByUserId: (
     userId,
-    page,
-    pageSize,
     designation_value = "contractor"
   ) =>
-    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task]=*&populate[documents]=true&populate[submissions][populate]=proofOfWork&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task]=*&populate[documents]=true&populate[submissions][populate]=proofOfWork&populate[project]=*`,
 
   getContractorTasks: (userId, page, pageSize) =>
     `/tasks?filters[contractor][id][$eq]=${userId}&populate[standard_task]=*&populate[documents]=true&populate[submissions][populate]=proofOfWork&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
@@ -33,8 +30,8 @@ const taskEndpoints = {
 
   getTasksByUser: (userId) =>
     `/tasks?filters[assigned_to][id][$eq]=${userId}&populate=*`,
-  getTaskByContractorId: (projectId, id, designation) =>
-    `/tasks?filters[project][id][$eq]=${projectId}&filters${designation}[id][$eq]=${id}&populate=*`,
+  getTaskByContractorId: (projectId) =>
+    `/tasks?filters[project][id][$eq]=${projectId}&populate=*`,
   getTasksBySubmissionId: (id) =>
     `/tasks?populate=*&filters[submissions][id][$eq]=${id}`,
 };

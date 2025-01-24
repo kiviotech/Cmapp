@@ -33,7 +33,7 @@ const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [cameraActive, setIsCameraActive] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [taskStatus, setTaskStatus] = useState("Yet to Upload");
+  const [taskStatus, setTaskStatus] = useState("Yet to Approve");
   const [uploadedHistory, setUploadedHistory] = useState([]);
   const [rejectionComment, setRejectionComment] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -69,7 +69,7 @@ const UploadProof = ({}) => {
           }
           setUploadedHistory(taskData?.data);
         } else {
-          setTaskStatus("Yet to Upload");
+          setTaskStatus("Yet to Approve");
         }
       } catch (error) {
         console.error("Error fetching tasks:", error);

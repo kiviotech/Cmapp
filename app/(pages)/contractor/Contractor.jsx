@@ -688,7 +688,10 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   projectTaskName: {
-    display: "flex",
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    maxWidth: 240,
   },
   milestoneTitle: {
     fontSize: 16,

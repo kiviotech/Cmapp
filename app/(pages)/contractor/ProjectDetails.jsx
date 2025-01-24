@@ -62,7 +62,7 @@ const ProjectDetails = () => {
       if (projectId && userId) {
         try {
           const allTasks = [];
-          const taskData = await getTaskByContractorId(projectId, userId);
+          const taskData = await getTaskByContractorId(projectId);
           allTasks.push(...taskData.data.data);
 
           setTasks(allTasks);

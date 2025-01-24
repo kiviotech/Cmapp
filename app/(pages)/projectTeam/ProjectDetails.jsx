@@ -231,6 +231,7 @@ const ProjectDetails = () => {
               projectId: projectId || projectData?.id,
             });
           }}
+          projectId={projectId || projectData?.id}
         />
         <View style={styles.bottomNavContainer}>
           <BottomNavigation />

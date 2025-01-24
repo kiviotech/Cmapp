@@ -955,6 +955,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
+  projectTaskName: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    maxWidth: 240,
+  },
   milestoneTitle: {
     fontSize: 16,
     fontWeight: "bold",

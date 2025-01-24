@@ -5,60 +5,226 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import fonts from "../../constants/fonts";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { fetchProjectWithTaskDetails } from "../../src/services/projectService";
+import { fetchProjectInspectionsByProjectId } from "../../src/services/projectInspectionService";
+import {
+  createNewInspectionForm,
+  updateExistingInspectionForm,
+  deleteExistingInspectionForm,
+} from "../../src/services/inspectionResponseService";
+import FileUpload from "../../components/FileUploading/FileUpload";
 
 const InspectionForm = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { projectId } = route.params || {};
+  const { projectId, selectedCategory, selectedSubCategory } =
+    route.params || {};
 
-  const [checkedItems, setCheckedItems] = useState(new Array(7).fill(false));
+  const [checklistItems, setChecklistItems] = useState([]);
+  const [checkedItems, setCheckedItems] = useState({});
   const [isAllChecked, setIsAllChecked] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ title: "", message: "" });
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchInspections = async () => {
       try {
-        const projectData = await fetchProjectWithTaskDetails(projectId);
-        const tasks = projectData?.data?.attributes?.tasks?.data || [];
-        tasks.forEach((task) => {
-          const subcategoryName =
-            task?.attributes?.standard_task?.data?.attributes?.subcategory?.data
-              ?.attributes?.name;
-          console.log("Subcategory Name:", subcategoryName);
+        const inspections = await fetchProjectInspectionsByProjectId(
+          projectId,
+          selectedSubCategory
+        );
+        const formData =
+          inspections.data[0]?.attributes?.standard_inspection_form?.data
+            ?.attributes;
+
+        // Extract checklist items from all sections
+        const items =
+          formData?.inspection_sections?.data?.flatMap((section) =>
+            section.attributes.checklist_items.data.map((item) => ({
+              id: item.id,
+              description: item.attributes.description,
+              isChecked:
+                item.attributes.inspection_response.data?.attributes?.checked ||
+                false,
+              required: item.attributes.required,
+              inspection_response: item.attributes.inspection_response,
+            }))
+          ) || [];
+
+        setChecklistItems(items);
+
+        // Create initial checked state object
+        const checkedState = {};
+        items.forEach((item) => {
+          checkedState[item.id] = item.required ? true : item.isChecked;
         });
+        setCheckedItems(checkedState);
+
+        setIsAllChecked(
+          items.length > 0 && items.every((item) => checkedState[item.id])
+        );
       } catch (error) {
-        console.error("Error fetching project details:", error);
+        console.error("Error fetching inspections:", error);
       }
     };
 
-    if (projectId) {
+    if (projectId && selectedSubCategory) {
       fetchInspections();
     }
-  }, [projectId]);
+  }, [projectId, selectedCategory, selectedSubCategory]);
 
-  const toggleCheckbox = (index) => {
-    const newCheckedItems = [...checkedItems];
-    newCheckedItems[index] = !newCheckedItems[index];
-    setCheckedItems(newCheckedItems);
-    setIsAllChecked(newCheckedItems.every((item) => item));
+  const toggleCheckbox = async (id) => {
+    // Find the item to check if it's required
+    const item = checklistItems.find((item) => item.id === id);
+    if (item?.required) {
+      return; // Don't allow toggling of required items
+    }
+
+    const newCheckedState = !checkedItems[id];
+
+    try {
+      if (!newCheckedState && item.inspection_response?.data?.id) {
+        // If unchecking and there's an existing response, delete it
+        await deleteExistingInspectionForm(item.inspection_response.data.id);
+
+        // Update the item to remove the inspection_response
+        const updatedItems = checklistItems.map((checkItem) =>
+          checkItem.id === id
+            ? { ...checkItem, inspection_response: null }
+            : checkItem
+        );
+        setChecklistItems(updatedItems);
+      }
+
+      const newCheckedItems = {
+        ...checkedItems,
+        [id]: newCheckedState,
+      };
+      setCheckedItems(newCheckedItems);
+      setIsAllChecked(Object.values(newCheckedItems).every((item) => item));
+    } catch (error) {
+      console.error("Error toggling checkbox:", error);
+      showToast({
+        title: "Error",
+        message: "Failed to update inspection response",
+      });
+    }
   };
 
   const handleCheckAll = () => {
     const newCheckedState = !isAllChecked;
+    const newCheckedItems = {};
+    checklistItems.forEach((item) => {
+      // Keep required items checked, toggle others
+      newCheckedItems[item.id] = item.required ? true : newCheckedState;
+    });
+    setCheckedItems(newCheckedItems);
     setIsAllChecked(newCheckedState);
-    setCheckedItems(new Array(7).fill(newCheckedState));
   };
 
-  // useEffect(() => {
-  //    const
-  // }, [checkedItems]);
+  const showToast = ({ title, message }) => {
+    setToastMessage({ title, message });
+    setToastVisible(true);
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2700),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setToastVisible(false);
+    });
+  };
+
+  const CustomToast = () => (
+    <Animated.View
+      style={[
+        toastStyles.container,
+        {
+          opacity: fadeAnim,
+          transform: [
+            {
+              translateY: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-20, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <View style={toastStyles.content}>
+        <Text style={toastStyles.title}>{toastMessage.title}</Text>
+        <Text style={toastStyles.message}>{toastMessage.message}</Text>
+      </View>
+    </Animated.View>
+  );
+
+  const handleSubmit = async () => {
+    try {
+      const submitPromises = checklistItems.map(async (item) => {
+        const isCurrentlyChecked = checkedItems[item.id];
+        const existingResponseId = item.inspection_response?.data?.id;
+
+        // If item is unchecked and has an existing response, delete it
+        if (!isCurrentlyChecked && existingResponseId) {
+          return await deleteExistingInspectionForm(existingResponseId);
+        }
+
+        // If item is checked, create or update the response
+        if (isCurrentlyChecked) {
+          const responseData = {
+            data: {
+              checklist_item: item.id,
+              checked: true,
+              remarks: "",
+              attachments: [],
+            },
+          };
+
+          if (existingResponseId) {
+            return await updateExistingInspectionForm(
+              existingResponseId,
+              responseData
+            );
+          } else {
+            return await createNewInspectionForm(responseData);
+          }
+        }
+      });
+
+      await Promise.all(submitPromises);
+      showToast({
+        title: "Success",
+        message: "Inspection form submitted successfully!",
+      });
+
+      setTimeout(() => {
+        navigation.goBack();
+      }, 3000);
+    } catch (error) {
+      console.error("Error submitting inspection form:", error);
+      showToast({
+        title: "Error",
+        message: "Failed to submit inspection form",
+      });
+    }
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {toastVisible && <CustomToast />}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -80,8 +246,8 @@ const InspectionForm = () => {
       <View style={styles.checklistHeader}>
         <Text style={styles.checklistTitle}>Checklist</Text>
         <Text style={styles.checklistCount}>
-          {checkedItems.filter((item) => item).length} out of{" "}
-          {checkedItems.length}
+          {Object.values(checkedItems).filter(Boolean).length} out of{" "}
+          {checklistItems.length}
         </Text>
         <TouchableOpacity
           style={styles.checkAllButton}
@@ -94,31 +260,31 @@ const InspectionForm = () => {
       </View>
 
       <View style={styles.checklistContainer}>
-        {checkedItems.map((checked, index) => (
+        {checklistItems.map((item) => (
           <TouchableOpacity
-            key={index}
-            style={styles.checklistItem}
-            onPress={() => toggleCheckbox(index)}
+            key={item.id}
+            style={[styles.checklistItem, item.required && styles.requiredItem]}
+            onPress={() => toggleCheckbox(item.id)}
           >
-            <View style={[styles.checkbox, checked && styles.checked]}>
-              {checked && <Text style={styles.checkmark}>✓</Text>}
+            <View
+              style={[
+                styles.checkbox,
+                checkedItems[item.id] && styles.checked,
+                item.required && styles.requiredCheckbox,
+              ]}
+            >
+              {checkedItems[item.id] && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <Text style={styles.checklistItemText}>
-              Lorem ipsum dolor sit amet consectetur. Sit mi integer pharetra
-              euismod. Vulputate nisl nam nibh id amet.
+              {item.description}
+              {item.required && <Text style={styles.requiredText}> *</Text>}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
+      <FileUpload />
 
-      <View style={styles.uploadSection}>
-        <Text style={styles.uploadTitle}>📁 Upload up to 5 related files</Text>
-        <TouchableOpacity style={styles.browseButton}>
-          <Text style={styles.browseButtonText}>Browse files</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.submitButton}>
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
         <Text style={styles.submitButtonText}>Submit</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -267,6 +433,63 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     fontFamily: fonts.WorkSans400,
+  },
+  categoryInfo: {
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+  },
+  categoryText: {
+    fontSize: 16,
+    marginBottom: 5,
+    fontFamily: fonts.WorkSans400,
+  },
+  requiredItem: {
+    backgroundColor: "#fafafa",
+  },
+  requiredCheckbox: {
+    borderColor: "#577CFF",
+  },
+  requiredText: {
+    color: "#FF0000",
+    marginLeft: 4,
+  },
+});
+
+const toastStyles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    top: 10,
+    left: 16,
+    right: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderLeftWidth: 5,
+    borderLeftColor: "#4CAF50",
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 9999,
+  },
+  content: {
+    flexDirection: "column",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  message: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

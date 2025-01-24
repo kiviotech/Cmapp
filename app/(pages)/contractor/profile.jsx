@@ -20,133 +20,133 @@ import { fetchContractorsIdByUserId } from "../../../src/services/contractorServ
 const profile = () => {
   const { user, designation, sub_contractor } = useAuthStore();
   const router = useRouter();
-  const pageSize = 5;
-  const [totalPages, setTotalPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
+  // const pageSize = 5;
+  // const [totalPages, setTotalPages] = useState(0);
+  // const [currentPage, setCurrentPage] = useState(1);
   const [contractorId, setContractorId] = useState(0);
   const [uploadedHistory, setUploadedHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [projects, setProjects] = useState([]);
   const [isFetching, setIsFetching] = useState(false); // Prevent duplicate API calls
 
-  const renderPagination = () => {
-    if (!totalPages || totalPages <= 1) return null;
+  // const renderPagination = () => {
+  //   if (!totalPages || totalPages <= 1) return null;
 
-    // const getPageNumbers = () => {
-    //   const delta = 2;
-    //   const range = [];
-    //   const rangeWithDots = [];
+  //   // const getPageNumbers = () => {
+  //   //   const delta = 2;
+  //   //   const range = [];
+  //   //   const rangeWithDots = [];
 
-    //   // Always include first page
-    //   range.push(1);
+  //   //   // Always include first page
+  //   //   range.push(1);
 
-    //   for (let i = currentPage - delta; i <= currentPage + delta; i++) {
-    //     if (i > 1 && i < totalPages) {
-    //       range.push(i);
-    //     }
-    //   }
+  //   //   for (let i = currentPage - delta; i <= currentPage + delta; i++) {
+  //   //     if (i > 1 && i < totalPages) {
+  //   //       range.push(i);
+  //   //     }
+  //   //   }
 
-    //   // Always include last page
-    //   if (totalPages > 1) {
-    //     range.push(totalPages);
-    //   }
+  //   //   // Always include last page
+  //   //   if (totalPages > 1) {
+  //   //     range.push(totalPages);
+  //   //   }
 
-    //   // Add dots and numbers to final array
-    //   let l;
-    //   for (const i of range) {
-    //     if (l) {
-    //       if (i - l === 2) {
-    //         rangeWithDots.push(l + 1);
-    //       } else if (i - l !== 1) {
-    //         rangeWithDots.push("...");
-    //       }
-    //     }
-    //     rangeWithDots.push(i);
-    //     l = i;
-    //   }
+  //   //   // Add dots and numbers to final array
+  //   //   let l;
+  //   //   for (const i of range) {
+  //   //     if (l) {
+  //   //       if (i - l === 2) {
+  //   //         rangeWithDots.push(l + 1);
+  //   //       } else if (i - l !== 1) {
+  //   //         rangeWithDots.push("...");
+  //   //       }
+  //   //     }
+  //   //     rangeWithDots.push(i);
+  //   //     l = i;
+  //   //   }
 
-    //   return rangeWithDots;
-    // };
+  //   //   return rangeWithDots;
+  //   // };
 
-    const getPageNumbers = () => {
-      // Dynamically generate page numbers (e.g., with dots for large ranges)
-      const pages = [];
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-      return pages;
-    };
+  //   const getPageNumbers = () => {
+  //     // Dynamically generate page numbers (e.g., with dots for large ranges)
+  //     const pages = [];
+  //     for (let i = 1; i <= totalPages; i++) {
+  //       pages.push(i);
+  //     }
+  //     return pages;
+  //   };
 
-    return (
-      <View style={styles.paginationContainer}>
-        {/* Previous Button */}
-        <TouchableOpacity
-          style={[
-            styles.pageButton,
-            currentPage === 1 && styles.disabledPageButton,
-          ]}
-          onPress={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <Text
-            style={[
-              styles.pageText,
-              currentPage === 1 && styles.disabledPageText,
-            ]}
-          >
-            {"<"}
-          </Text>
-        </TouchableOpacity>
+  //   return (
+  //     <View style={styles.paginationContainer}>
+  //       {/* Previous Button */}
+  //       <TouchableOpacity
+  //         style={[
+  //           styles.pageButton,
+  //           currentPage === 1 && styles.disabledPageButton,
+  //         ]}
+  //         onPress={() => handlePageChange(currentPage - 1)}
+  //         disabled={currentPage === 1}
+  //       >
+  //         <Text
+  //           style={[
+  //             styles.pageText,
+  //             currentPage === 1 && styles.disabledPageText,
+  //           ]}
+  //         >
+  //           {"<"}
+  //         </Text>
+  //       </TouchableOpacity>
 
-        {/* Page Numbers */}
-        {getPageNumbers().map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.pageButton,
-              currentPage === item && styles.activePageButton,
-            ]}
-            onPress={() => handlePageChange(item)}
-          >
-            <Text
-              style={[
-                styles.pageText,
-                currentPage === item && styles.activePageText,
-              ]}
-            >
-              {item}
-            </Text>
-          </TouchableOpacity>
-        ))}
+  //       {/* Page Numbers */}
+  //       {getPageNumbers().map((item, index) => (
+  //         <TouchableOpacity
+  //           key={index}
+  //           style={[
+  //             styles.pageButton,
+  //             currentPage === item && styles.activePageButton,
+  //           ]}
+  //           onPress={() => handlePageChange(item)}
+  //         >
+  //           <Text
+  //             style={[
+  //               styles.pageText,
+  //               currentPage === item && styles.activePageText,
+  //             ]}
+  //           >
+  //             {item}
+  //           </Text>
+  //         </TouchableOpacity>
+  //       ))}
 
-        {/* Next Button */}
-        <TouchableOpacity
-          style={[
-            styles.pageButton,
-            currentPage === totalPages && styles.disabledPageButton,
-          ]}
-          onPress={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          <Text
-            style={[
-              styles.pageText,
-              currentPage === totalPages && styles.disabledPageText,
-            ]}
-          >
-            {">"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+  //       {/* Next Button */}
+  //       <TouchableOpacity
+  //         style={[
+  //           styles.pageButton,
+  //           currentPage === totalPages && styles.disabledPageButton,
+  //         ]}
+  //         onPress={() => handlePageChange(currentPage + 1)}
+  //         disabled={currentPage === totalPages}
+  //       >
+  //         <Text
+  //           style={[
+  //             styles.pageText,
+  //             currentPage === totalPages && styles.disabledPageText,
+  //           ]}
+  //         >
+  //           {">"}
+  //         </Text>
+  //       </TouchableOpacity>
+  //     </View>
+  //   );
+  // };
 
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages && page !== currentPage) {
-      setCurrentPage(page); // Update the page state
-      fetchProjects();
-    }
-  };
+  // const handlePageChange = (page) => {
+  //   if (page >= 1 && page <= totalPages && page !== currentPage) {
+  //     setCurrentPage(page); // Update the page state
+  //     fetchProjects();
+  //   }
+  // };
 
   useEffect(() => {
     const fetchContractors = async () => {
@@ -184,36 +184,18 @@ const profile = () => {
     try {
       const response = await fetchProjectAndDocumentByUserId(
         idToUse,
-        currentPage,
-        pageSize,
         designation.charAt(0).toLowerCase() + designation.slice(1)
       );
       const data = response.data;
 
       if (data && data.length > 0) {
-        // Extracting unique project data
-        // const projectsData = data
-        //   .map((taskData) => taskData?.attributes?.project?.data) // Extract project data
-        //   .filter((project) => project) // Filter out null or undefined
-        //   .filter(
-        //     (project, index, self) =>
-        //       self.findIndex((p) => p?.id === project?.id) === index // Ensure uniqueness
-        //   );
-
-        // // If at least one valid project exists, set it; otherwise, keep the existing state
-
-        // setProjects(projectsData);
-
-        // console.log("Projects Data:", projectsData);
-
-        // Filtering tasks with submissions
         const tasksWithSubmissions = data.filter(
           (task) => task?.attributes?.submissions?.data?.length > 0
         );
         setUploadedHistory(tasksWithSubmissions);
 
         // Set total pages for pagination
-        setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
+        // setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
       } else {
         setUploadedHistory([]);
       }
@@ -350,10 +332,10 @@ const profile = () => {
           );
         })}
 
-        <View style={{ marginTop: 20 }}>
+        <View style={{ marginVertical: 20 }}>
           <SelectYourProject isLoading={isLoading} projects={projects} />
         </View>
-        {totalPages > 1 && renderPagination()}
+        {/* {totalPages > 1 && renderPagination()} */}
       </ScrollView>
       <BottomNavigation />
     </SafeAreaView>
