@@ -1,5 +1,3 @@
-// submissionRepository.js
-
 import apiClient from "../apiClient";
 import submissionEndpoints from "../endpoints/submissionEndpoints";
 
@@ -8,6 +6,9 @@ export const getSubmissions = () =>
 
 export const getSubmissionById = (id) =>
   apiClient.get(submissionEndpoints.getSubmissionById(id));
+
+export const getSubmissionByUserId = (userId) =>
+  apiClient.get(submissionEndpoints.getSubmissionsByUserId(userId));
 
 export const createSubmission = (data) =>
   apiClient.post(submissionEndpoints.createSubmission, data);

@@ -9,11 +9,14 @@ import {
   ScrollView,
   Dimensions,
   TextInput,
+  Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { fetchRegistrations } from "../../src/services/registrationService";
 import { fetchSubmissions } from "../../src/services/submissionService";
+import icons from "../../constants/icons"
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 const { width, height } = Dimensions.get("window");
 
@@ -33,6 +36,7 @@ const RequestsScreen = () => {
 
           const registrations = registrationsResponse?.data || [];
           const submissions = submissionsResponse?.data || [];
+          console.log('submissions', submissions)
           setRequests([...registrations, ...submissions]);
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -70,56 +74,143 @@ const RequestsScreen = () => {
     );
   });
 
-  const renderRequestItem = ({ item }) => (
-    <View style={styles.requestContainer}>
-      {item.attributes.email ? (
-        <Text style={styles.requestTitle}>
-          New Registration Request from {item?.attributes?.username}
-        </Text>
-      ) : (
-        <Text style={styles.requestTitle}>
-          Submission for{" "}
-          {item.attributes.task?.data?.attributes?.project?.data?.attributes
-            .name || "Project"}
-          {" - "}
-          {item?.attributes?.task?.data?.attributes?.standard_task?.data
-            ?.attributes?.Name || "Work"}
-        </Text>
-      )}
-      {item.attributes.comment && (
-        <Text style={styles.requestDescription}>
-          {item?.attributes?.comment}
-        </Text>
-      )}
-      <Text
-        style={[
-          styles.requestStatus,
-          styles[
-            `status${
-              item.attributes.status.charAt(0).toUpperCase() +
-              item.attributes.status.slice(1)
+  const renderRequestItem = ({ item }) => {
+    const isSubmission = activeCategory === "Submission";
+    return (
+      <View style={styles.requestContainer}>
+        {isSubmission ? (
+          <View style={styles.submissionCard}>
+            <View style={styles.imageCardContent}>
+              <Text style={styles.requestTitle}>
+                {item?.attributes?.submitted_by?.data?.attributes?.username}
+              </Text>
+
+              <View style={styles.subCardContainer}>
+                <Image source={icons.check_list} style={{ width: 18, height: 18 }} />
+                <Text style={{ color: '#666' }}>
+                  {item?.attributes?.task?.data?.attributes?.standard_task?.data
+                    ?.attributes?.Name || "Work"}
+                </Text>
+              </View>
+
+              <View style={styles.subCardContainer}>
+                <Image source={icons.project_diagram} style={{ width: 18, height: 18 }} />
+                <Text style={{ color: '#666' }}>
+                  {item.attributes.task?.data?.attributes?.project?.data?.attributes
+                    .name || "Project"}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.statusCard}>
+              <View>
+                <Text
+                  style={[
+                    styles.requestStatus,
+                    styles[
+                    `status${item.attributes.status.charAt(0).toUpperCase() +
+                    item.attributes.status.slice(1)
+                    }`
+                    ],
+                  ]}
+                >
+                  Status:{" "}
+                  {item?.attributes?.status.charAt(0).toUpperCase() +
+                    item?.attributes?.status.slice(1).toLowerCase()}
+                </Text>
+              </View>
+
+              <View>
+                <View style={styles.submissionDate}>
+                  <Icon
+                    name="event"
+                    size={16}
+                    color="#666"
+                  />
+                  <Text style={styles.subDate}>
+                    Submitted on {item?.attributes?.createdAt.slice(0, 10)}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("(pages)/TaskRequestDetails",
+                      // isSubmission
+                      //   ? "(pages)/TaskRequestDetails"
+                      //   : "(pages)/EmailRequestDetails",
+                      { requestData: item }
+                    )
+                  }
+                >
+                  <Text style={styles.subViewButton}>View Details</Text>
+                </TouchableOpacity>
+              </View>
+
+            </View>
+          </View>
+        ) : (
+          <View>
+            <Text style={styles.requestTitle}>
+              New Registration Request from {item?.attributes?.username}
+            </Text>
+
+            <Text
+              style={[
+                styles.requestStatus,
+                styles[
+                `status${item.attributes.status.charAt(0).toUpperCase() +
+                item.attributes.status.slice(1)
+                }`
+                ],
+              ]}
+            >
+              Status:{" "}
+              {item?.attributes?.status.charAt(0).toUpperCase() +
+                item?.attributes?.status.slice(1).toLowerCase()}
+            </Text>
+
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("(pages)/EmailRequestDetails",
+                  // isSubmission
+                  //   ? "(pages)/TaskRequestDetails"
+                  //   : "(pages)/EmailRequestDetails",
+                  { requestData: item }
+                )
+              }
+            >
+              <Text style={styles.regViewButton}>View Details</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {/* <Text
+          style={[
+            styles.requestStatus,
+            styles[
+            `status${item.attributes.status.charAt(0).toUpperCase() +
+            item.attributes.status.slice(1)
             }`
-          ],
-        ]}
-      >
-        Status:{" "}
-        {item?.attributes?.status.charAt(0).toUpperCase() +
-          item?.attributes?.status.slice(1).toLowerCase()}
-      </Text>
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate(
-            activeCategory === "Submission"
-              ? "(pages)/TaskRequestDetails"
-              : "(pages)/EmailRequestDetails",
-            { requestData: item }
-          )
-        }
-      >
-        <Text style={styles.viewButton}>View Details</Text>
-      </TouchableOpacity>
-    </View>
-  );
+            ],
+          ]}
+        >
+          Status:{" "}
+          {item?.attributes?.status.charAt(0).toUpperCase() +
+            item?.attributes?.status.slice(1).toLowerCase()}
+        </Text> */}
+        {/* <TouchableOpacity
+          onPress={() =>
+            navigation.navigate(
+              isSubmission
+                ? "(pages)/TaskRequestDetails"
+                : "(pages)/EmailRequestDetails",
+              { requestData: item }
+            )
+          }
+        >
+          <Text style={styles.viewButton}>View Details</Text>
+        </TouchableOpacity> */}
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
@@ -289,10 +380,26 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
   },
+  submissionCard: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  imageCardContent: {
+    maxWidth: '60%'
+  },
   requestTitle: {
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
+  },
+  subCardContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    flexDirection: "row",
+    gap: 5,
+    marginVertical: 3,
   },
   requestDescription: {
     fontSize: 14,
@@ -301,7 +408,7 @@ const styles = StyleSheet.create({
   requestStatus: {
     fontSize: 14,
     fontWeight: "bold",
-    marginTop: 8,
+    // marginTop: 8,
   },
   statusPending: {
     color: "#ED8936",
@@ -312,7 +419,31 @@ const styles = StyleSheet.create({
   statusRejected: {
     color: "#E53E3E",
   },
-  viewButton: {
+  statusCard: {
+    display: 'flex',
+    flexDirection: "column",
+    justifyContent: 'space-between',
+    // textAlign: 'right',
+    alignItems: 'flex-end'
+  },
+  submissionDate: {
+    display: "flex",
+    flexDirection: "row",
+    gap: 3,
+    alignItems: 'center',
+  },
+  subDate: {
+    color: "#666",
+    fontSize: 12,
+  },
+  subViewButton: {
+    color: "#3182CE",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 3,
+    textAlign: 'right',
+  },
+  regViewButton: {
     color: "#3182CE",
     fontSize: 14,
     fontWeight: "bold",

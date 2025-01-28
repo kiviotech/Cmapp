@@ -11,6 +11,7 @@ import {
   FlatList,
   TextInput,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -32,63 +33,64 @@ import apiClient, {
   URL,
 } from "../../../src/api/apiClient";
 import { fetchTasks } from "../../../src/services/taskService";
+import { icons } from "../../../constants";
 
-const data = [
-  {
-    id: "1",
-    title: "Inspection",
-    projectName: "Project Name",
-    date: "Mon, 10 July 2022",
-    time: "9 AM - 10:30 AM",
-  },
-  {
-    id: "2",
-    title: "Inspection",
-    projectName: "Project Name",
-    date: "Mon, 10 July 2022",
-    time: "9 AM - 10:30 AM",
-  },
-  {
-    id: "3",
-    title: "Inspection",
-    projectName: "Project Name",
-    date: "Mon, 10 July 2022",
-    time: "9 AM - 10:30 AM",
-  },
-];
+// const data = [
+//   {
+//     id: "1",
+//     title: "Inspection",
+//     projectName: "Project Name",
+//     date: "Mon, 10 July 2022",
+//     time: "9 AM - 10:30 AM",
+//   },
+//   {
+//     id: "2",
+//     title: "Inspection",
+//     projectName: "Project Name",
+//     date: "Mon, 10 July 2022",
+//     time: "9 AM - 10:30 AM",
+//   },
+//   {
+//     id: "3",
+//     title: "Inspection",
+//     projectName: "Project Name",
+//     date: "Mon, 10 July 2022",
+//     time: "9 AM - 10:30 AM",
+//   },
+// ];
 
-const renderCard = ({ item }) => (
-  <View style={styles.card}>
-    <View style={styles.cardHeader}>
-      <Text style={styles.title}>{item.title}</Text>
-      <MaterialCommunityIcons name="bell-outline" size={20} color="green" />
-    </View>
-    <Text style={styles.projectName}>{item.projectName}</Text>
-    <View style={styles.divider} />
-    <View style={styles.infoRow}>
-      <MaterialCommunityIcons name="calendar" size={20} color="black" />
-      <Text style={styles.infoText}>{item.date}</Text>
-    </View>
-    <View style={styles.infoRow}>
-      <MaterialCommunityIcons name="clock-outline" size={20} color="black" />
-      <Text style={styles.infoText}>{item.time}</Text>
-    </View>
-  </View>
-);
+// const renderCard = ({ item }) => (
+//   <View style={styles.card}>
+//     <View style={styles.cardHeader}>
+//       <Text style={styles.title}>{item.title}</Text>
+//       <MaterialCommunityIcons name="bell-outline" size={20} color="green" />
+//     </View>
+//     <Text style={styles.projectName}>{item.projectName}</Text>
+//     <View style={styles.divider} />
+//     <View style={styles.infoRow}>
+//       <MaterialCommunityIcons name="calendar" size={20} color="black" />
+//       <Text style={styles.infoText}>{item.date}</Text>
+//     </View>
+//     <View style={styles.infoRow}>
+//       <MaterialCommunityIcons name="clock-outline" size={20} color="black" />
+//       <Text style={styles.infoText}>{item.time}</Text>
+//     </View>
+//   </View>
+// );
 
-const getProjectStatus = (project) => {
-  const status = project?.attributes?.project_status;
-  switch (status) {
-    case "completed":
-      return { text: "Completed", color: "#4CAF50" };
-    case "ongoing":
-      return { text: "Ongoing", color: "#2196F3" };
-    case "pending":
-      return { text: "Pending", color: "#FFA000" };
-    default:
-      return { text: "Unknown", color: "#757575" };
-  }
-};
+// const getProjectStatus = (project) => {
+//   const status = project?.attributes?.project_status;
+//   switch (status) {
+//     case "completed":
+//       return { text: "Completed", color: "#4CAF50" };
+//     case "ongoing":
+//       return { text: "Ongoing", color: "#2196F3" };
+//     case "pending":
+//       return { text: "Pending", color: "#FFA000" };
+//     default:
+//       return { text: "Unknown", color: "#757575" };
+//   }
+// };
 
 const ProjectTeam = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
@@ -111,6 +113,20 @@ const ProjectTeam = () => {
   const [projects, setProjects] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isListView, setIsListView] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [isStatusDropdownVisible, setStatusDropdownVisible] = useState(false);
+  const [selectedProject, setSelectedProject] = useState("");
+  const [isProjectDropdownVisible, setProjectDropdownVisible] = useState(false);
+
+  const statusOptions = [
+    { label: "All", value: "" },
+    { label: "Pending", value: "pending" },
+    { label: "Ongoing", value: "ongoing" },
+    { label: "Ahead", value: "ahead" },
+    { label: "Delayed", value: "delayed" },
+    { label: "Completed", value: "completed" },
+  ];
 
   useEffect(() => {
     const fetchContractors = async () => {
@@ -292,417 +308,679 @@ const ProjectTeam = () => {
   );
 
   const filteredTasks = (tasks) => {
-    // Apply search filter but maintain pageSize limit
     return tasks
-      .filter((taskDetail) =>
-        taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
-          searchQuery.toLowerCase()
-        )
-      )
+      .filter((taskDetail) => {
+        const matchesSearch =
+          taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
+            searchQuery.toLowerCase()
+          );
+        const matchesStatus =
+          selectedStatus === "" ||
+          taskDetail?.attributes?.task_status === selectedStatus;
+        const matchesProject =
+          selectedProject === "" ||
+          taskDetail?.attributes?.project?.data?.id === selectedProject;
+        return matchesSearch && matchesStatus && matchesProject;
+      })
       .slice(0, pageSize);
+  };
+
+  // Modify the handleOutsideClick function
+  const handleOutsideClick = () => {
+    if (isProjectDropdownVisible) {
+      setProjectDropdownVisible(false);
+    }
+    if (isStatusDropdownVisible) {
+      setStatusDropdownVisible(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.userInfoContainer}>
-          <Image
-            source={{
-              uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
-            }}
-            style={styles.profileImage}
-          />
-          <View>
-            <Text style={styles.userName}>{user.username}</Text>
-            <Text style={styles.userRole}>{designation}</Text>
-          </View>
-          {/* <TouchableOpacity style={styles.searchIcon}>
-            <Icon name="search" size={24} color="#333" />
-          </TouchableOpacity> */}
-        </View>
-
-        <Text style={styles.sectionHeader}>Project Overview</Text>
-        <View style={styles.overviewContainer}>
-          <View style={styles.overviewItem}>
-            <Text style={styles.overviewNumber1}>{projects.length}</Text>
-            <Text style={styles.overviewLabel1}>Total Projects</Text>
-          </View>
-          <View style={styles.overviewItem}>
-            <Text style={styles.overviewNumber2}>{ongoingProjectsCount}</Text>
-            <Text style={styles.overviewLabel2}>Active</Text>
-          </View>
-          <View style={styles.overviewItem}>
-            <Text style={styles.overviewNumber3}>{completedProjectsCount}</Text>
-            <Text style={styles.overviewLabel3}>Completed</Text>
-          </View>
-        </View>
-
-        <Text style={styles.sectionHeader}>Select Your Project</Text>
-
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <Text>Loading projects...</Text>
-          </View>
-        ) : (
+      <Pressable style={{ flex: 1 }} onPress={handleOutsideClick}>
+        <View style={{ flex: 1 }}>
           <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScrollContainer}
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
           >
-            {projects.length > 0 ? (
-              projects.map((project) => {
-                const isDelayed =
-                  project?.attributes?.project_status === "delayed"; // Define isDelayed based on status
-                const projectStatus = {
-                  text:
-                    project?.attributes?.project_status
-                      ?.charAt(0)
-                      ?.toUpperCase() +
-                    project?.attributes?.project_status?.slice(1),
-                }; // Define projectStatus
+            <View style={styles.userInfoContainer}>
+              <Image
+                source={{
+                  uri: "https://avatars.githubusercontent.com/u/165383754?v=4",
+                }}
+                style={styles.profileImage}
+              />
+              <View>
+                <Text style={styles.userName}>{user.username}</Text>
+                <Text style={styles.userRole}>{designation}</Text>
+              </View>
+              {/* <TouchableOpacity style={styles.searchIcon}>
+                <Icon name="search" size={24} color="#333" />
+              </TouchableOpacity> */}
+            </View>
 
-                return (
-                  <TouchableOpacity
-                    key={project.id}
-                    style={[
-                      styles.projectCard,
-                      (() => {
-                        const endDate = new Date(project?.attributes?.end_date);
-                        const today = new Date();
-                        const isDelayed = today > endDate;
+            <Text style={styles.sectionHeader}>Project Overview</Text>
+            <View style={styles.overviewContainer}>
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewNumber1}>{projects.length}</Text>
+                <Text style={styles.overviewLabel1}>Total Projects</Text>
+              </View>
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewNumber2}>
+                  {ongoingProjectsCount}
+                </Text>
+                <Text style={styles.overviewLabel2}>Active</Text>
+              </View>
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewNumber3}>
+                  {completedProjectsCount}
+                </Text>
+                <Text style={styles.overviewLabel3}>Completed</Text>
+              </View>
+            </View>
 
-                        return isDelayed
-                          ? { backgroundColor: "#ffebee" } // Light red for delayed
-                          : { backgroundColor: "#e8f5e9" }; // Light green for on schedule
-                      })(),
-                    ]}
-                    onPress={() =>
-                      navigation.navigate(
-                        "(pages)/projectTeam/ProjectDetails",
-                        {
-                          projectId: project.id,
-                          projectData: project,
-                          userId: user.id,
-                          tasksData: tasks,
-                        }
-                      )
-                    }
-                  >
-                    <View style={styles.projectCardContent}>
-                      {/* Project Name and Description */}
-                      <Text style={styles.projectTitle}>
-                        {project?.attributes?.name || "No Project Name"}
-                      </Text>
-                      <Text style={styles.projectDescription}>
-                        {project?.attributes?.description
-                          ? project?.attributes?.description?.length > 50
-                            ? `${project?.attributes?.description?.slice(
-                                0,
-                                50
-                              )}...`
-                            : project?.attributes?.description
-                          : "No description available"}
-                      </Text>
+            <Text style={styles.sectionHeader}>Select Your Project</Text>
 
-                      {/* Project Status */}
-                      <View style={styles.statusContainer}>
-                        <View
-                          style={[
-                            styles.projectStatusBadge,
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <Text>Loading projects...</Text>
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalScrollContainer}
+              >
+                {projects.length > 0 ? (
+                  projects.map((project) => {
+                    const isDelayed =
+                      project?.attributes?.project_status === "delayed"; // Define isDelayed based on status
+                    const projectStatus = {
+                      text:
+                        project?.attributes?.project_status
+                          ?.charAt(0)
+                          ?.toUpperCase() +
+                        project?.attributes?.project_status?.slice(1),
+                    }; // Define projectStatus
+
+                    return (
+                      <TouchableOpacity
+                        key={project.id}
+                        style={[
+                          styles.projectCard,
+                          (() => {
+                            const endDate = new Date(
+                              project?.attributes?.end_date
+                            );
+                            const today = new Date();
+                            const isDelayed = today > endDate;
+
+                            return isDelayed
+                              ? { backgroundColor: "#ffebee" } // Light red for delayed
+                              : { backgroundColor: "#e8f5e9" }; // Light green for on schedule
+                          })(),
+                        ]}
+                        onPress={() =>
+                          navigation.navigate(
+                            "(pages)/projectTeam/ProjectDetails",
                             {
-                              backgroundColor: "#FFFFFF",
-                              alignSelf: "flex-start",
-                              marginBottom: 8,
-                            },
-                          ]}
-                        >
-                          <View style={styles.statusBadgeContent}>
+                              projectId: project.id,
+                              projectData: project,
+                              userId: user.id,
+                              tasksData: tasks,
+                            }
+                          )
+                        }
+                      >
+                        <View style={styles.projectCardContent}>
+                          {/* Project Name and Description */}
+                          <Text style={styles.projectTitle}>
+                            {project?.attributes?.name || "No Project Name"}
+                          </Text>
+                          <Text style={styles.projectDescription}>
+                            {project?.attributes?.description
+                              ? project?.attributes?.description?.length > 50
+                                ? `${project?.attributes?.description?.slice(
+                                  0,
+                                  50
+                                )}...`
+                                : project?.attributes?.description
+                              : "No description available"}
+                          </Text>
+
+                          {/* Project Status */}
+                          <View style={styles.statusContainer}>
                             <View
                               style={[
-                                styles.statusDot,
+                                styles.projectStatusBadge,
                                 {
-                                  backgroundColor: isDelayed
-                                    ? "#ff5252"
-                                    : "#4caf50",
+                                  backgroundColor: "#FFFFFF",
+                                  alignSelf: "flex-start",
+                                  marginBottom: 8,
                                 },
                               ]}
-                            />
-                            <Text style={styles.projectStatusText}>
-                              {projectStatus.text || "Unknown"}
+                            >
+                              <View style={styles.statusBadgeContent}>
+                                <View
+                                  style={[
+                                    styles.statusDot,
+                                    {
+                                      backgroundColor: isDelayed
+                                        ? "#ff5252"
+                                        : "#4caf50",
+                                    },
+                                  ]}
+                                />
+                                <Text style={styles.projectStatusText}>
+                                  {projectStatus.text || "Unknown"}
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={styles.statusIndicator}>
+                              <Icon
+                                name={isDelayed ? "error" : "check-circle"}
+                                size={16}
+                                color={isDelayed ? "#ff5252" : "#4caf50"}
+                              />
+                              <Text
+                                style={[
+                                  styles.statusText,
+                                  { color: isDelayed ? "#ff5252" : "#4caf50" },
+                                ]}
+                              >
+                                {isDelayed ? "Delayed" : "On Schedule"}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Project End Date */}
+                          <View style={styles.dateContainer}>
+                            <Icon name="event" size={16} color="#666" />
+                            <Text style={styles.dateText}>
+                              End Date:{" "}
+                              {project?.attributes?.end_date
+                                ? new Date(
+                                  project?.attributes?.end_date
+                                ).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })
+                                : "Not set"}
                             </Text>
                           </View>
                         </View>
-                        <View style={styles.statusIndicator}>
+                      </TouchableOpacity>
+                    );
+                  })
+                ) : (
+                  <View style={styles.noProjectsContainer}>
+                    <Text style={styles.noProjectsText}>
+                      No projects available
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            )}
+
+            <View style={styles.requestsHeader}>
+              <Text style={styles.sectionHeader}>Requests</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("(pages)/Request")}
+              >
+                <Text style={styles.seeAllButton}>See all</Text>
+              </TouchableOpacity>
+            </View>
+
+            {requests.length > 0 ? (
+              requests.map((request) => (
+                <TouchableOpacity
+                  key={request?.id}
+                  style={styles.requestItem}
+                  onPress={() => {
+                    navigation.navigate("(pages)/TaskRequestDetails", {
+                      requestData: request,
+                    });
+                  }}
+                >
+                  <View style={styles.submissionCard}>
+                    <View style={{ maxWidth: '65%' }}>
+                      <Text style={styles.requestTitle}>
+                        {request?.attributes?.submitted_by?.data?.attributes?.username}
+                      </Text>
+
+                      <View style={styles.subCardContainer}>
+                        <Image source={icons.check_list} style={{ width: 18, height: 18 }} />
+                        <Text style={{ color: '#666' }}>
+                          {request?.attributes?.task?.data?.attributes
+                            ?.standard_task?.data?.attributes?.Name || "task"}
+                        </Text>
+                      </View>
+
+                      <View style={styles.subCardContainer}>
+                        <Image source={icons.project_diagram} style={{ width: 18, height: 18 }} />
+                        <Text style={{ color: '#666' }}>
+                          {request?.attributes?.task?.data?.attributes?.project
+                            ?.data?.attributes?.name || "Project"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.statusCard}>
+                      <View>
+                        <Text
+                          style={[
+                            styles.statusBold,
+                            request?.attributes?.status === "approved"
+                              ? styles.requestStatusApproved
+                              : request?.attributes?.status === "rejected"
+                                ? styles.requestStatusRejected
+                                : request?.attributes?.status === "pending"
+                                  ? styles.requestStatusPendingText
+                                  : {},
+                          ]}
+                        >
+                          {request?.attributes?.status
+                            ? request?.attributes?.status
+                              .charAt(0)
+                              .toUpperCase() +
+                            request?.attributes?.status.slice(1).toLowerCase()
+                            : "Pending"}
+                        </Text>
+                      </View>
+
+                      <View>
+                        <View style={styles.submissionDate}>
                           <Icon
-                            name={isDelayed ? "error" : "check-circle"}
+                            name="event"
                             size={16}
-                            color={isDelayed ? "#ff5252" : "#4caf50"}
+                            color="#666"
                           />
-                          <Text
-                            style={[
-                              styles.statusText,
-                              { color: isDelayed ? "#ff5252" : "#4caf50" },
-                            ]}
-                          >
-                            {isDelayed ? "Delayed" : "On Schedule"}
+                          <Text style={styles.subDate}>
+                            Submitted on {request?.attributes?.createdAt.slice(0, 10)}
                           </Text>
                         </View>
-                      </View>
-
-                      {/* Project End Date */}
-                      <View style={styles.dateContainer}>
-                        <Icon name="event" size={16} color="#666" />
-                        <Text style={styles.dateText}>
-                          End Date:{" "}
-                          {project?.attributes?.end_date
-                            ? new Date(
-                                project?.attributes?.end_date
-                              ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })
-                            : "Not set"}
-                        </Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            navigation.navigate("(pages)/TaskRequestDetails", {
+                              requestData: request,
+                            });
+                          }}
+                        >
+                          <Text style={styles.viewLink}>View</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
-                  </TouchableOpacity>
-                );
-              })
+                  </View>
+                </TouchableOpacity>
+              ))
             ) : (
-              <View style={styles.noProjectsContainer}>
-                <Text style={styles.noProjectsText}>No projects available</Text>
-              </View>
+              <Text style={styles.noRequestsText}>No requests available</Text>
             )}
-          </ScrollView>
-        )}
 
-        <View style={styles.requestsHeader}>
-          <Text style={styles.sectionHeader}>Requests</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("(pages)/Request")}
-          >
-            <Text style={styles.seeAllButton}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
-        {requests.length > 0 ? (
-          requests.map((request) => (
-            <TouchableOpacity
-              key={request?.id}
-              style={styles.requestItem}
-              onPress={() => {
-                navigation.navigate("(pages)/TaskRequestDetails", {
-                  requestData: request,
-                });
-              }}
-            >
-              <View>
-                <Text style={styles.requestTitle}>
-                  Submission for{" "}
-                  {request?.attributes?.task?.data?.attributes?.standard_task
-                    ?.data?.attributes?.Name || "task"}{" "}
-                  in{" "}
-                  {request?.attributes?.task?.data?.attributes?.project?.data
-                    ?.attributes?.name || "Project"}
-                </Text>
-                <Text style={styles.requestDescription}>
-                  {request?.attributes?.comment
-                    ? request?.attributes?.comment.charAt(0).toUpperCase() +
-                      request?.attributes?.comment.slice(1)
-                    : "No description available."}
-                </Text>
-
-                <View style={styles.requestStatusContainer}>
-                  <Text
-                    style={[
-                      styles.statusBold,
-                      request?.attributes?.status === "approved"
-                        ? styles.requestStatusApproved
-                        : request?.attributes?.status === "rejected"
-                        ? styles.requestStatusRejected
-                        : request?.attributes?.status === "pending"
-                        ? styles.requestStatusPendingText
-                        : {},
-                    ]}
-                  >
-                    {request?.attributes?.status
-                      ? request?.attributes?.status.charAt(0).toUpperCase() +
-                        request?.attributes?.status.slice(1).toLowerCase()
-                      : "Pending"}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      navigation.navigate("(pages)/TaskRequestDetails", {
-                        requestData: request,
-                      });
-                    }}
-                  >
-                    <Text style={styles.viewLink}>View</Text>
-                  </TouchableOpacity>
-                </View>
+            <View style={styles.container1}>
+              <View style={styles.milestoneContainer}>
+                <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
               </View>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text style={styles.noRequestsText}>No requests available</Text>
-        )}
+            </View>
 
-        <View style={styles.container1}>
-          <View style={styles.milestoneContainer}>
-            <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
-          </View>
-        </View>
+            <View style={styles.searchContainer}>
+              <Icon
+                name="search"
+                size={20}
+                color="#666"
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search tasks by name..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
 
-        <View style={styles.searchContainer}>
-          <Icon
-            name="search"
-            size={20}
-            color="#666"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search tasks by name..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-        <>
-          <FlatList
-            data={filteredTasks(tasks)}
-            renderItem={({ item: task }) => {
-              const taskImageUrl = task?.attributes?.documents?.data?.[0]
-                ?.attributes?.url
-                ? `${URL}${task?.attributes?.documents?.data[0]?.attributes?.url}`
-                : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
-
-              return (
-                <View
-                  key={task.id}
-                  // style={styles.milestoneCard}
-                  style={[
-                    styles.milestoneCard,
-                    {
-                      backgroundColor:
-                        task?.attributes?.task_status === "completed"
-                          ? "#E8F5E9" // green
-                          : task?.attributes?.task_status === "ongoing"
-                          ? "#fff" // orange
-                          : task?.attributes?.task_status === "rejected"
-                          ? "#FED5DD" // red
-                          : "#fff", // default color
-                    },
-                  ]}
+            <View style={styles.filterContainer}>
+              <View style={styles.dropdownWrapper}>
+                <Pressable
+                  style={styles.projectDropdown}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setProjectDropdownVisible(!isProjectDropdownVisible);
+                  }}
                 >
-                  <Image
-                    source={{ uri: taskImageUrl }}
-                    style={styles.milestoneImage}
+                  <Text style={styles.dropdownText}>
+                    {selectedProject
+                      ? projects.find((p) => p.id === selectedProject)
+                        ?.attributes?.name || "Select Project"
+                      : "Select Project"}
+                  </Text>
+                  <Icon
+                    name={
+                      isProjectDropdownVisible
+                        ? "keyboard-arrow-up"
+                        : "keyboard-arrow-down"
+                    }
+                    size={24}
+                    color="#666"
                   />
-                  <View style={styles.milestoneContent}>
-                    <Text style={styles.milestoneTitle}>
-                      Project:{" "}
-                      {task?.attributes?.project?.data?.attributes?.name ||
-                        "Project"}
-                    </Text>
-                    <View style={styles.milestoneHeaderContainer}>
-                      <View style={styles.projectTaskName}>
-                        <Text style={styles.milestoneTitle}>
-                          {task?.attributes?.standard_task?.data?.attributes
-                            ?.Name || "Task"}
-                        </Text>
-                      </View>
-                      <View style={styles.substituteButton}>
-                        <Text style={styles.substituteText}>Substructure</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.milestoneDescription}>
-                      {task?.attributes?.standard_task?.data?.attributes
-                        .Description ||
-                        "No description available for this task."}
-                    </Text>
-                    <View style={styles.divider} />
-                    <View style={styles.status_container}>
-                      <Text style={styles.deadlineText}>
-                        <Icon
-                          name="event"
-                          size={16}
-                          color="#333"
-                          style={{ position: "relative", top: "3px" }}
-                        />{" "}
-                        Deadline:{" "}
-                        {task?.attributes?.due_date || "No deadline specified"}
-                      </Text>
-                      <View
+                </Pressable>
+
+                {isProjectDropdownVisible && (
+                  <View style={styles.dropdownMenu}>
+                    <Pressable
+                      style={styles.dropdownItem}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setSelectedProject("");
+                        setProjectDropdownVisible(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>All Projects</Text>
+                    </Pressable>
+                    {projects.map((project) => (
+                      <Pressable
+                        key={project.id}
                         style={[
-                          styles.statusBadge,
-                          {
-                            backgroundColor:
-                              task?.attributes?.task_status === "completed"
-                                ? "#E8F5E9"
-                                : task?.attributes?.task_status === "ongoing"
-                                ? "#FFF3E0"
-                                : task?.attributes?.task_status === "rejected"
-                                ? "#FFEBEE"
-                                : "#F5F5F5",
-                          },
+                          styles.dropdownItem,
+                          selectedProject === project.id &&
+                          styles.selectedDropdownItem,
                         ]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setSelectedProject(project.id);
+                          setProjectDropdownVisible(false);
+                        }}
                       >
                         <Text
                           style={[
-                            styles.statusText,
-                            {
-                              color:
-                                task?.attributes?.task_status === "completed"
-                                  ? "#2E7D32"
-                                  : task?.attributes?.task_status === "ongoing"
-                                  ? "#EF6C00"
-                                  : task?.attributes?.task_status === "rejected"
-                                  ? "#C62828"
-                                  : "#757575",
-                            },
+                            styles.dropdownItemText,
+                            selectedProject === project.id &&
+                            styles.selectedDropdownItemText,
                           ]}
                         >
-                          {task?.attributes?.task_status || "pending"}
+                          {project?.attributes?.name}
                         </Text>
-                      </View>
-                    </View>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.statusDropdownContainer}>
+                <TouchableOpacity
+                  style={styles.statusDropdown}
+                  onPress={() =>
+                    setStatusDropdownVisible(!isStatusDropdownVisible)
+                  }
+                >
+                  <Text style={styles.statusDropdownText}>
+                    {selectedStatus
+                      ? statusOptions.find(
+                        (opt) => opt.value === selectedStatus
+                      )?.label
+                      : "Select Status"}
+                  </Text>
+                  <Icon
+                    name={
+                      isStatusDropdownVisible
+                        ? "keyboard-arrow-up"
+                        : "keyboard-arrow-down"
+                    }
+                    size={24}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+
+                {isStatusDropdownVisible && (
+                  <View style={styles.dropdownMenu}>
+                    {statusOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.dropdownItem,
+                          selectedStatus === option.value &&
+                          styles.selectedDropdownItem,
+                        ]}
+                        onPress={() => {
+                          setSelectedStatus(option.value);
+                          setStatusDropdownVisible(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            selectedStatus === option.value &&
+                            styles.selectedDropdownItemText,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.toggleWrapper}>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleButton,
+                    isListView ? null : styles.activeToggle,
+                  ]}
+                  onPress={() => setIsListView(false)}
+                >
+                  <Icon
+                    name="grid-view"
+                    size={18}
+                    color={!isListView ? "#fff" : "#666"}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleButton,
+                    isListView ? styles.activeToggle : null,
+                  ]}
+                  onPress={() => setIsListView(true)}
+                >
+                  <Icon
+                    name="view-list"
+                    size={18}
+                    color={isListView ? "#fff" : "#666"}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <FlatList
+              data={filteredTasks(tasks)}
+              numColumns={1}
+              key={isListView ? "list" : "grid"}
+              renderItem={({ item: task }) => {
+                if (isListView) {
+                  const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                    ? `${URL}${task?.attributes?.documents?.data[0]?.attributes?.url}`
+                    : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+
+                  return (
                     <TouchableOpacity
-                      style={styles.uploadButton}
                       onPress={() =>
                         navigation.navigate("(pages)/taskDetails", {
                           taskData: task,
                         })
                       }
+                      style={styles.listItemContainer}
                     >
-                      <Icon name="file-upload" size={16} color="#fff" />
-                      <Text style={styles.uploadButtonText}>
-                        Upload your Proof of work
-                      </Text>
+                      <View style={styles.listItem}>
+                        <View style={styles.listItemContent}>
+                          <Image
+                            source={{ uri: taskImageUrl }}
+                            style={styles.listItemImage}
+                          />
+                          <View style={styles.listItemDetails}>
+                            <Text style={styles.taskName}>
+                              {task?.attributes?.standard_task?.data?.attributes
+                                ?.Name || "Task"}
+                            </Text>
+                            <Text style={styles.projectNameText}>
+                              {task?.attributes?.project?.data?.attributes
+                                ?.name || "Project"}
+                            </Text>
+
+                            <View style={styles.taskInfoRow}>
+                              <View style={styles.deadlineContainer}>
+                                <Icon name="event" size={16} color="#666" />
+                                <Text style={styles.deadlineText}>
+                                  Deadline:{" "}
+                                  {task?.attributes?.due_date || "Not set"}
+                                </Text>
+                              </View>
+                              <View style={styles.categoryBadge}>
+                                <Text style={styles.categoryText}>
+                                  Substructure
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </View>
                     </TouchableOpacity>
+                  );
+                }
+                const taskImageUrl = task?.attributes?.documents?.data?.[0]
+                  ? `${URL}${task?.attributes?.documents?.data[0]?.attributes?.url}`
+                  : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+
+                return (
+                  <View
+                    key={task.id}
+                    style={[
+                      styles.milestoneCard,
+                      {
+                        backgroundColor:
+                          task?.attributes?.task_status === "completed"
+                            ? "#E8F5E9"
+                            : task?.attributes?.task_status === "ongoing"
+                              ? "#fff"
+                              : task?.attributes?.task_status === "rejected"
+                                ? "#FED5DD"
+                                : "#fff",
+                      },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: taskImageUrl }}
+                      style={styles.milestoneImage}
+                    />
+                    <View style={styles.milestoneContent}>
+                      <Text style={styles.milestoneTitle}>
+                        Project:{" "}
+                        {task?.attributes?.project?.data?.attributes?.name ||
+                          "Project"}
+                      </Text>
+                      <View style={styles.milestoneHeaderContainer}>
+                        <View style={styles.projectTaskName}>
+                          <Text style={styles.milestoneTitle}>
+                            {task?.attributes?.standard_task?.data?.attributes
+                              ?.Name || "Task"}
+                          </Text>
+                        </View>
+                        <View style={styles.substituteButton}>
+                          <Text style={styles.substituteText}>
+                            Substructure
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.milestoneDescription}>
+                        {task?.attributes?.standard_task?.data?.attributes
+                          ?.Description ||
+                          "No description available for this task."}
+                      </Text>
+                      <View style={styles.divider} />
+                      <View style={styles.status_container}>
+                        <Text style={styles.deadlineText}>
+                          <Icon
+                            name="event"
+                            size={16}
+                            color="#333"
+                            style={{ position: "relative", top: "3px" }}
+                          />{" "}
+                          Deadline:{" "}
+                          {task?.attributes?.due_date ||
+                            "No deadline specified"}
+                        </Text>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            {
+                              backgroundColor:
+                                task?.attributes?.task_status === "completed"
+                                  ? "#E8F5E9"
+                                  : task?.attributes?.task_status === "ongoing"
+                                    ? "#FFF3E0"
+                                    : task?.attributes?.task_status === "rejected"
+                                      ? "#FFEBEE"
+                                      : "#F5F5F5",
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusText,
+                              {
+                                color:
+                                  task?.attributes?.task_status === "completed"
+                                    ? "#2E7D32"
+                                    : task?.attributes?.task_status ===
+                                      "ongoing"
+                                      ? "#EF6C00"
+                                      : task?.attributes?.task_status ===
+                                        "rejected"
+                                        ? "#C62828"
+                                        : "#757575",
+                              },
+                            ]}
+                          >
+                            {task?.attributes?.task_status || "pending"}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.uploadButton}
+                        onPress={() =>
+                          navigation.navigate("(pages)/taskDetails", {
+                            taskData: task,
+                          })
+                        }
+                      >
+                        <Icon name="file-upload" size={16} color="#fff" />
+                        <Text style={styles.uploadButtonText}>
+                          Upload your Proof of work
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
+                );
+              }}
+              keyExtractor={(item) => item.id.toString()}
+              ListFooterComponent={
+                <>
+                  {isLoading && (
+                    <ActivityIndicator size="small" color="#0000ff" />
+                  )}
+                  {!isLoading && totalPages > 1 && renderPagination()}
+                </>
+              }
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.noProjectsText}>
+                    {isLoading ? "Loading..." : "No tasks available."}
+                  </Text>
                 </View>
-              );
-            }}
-            keyExtractor={(item) => item.id.toString()}
-            ListFooterComponent={
-              <>
-                {isLoading && (
-                  <ActivityIndicator size="small" color="#0000ff" />
-                )}
-                {!isLoading && totalPages > 1 && renderPagination()}
-              </>
-            }
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.noProjectsText}>
-                  {isLoading ? "Loading..." : "No tasks available."}
-                </Text>
-              </View>
-            }
-          />
-        </>
-      </ScrollView>
+              }
+            />
+          </ScrollView>
+        </View>
+      </Pressable>
       <BottomNavigation />
     </SafeAreaView>
   );
@@ -956,9 +1234,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   projectTaskName: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
     maxWidth: 240,
   },
   milestoneTitle: {
@@ -1026,24 +1304,48 @@ const styles = StyleSheet.create({
   },
   requestItem: {
     backgroundColor: "#fff",
-    padding: 15,
+    padding: 10,
     borderRadius: 10,
     marginBottom: 10,
     elevation: 2,
+  },
+  submissionCard: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   requestTitle: {
     fontSize: 16,
     fontWeight: "bold",
   },
+  subCardContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    flexDirection: "row",
+    gap: 5,
+    marginVertical: 3,
+  },
+  statusCard: {
+    display: 'flex',
+    flexDirection: "column",
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  submissionDate: {
+    display: "flex",
+    flexDirection: "row",
+    gap: 3,
+    alignItems: 'center',
+  },
+  subDate: {
+    color: "#666",
+    fontSize: 12,
+  },
   requestDescription: {
     fontSize: 14,
     color: "#666",
     marginVertical: 5,
-  },
-  requestStatusContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
   },
   requestStatus: {
     color: "#333",
@@ -1051,6 +1353,7 @@ const styles = StyleSheet.create({
   },
   viewLink: {
     color: "#1e90ff",
+    textAlign: 'right'
   },
   requestsHeader: {
     flexDirection: "row",
@@ -1118,6 +1421,170 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     textTransform: "capitalize",
+  },
+  viewToggleContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 15,
+    paddingHorizontal: 5,
+  },
+  toggleWrapper: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: "#D1D1D1",
+  },
+  toggleButton: {
+    padding: 6,
+    borderRadius: 6,
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activeToggle: {
+    backgroundColor: "#4A6FFF",
+  },
+  listItemContainer: {
+    marginBottom: 12,
+  },
+  listItem: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 12,
+    elevation: 2,
+  },
+  listItemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  listItemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  listItemDetails: {
+    flex: 1,
+  },
+  taskName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  projectNameText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+  },
+  taskInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  deadlineContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  categoryBadge: {
+    backgroundColor: "#e3f2fd",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  categoryText: {
+    color: "#1e90ff",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  filterContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+    paddingHorizontal: 5,
+    position: "relative",
+    zIndex: 1000,
+    gap: 10,
+  },
+  dropdownWrapper: {
+    position: "relative",
+    zIndex: 1001,
+    flex: 1,
+  },
+  projectDropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#D1D1D1",
+    justifyContent: "space-between",
+    userSelect: "none",
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+  },
+  statusDropdownContainer: {
+    position: "relative",
+    zIndex: 1001,
+    flex: 1,
+  },
+  statusDropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#D1D1D1",
+    minWidth: 150,
+    justifyContent: "space-between",
+  },
+  statusDropdownText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 4,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1002,
+    minWidth: "100%",
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 4,
+  },
+  selectedDropdownItem: {
+    backgroundColor: "#4A6FFF",
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  selectedDropdownItemText: {
+    color: "#fff",
   },
 });
 

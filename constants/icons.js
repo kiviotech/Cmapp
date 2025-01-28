@@ -33,6 +33,8 @@ import reject from "../assets/icons/png/reject.png";
 import userProfile from "../assets/icons/png/userProfile.jpeg";
 import backarrow from "../assets/icons/png/backarrow.png";
 import file from "../assets/icons/png/file.png";
+import check_list from "../assets/icons/png/list-check.png"
+import project_diagram from "../assets/icons/png/project-diagram.png"
 
 import loginLogo from "../assets/images/login.png";
 import loginHouse from "../assets/images/House.png";
@@ -76,4 +78,6 @@ export default {
   loginHouse,
   title,
   loginlogo,
+  check_list,
+  project_diagram
 };

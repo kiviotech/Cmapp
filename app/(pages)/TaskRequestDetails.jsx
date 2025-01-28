@@ -47,16 +47,10 @@ const RequestDetails = () => {
   const [documents, setDocuments] = useState([]);
 
   const { user } = useAuthStore();
-
+console.log('userdata', requestData)
   useEffect(() => {
     setTaskData(requestData?.attributes?.task?.data);
-    setRequesterName(
-      requestData?.attributes?.task?.data?.attributes?.contractor?.data 
-      ? 
-      requestData?.attributes?.task?.data?.attributes?.contractor?.data[0]?.attributes?.username 
-      : 
-      requestData?.attributes?.task?.data?.attributes?.project_team_member[0]?.data?.attributes?.username
-    );
+    setRequesterName(requestData?.attributes?.submitted_by?.data?.attributes?.username);
     setDocuments(requestData?.attributes?.proofOfWork?.data || []);
   }, [requestData]);
 

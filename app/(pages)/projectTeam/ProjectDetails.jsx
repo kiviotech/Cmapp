@@ -16,6 +16,7 @@ import useProjectStore from "../../../projectStore";
 import { fetchProjectTeamById } from "../../../src/services/projectTeamService";
 import { fetchTaskById } from "../../../src/services/taskService";
 import InspectionFormModal from "../InspectionFormModal";
+import { fetchProjectById } from "../../../src/services/projectService";
 
 const { width, height } = Dimensions.get("window");
 
@@ -35,16 +36,20 @@ const ProjectDetails = () => {
     useState(false);
 
   useEffect(() => {
-    if (routeProjectData) {
-      setProjectData(routeProjectData);
-      // fetchProjectTasks();
-    }
-    const approverId = routeProjectData?.attributes?.approvers?.data[0]?.id;
+    // if (routeProjectData) {
+    //   // setProjectData(routeProjectData);
+    // }
     const fetchManagerDetails = async () => {
-      // console.log('approverId', routeProjectData.attributes)
-      // if (approverId) {
+      const projectDetails = await fetchProjectById(projectId);
+      setProjectData(projectDetails?.data)
+      const approver = projectDetails?.data?.attributes?.approvers?.data.find(
+        (item) => item?.attributes?.job_role === "Project Manager"
+      );
+      const approverId = approver?.id;
+
+      if (approverId) {
       try {
-        const response = await fetchProjectTeamById("4");
+        const response = await fetchProjectTeamById(approverId);
         const names = response?.data?.attributes?.users?.data.map(
           (item) => item?.attributes?.username
         );
@@ -53,7 +58,7 @@ const ProjectDetails = () => {
       } catch (error) {
         console.error("Error fetching manager details:", error);
       }
-      // }
+      }
     };
     fetchManagerDetails();
     // }, [routeProjectData, setProjectData]);
@@ -186,15 +191,15 @@ const ProjectDetails = () => {
                         status === "completed"
                           ? styles.completedStatus
                           : status === "ongoing"
-                          ? styles.ongoingStatus
-                          : styles.pendingStatus,
+                            ? styles.ongoingStatus
+                            : styles.pendingStatus,
                       ]}
                     >
                       {status === "completed"
                         ? "Completed"
                         : status === "ongoing"
-                        ? "Ongoing"
-                        : "Pending"}
+                          ? "Ongoing"
+                          : "Pending"}
                     </Text>
                   </View>
                   <Text style={styles.taskDescription} numberOfLines={2}>
@@ -204,12 +209,12 @@ const ProjectDetails = () => {
                     <Text style={styles.dueDate}>
                       {taskData.due_date
                         ? new Date(taskData.due_date)
-                            .toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            })
-                            .replace(/\//g, "-")
+                          .toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })
+                          .replace(/\//g, "-")
                         : "N/A"}
                     </Text>
                   </View>

@@ -4,6 +4,7 @@ import {
   createSubmission,
   updateSubmission,
   deleteSubmission,
+  getSubmissionByUserId,
 } from "../api/repositories/submissionRepository";
 
 export const fetchSubmissions = async () => {
@@ -18,6 +19,15 @@ export const fetchSubmissions = async () => {
 export const fetchSubmissionById = async (id) => {
   try {
     const response = await getSubmissionById(id);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchSubmissionByUserId = async (userId) => {
+  try {
+    const response = await getSubmissionByUserId(userId);
     return response.data;
   } catch (error) {
     throw error;

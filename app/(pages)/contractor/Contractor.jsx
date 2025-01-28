@@ -11,6 +11,7 @@ import {
   FlatList,
   TextInput,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -39,6 +40,21 @@ const Contractor = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [contractorId, setContractorId] = useState(0); // State for contractor ID
+  const [isListView, setIsListView] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [isStatusDropdownVisible, setStatusDropdownVisible] = useState(false);
+  const [selectedProject, setSelectedProject] = useState("");
+  const [isProjectDropdownVisible, setProjectDropdownVisible] = useState(false);
+
+  // Add this constant for status options
+  const statusOptions = [
+    { label: "All", value: "" },
+    { label: "Pending", value: "pending" },
+    { label: "Ongoing", value: "ongoing" },
+    { label: "Ahead", value: "ahead" },
+    { label: "Delayed", value: "delayed" },
+    { label: "Completed", value: "completed" },
+  ];
 
   // Fetch contractor ID based on designation and user ID
   useEffect(() => {
@@ -238,6 +254,30 @@ const Contractor = () => {
     });
   };
 
+  // Add this function to handle outside clicks
+  const handleOutsideClick = () => {
+    if (isProjectDropdownVisible) {
+      setProjectDropdownVisible(false);
+    }
+    if (isStatusDropdownVisible) {
+      setStatusDropdownVisible(false);
+    }
+  };
+
+  // Update the filtering logic
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch =
+      task?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
+        searchQuery.toLowerCase()
+      );
+    const matchesStatus =
+      selectedStatus === "" || task?.attributes?.task_status === selectedStatus;
+    const matchesProject =
+      selectedProject === "" ||
+      task?.attributes?.project?.data?.id === selectedProject;
+    return matchesSearch && matchesStatus && matchesProject;
+  });
+
   return (
     <SafeAreaView style={styles.AreaContainer}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -278,6 +318,156 @@ const Contractor = () => {
           />
         </View>
 
+        {/* Add these JSX right after the search container and before the FlatList */}
+        <View style={styles.filterContainer}>
+          <View style={styles.dropdownWrapper}>
+            <Pressable
+              style={styles.projectDropdown}
+              onPress={(e) => {
+                e.stopPropagation();
+                setProjectDropdownVisible(!isProjectDropdownVisible);
+              }}
+            >
+              <Text style={styles.dropdownText}>
+                {selectedProject
+                  ? projects.find((p) => p.id === selectedProject)?.attributes
+                      ?.name || "Select Project"
+                  : "Select Project"}
+              </Text>
+              <Icon
+                name={
+                  isProjectDropdownVisible
+                    ? "keyboard-arrow-up"
+                    : "keyboard-arrow-down"
+                }
+                size={24}
+                color="#666"
+              />
+            </Pressable>
+
+            {isProjectDropdownVisible && (
+              <View style={styles.dropdownMenu}>
+                <Pressable
+                  style={styles.dropdownItem}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setSelectedProject("");
+                    setProjectDropdownVisible(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>All Projects</Text>
+                </Pressable>
+                {projects.map((project) => (
+                  <Pressable
+                    key={project.id}
+                    style={[
+                      styles.dropdownItem,
+                      selectedProject === project.id &&
+                        styles.selectedDropdownItem,
+                    ]}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setSelectedProject(project.id);
+                      setProjectDropdownVisible(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        selectedProject === project.id &&
+                          styles.selectedDropdownItemText,
+                      ]}
+                    >
+                      {project?.attributes?.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View style={styles.statusDropdownContainer}>
+            <TouchableOpacity
+              style={styles.statusDropdown}
+              onPress={() => setStatusDropdownVisible(!isStatusDropdownVisible)}
+            >
+              <Text style={styles.statusDropdownText}>
+                {selectedStatus
+                  ? statusOptions.find((opt) => opt.value === selectedStatus)
+                      ?.label
+                  : "Select Status"}
+              </Text>
+              <Icon
+                name={
+                  isStatusDropdownVisible
+                    ? "keyboard-arrow-up"
+                    : "keyboard-arrow-down"
+                }
+                size={24}
+                color="#666"
+              />
+            </TouchableOpacity>
+
+            {isStatusDropdownVisible && (
+              <View style={styles.dropdownMenu}>
+                {statusOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.dropdownItem,
+                      selectedStatus === option.value &&
+                        styles.selectedDropdownItem,
+                    ]}
+                    onPress={() => {
+                      setSelectedStatus(option.value);
+                      setStatusDropdownVisible(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        selectedStatus === option.value &&
+                          styles.selectedDropdownItemText,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View style={styles.toggleWrapper}>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                isListView ? null : styles.activeToggle,
+              ]}
+              onPress={() => setIsListView(false)}
+            >
+              <Icon
+                name="grid-view"
+                size={18}
+                color={!isListView ? "#fff" : "#666"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                isListView ? styles.activeToggle : null,
+              ]}
+              onPress={() => setIsListView(true)}
+            >
+              <Icon
+                name="view-list"
+                size={18}
+                color={isListView ? "#fff" : "#666"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {isLoading ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#007bff" />
@@ -285,137 +475,129 @@ const Contractor = () => {
         ) : (
           <>
             <FlatList
-              data={tasks.filter((task) =>
-                task?.attributes?.standard_task?.data?.attributes?.Name.toLowerCase().includes(
-                  searchQuery.toLowerCase()
-                )
-              )}
+              data={filteredTasks}
+              key={isListView ? "list" : "grid"}
+              numColumns={1}
               renderItem={({ item: task }) => {
-                // console.log(
-                //   "tmp",
-                //   task?.attributes?.standard_task?.data?.attributes
-                // );
                 const taskImageUrl =
                   task?.attributes?.standard_task?.data?.attributes?.image
                     ?.data?.[0]?.attributes?.url || null;
-
                 const imageUrl = taskImageUrl
-                  ? `${URL}${taskImageUrl}` // Valid image URL exists
-                  : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop"; // Fallback image
-
-                // Check for null, empty, or undefined
-                if (
-                  !taskImageUrl ||
-                  typeof taskImageUrl !== "string" ||
-                  taskImageUrl.trim() === ""
-                ) {
-                  console.log(
-                    "Image URL is null, empty, or undefined. Using fallback image."
-                  );
-                }
+                  ? `${URL}${taskImageUrl}`
+                  : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
                 return (
-                  <View
+                  <TouchableOpacity
                     key={task.id}
                     style={[
                       styles.milestoneCard,
-                      {
-                        backgroundColor:
-                          task?.attributes?.task_status === "completed"
-                            ? "#E8F5E9"
-                            : task?.attributes?.task_status === "ongoing"
-                            ? "#fff" // Light green background for ongoing tasks
-                            : task?.attributes?.task_status === "rejected"
-                            ? "#FED5DD"
-                            : "#fff",
-                      },
+                      isListView ? styles.listViewCard : styles.gridViewCard,
                     ]}
+                    onPress={() => handleTaskPress(task)}
+                    activeOpacity={0.7}
                   >
                     <Image
                       source={{ uri: imageUrl }}
-                      style={styles.milestoneImage}
+                      style={[
+                        styles.milestoneImage,
+                        isListView
+                          ? styles.listViewImage
+                          : styles.gridViewImage,
+                      ]}
                     />
-                    <View style={styles.milestoneContent}>
-                      <Text style={styles.milestoneTitle}>
-                        Project:{" "}
-                        {task?.attributes?.project?.data?.attributes?.name ||
-                          "Project"}
-                      </Text>
-                      <View style={styles.milestoneHeaderContainer}>
-                        <View style={styles.projectTaskName}>
-                          <Text style={styles.milestoneTitle}>
+                    <View style={styles.cardContent}>
+                      <View style={styles.projectInfo}>
+                        <Text
+                          style={[
+                            styles.projectTitle,
+                            isListView
+                              ? styles.listViewProjectTitle
+                              : styles.gridViewProjectTitle,
+                          ]}
+                        >
+                          Project:{" "}
+                          {task?.attributes?.project?.data?.attributes?.name ||
+                            "Project"}
+                        </Text>
+                        <View style={styles.taskNameContainer}>
+                          <Text
+                            style={[
+                              styles.taskName,
+                              isListView
+                                ? styles.listViewTaskName
+                                : styles.gridViewTaskName,
+                            ]}
+                          >
                             {task?.attributes?.standard_task?.data?.attributes
                               ?.Name || "Task"}
                           </Text>
+                          {!isListView && (
+                            <View style={styles.substructureBadge}>
+                              <Text style={styles.substructureText}>
+                                Substructure
+                              </Text>
+                            </View>
+                          )}
                         </View>
-                        <View style={styles.substituteButton}>
-                          <Text style={styles.substituteText}>
-                            Substructure
+                        {!isListView && (
+                          <Text style={styles.taskDescription}>
+                            Regular site inspections to ensure compliance with
+                            building codes and standards.
                           </Text>
-                        </View>
+                        )}
                       </View>
-                      <Text style={styles.milestoneDescription}>
-                        {task?.attributes?.standard_task?.data?.attributes
-                          ?.Description ||
-                          "No description available for this task."}
-                      </Text>
-                      <View style={styles.divider} />
-                      <View style={styles.deadlineContainer}>
-                        <Text style={styles.deadlineText}>
-                          <Icon name="event" size={16} color="#333" /> Deadline:{" "}
-                          {task?.attributes?.due_date ||
-                            "No deadline specified"}
-                        </Text>
-                        <View
-                          style={[
-                            styles.statusBadge,
-                            {
-                              backgroundColor:
-                                task?.attributes?.task_status === "completed"
-                                  ? "#E8F5E9"
-                                  : task?.attributes?.task_status === "ongoing"
-                                  ? "#FFF3E0"
-                                  : task?.attributes?.task_status === "rejected"
-                                  ? "#FFEBEE"
-                                  : "#F5F5F5",
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.statusText,
-                              {
-                                color:
-                                  task?.attributes?.task_status === "completed"
-                                    ? "#2E7D32"
-                                    : task?.attributes?.task_status ===
-                                      "ongoing"
-                                    ? "#EF6C00"
-                                    : task?.attributes?.task_status ===
-                                      "rejected"
-                                    ? "#C62828"
-                                    : "#757575",
-                              },
-                            ]}
-                          >
-                            {task?.attributes?.task_status || "pending"}
-                          </Text>
-                        </View>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.uploadButton}
-                        onPress={() => handleTaskPress(task)}
+                      <View
+                        style={[
+                          styles.cardFooter,
+                          isListView
+                            ? styles.listViewFooter
+                            : styles.gridViewFooter,
+                        ]}
                       >
-                        <Icon name="file-upload" size={16} color="#fff" />
-                        <Text style={styles.uploadButtonText}>
-                          Upload your Proof of work
-                        </Text>
-                      </TouchableOpacity>
+                        <View style={styles.deadlineContainer}>
+                          <Icon name="event" size={16} color="#666" />
+                          <Text style={styles.deadlineText}>
+                            Deadline:{" "}
+                            {task?.attributes?.due_date ||
+                              "No deadline specified"}
+                          </Text>
+                        </View>
+                        {isListView ? (
+                          <View style={styles.substructureBadge}>
+                            <Text style={styles.substructureText}>
+                              Substructure
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={styles.statusBadge}>
+                            <Text style={styles.statusText}>
+                              {task?.attributes?.task_status || "Ongoing"}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      {!isListView && (
+                        <TouchableOpacity
+                          style={styles.uploadButton}
+                          onPress={() => handleTaskPress(task)}
+                        >
+                          <Icon
+                            name="upload"
+                            size={18}
+                            color="#fff"
+                            style={{ marginRight: 8 }}
+                          />
+                          <Text style={styles.uploadButtonText}>
+                            Upload your Proof of work
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               }}
               keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.flatListContainer}
               ListFooterComponent={
                 isLoading ? (
                   <ActivityIndicator size="small" color="#0000ff" />
@@ -644,9 +826,7 @@ const styles = StyleSheet.create({
     color: "#1e90ff",
   },
   projectTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 4,
   },
   headerContainer: {
     flexDirection: "row",
@@ -679,24 +859,34 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   milestoneContent: {
-    paddingBottom: 10,
+    flex: 1,
+    gap: 4,
   },
-  milestoneHeaderContainer: {
+  bottomRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 5,
+    marginTop: 4,
   },
-  projectTaskName: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    maxWidth: 240,
+  deadlineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  milestoneTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
+  deadlineText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  tagContainer: {
+    backgroundColor: "#E3F2FD",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  tagText: {
+    color: "#2196F3",
+    fontSize: 12,
+    fontWeight: "500",
   },
   substituteButton: {
     backgroundColor: "#e3f2fd",
@@ -724,16 +914,9 @@ const styles = StyleSheet.create({
   },
   deadlineContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
-  },
-  deadlineText: {
-    fontSize: 14,
-    color: "#333",
-    padding: 5,
-    display: "flex",
-    alignItems: "center",
+    gap: 8,
+    flex: 1,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -841,6 +1024,283 @@ const styles = StyleSheet.create({
   projectEndDate: {
     fontSize: 14,
     color: "#666",
+  },
+  filterContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+    paddingHorizontal: 5,
+    position: "relative",
+    zIndex: 1000,
+    gap: 10,
+  },
+  dropdownWrapper: {
+    position: "relative",
+    zIndex: 1001,
+    flex: 1,
+  },
+  projectDropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#D1D1D1",
+    justifyContent: "space-between",
+  },
+  dropdownText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+  },
+  statusDropdownContainer: {
+    position: "relative",
+    zIndex: 1001,
+    flex: 1,
+  },
+  statusDropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#D1D1D1",
+    minWidth: 150,
+    justifyContent: "space-between",
+  },
+  statusDropdownText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 4,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1002,
+    minWidth: "100%",
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 4,
+  },
+  selectedDropdownItem: {
+    backgroundColor: "#4A6FFF",
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  selectedDropdownItemText: {
+    color: "#fff",
+  },
+  toggleWrapper: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: "#D1D1D1",
+  },
+  toggleButton: {
+    padding: 6,
+    borderRadius: 6,
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activeToggle: {
+    backgroundColor: "#4A6FFF",
+  },
+  flatListContainer: {
+    padding: 8,
+  },
+  listViewCard: {
+    flexDirection: "row",
+    padding: 12,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 12,
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  gridViewCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  listViewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    flexShrink: 0,
+  },
+  gridViewImage: {
+    width: "100%",
+    height: 160,
+    resizeMode: "cover",
+  },
+  listViewTitle: {
+    fontSize: 16,
+  },
+  gridViewTitle: {
+    fontSize: 14,
+  },
+  cardContent: {
+    flex: 1,
+    padding: 16,
+  },
+  projectInfo: {
+    marginBottom: 12,
+  },
+  taskName: {
+    marginBottom: 8,
+  },
+  taskDescription: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0", // Light gray border
+    paddingTop: 16, // Add padding to create space between border and content
+  },
+  deadlineContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  deadlineText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  statusBadge: {
+    backgroundColor: "#FFF3E0",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusText: {
+    color: "#FB8C00",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  uploadButton: {
+    backgroundColor: "#2196F3",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 8,
+  },
+  uploadButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  // Base styles
+  projectTitle: {
+    marginBottom: 4,
+  },
+  taskName: {
+    marginBottom: 8,
+  },
+
+  // Grid view specific styles
+  gridViewProjectTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000", // Changed to black to match task name
+  },
+  gridViewTaskName: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
+    flex: 1, // This allows the badge to sit next to it
+    marginRight: 8, // Add some space between task name and badge
+  },
+
+  // List view specific styles
+  listViewProjectTitle: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "600",
+  },
+  listViewTaskName: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+
+  listViewFooter: {
+    marginBottom: 0,
+    borderTopWidth: 0,
+    paddingTop: 0,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    width: "100%",
+  },
+
+  gridViewFooter: {
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+    paddingTop: 16,
+    marginBottom: 16,
+  },
+
+  taskNameContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+
+  substructureBadge: {
+    backgroundColor: "#E3F2FD",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginLeft: "auto",
+  },
+
+  substructureText: {
+    color: "#2196F3",
+    fontSize: 12,
+    fontWeight: "500",
   },
 });
 

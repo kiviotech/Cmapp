@@ -14,7 +14,7 @@ import BottomNavigation from "./contractor/BottomNavigation ";
 import { getTaskByContractorId } from "../../src/api/repositories/taskRepository";
 import { fetchContractorsByUserId } from "../../src/services/contractorService";
 import useAuthStore from "../../useAuthStore";
-import { updateExistingSubmission } from "../../src/services/submissionService";
+import { fetchSubmissionByUserId, updateExistingSubmission } from "../../src/services/submissionService";
 
 const Notification = () => {
   const [activeTab, setActiveTab] = useState("Unread");
@@ -23,64 +23,9 @@ const Notification = () => {
   const [readNotifications, setReadNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
   const navigation = useNavigation();
   const { user } = useAuthStore();
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     if (user && user.id) {
-  //       try {
-  //         setIsLoading(true);
-  //         const data = await fetchContractorsByUserId(user.id);
-  //         var filteredData = [];
-  //         if (data.data.length > 0) {
-  //           const contractorId = data.data[0].id;
-  //           const projectData = data.data.map(
-  //             (project) => (filteredData = project.attributes.projects.data)
-  //           );
-
-  //           const allTasks = [];
-  //           let unread = [];
-  //           let read = [];
-
-  //           for (const projectId of filteredData) {
-  //             const taskData = await getTaskByContractorId(
-  //               projectId.id,
-  //               contractorId
-  //             );
-  //             const ongoingTasks = taskData.data.data.filter(
-  //               (task) => task.attributes.task_status === "ongoing"
-  //             );
-  //             allTasks.push(...ongoingTasks);
-  //           }
-
-  //           for (const task of allTasks) {
-  //             const submissions = task.attributes.submissions.data;
-  //             unread = unread.concat(
-  //               submissions?.filter(
-  //                 (sub) => sub.attributes.notification_status === "unread"
-  //               )
-  //             );
-  //             read = read.concat(
-  //               submissions?.filter(
-  //                 (sub) => sub.attributes.notification_status === "read"
-  //               )
-  //             );
-  //           }
-
-  //           setTasks(allTasks);
-  //           setUnreadNotifications(unread);
-  //           setReadNotifications(read);
-  //         }
-  //       } catch (error) {
-  //         console.error("Error fetching notifications:", error);
-  //       } finally {
-  //         setIsLoading(false);
-  //       }
-  //     }
-  //   };
-  //   fetchData();
-  // }, [user]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,52 +33,28 @@ const Notification = () => {
         try {
           setIsLoading(true);
 
-          // Fetch contractor data by user ID
-          const data = await fetchContractorsByUserId(user.id);
+          const submissionResponse = await fetchSubmissionByUserId(user.id);
 
-          if (data.data.length > 0) {
-            const contractorId = data.data[0].id;
+          const taskData = submissionResponse?.data?.map((submission) => submission?.attributes?.task?.data)
 
-            // Extract and flatten project IDs
-            const projectIds = data.data.flatMap(
-              (contractor) => contractor.attributes.projects.data || []
-            );
+          const unread = [];
+          const read = [];
 
-            // Fetch tasks for all projects in parallel using Promise.all
-            const taskPromises = projectIds.map((project) =>
-              getTaskByContractorId(project.id, contractorId)
-            );
+          unread.push(
+            ...submissionResponse.data.filter(
+              (sub) => sub?.attributes?.notification_status === "unread"
+            )
+          );
+          read.push(
+            ...submissionResponse.data.filter(
+              (sub) => sub?.attributes?.notification_status === "read"
+            )
+          );
 
-            const taskResults = await Promise.all(taskPromises);
-
-            // Collect all ongoing tasks
-            const allTasks = taskResults.flatMap(
-              (taskResult) => taskResult?.data?.data
-            );
-
-            // Process notifications
-            const unread = [];
-            const read = [];
-            allTasks.forEach((task) => {
-              const submissions = task.attributes.submissions.data || [];
-
-              unread.push(
-                ...submissions.filter(
-                  (sub) => sub.attributes.notification_status === "unread"
-                )
-              );
-              read.push(
-                ...submissions.filter(
-                  (sub) => sub.attributes.notification_status === "read"
-                )
-              );
-            });
-
-            // Update state with tasks and notifications
-            setTasks(allTasks);
-            setUnreadNotifications(unread);
-            setReadNotifications(read);
-          }
+          setSubmissions(submissionResponse?.data);
+          setTasks(taskData)
+          setUnreadNotifications(unread);
+          setReadNotifications(read);
         } catch (error) {
           console.error("Error fetching notifications:", error);
         } finally {
@@ -174,6 +95,7 @@ const Notification = () => {
   };
 
   const renderNotificationItem = ({ item }) => {
+    console.log('item', item)
     const task = tasks.find((t) =>
       t.attributes.submissions.data.some((s) => s.id === item.id)
     );

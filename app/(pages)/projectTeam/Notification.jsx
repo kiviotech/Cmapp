@@ -271,6 +271,12 @@ const Notification = () => {
     }, [navigation])
   );
 
+  // Add this after the fetchData function
+  useEffect(() => {
+    // Update global unread count whenever unreadNotifications changes
+    global.unreadNotificationsCount = unreadNotifications.length;
+  }, [unreadNotifications]);
+
   return (
     <SafeAreaView style={styles.areaContainer}>
       {toastVisible && <CustomToast />}

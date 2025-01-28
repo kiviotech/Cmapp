@@ -28,6 +28,7 @@ import { fetchTaskById } from "../../src/services/taskService";
 import { useNavigation } from "expo-router";
 import colors from "../../constants/colors";
 import useFileUploadStore from "../../src/stores/fileUploadStore";
+import useAuthStore from "../../useAuthStore";
 
 const UploadProof = ({}) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -51,7 +52,8 @@ const UploadProof = ({}) => {
   const fileUploadRef = useRef(null);
   const clearFiles = useFileUploadStore((state) => state.clearFiles);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
-
+  const { user } = useAuthStore();
+ 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -127,6 +129,7 @@ const UploadProof = ({}) => {
           status: "pending",
           task: taskId,
           notification_status: "unread",
+          submitted_by: user.id,
           proofOfWork: fileIds && fileIds.length > 0 ? fileIds : [],
         },
       });

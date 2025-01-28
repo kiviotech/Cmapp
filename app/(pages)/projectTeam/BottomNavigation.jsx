@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -7,6 +7,16 @@ import { logout } from "../../../src/utils/auth";
 const BottomNavigation = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    // Check unread count every 1 second
+    const interval = setInterval(() => {
+      setUnreadCount(global.unreadNotificationsCount || 0);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <View style={styles.navContainer}>
@@ -94,19 +104,28 @@ const BottomNavigation = () => {
         style={styles.navItem}
         onPress={() => navigation.navigate("(pages)/projectTeam/Notification")}
       >
-        <Icon
-          name={
-            route.name === "(pages)/projectTeam/Notification"
-              ? "notifications"
-              : "notifications-outline"
-          }
-          size={24}
-          color={
-            route.name === "(pages)/projectTeam/Notification"
-              ? "#577CFF"
-              : "#A8A8A8"
-          }
-        />
+        <View>
+          <Icon
+            name={
+              route.name === "(pages)/projectTeam/Notification"
+                ? "notifications"
+                : "notifications-outline"
+            }
+            size={24}
+            color={
+              route.name === "(pages)/projectTeam/Notification"
+                ? "#577CFF"
+                : "#A8A8A8"
+            }
+          />
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </Text>
+            </View>
+          )}
+        </View>
         <Text
           style={
             route.name === "(pages)/projectTeam/Notification"
@@ -174,6 +193,23 @@ const styles = StyleSheet.create({
     color: "#A8A8A8",
     fontSize: 12,
     marginTop: 6,
+  },
+  badge: {
+    position: "absolute",
+    right: -6,
+    top: -6,
+    backgroundColor: "#FF3B30",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 

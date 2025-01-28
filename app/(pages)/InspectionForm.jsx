@@ -25,6 +25,7 @@ const InspectionForm = () => {
     route.params || {};
 
   const [checklistItems, setChecklistItems] = useState([]);
+  const [projectInspId, setProjectInspId] = useState(0);
   const [checkedItems, setCheckedItems] = useState({});
   const [isAllChecked, setIsAllChecked] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -38,33 +39,43 @@ const InspectionForm = () => {
           projectId,
           selectedSubCategory
         );
+
+        setProjectInspId(inspections?.data[0]?.id)
+  
         const formData =
           inspections.data[0]?.attributes?.standard_inspection_form?.data
             ?.attributes;
-
+  
+        const responseData =
+          inspections.data[0]?.attributes?.inspection_responses?.data;
+  
         // Extract checklist items from all sections
         const items =
           formData?.inspection_sections?.data?.flatMap((section) =>
-            section.attributes.checklist_items.data.map((item) => ({
+            section.attributes?.checklist_items?.data.map((item) => ({
               id: item.id,
-              description: item.attributes.description,
-              isChecked:
-                item.attributes.inspection_response.data?.attributes?.checked ||
-                false,
-              required: item.attributes.required,
-              inspection_response: item.attributes.inspection_response,
+              description: item?.attributes?.description,
+              required: item?.attributes?.required,
             }))
           ) || [];
-
-        setChecklistItems(items);
-
-        // Create initial checked state object
+  
+        // Check if the checklist item's ID exists in the responses
         const checkedState = {};
         items.forEach((item) => {
-          checkedState[item.id] = item.required ? true : item.isChecked;
+          const response = responseData?.find(
+            (responseItem) =>
+              responseItem.attributes?.checklist_item?.data?.id === item.id
+          );
+  
+          // If no response exists for the checklist item, mark it as checked
+          checkedState[item.id] = response ? true : false;
         });
+  
+        setChecklistItems(items);
+  
         setCheckedItems(checkedState);
-
+  
+        // Update the `isAllChecked` state
         setIsAllChecked(
           items.length > 0 && items.every((item) => checkedState[item.id])
         );
@@ -72,11 +83,12 @@ const InspectionForm = () => {
         console.error("Error fetching inspections:", error);
       }
     };
-
+  
     if (projectId && selectedSubCategory) {
       fetchInspections();
     }
   }, [projectId, selectedCategory, selectedSubCategory]);
+  
 
   const toggleCheckbox = async (id) => {
     // Find the item to check if it's required
@@ -190,6 +202,7 @@ const InspectionForm = () => {
               checked: true,
               remarks: "",
               attachments: [],
+              project_inspection: projectInspId
             },
           };
 
@@ -212,7 +225,7 @@ const InspectionForm = () => {
 
       setTimeout(() => {
         navigation.goBack();
-      }, 3000);
+      }, 2000);
     } catch (error) {
       console.error("Error submitting inspection form:", error);
       showToast({

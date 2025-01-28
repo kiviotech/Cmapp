@@ -22,6 +22,8 @@ import apiClient from "../../src/api/apiClient";
 import { fetchProjectTeamManager } from "../../src/services/projectTeamService";
 import useAuthStore from "../../useAuthStore";
 import DropDownPicker from "react-native-dropdown-picker";
+import { fetchStandardInspectionForms } from "../../src/services/standardInspectionFormService";
+import { createNewProjectInspection } from "../../src/services/projectInspectionService";
 
 const { width, height } = Dimensions.get("window");
 
@@ -113,23 +115,22 @@ const ProjectForm = () => {
     loadTeamData();
   }, []);
 
-  const isDateInFuture = (date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to the start of the day (midnight)
-    return date >= today;
-  };
+  // const isDateInFuture = (date) => {
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0); // Set to the start of the day (midnight)
+  //   return date >= today;
+  // };
 
   const validateField = (fieldName, value) => {
     if (!value) {
       setErrors((prev) => ({
         ...prev,
-        [fieldName]: `${
-          fieldName.charAt(0).toUpperCase() +
+        [fieldName]: `${fieldName.charAt(0).toUpperCase() +
           fieldName
             .slice(1)
             .replace(/([A-Z])/g, " $1")
             .trim()
-        } is required`,
+          } is required`,
       }));
     } else {
       setErrors((prev) => ({
@@ -222,34 +223,52 @@ const ProjectForm = () => {
       };
 
       const response = await createNewProject(projectData);
+      console.log('resp', response.data, response.data.id)
+      const projectId = response?.data?.id
 
-      if (response?.data) {
-        setProjectData(response.data);
-        setIsSuccessModalVisible(true);
-        resetForm();
-      } else {
-        console.error("Error details:", response.error);
-        Alert.alert(
-          "Error",
-          response.error?.message || "Failed to create project."
-        );
-      }
-      if (response?.data) {
-        setProjectData(response.data);
-        Alert.alert("Success", "Project created successfully!");
-        resetForm();
-        navigation.navigate("(pages)/AssignProjectTeam", {
-          projectId: response.data.id, // Pass only the id
-          project_manager: projectManager,
-          project_supervisor: supervisor,
-          site_coordinator: coordinator,
-        });
-      } else {
-        console.error("Error details:", response.error);
-        Alert.alert(
-          "Error",
-          response.error?.message || "Failed to create project."
-        );
+      if (projectId) {
+        // Fetch standard inspection forms
+        const stdInspForm = await fetchStandardInspectionForms();
+        const stdInspFormIds = stdInspForm?.data?.map((form) => form.id);
+        console.log("stdInspForm", stdInspFormIds);
+
+        if (stdInspFormIds?.length > 0) {
+          // Prepare project inspection creation for each standard form ID
+          const inspectionPromises = stdInspFormIds.map((formId) => {
+            const payload = {
+              data: {
+                project: projectId,
+                project_team: projectManagerTeamId,
+                status: "draft",
+                standard_inspection_form: formId,
+              },
+            };
+            return createNewProjectInspection(payload);
+          });
+
+          // Execute all promises
+          await Promise.all(inspectionPromises);
+          console.log("Project inspections created successfully.");
+        }
+
+        if (response?.data) {
+          setProjectData(response.data);
+          setIsSuccessModalVisible(true);
+          Alert.alert("Success", "Project created successfully!");
+          resetForm();
+          // navigation.navigate("(pages)/AssignProjectTeam", {
+          //   projectId: response.data.id, // Pass only the id
+          //   project_manager: projectManager,
+          //   project_supervisor: supervisor,
+          //   site_coordinator: coordinator,
+          // });
+        } else {
+          console.error("Error details:", response.error);
+          Alert.alert(
+            "Error",
+            response.error?.message || "Failed to create project."
+          );
+        }
       }
     } catch (error) {
       console.error("Error creating project:", error);
@@ -482,16 +501,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                    ? "Select Project Supervisor"
-                    : "Select Site Coordinator"}
+                      ? "Select Project Supervisor"
+                      : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                      ? projectSupervisors
-                      : siteCoordinators
+                        ? projectSupervisors
+                        : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
@@ -555,16 +574,16 @@ const ProjectForm = () => {
                   {selectedDropdown === "manager"
                     ? "Select Project Manager"
                     : selectedDropdown === "supervisor"
-                    ? "Select Project Supervisor"
-                    : "Select Site Coordinator"}
+                      ? "Select Project Supervisor"
+                      : "Select Site Coordinator"}
                 </Text>
                 <FlatList
                   data={
                     selectedDropdown === "manager"
                       ? projectManagers
                       : selectedDropdown === "supervisor"
-                      ? projectSupervisors
-                      : siteCoordinators
+                        ? projectSupervisors
+                        : siteCoordinators
                   }
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
