@@ -256,12 +256,12 @@ const ProjectForm = () => {
           setIsSuccessModalVisible(true);
           Alert.alert("Success", "Project created successfully!");
           resetForm();
-          // navigation.navigate("(pages)/AssignProjectTeam", {
-          //   projectId: response.data.id, // Pass only the id
-          //   project_manager: projectManager,
-          //   project_supervisor: supervisor,
-          //   site_coordinator: coordinator,
-          // });
+          navigation.navigate("(pages)/AssignProjectTeam", {
+            projectId: response.data.id, // Pass only the id
+            project_manager: projectManager,
+            project_supervisor: supervisor,
+            site_coordinator: coordinator,
+          });
         } else {
           console.error("Error details:", response.error);
           Alert.alert(
