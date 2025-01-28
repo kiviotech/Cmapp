@@ -7,18 +7,15 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  Dimensions,
   TextInput,
-  Image
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { fetchRegistrations } from "../../src/services/registrationService";
 import { fetchSubmissions } from "../../src/services/submissionService";
-import icons from "../../constants/icons"
+import icons from "../../constants/icons";
 import Icon from "react-native-vector-icons/MaterialIcons";
-
-const { width, height } = Dimensions.get("window");
 
 const RequestsScreen = () => {
   const [activeTab, setActiveTab] = useState("Pending");
@@ -36,7 +33,7 @@ const RequestsScreen = () => {
 
           const registrations = registrationsResponse?.data || [];
           const submissions = submissionsResponse?.data || [];
-          console.log('submissions', submissions)
+          console.log("submissions", submissions);
           setRequests([...registrations, ...submissions]);
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -86,18 +83,24 @@ const RequestsScreen = () => {
               </Text>
 
               <View style={styles.subCardContainer}>
-                <Image source={icons.check_list} style={{ width: 18, height: 18 }} />
-                <Text style={{ color: '#666' }}>
+                <Image
+                  source={icons.check_list}
+                  style={{ width: 18, height: 18 }}
+                />
+                <Text style={{ color: "#666" }}>
                   {item?.attributes?.task?.data?.attributes?.standard_task?.data
                     ?.attributes?.Name || "Work"}
                 </Text>
               </View>
 
               <View style={styles.subCardContainer}>
-                <Image source={icons.project_diagram} style={{ width: 18, height: 18 }} />
-                <Text style={{ color: '#666' }}>
-                  {item.attributes.task?.data?.attributes?.project?.data?.attributes
-                    .name || "Project"}
+                <Image
+                  source={icons.project_diagram}
+                  style={{ width: 18, height: 18 }}
+                />
+                <Text style={{ color: "#666" }}>
+                  {item.attributes.task?.data?.attributes?.project?.data
+                    ?.attributes.name || "Project"}
                 </Text>
               </View>
             </View>
@@ -108,9 +111,10 @@ const RequestsScreen = () => {
                   style={[
                     styles.requestStatus,
                     styles[
-                    `status${item.attributes.status.charAt(0).toUpperCase() +
-                    item.attributes.status.slice(1)
-                    }`
+                      `status${
+                        item.attributes.status.charAt(0).toUpperCase() +
+                        item.attributes.status.slice(1)
+                      }`
                     ],
                   ]}
                 >
@@ -122,18 +126,15 @@ const RequestsScreen = () => {
 
               <View>
                 <View style={styles.submissionDate}>
-                  <Icon
-                    name="event"
-                    size={16}
-                    color="#666"
-                  />
+                  <Icon name="event" size={16} color="#666" />
                   <Text style={styles.subDate}>
                     Submitted on {item?.attributes?.createdAt.slice(0, 10)}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={() =>
-                    navigation.navigate("(pages)/TaskRequestDetails",
+                    navigation.navigate(
+                      "(pages)/TaskRequestDetails",
                       // isSubmission
                       //   ? "(pages)/TaskRequestDetails"
                       //   : "(pages)/EmailRequestDetails",
@@ -144,7 +145,6 @@ const RequestsScreen = () => {
                   <Text style={styles.subViewButton}>View Details</Text>
                 </TouchableOpacity>
               </View>
-
             </View>
           </View>
         ) : (
@@ -157,9 +157,10 @@ const RequestsScreen = () => {
               style={[
                 styles.requestStatus,
                 styles[
-                `status${item.attributes.status.charAt(0).toUpperCase() +
-                item.attributes.status.slice(1)
-                }`
+                  `status${
+                    item.attributes.status.charAt(0).toUpperCase() +
+                    item.attributes.status.slice(1)
+                  }`
                 ],
               ]}
             >
@@ -170,7 +171,8 @@ const RequestsScreen = () => {
 
             <TouchableOpacity
               onPress={() =>
-                navigation.navigate("(pages)/EmailRequestDetails",
+                navigation.navigate(
+                  "(pages)/EmailRequestDetails",
                   // isSubmission
                   //   ? "(pages)/TaskRequestDetails"
                   //   : "(pages)/EmailRequestDetails",
@@ -210,7 +212,7 @@ const RequestsScreen = () => {
         </TouchableOpacity> */}
       </View>
     );
-  }
+  };
 
   return (
     <SafeAreaView style={styles.safeAreaContainer}>
@@ -310,28 +312,29 @@ const styles = StyleSheet.create({
   },
   fixedHeader: {
     backgroundColor: "#F8F8F8",
-    paddingHorizontal: 16,
-    paddingTop: 30,
+    paddingHorizontal: "4%",
+    paddingTop: "8%",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E5",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    marginTop: 20,
+    marginBottom: "5%",
+    marginTop: "5%",
   },
   headerText: {
-    fontSize: width * 0.06,
+    fontSize: 24,
     fontWeight: "600",
     color: "#1C1C1E",
-    marginLeft: 20,
-    marginTop: -5,
+    marginLeft: "5%",
+    flex: 1,
   },
   categoryTabsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 16,
+    marginBottom: "4%",
+    width: "100%",
   },
   categoryTab: {
     paddingVertical: 8,
@@ -371,23 +374,27 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   listContent: {
-    padding: 16,
-    paddingTop: 8,
+    padding: "4%",
+    paddingTop: "2%",
   },
   requestContainer: {
-    padding: 16,
+    padding: "4%",
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: "4%",
+    width: "100%",
   },
   submissionCard: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 10,
   },
   imageCardContent: {
-    maxWidth: '60%'
+    flex: 1,
+    minWidth: "50%",
+    maxWidth: "60%",
   },
   requestTitle: {
     fontSize: 16,
@@ -395,8 +402,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   subCardContainer: {
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexWrap: "wrap",
     flexDirection: "row",
     gap: 5,
     marginVertical: 3,
@@ -420,17 +427,17 @@ const styles = StyleSheet.create({
     color: "#E53E3E",
   },
   statusCard: {
-    display: 'flex',
+    flex: 1,
+    minWidth: "35%",
     flexDirection: "column",
-    justifyContent: 'space-between',
-    // textAlign: 'right',
-    alignItems: 'flex-end'
+    justifyContent: "space-between",
+    alignItems: "flex-end",
   },
   submissionDate: {
     display: "flex",
     flexDirection: "row",
     gap: 3,
-    alignItems: 'center',
+    alignItems: "center",
   },
   subDate: {
     color: "#666",
@@ -441,7 +448,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     marginTop: 3,
-    textAlign: 'right',
+    textAlign: "right",
   },
   regViewButton: {
     color: "#3182CE",
@@ -451,8 +458,8 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     position: "relative",
-    marginBottom: 20,
-    paddingHorizontal: 0,
+    marginBottom: "5%",
+    width: "100%",
   },
   searchIcon: {
     position: "absolute",
@@ -470,6 +477,7 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
     fontSize: 14,
     color: "#333",
+    width: "100%",
   },
   noDataContainer: {
     flex: 1,
