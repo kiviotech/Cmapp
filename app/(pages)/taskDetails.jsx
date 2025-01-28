@@ -10,6 +10,7 @@ import {
   Modal,
   Linking,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import CustomButton from "../../components/CustomButton";
 import { icons } from "../../constants";
@@ -76,7 +77,8 @@ const GoogleDrivePreview = ({ url }) => {
 const TaskDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { taskData, refresh } = route.params || {};
+  const { taskData: initialTaskData, refresh } = route.params || {};
+  const [taskData, setTaskData] = useState(initialTaskData);
   const [showModal, setShowModal] = useState(false);
   const [standardTaskDetails, setStandardTaskDetails] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -84,6 +86,23 @@ const TaskDetails = () => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [linkModalVisible, setLinkModalVisible] = useState(false);
   const [taskStatus, setTaskStatus] = useState("");
+
+  useEffect(() => {
+    const loadTaskData = async () => {
+      if (!taskData?.attributes || refresh) {
+        try {
+          const response = await fetchTaskById(taskData.id);
+          if (response?.data) {
+            setTaskData(response.data);
+          }
+        } catch (error) {
+          console.error("Error fetching task data:", error);
+        }
+      }
+    };
+
+    loadTaskData();
+  }, [taskData?.id, refresh]);
 
   useEffect(() => {
     const fetchStandardTaskDetails = async () => {
@@ -101,29 +120,6 @@ const TaskDetails = () => {
     };
     fetchStandardTaskDetails();
   }, []);
-
-  // useEffect(() => {
-  //   const fetchSubmissionDetails = async () => {
-  //     try {
-  //       const submissionIds = taskData?.attributes?.submissions?.data?.map(
-  //         (item) => item.id
-  //       );
-  //       console.log("taskId", submissionIds);
-  //       if (submissionIds && submissionIds.length > 0) {
-  //         const submissionPromises = submissionIds.map((id) =>
-  //           fetchSubmissionById(id)
-  //         );
-  //         const responses = await Promise.all(submissionPromises);
-  //         const submissionData = responses.map((response) => response.data);
-  //         setSubmissions(submissionData);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching submission data:", error);
-  //     }
-  //   };
-
-  //   fetchSubmissionDetails();
-  // }, [taskData]);
 
   useEffect(() => {
     const fetchTaskDetails = async () => {
@@ -161,10 +157,12 @@ const TaskDetails = () => {
     fetchTaskDetails();
   }, [taskData?.id, refresh]);
 
-  // Optionally add a check to handle missing taskData gracefully
-  if (!taskData) {
-    console.error("No task data received"); // Log an error if taskData is undefined
-    return <Text>No task data available</Text>; // Render a fallback message if no data
+  if (!taskData?.attributes) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
   }
 
   const documents = taskData?.attributes?.documents?.data
@@ -183,33 +181,6 @@ const TaskDetails = () => {
       console.error("Failed to open URL: ", error);
     }
   };
-
-  // const openLink = () => {
-  //   const link = taskData?.attributes?.standard_task?.data?.attributes?.Urls;
-  //   console.log("task", link);
-  //   if (link) {
-  //     setLinkModalVisible(true);
-  //   } else {
-  //     Alert.alert(
-  //       "No Link Available",
-  //       "No link has been provided for this task.",
-  //       [{ text: "OK" }]
-  //     );
-  //   }
-  // };
-
-  // const handleLinkOpen = () => {
-  //   const link = taskData?.attributes?.standard_task?.data?.attributes?.Urls;
-  //   console.log("link", link);
-  //   if (link) {
-  //     Linking.openURL(link).catch((err) =>
-  //       console.error("Failed to open link:", err)
-  //     );
-  //     setLinkModalVisible(false);
-  //   } else {
-  //     console.error("No link to open");
-  //   }
-  // };
 
   const handleImagePress = (imageUrl) => {
     setSelectedImage(imageUrl);
@@ -250,12 +221,12 @@ const TaskDetails = () => {
             Deadline:{" "}
             {taskData?.attributes?.due_date
               ? new Date(taskData.attributes.due_date)
-                .toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })
-                .replace(/\//g, "-")
+                  .toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })
+                  .replace(/\//g, "-")
               : "N/A"}
           </Text>
         </View>
@@ -341,7 +312,6 @@ const TaskDetails = () => {
                 </Text>
               </TouchableOpacity>
             )}
-
           </View>
           {/* )} */}
 
@@ -430,21 +400,21 @@ const TaskDetails = () => {
                       ?.status === "approved"
                       ? "#D4EDDA"
                       : taskData?.attributes?.submission?.data?.attributes
-                        ?.status === "declined"
-                        ? "#ffebee"
-                        : "rgba(251, 188, 85, 0.3)",
+                          ?.status === "declined"
+                      ? "#ffebee"
+                      : "rgba(251, 188, 85, 0.3)",
                 },
               ]}
             >
               <Image
                 source={
                   taskData?.attributes?.submission?.data?.attributes?.status ===
-                    "approved"
+                  "approved"
                     ? icons.approved
                     : taskData?.attributes?.submission?.data?.attributes
-                      ?.status === "declined"
-                      ? icons.reject
-                      : icons.uploadApproval
+                        ?.status === "declined"
+                    ? icons.reject
+                    : icons.uploadApproval
                 }
               />
               <Text
@@ -454,9 +424,9 @@ const TaskDetails = () => {
                       ?.status === "approved"
                       ? "#28A745"
                       : taskData?.attributes?.submission?.data?.attributes
-                        ?.status === "declined"
-                        ? "#DC3545"
-                        : "#FBBC55",
+                          ?.status === "declined"
+                      ? "#DC3545"
+                      : "#FBBC55",
                 }}
               >
                 {taskData?.attributes?.submission?.data?.attributes?.status ||
@@ -890,6 +860,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
     overflow: "hidden",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

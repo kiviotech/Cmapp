@@ -127,7 +127,7 @@ const FileUpload = forwardRef(({ onFileUploadSuccess, message }, ref) => {
             }
           }
         } catch (error) {
-          console.error(`Upload failed for ${fileName}:`, error);
+          console.error(`Upload failed for ${fileName}:, error`);
           updateFileStatus(fileName, "error");
           throw error;
         }

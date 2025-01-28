@@ -487,7 +487,7 @@ const UploadProof = ({}) => {
                         />
                       ) : file.status === "uploading" ? (
                         <Text style={{ color: "#838383", fontSize: 10 }}>
-                          ${file.progress}%
+                          `${file.progress}%`
                         </Text>
                       ) : null}
                     </View>
