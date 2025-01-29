@@ -441,9 +441,9 @@ const ProjectTeam = () => {
                             {project?.attributes?.description
                               ? project?.attributes?.description?.length > 50
                                 ? `${project?.attributes?.description?.slice(
-                                  0,
-                                  50
-                                )}...`
+                                    0,
+                                    50
+                                  )}...`
                                 : project?.attributes?.description
                               : "No description available"}
                           </Text>
@@ -500,12 +500,12 @@ const ProjectTeam = () => {
                               End Date:{" "}
                               {project?.attributes?.end_date
                                 ? new Date(
-                                  project?.attributes?.end_date
-                                ).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })
+                                    project?.attributes?.end_date
+                                  ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })
                                 : "Not set"}
                             </Text>
                           </View>
@@ -544,22 +544,31 @@ const ProjectTeam = () => {
                   }}
                 >
                   <View style={styles.submissionCard}>
-                    <View style={{ maxWidth: '65%' }}>
+                    <View style={{ maxWidth: "65%" }}>
                       <Text style={styles.requestTitle}>
-                        {request?.attributes?.submitted_by?.data?.attributes?.username}
+                        {
+                          request?.attributes?.submitted_by?.data?.attributes
+                            ?.username
+                        }
                       </Text>
 
                       <View style={styles.subCardContainer}>
-                        <Image source={icons.check_list} style={{ width: 18, height: 18 }} />
-                        <Text style={{ color: '#666' }}>
+                        <Image
+                          source={icons.check_list}
+                          style={{ width: 18, height: 18 }}
+                        />
+                        <Text style={{ color: "#666" }}>
                           {request?.attributes?.task?.data?.attributes
                             ?.standard_task?.data?.attributes?.Name || "task"}
                         </Text>
                       </View>
 
                       <View style={styles.subCardContainer}>
-                        <Image source={icons.project_diagram} style={{ width: 18, height: 18 }} />
-                        <Text style={{ color: '#666' }}>
+                        <Image
+                          source={icons.project_diagram}
+                          style={{ width: 18, height: 18 }}
+                        />
+                        <Text style={{ color: "#666" }}>
                           {request?.attributes?.task?.data?.attributes?.project
                             ?.data?.attributes?.name || "Project"}
                         </Text>
@@ -574,30 +583,27 @@ const ProjectTeam = () => {
                             request?.attributes?.status === "approved"
                               ? styles.requestStatusApproved
                               : request?.attributes?.status === "rejected"
-                                ? styles.requestStatusRejected
-                                : request?.attributes?.status === "pending"
-                                  ? styles.requestStatusPendingText
-                                  : {},
+                              ? styles.requestStatusRejected
+                              : request?.attributes?.status === "pending"
+                              ? styles.requestStatusPendingText
+                              : {},
                           ]}
                         >
                           {request?.attributes?.status
                             ? request?.attributes?.status
-                              .charAt(0)
-                              .toUpperCase() +
-                            request?.attributes?.status.slice(1).toLowerCase()
+                                .charAt(0)
+                                .toUpperCase() +
+                              request?.attributes?.status.slice(1).toLowerCase()
                             : "Pending"}
                         </Text>
                       </View>
 
                       <View>
                         <View style={styles.submissionDate}>
-                          <Icon
-                            name="event"
-                            size={16}
-                            color="#666"
-                          />
+                          <Icon name="event" size={16} color="#666" />
                           <Text style={styles.subDate}>
-                            Submitted on {request?.attributes?.createdAt.slice(0, 10)}
+                            Submitted on{" "}
+                            {request?.attributes?.createdAt.slice(0, 10)}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -620,7 +626,39 @@ const ProjectTeam = () => {
 
             <View style={styles.container1}>
               <View style={styles.milestoneContainer}>
-                <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
+                <View style={styles.headerContainer}>
+                  <Text style={styles.milestoneHeader}>
+                    Upcoming Milestones
+                  </Text>
+                  <View style={styles.toggleWrapper}>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggleButton,
+                        isListView ? null : styles.activeToggle,
+                      ]}
+                      onPress={() => setIsListView(false)}
+                    >
+                      <Icon
+                        name="grid-view"
+                        size={18}
+                        color={!isListView ? "#fff" : "#666"}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggleButton,
+                        isListView ? styles.activeToggle : null,
+                      ]}
+                      onPress={() => setIsListView(true)}
+                    >
+                      <Icon
+                        name="view-list"
+                        size={18}
+                        color={isListView ? "#fff" : "#666"}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -640,154 +678,129 @@ const ProjectTeam = () => {
             </View>
 
             <View style={styles.filterContainer}>
-              <View style={styles.dropdownWrapper}>
-                <Pressable
-                  style={styles.projectDropdown}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    setProjectDropdownVisible(!isProjectDropdownVisible);
-                  }}
-                >
-                  <Text style={styles.dropdownText}>
-                    {selectedProject
-                      ? projects.find((p) => p.id === selectedProject)
-                        ?.attributes?.name || "Select Project"
-                      : "Select Project"}
-                  </Text>
-                  <Icon
-                    name={
-                      isProjectDropdownVisible
-                        ? "keyboard-arrow-up"
-                        : "keyboard-arrow-down"
-                    }
-                    size={24}
-                    color="#666"
-                  />
-                </Pressable>
+              <View style={styles.dropdownsRow}>
+                <View style={styles.dropdownWrapper}>
+                  <Pressable
+                    style={styles.projectDropdown}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setProjectDropdownVisible(!isProjectDropdownVisible);
+                    }}
+                  >
+                    <Text style={styles.dropdownText}>
+                      {selectedProject
+                        ? projects.find((p) => p.id === selectedProject)
+                            ?.attributes?.name || "Select Project"
+                        : "Select Project"}
+                    </Text>
+                    <Icon
+                      name={
+                        isProjectDropdownVisible
+                          ? "keyboard-arrow-up"
+                          : "keyboard-arrow-down"
+                      }
+                      size={24}
+                      color="#666"
+                    />
+                  </Pressable>
 
-                {isProjectDropdownVisible && (
-                  <View style={styles.dropdownMenu}>
-                    <Pressable
-                      style={styles.dropdownItem}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setSelectedProject("");
-                        setProjectDropdownVisible(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>All Projects</Text>
-                    </Pressable>
-                    {projects.map((project) => (
+                  {isProjectDropdownVisible && (
+                    <View style={styles.dropdownMenu}>
                       <Pressable
-                        key={project.id}
-                        style={[
-                          styles.dropdownItem,
-                          selectedProject === project.id &&
-                          styles.selectedDropdownItem,
-                        ]}
+                        style={styles.dropdownItem}
                         onPress={(e) => {
                           e.stopPropagation();
-                          setSelectedProject(project.id);
+                          setSelectedProject("");
                           setProjectDropdownVisible(false);
                         }}
                       >
-                        <Text
-                          style={[
-                            styles.dropdownItemText,
-                            selectedProject === project.id &&
-                            styles.selectedDropdownItemText,
-                          ]}
-                        >
-                          {project?.attributes?.name}
+                        <Text style={styles.dropdownItemText}>
+                          All Projects
                         </Text>
                       </Pressable>
-                    ))}
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.statusDropdownContainer}>
-                <TouchableOpacity
-                  style={styles.statusDropdown}
-                  onPress={() =>
-                    setStatusDropdownVisible(!isStatusDropdownVisible)
-                  }
-                >
-                  <Text style={styles.statusDropdownText}>
-                    {selectedStatus
-                      ? statusOptions.find(
-                        (opt) => opt.value === selectedStatus
-                      )?.label
-                      : "Select Status"}
-                  </Text>
-                  <Icon
-                    name={
-                      isStatusDropdownVisible
-                        ? "keyboard-arrow-up"
-                        : "keyboard-arrow-down"
-                    }
-                    size={24}
-                    color="#666"
-                  />
-                </TouchableOpacity>
-
-                {isStatusDropdownVisible && (
-                  <View style={styles.dropdownMenu}>
-                    {statusOptions.map((option) => (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          styles.dropdownItem,
-                          selectedStatus === option.value &&
-                          styles.selectedDropdownItem,
-                        ]}
-                        onPress={() => {
-                          setSelectedStatus(option.value);
-                          setStatusDropdownVisible(false);
-                        }}
-                      >
-                        <Text
+                      {projects.map((project) => (
+                        <Pressable
+                          key={project.id}
                           style={[
-                            styles.dropdownItemText,
-                            selectedStatus === option.value &&
-                            styles.selectedDropdownItemText,
+                            styles.dropdownItem,
+                            selectedProject === project.id &&
+                              styles.selectedDropdownItem,
                           ]}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            setSelectedProject(project.id);
+                            setProjectDropdownVisible(false);
+                          }}
                         >
-                          {option.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
+                          <Text
+                            style={[
+                              styles.dropdownItemText,
+                              selectedProject === project.id &&
+                                styles.selectedDropdownItemText,
+                            ]}
+                          >
+                            {project?.attributes?.name}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </View>
 
-              <View style={styles.toggleWrapper}>
-                <TouchableOpacity
-                  style={[
-                    styles.toggleButton,
-                    isListView ? null : styles.activeToggle,
-                  ]}
-                  onPress={() => setIsListView(false)}
-                >
-                  <Icon
-                    name="grid-view"
-                    size={18}
-                    color={!isListView ? "#fff" : "#666"}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.toggleButton,
-                    isListView ? styles.activeToggle : null,
-                  ]}
-                  onPress={() => setIsListView(true)}
-                >
-                  <Icon
-                    name="view-list"
-                    size={18}
-                    color={isListView ? "#fff" : "#666"}
-                  />
-                </TouchableOpacity>
+                <View style={styles.statusDropdownContainer}>
+                  <TouchableOpacity
+                    style={styles.statusDropdown}
+                    onPress={() =>
+                      setStatusDropdownVisible(!isStatusDropdownVisible)
+                    }
+                  >
+                    <Text style={styles.statusDropdownText}>
+                      {selectedStatus
+                        ? statusOptions.find(
+                            (opt) => opt.value === selectedStatus
+                          )?.label
+                        : "Select Status"}
+                    </Text>
+                    <Icon
+                      name={
+                        isStatusDropdownVisible
+                          ? "keyboard-arrow-up"
+                          : "keyboard-arrow-down"
+                      }
+                      size={24}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
+
+                  {isStatusDropdownVisible && (
+                    <View style={styles.dropdownMenu}>
+                      {statusOptions.map((option) => (
+                        <TouchableOpacity
+                          key={option.value}
+                          style={[
+                            styles.dropdownItem,
+                            selectedStatus === option.value &&
+                              styles.selectedDropdownItem,
+                          ]}
+                          onPress={() => {
+                            setSelectedStatus(option.value);
+                            setStatusDropdownVisible(false);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.dropdownItemText,
+                              selectedStatus === option.value &&
+                                styles.selectedDropdownItemText,
+                            ]}
+                          >
+                            {option.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
 
@@ -860,10 +873,10 @@ const ProjectTeam = () => {
                           task?.attributes?.task_status === "completed"
                             ? "#E8F5E9"
                             : task?.attributes?.task_status === "ongoing"
-                              ? "#fff"
-                              : task?.attributes?.task_status === "rejected"
-                                ? "#FED5DD"
-                                : "#fff",
+                            ? "#fff"
+                            : task?.attributes?.task_status === "rejected"
+                            ? "#FED5DD"
+                            : "#fff",
                       },
                     ]}
                   >
@@ -916,10 +929,10 @@ const ProjectTeam = () => {
                                 task?.attributes?.task_status === "completed"
                                   ? "#E8F5E9"
                                   : task?.attributes?.task_status === "ongoing"
-                                    ? "#FFF3E0"
-                                    : task?.attributes?.task_status === "rejected"
-                                      ? "#FFEBEE"
-                                      : "#F5F5F5",
+                                  ? "#FFF3E0"
+                                  : task?.attributes?.task_status === "rejected"
+                                  ? "#FFEBEE"
+                                  : "#F5F5F5",
                             },
                           ]}
                         >
@@ -932,11 +945,11 @@ const ProjectTeam = () => {
                                     ? "#2E7D32"
                                     : task?.attributes?.task_status ===
                                       "ongoing"
-                                      ? "#EF6C00"
-                                      : task?.attributes?.task_status ===
-                                        "rejected"
-                                        ? "#C62828"
-                                        : "#757575",
+                                    ? "#EF6C00"
+                                    : task?.attributes?.task_status ===
+                                      "rejected"
+                                    ? "#C62828"
+                                    : "#757575",
                               },
                             ]}
                           >
@@ -1191,7 +1204,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 40,
   },
   milestoneContainer: {
     flex: 1,
@@ -1310,33 +1323,33 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   submissionCard: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
   },
   requestTitle: {
     fontSize: 16,
     fontWeight: "bold",
   },
   subCardContainer: {
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexWrap: "wrap",
     flexDirection: "row",
     gap: 5,
     marginVertical: 3,
   },
   statusCard: {
-    display: 'flex',
+    display: "flex",
     flexDirection: "column",
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    justifyContent: "space-between",
+    alignItems: "flex-end",
   },
   submissionDate: {
     display: "flex",
     flexDirection: "row",
     gap: 3,
-    alignItems: 'center',
+    alignItems: "center",
   },
   subDate: {
     color: "#666",
@@ -1353,7 +1366,7 @@ const styles = StyleSheet.create({
   },
   viewLink: {
     color: "#1e90ff",
-    textAlign: 'right'
+    textAlign: "right",
   },
   requestsHeader: {
     flexDirection: "row",
@@ -1501,19 +1514,23 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   filterContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    gap: 10,
     marginBottom: 15,
     paddingHorizontal: 5,
     position: "relative",
     zIndex: 1000,
+  },
+  dropdownsRow: {
+    flexDirection: "row",
     gap: 10,
+    flexWrap: "wrap",
   },
   dropdownWrapper: {
     position: "relative",
     zIndex: 1001,
     flex: 1,
+    minWidth: 150,
   },
   projectDropdown: {
     flexDirection: "row",
@@ -1525,7 +1542,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D1D1D1",
     justifyContent: "space-between",
-    userSelect: "none",
   },
   dropdownText: {
     fontSize: 14,
@@ -1536,6 +1552,7 @@ const styles = StyleSheet.create({
     position: "relative",
     zIndex: 1001,
     flex: 1,
+    minWidth: 150,
   },
   statusDropdown: {
     flexDirection: "row",
