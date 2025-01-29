@@ -476,7 +476,7 @@ const ProjectTeam = () => {
                                 </Text>
                               </View>
                             </View>
-                            <View style={styles.statusIndicator}>
+                            {/* <View style={styles.statusIndicator}>
                               <Icon
                                 name={isDelayed ? "error" : "check-circle"}
                                 size={16}
@@ -490,7 +490,7 @@ const ProjectTeam = () => {
                               >
                                 {isDelayed ? "Delayed" : "On Schedule"}
                               </Text>
-                            </View>
+                            </View> */}
                           </View>
 
                           {/* Project End Date */}

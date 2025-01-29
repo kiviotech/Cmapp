@@ -46,14 +46,26 @@ const ChangePassword = () => {
     }
   };
 
-  const handlePasswordChange = (password) => {
-    setNewPassword(password);
+  // Update these handlers to prevent spaces
+  const handleCurrentPassword = (text) => {
+    const noSpaces = text.replace(/\s/g, "");
+    setCurrentPassword(noSpaces);
+  };
+
+  const handlePasswordChange = (text) => {
+    const noSpaces = text.replace(/\s/g, "");
+    setNewPassword(noSpaces);
     setValidation({
-      minLength: password.length >= 8,
-      hasNumber: /\d/.test(password),
-      noSpaces: !/\s/.test(password),
-      hasUpperLower: /[a-z]/.test(password) && /[A-Z]/.test(password),
+      minLength: noSpaces.length >= 8,
+      hasNumber: /\d/.test(noSpaces),
+      noSpaces: true, // This will always be true now
+      hasUpperLower: /[a-z]/.test(noSpaces) && /[A-Z]/.test(noSpaces),
     });
+  };
+
+  const handleConfirmPassword = (text) => {
+    const noSpaces = text.replace(/\s/g, "");
+    setConfirmPassword(noSpaces);
   };
 
   const handleSubmit = async () => {
@@ -124,7 +136,7 @@ const ChangePassword = () => {
               placeholder="Current Password"
               secureTextEntry={!isCurrentPasswordVisible}
               value={currentPassword}
-              onChangeText={setCurrentPassword}
+              onChangeText={handleCurrentPassword}
             />
             <TouchableOpacity
               onPress={() =>
@@ -168,7 +180,7 @@ const ChangePassword = () => {
               placeholder="Confirm New Password"
               secureTextEntry={!isConfirmPasswordVisible}
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={handleConfirmPassword}
             />
             <TouchableOpacity
               onPress={() =>
@@ -210,7 +222,7 @@ const ChangePassword = () => {
                 Must contain at least a number
               </Text>
             </View>
-            <View style={styles.validationItem}>
+            {/* <View style={styles.validationItem}>
               <Icon
                 name={validation.noSpaces ? "check-circle" : "cancel"}
                 size={20}
@@ -219,7 +231,7 @@ const ChangePassword = () => {
               <Text style={validation.noSpaces ? styles.valid : styles.invalid}>
                 There should be no spaces
               </Text>
-            </View>
+            </View> */}
             <View style={styles.validationItem}>
               <Icon
                 name={validation.hasUpperLower ? "check-circle" : "cancel"}

@@ -77,7 +77,7 @@ const SelectYourProject = ({ isLoading, projects }) => {
                   </Text>
                 </View>
 
-                <Text
+                {/* <Text
                   style={[
                     styles.projectStatus,
                     {
@@ -112,7 +112,7 @@ const SelectYourProject = ({ isLoading, projects }) => {
                       </>
                     );
                   })()}
-                </Text>
+                </Text> */}
                 <View style={styles.projectEndDateContainer}>
                   <Icon
                     name="event"
