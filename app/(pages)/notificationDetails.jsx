@@ -191,7 +191,7 @@ const NotificationDetails = () => {
         <View style={styles.card}>
           <View style={styles.projectHeader}>
             <Text style={styles.projectName}>
-              {taskData?.attributes?.project?.data?.attributes?.name}
+              Project: {taskData?.attributes?.project?.data?.attributes?.name}
             </Text>
             <Text style={[styles.status, { color: statusColor }]}>
               {notificationData.attributes.status?.charAt(0).toUpperCase() +
