@@ -1582,6 +1582,19 @@ const styles = StyleSheet.create({
   selectedDropdownItemText: {
     color: "#fff",
   },
+  toggleWrapper: {
+    flexDirection: "row",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    padding: 4,
+  },
+  toggleButton: {
+    padding: 8,
+    borderRadius: 6,
+  },
+  activeToggle: {
+    backgroundColor: "#1e90ff",
+  },
 });
 
 export default ProjectTeam;
