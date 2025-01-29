@@ -575,13 +575,7 @@ const Contractor = () => {
                               "No deadline specified"}
                           </Text>
                         </View>
-                        {isListView ? (
-                          <View style={styles.substructureBadge}>
-                            <Text style={styles.substructureText}>
-                              Substructure
-                            </Text>
-                          </View>
-                        ) : (
+                        {!isListView && (
                           <View
                             style={[
                               styles.statusBadge,

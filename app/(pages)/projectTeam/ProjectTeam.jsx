@@ -844,12 +844,8 @@ const ProjectTeam = () => {
                                 <Icon name="event" size={16} color="#666" />
                                 <Text style={styles.deadlineText}>
                                   Deadline:{" "}
-                                  {task?.attributes?.due_date || "Not set"}
-                                </Text>
-                              </View>
-                              <View style={styles.categoryBadge}>
-                                <Text style={styles.categoryText}>
-                                  Substructure
+                                  {task?.attributes?.due_date ||
+                                    "No deadline specified"}
                                 </Text>
                               </View>
                             </View>

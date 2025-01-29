@@ -63,9 +63,9 @@ const ProjectDetails = () => {
         try {
           const allTasks = [];
           const taskData = await getTaskByContractorId(projectId, userId);
-          console.log('task data', taskData.data)
+          console.log("task data", taskData.data);
           allTasks.push(...taskData.data.data);
-          console.log('all tasks', allTasks)
+          console.log("all tasks", allTasks);
 
           setTasks(allTasks);
 
@@ -335,8 +335,8 @@ const ProjectDetails = () => {
                 }
               >
                 {task?.attributes?.task_status === "completed"
-                  ? `On ${task?.attributes?.updatedAt || "N/A"}`
-                  : `Due ${task?.attributes?.due_date || "N/A"}`}
+                  ? `On: ${task?.attributes?.updatedAt || "N/A"}`
+                  : `Due: ${task?.attributes?.due_date || "N/A"}`}
               </Text>
             </View>
           </View>
