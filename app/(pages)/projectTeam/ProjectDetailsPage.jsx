@@ -235,7 +235,7 @@ const ProjectDetailsPage = () => {
                 style={styles.assignBtn}
                 onPress={() => {
                   navigation.navigate("(pages)/AssignContractors", {
-                    projectId: projectData?.data?.id,
+                    projectId: projectId,
                   });
                 }}
               >
