@@ -21,6 +21,7 @@ import {
 } from "../../../src/services/taskService";
 import { getProjectById } from "../../../src/api/repositories/projectRepository";
 import useAuthStore from "../../../useAuthStore";
+import InspectionFormModal from "../InspectionFormModal";
 
 const { width, height } = Dimensions.get("window");
 
@@ -41,6 +42,8 @@ const ProjectDetailsPage = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInspectionModalVisible, setIsInspectionModalVisible] =
+    useState(false);
 
   const userId = user?.id;
 
@@ -265,6 +268,16 @@ const ProjectDetailsPage = () => {
             </Text>
           </View>
 
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressLabel}>Inspection Form</Text>
+            <TouchableOpacity
+              style={styles.formButton}
+              onPress={() => setIsInspectionModalVisible(true)}
+            >
+              <Text style={styles.formButtonText}>Open Form</Text>
+            </TouchableOpacity>
+          </View>
+
           <Text style={styles.label}>All Tasks</Text>
 
           {tasksData?.length > 0 ? (
@@ -327,6 +340,17 @@ const ProjectDetailsPage = () => {
           <BottomNavigation />
         </View>
       </View>
+      <InspectionFormModal
+        visible={isInspectionModalVisible}
+        onClose={() => setIsInspectionModalVisible(false)}
+        onOpenForm={() => {
+          setIsInspectionModalVisible(false);
+          navigation.navigate("(pages)/InspectionForm", {
+            projectId: projectId,
+          });
+        }}
+        projectId={projectId}
+      />
     </SafeAreaView>
   );
 };
@@ -517,6 +541,18 @@ const styles = StyleSheet.create({
   noTasksText: {
     fontSize: 16,
     color: "#6E6E6E",
+  },
+  formButton: {
+    backgroundColor: "#66B8FC",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginLeft: "auto",
+  },
+  formButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
 
