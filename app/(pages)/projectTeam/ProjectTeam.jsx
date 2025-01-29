@@ -544,7 +544,7 @@ const ProjectTeam = () => {
                   }}
                 >
                   <View style={styles.submissionCard}>
-                    <View style={{ maxWidth: "65%" }}>
+                    <View style={styles.requestMainContent}>
                       <Text style={styles.requestTitle}>
                         {
                           request?.attributes?.submitted_by?.data?.attributes
@@ -555,9 +555,9 @@ const ProjectTeam = () => {
                       <View style={styles.subCardContainer}>
                         <Image
                           source={icons.check_list}
-                          style={{ width: 18, height: 18 }}
+                          style={styles.requestIcon}
                         />
-                        <Text style={{ color: "#666" }}>
+                        <Text style={styles.requestText} numberOfLines={1}>
                           {request?.attributes?.task?.data?.attributes
                             ?.standard_task?.data?.attributes?.Name || "task"}
                         </Text>
@@ -566,9 +566,9 @@ const ProjectTeam = () => {
                       <View style={styles.subCardContainer}>
                         <Image
                           source={icons.project_diagram}
-                          style={{ width: 18, height: 18 }}
+                          style={styles.requestIcon}
                         />
-                        <Text style={{ color: "#666" }}>
+                        <Text style={styles.requestText} numberOfLines={1}>
                           {request?.attributes?.task?.data?.attributes?.project
                             ?.data?.attributes?.name || "Project"}
                         </Text>
@@ -576,46 +576,43 @@ const ProjectTeam = () => {
                     </View>
 
                     <View style={styles.statusCard}>
-                      <View>
-                        <Text
-                          style={[
-                            styles.statusBold,
-                            request?.attributes?.status === "approved"
-                              ? styles.requestStatusApproved
-                              : request?.attributes?.status === "rejected"
-                              ? styles.requestStatusRejected
-                              : request?.attributes?.status === "pending"
-                              ? styles.requestStatusPendingText
-                              : {},
-                          ]}
-                        >
-                          {request?.attributes?.status
-                            ? request?.attributes?.status
-                                .charAt(0)
-                                .toUpperCase() +
-                              request?.attributes?.status.slice(1).toLowerCase()
-                            : "Pending"}
+                      <Text
+                        style={[
+                          styles.statusBold,
+                          request?.attributes?.status === "approved"
+                            ? styles.requestStatusApproved
+                            : request?.attributes?.status === "rejected"
+                            ? styles.requestStatusRejected
+                            : request?.attributes?.status === "pending"
+                            ? styles.requestStatusPendingText
+                            : {},
+                        ]}
+                      >
+                        {request?.attributes?.status
+                          ? request?.attributes?.status
+                              .charAt(0)
+                              .toUpperCase() +
+                            request?.attributes?.status.slice(1).toLowerCase()
+                          : "Pending"}
+                      </Text>
+
+                      <View style={styles.submissionDate}>
+                        <Icon name="event" size={16} color="#666" />
+                        <Text style={styles.subDate}>
+                          {request?.attributes?.createdAt.slice(0, 10)}
                         </Text>
                       </View>
 
-                      <View>
-                        <View style={styles.submissionDate}>
-                          <Icon name="event" size={16} color="#666" />
-                          <Text style={styles.subDate}>
-                            Submitted on{" "}
-                            {request?.attributes?.createdAt.slice(0, 10)}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => {
-                            navigation.navigate("(pages)/TaskRequestDetails", {
-                              requestData: request,
-                            });
-                          }}
-                        >
-                          <Text style={styles.viewLink}>View</Text>
-                        </TouchableOpacity>
-                      </View>
+                      <TouchableOpacity
+                        style={styles.viewButton}
+                        onPress={() => {
+                          navigation.navigate("(pages)/TaskRequestDetails", {
+                            requestData: request,
+                          });
+                        }}
+                      >
+                        <Text style={styles.viewLink}>View</Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -1313,56 +1310,89 @@ const styles = StyleSheet.create({
   },
   requestItem: {
     backgroundColor: "#fff",
-    padding: 10,
+    padding: 12,
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 12,
     elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   submissionCard: {
-    display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    flexWrap: "wrap",
+    gap: 12,
+  },
+  requestMainContent: {
+    flex: 1,
+    minWidth: 0, // Ensures text truncation works properly
   },
   requestTitle: {
     fontSize: 16,
     fontWeight: "bold",
+    marginBottom: 8,
   },
   subCardContainer: {
-    display: "flex",
-    flexWrap: "wrap",
     flexDirection: "row",
-    gap: 5,
-    marginVertical: 3,
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  requestIcon: {
+    width: 18,
+    height: 18,
+    flexShrink: 0,
+  },
+  requestText: {
+    color: "#666",
+    flex: 1,
+    fontSize: 14,
   },
   statusCard: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
     alignItems: "flex-end",
+    justifyContent: "space-between",
+    minWidth: 100,
   },
   submissionDate: {
-    display: "flex",
     flexDirection: "row",
-    gap: 3,
     alignItems: "center",
+    gap: 4,
+    marginVertical: 8,
   },
   subDate: {
     color: "#666",
     fontSize: 12,
   },
-  requestDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 5,
-  },
-  requestStatus: {
-    color: "#333",
-    fontSize: 14,
+  viewButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   viewLink: {
     color: "#1e90ff",
-    textAlign: "right",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  requestStatusApproved: {
+    color: "#38A169",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  requestStatusRejected: {
+    color: "#E53E3E",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  requestStatusPendingText: {
+    color: "#ED6C02",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  noRequestsText: {
+    textAlign: "center",
+    color: "#666",
+    fontSize: 16,
+    paddingVertical: 20,
   },
   requestsHeader: {
     flexDirection: "row",
@@ -1408,53 +1438,6 @@ const styles = StyleSheet.create({
   },
   activePageText: {
     color: "#fff",
-  },
-  requestStatusApproved: {
-    color: "#38A169",
-  },
-  requestStatusRejected: {
-    color: "#E53E3E",
-  },
-  requestStatusPendingText: {
-    color: "red",
-  },
-  statusBold: {
-    fontWeight: "bold",
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: "600",
-    textTransform: "capitalize",
-  },
-  viewToggleContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginBottom: 15,
-    paddingHorizontal: 5,
-  },
-  toggleWrapper: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: "#D1D1D1",
-  },
-  toggleButton: {
-    padding: 6,
-    borderRadius: 6,
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  activeToggle: {
-    backgroundColor: "#4A6FFF",
   },
   listItemContainer: {
     marginBottom: 12,
