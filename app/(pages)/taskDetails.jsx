@@ -390,7 +390,7 @@ const TaskDetails = () => {
 
           {/* Add this before the Modal section */}
           <View style={styles.approvalSection}>
-            <Text style={styles.sectionTitle}>Supervisor's Approval</Text>
+            {/* <Text style={styles.sectionTitle}>Supervisor's Approval</Text>
             <View
               style={[
                 styles.notificationApproval,
@@ -432,9 +432,8 @@ const TaskDetails = () => {
                 {taskData?.attributes?.submission?.data?.attributes?.status ||
                   "Yet to Approve"}
               </Text>
-            </View>
+            </View> */}
 
-            {/* Previous Submissions Section */}
             <Text style={styles.sectionTitle}>Previous Submissions</Text>
             {submissions?.length > 0 ? (
               submissions.map((submission, index) => (
@@ -446,7 +445,6 @@ const TaskDetails = () => {
                     Comment: {submission.attributes.comment || "No comment"}
                   </Text>
 
-                  {/* Submission Images */}
                   <View style={styles.submissionImages}>
                     {submission.attributes.proofOfWork?.data?.map(
                       (image, imgIndex) => {

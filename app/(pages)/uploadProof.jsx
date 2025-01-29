@@ -53,7 +53,7 @@ const UploadProof = ({}) => {
   const clearFiles = useFileUploadStore((state) => state.clearFiles);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const { user } = useAuthStore();
- 
+
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -233,7 +233,7 @@ const UploadProof = ({}) => {
         return;
       }
 
-      // Instead of trying to call handleSubmit on the ref, use the uploadedFileIds
+      // Check for uploaded files
       if (!uploadedFileIds || uploadedFileIds.length === 0) {
         setErrors("Please upload at least one file");
         return;
@@ -412,6 +412,10 @@ const UploadProof = ({}) => {
 
   const handleFileUploadSuccess = (fileIds) => {
     setUploadedFileIds((prevIds) => [...prevIds, ...fileIds]);
+    // Clear the "Please upload at least one file" error if files are present
+    if (fileIds.length > 0) {
+      setErrors("");
+    }
   };
 
   const handleBackNavigation = () => {
@@ -451,7 +455,7 @@ const UploadProof = ({}) => {
       </View>
 
       <View>
-        <Text>
+        <Text style={{ textAlign: "center" }}>
           {errors ? <Text style={styles.errorText}>{errors}</Text> : null}
         </Text>
       </View>

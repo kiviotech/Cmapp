@@ -11,8 +11,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import BottomNavigation from "./contractor/BottomNavigation ";
-import { getTaskByContractorId } from "../../src/api/repositories/taskRepository";
-import { fetchContractorsByUserId } from "../../src/services/contractorService";
 import useAuthStore from "../../useAuthStore";
 import { fetchSubmissionByUserId, updateExistingSubmission } from "../../src/services/submissionService";
 
@@ -318,21 +316,30 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 80,
   },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    height: 40,
-  },
+  // searchContainer: {
+  //   // flexDirection: "row",
+  //   // alignItems: "center",
+  //   // backgroundColor: "#FFF",
+  //   // borderRadius: 8,
+  //   // paddingHorizontal: 12,
+  //   // marginBottom: 16,
+  //   // height: 40,
+  // },
   searchIcon: {
-    marginRight: 8,
+    position: "absolute",
+    left: 15,
+    top: 12,
+    zIndex: 1,
   },
   searchInput: {
-    flex: 1,
-    fontSize: 16,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingLeft: 45,
+    paddingRight: 15,
+    height: 45,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    fontSize: 14,
     color: "#333",
   },
   categoryTabsContainer: {

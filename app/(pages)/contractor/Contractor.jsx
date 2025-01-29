@@ -300,144 +300,6 @@ const Contractor = () => {
 
         <View style={styles.headerContainer}>
           <Text style={styles.milestoneHeader}>Upcoming Milestones</Text>
-        </View>
-
-        {/* Add Search Bar */}
-        <View style={styles.searchContainer}>
-          <Icon
-            name="search"
-            size={20}
-            color="#666"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search tasks by name..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        {/* Add these JSX right after the search container and before the FlatList */}
-        <View style={styles.filterContainer}>
-          <View style={styles.dropdownWrapper}>
-            <Pressable
-              style={styles.projectDropdown}
-              onPress={(e) => {
-                e.stopPropagation();
-                setProjectDropdownVisible(!isProjectDropdownVisible);
-              }}
-            >
-              <Text style={styles.dropdownText}>
-                {selectedProject
-                  ? projects.find((p) => p.id === selectedProject)?.attributes
-                      ?.name || "Select Project"
-                  : "Select Project"}
-              </Text>
-              <Icon
-                name={
-                  isProjectDropdownVisible
-                    ? "keyboard-arrow-up"
-                    : "keyboard-arrow-down"
-                }
-                size={24}
-                color="#666"
-              />
-            </Pressable>
-
-            {isProjectDropdownVisible && (
-              <View style={styles.dropdownMenu}>
-                <Pressable
-                  style={styles.dropdownItem}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    setSelectedProject("");
-                    setProjectDropdownVisible(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemText}>All Projects</Text>
-                </Pressable>
-                {projects.map((project) => (
-                  <Pressable
-                    key={project.id}
-                    style={[
-                      styles.dropdownItem,
-                      selectedProject === project.id &&
-                        styles.selectedDropdownItem,
-                    ]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setSelectedProject(project.id);
-                      setProjectDropdownVisible(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        selectedProject === project.id &&
-                          styles.selectedDropdownItemText,
-                      ]}
-                    >
-                      {project?.attributes?.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.statusDropdownContainer}>
-            <TouchableOpacity
-              style={styles.statusDropdown}
-              onPress={() => setStatusDropdownVisible(!isStatusDropdownVisible)}
-            >
-              <Text style={styles.statusDropdownText}>
-                {selectedStatus
-                  ? statusOptions.find((opt) => opt.value === selectedStatus)
-                      ?.label
-                  : "Select Status"}
-              </Text>
-              <Icon
-                name={
-                  isStatusDropdownVisible
-                    ? "keyboard-arrow-up"
-                    : "keyboard-arrow-down"
-                }
-                size={24}
-                color="#666"
-              />
-            </TouchableOpacity>
-
-            {isStatusDropdownVisible && (
-              <View style={styles.dropdownMenu}>
-                {statusOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.dropdownItem,
-                      selectedStatus === option.value &&
-                        styles.selectedDropdownItem,
-                    ]}
-                    onPress={() => {
-                      setSelectedStatus(option.value);
-                      setStatusDropdownVisible(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        selectedStatus === option.value &&
-                          styles.selectedDropdownItemText,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
           <View style={styles.toggleWrapper}>
             <TouchableOpacity
               style={[
@@ -468,6 +330,147 @@ const Contractor = () => {
           </View>
         </View>
 
+        {/* Add Search Bar */}
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search tasks by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {/* Add these JSX right after the search container and before the FlatList */}
+        <View style={styles.filterContainer}>
+          <View style={styles.dropdownsRow}>
+            <View style={styles.dropdownWrapper}>
+              <Pressable
+                style={styles.projectDropdown}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setProjectDropdownVisible(!isProjectDropdownVisible);
+                }}
+              >
+                <Text style={styles.dropdownText}>
+                  {selectedProject
+                    ? projects.find((p) => p.id === selectedProject)?.attributes
+                        ?.name || "Select Project"
+                    : "Select Project"}
+                </Text>
+                <Icon
+                  name={
+                    isProjectDropdownVisible
+                      ? "keyboard-arrow-up"
+                      : "keyboard-arrow-down"
+                  }
+                  size={24}
+                  color="#666"
+                />
+              </Pressable>
+
+              {isProjectDropdownVisible && (
+                <View style={styles.dropdownMenu}>
+                  <Pressable
+                    style={styles.dropdownItem}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setSelectedProject("");
+                      setProjectDropdownVisible(false);
+                    }}
+                  >
+                    <Text style={styles.dropdownItemText}>All Projects</Text>
+                  </Pressable>
+                  {projects.map((project) => (
+                    <Pressable
+                      key={project.id}
+                      style={[
+                        styles.dropdownItem,
+                        selectedProject === project.id &&
+                          styles.selectedDropdownItem,
+                      ]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setSelectedProject(project.id);
+                        setProjectDropdownVisible(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          selectedProject === project.id &&
+                            styles.selectedDropdownItemText,
+                        ]}
+                      >
+                        {project?.attributes?.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.statusDropdownContainer}>
+              <TouchableOpacity
+                style={styles.statusDropdown}
+                onPress={() =>
+                  setStatusDropdownVisible(!isStatusDropdownVisible)
+                }
+              >
+                <Text style={styles.statusDropdownText}>
+                  {selectedStatus
+                    ? statusOptions.find((opt) => opt.value === selectedStatus)
+                        ?.label
+                    : "Select Status"}
+                </Text>
+                <Icon
+                  name={
+                    isStatusDropdownVisible
+                      ? "keyboard-arrow-up"
+                      : "keyboard-arrow-down"
+                  }
+                  size={24}
+                  color="#666"
+                />
+              </TouchableOpacity>
+
+              {isStatusDropdownVisible && (
+                <View style={styles.dropdownMenu}>
+                  {statusOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.dropdownItem,
+                        selectedStatus === option.value &&
+                          styles.selectedDropdownItem,
+                      ]}
+                      onPress={() => {
+                        setSelectedStatus(option.value);
+                        setStatusDropdownVisible(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          selectedStatus === option.value &&
+                            styles.selectedDropdownItemText,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
         {isLoading ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#007bff" />
@@ -492,6 +495,16 @@ const Contractor = () => {
                     style={[
                       styles.milestoneCard,
                       isListView ? styles.listViewCard : styles.gridViewCard,
+                      {
+                        backgroundColor:
+                          task?.attributes?.task_status === "completed"
+                            ? "#E8F5E9"
+                            : task?.attributes?.task_status === "ongoing"
+                            ? "#fff"
+                            : task?.attributes?.task_status === "rejected"
+                            ? "#FED5DD"
+                            : "#fff",
+                      },
                     ]}
                     onPress={() => handleTaskPress(task)}
                     activeOpacity={0.7}
@@ -569,8 +582,45 @@ const Contractor = () => {
                             </Text>
                           </View>
                         ) : (
-                          <View style={styles.statusBadge}>
-                            <Text style={styles.statusText}>
+                          <View
+                            style={[
+                              styles.statusBadge,
+                              {
+                                backgroundColor:
+                                  task?.attributes?.task_status === "completed"
+                                    ? "#E8F5E9"
+                                    : task?.attributes?.task_status ===
+                                        "ongoing" ||
+                                      task?.attributes?.task_status ===
+                                        "pending"
+                                    ? "#FFF3E0"
+                                    : task?.attributes?.task_status ===
+                                      "rejected"
+                                    ? "#FFEBEE"
+                                    : "#F5F5F5",
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.statusText,
+                                {
+                                  color:
+                                    task?.attributes?.task_status ===
+                                    "completed"
+                                      ? "#2E7D32"
+                                      : task?.attributes?.task_status ===
+                                          "ongoing" ||
+                                        task?.attributes?.task_status ===
+                                          "pending"
+                                      ? "#EF6C00"
+                                      : task?.attributes?.task_status ===
+                                        "rejected"
+                                      ? "#C62828"
+                                      : "#757575",
+                                },
+                              ]}
+                            >
                               {task?.attributes?.task_status || "Ongoing"}
                             </Text>
                           </View>
@@ -835,7 +885,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   milestoneHeader: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
   },
   taskStatus: {
@@ -1026,19 +1076,23 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   filterContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    gap: 10,
     marginBottom: 15,
     paddingHorizontal: 5,
     position: "relative",
     zIndex: 1000,
+  },
+  dropdownsRow: {
+    flexDirection: "row",
     gap: 10,
+    flexWrap: "wrap",
   },
   dropdownWrapper: {
     position: "relative",
     zIndex: 1001,
     flex: 1,
+    minWidth: 150,
   },
   projectDropdown: {
     flexDirection: "row",
@@ -1060,6 +1114,7 @@ const styles = StyleSheet.create({
     position: "relative",
     zIndex: 1001,
     flex: 1,
+    minWidth: 150,
   },
   statusDropdown: {
     flexDirection: "row",

@@ -59,7 +59,7 @@ const ChangePassword = () => {
   const handleSubmit = async () => {
     checkFields();
     if (newPassword != confirmPassword) {
-      setErrors("Current password and Confirm password should be same");
+      setErrors("New password and Confirm password should be same");
     }
     if (
       newPassword === confirmPassword &&

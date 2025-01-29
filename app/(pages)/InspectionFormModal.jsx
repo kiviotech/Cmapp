@@ -107,6 +107,7 @@ const InspectionFormModal = ({ visible, onClose, projectId }) => {
   const handleOutsideClick = () => {
     setShowCategoryDropdown(false);
     setShowSubCategoryDropdown(false);
+    onClose(); // Close the modal after navigation
   };
 
   const handleOpenForm = () => {
@@ -139,6 +140,9 @@ const InspectionFormModal = ({ visible, onClose, projectId }) => {
         onPress={handleOutsideClick}
       >
         <View style={styles.modalContent}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Ionicons name="close" size={24} color="#666" />
+          </TouchableOpacity>
           <Text style={styles.modalTitle}>Inspection Form</Text>
 
           <View
@@ -245,6 +249,13 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     position: "relative",
     zIndex: 1000,
+  },
+  closeButton: {
+    position: "absolute",
+    right: 12,
+    top: 12,
+    zIndex: 1001,
+    padding: 4,
   },
   dropdownWrapper: {
     marginBottom: 16,

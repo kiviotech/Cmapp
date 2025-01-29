@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useActionState, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -62,8 +62,10 @@ const ProjectDetails = () => {
       if (projectId && userId) {
         try {
           const allTasks = [];
-          const taskData = await getTaskByContractorId(projectId);
+          const taskData = await getTaskByContractorId(projectId, userId);
+          console.log('task data', taskData.data)
           allTasks.push(...taskData.data.data);
+          console.log('all tasks', allTasks)
 
           setTasks(allTasks);
 

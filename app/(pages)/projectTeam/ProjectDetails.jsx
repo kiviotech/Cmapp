@@ -205,7 +205,7 @@ const ProjectDetails = () => {
                   <Text style={styles.taskDescription} numberOfLines={2}>
                     {standardTask.Description || "No description available."}
                   </Text>
-                  <View style={styles.assign}>
+                  {/* <View style={styles.assign}>
                     <Text style={styles.dueDate}>
                       {taskData.due_date
                         ? new Date(taskData.due_date)
@@ -217,7 +217,7 @@ const ProjectDetails = () => {
                           .replace(/\//g, "-")
                         : "N/A"}
                     </Text>
-                  </View>
+                  </View> */}
                 </View>
               );
             })

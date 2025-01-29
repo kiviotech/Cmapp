@@ -176,28 +176,36 @@ const AssignContractors = () => {
     loadProjectDetails();
   }, [projectId]);
 
-  const validateFields = () => {
-    let errors = {};
-    if (!contractorTypeValue) {
-      errors.contractorType = "Contractor type is required.";
+  const validateField = (fieldName, value) => {
+    let error = "";
+    switch (fieldName) {
+      case "contractorType":
+        if (!value) error = "Contractor type is required.";
+        break;
+      case "contractor":
+        if (!value) error = "Contractor is required.";
+        break;
+      case "dueDate":
+        if (!value) {
+          error = "Due date is required.";
+        } else {
+          const today = new Date();
+          if (new Date(value) < today) {
+            error = "Please select a future date.";
+          }
+        }
+        break;
     }
-    if (!contractorValue) {
-      errors.contractor = "Contractor is required.";
-    }
-    if (!dueDate) {
-      errors.dueDate = "Due date is required.";
-    } else {
-      const today = new Date();
-      if (new Date(dueDate) < today) {
-        errors.dueDate = "Please select a future date.";
-      }
-    }
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    setValidationErrors((prev) => ({ ...prev, [fieldName]: error }));
+    return !error;
   };
 
   const handleAddContractor = async () => {
-    if (!validateFields()) {
+    if (
+      !validateField("contractorType", contractorTypeValue) ||
+      !validateField("contractor", contractorValue) ||
+      !validateField("dueDate", dueDate)
+    ) {
       Alert.alert(
         "Error",
         "Please select all required fields, including Due Date."
@@ -426,7 +434,6 @@ const AssignContractors = () => {
             items={contractorTypeItems}
             setOpen={(isOpen) => {
               setContractorTypeOpen(isOpen);
-              // When dropdown opens, focus the search input after a short delay
               if (isOpen) {
                 setTimeout(() => {
                   searchInputRef.current?.focus();
@@ -436,6 +443,7 @@ const AssignContractors = () => {
             setValue={(value) => {
               setContractorTypeValue(value);
               setShowTypeError(false);
+              validateField("contractorType", value);
             }}
             onChangeValue={fetchStandardTasks}
             setItems={setContractorTypeItems}
@@ -465,7 +473,10 @@ const AssignContractors = () => {
             value={contractorValue}
             items={contractorItems}
             setOpen={setContractorOpen}
-            setValue={setContractorValue}
+            setValue={(value) => {
+              setContractorValue(value);
+              validateField("contractor", value);
+            }}
             setItems={setContractorItems}
             placeholder="Select Contractor"
             style={styles.dropdown}
@@ -501,7 +512,10 @@ const AssignContractors = () => {
           <View style={styles.datePickerContainer}>
             <CrossPlatformDatePicker
               value={dueDate}
-              onChange={setDueDate}
+              onChange={(value) => {
+                setDueDate(value);
+                validateField("dueDate", value);
+              }}
               minDate={projectDates.startDate}
               maxDate={projectDates.endDate}
             />

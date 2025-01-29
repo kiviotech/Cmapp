@@ -40,8 +40,8 @@ export const getTasksByUserAndProject = (id, projectId) =>
 export const getTasksByUser = (id) =>
   apiClient.get(taskEndpoints.getTasksByUser(id));
 
-export const getTaskByContractorId = (projectId) =>
-  apiClient.get(taskEndpoints.getTaskByContractorId(projectId));
+export const getTaskByContractorId = (projectId, userId) =>
+  apiClient.get(taskEndpoints.getTaskByContractorId(projectId, userId));
 
 export const getTasksBySubmissionId = (id) =>
   apiClient.get(taskEndpoints.getTasksBySubmissionId(id));

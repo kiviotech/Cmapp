@@ -656,6 +656,9 @@ const styles = StyleSheet.create({
     width: "90%",
     borderWidth: 1,
     borderColor: "#000",
+    paddingTop: 10,
+    paddingLeft: 5,
+    borderRadius: 10,
   },
   // Modal styles
   modalOverlay: {
