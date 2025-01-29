@@ -280,7 +280,11 @@ const RequestsScreen = () => {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search requests..."
+            placeholder={
+              activeCategory === "Submission"
+                ? "Search by task name..."
+                : "Search by username..."
+            }
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
