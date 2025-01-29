@@ -317,7 +317,10 @@ const profile = () => {
                           backgroundColor:
                             firstSubmission?.attributes?.status === "approved"
                               ? "#4CAF50"
-                              : "#FF9800",
+                              : firstSubmission?.attributes?.status ===
+                                "rejected"
+                              ? "#F44336" // Red for rejected
+                              : "#FF9800", // Default (e.g., pending)
                         },
                       ]}
                     >
