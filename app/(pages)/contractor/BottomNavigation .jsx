@@ -1,12 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { logout } from "../../../src/utils/auth";
+import useAuthStore from "../../../useAuthStore";
+import { fetchSubmissionByUserId } from "../../../src/services/submissionService";
 
-const BottomNavigation = () => {
+const BottomNavigation = ({ unreadCount: propUnreadCount }) => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { user } = useAuthStore();
+  const [unreadCount, setUnreadCount] = useState(propUnreadCount);
+
+  useEffect(() => {
+    const getUnreadCount = async () => {
+      if (user && user.id) {
+        try {
+          const submissionResponse = await fetchSubmissionByUserId(user.id);
+          const unreadNotifications = submissionResponse.data.filter(
+            (sub) => sub?.attributes?.notification_status === "unread"
+          );
+          setUnreadCount(unreadNotifications.length);
+        } catch (error) {
+          console.error("Error fetching unread count:", error);
+        }
+      }
+    };
+
+    getUnreadCount();
+  }, [user, route.name]);
 
   return (
     <View style={styles.navContainer}>
@@ -40,10 +62,14 @@ const BottomNavigation = () => {
       >
         <Icon
           name={
-            route.name === "(pages)/contractor/profile" ? "bar-chart" : "bar-chart-outline"
+            route.name === "(pages)/contractor/profile"
+              ? "bar-chart"
+              : "bar-chart-outline"
           }
           size={24}
-          color={route.name === "(pages)/contractor/profile" ? "#577CFF" : "#A8A8A8"}
+          color={
+            route.name === "(pages)/contractor/profile" ? "#577CFF" : "#A8A8A8"
+          }
         />
         <Text
           style={
@@ -61,15 +87,26 @@ const BottomNavigation = () => {
         style={styles.navItem}
         onPress={() => navigation.navigate("(pages)/notification")}
       >
-        <Icon
-          name={
-            route.name === "(pages)/notification"
-              ? "notifications"
-              : "notifications-outline"
-          }
-          size={24}
-          color={route.name === "(pages)/notification" ? "#577CFF" : "#A8A8A8"}
-        />
+        <View>
+          <Icon
+            name={
+              route.name === "(pages)/notification"
+                ? "notifications"
+                : "notifications-outline"
+            }
+            size={24}
+            color={
+              route.name === "(pages)/notification" ? "#577CFF" : "#A8A8A8"
+            }
+          />
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </Text>
+            </View>
+          )}
+        </View>
         <Text
           style={
             route.name === "(pages)/notification"
@@ -135,6 +172,23 @@ const styles = StyleSheet.create({
     color: "#A8A8A8",
     fontSize: 12,
     marginTop: 6,
+  },
+  badge: {
+    position: "absolute",
+    right: -6,
+    top: -6,
+    backgroundColor: "red",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 

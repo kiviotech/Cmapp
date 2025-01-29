@@ -12,7 +12,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import BottomNavigation from "./contractor/BottomNavigation ";
 import useAuthStore from "../../useAuthStore";
-import { fetchSubmissionByUserId, updateExistingSubmission } from "../../src/services/submissionService";
+import {
+  fetchSubmissionByUserId,
+  updateExistingSubmission,
+} from "../../src/services/submissionService";
 
 const Notification = () => {
   const [activeTab, setActiveTab] = useState("Unread");
@@ -33,7 +36,9 @@ const Notification = () => {
 
           const submissionResponse = await fetchSubmissionByUserId(user.id);
 
-          const taskData = submissionResponse?.data?.map((submission) => submission?.attributes?.task?.data)
+          const taskData = submissionResponse?.data?.map(
+            (submission) => submission?.attributes?.task?.data
+          );
 
           const unread = [];
           const read = [];
@@ -50,9 +55,12 @@ const Notification = () => {
           );
 
           setSubmissions(submissionResponse?.data);
-          setTasks(taskData)
+          setTasks(taskData);
           setUnreadNotifications(unread);
           setReadNotifications(read);
+
+          // Update the navigation param with the unread count
+          navigation.setParams({ unreadCount: unread.length });
         } catch (error) {
           console.error("Error fetching notifications:", error);
         } finally {
@@ -62,13 +70,11 @@ const Notification = () => {
     };
 
     fetchData();
-  }, [user]);
+  }, [user, navigation]);
 
   const markAsRead = async (item) => {
     try {
-      // Only update the notification status if it's currently unread
       if (item.attributes.notification_status === "unread") {
-        // Update the notification status using the submission service
         await updateExistingSubmission(item.id, {
           data: {
             notification_status: "read",
@@ -76,9 +82,10 @@ const Notification = () => {
         });
 
         // Update local state
-        setUnreadNotifications((prev) =>
-          prev.filter((notification) => notification.id !== item.id)
+        const updatedUnread = unreadNotifications.filter(
+          (notification) => notification.id !== item.id
         );
+        setUnreadNotifications(updatedUnread);
         setReadNotifications((prev) => [
           ...prev,
           {
@@ -86,6 +93,9 @@ const Notification = () => {
             attributes: { ...item.attributes, notification_status: "read" },
           },
         ]);
+
+        // Update the navigation param with the new unread count
+        navigation.setParams({ unreadCount: updatedUnread.length });
       }
     } catch (error) {
       console.error("Error updating notification status:", error);
@@ -93,7 +103,7 @@ const Notification = () => {
   };
 
   const renderNotificationItem = ({ item }) => {
-    console.log('item', item)
+    console.log("item", item);
     const task = tasks.find((t) =>
       t.attributes.submissions.data.some((s) => s.id === item.id)
     );
@@ -236,7 +246,7 @@ const Notification = () => {
         showsVerticalScrollIndicator={false}
       />
 
-      <BottomNavigation />
+      <BottomNavigation unreadCount={unreadNotifications.length} />
     </SafeAreaView>
   );
 };
@@ -316,15 +326,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 80,
   },
-  // searchContainer: {
-  //   // flexDirection: "row",
-  //   // alignItems: "center",
-  //   // backgroundColor: "#FFF",
-  //   // borderRadius: 8,
-  //   // paddingHorizontal: 12,
-  //   // marginBottom: 16,
-  //   // height: 40,
-  // },
   searchIcon: {
     position: "absolute",
     left: 15,

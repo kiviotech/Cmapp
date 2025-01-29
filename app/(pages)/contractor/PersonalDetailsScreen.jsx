@@ -89,9 +89,9 @@ const PersonalDetailsScreen = () => {
               }}
               style={styles.profileImage}
             />
-            <TouchableOpacity style={styles.editIconContainer}>
+            {/* <TouchableOpacity style={styles.editIconContainer}>
               <Ionicons name="pencil" size={14} color="white" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           <View style={styles.inputContainer}>

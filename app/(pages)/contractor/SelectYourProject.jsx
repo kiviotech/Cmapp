@@ -72,7 +72,8 @@ const SelectYourProject = ({ isLoading, projects }) => {
                 >
                   <View style={styles.statusDot} />
                   <Text style={styles.statusText}>
-                    {project.attributes.project_status}
+                    {project.attributes.project_status.charAt(0).toUpperCase() +
+                      project.attributes.project_status.slice(1)}
                   </Text>
                 </View>
 
