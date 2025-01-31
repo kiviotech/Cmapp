@@ -297,6 +297,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
+    marginLeft: 1,
   },
   comment: {
     fontSize: 15,
