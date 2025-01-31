@@ -49,8 +49,8 @@ const LoginField = ({
                   ? !showPassword
                   : !showSecurityPassword
               )
-                ? icons.eye
-                : icons.eyeHide
+                ? icons.eyeHide
+                : icons.eye
             }
             resizeMode="contain"
           />

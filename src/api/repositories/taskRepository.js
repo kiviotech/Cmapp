@@ -6,15 +6,9 @@ export const getTasks = (userId, page, pageSize, designation_value) =>
     taskEndpoints.getTasks(userId, page, pageSize, designation_value)
   );
 
-export const getProjectAndDocumentByUserId = (
-  userId,
-  designation_value
-) =>
+export const getProjectAndDocumentByUserId = (userId, designation_value) =>
   apiClient.get(
-    taskEndpoints.getProjectAndDocumentByUserId(
-      userId,
-      designation_value
-    )
+    taskEndpoints.getProjectAndDocumentByUserId(userId, designation_value)
   );
 
 export const getTaskByProjectIdAndUserId = (projectId) =>
@@ -45,3 +39,22 @@ export const getTaskByContractorId = (projectId, userId) =>
 
 export const getTasksBySubmissionId = (id) =>
   apiClient.get(taskEndpoints.getTasksBySubmissionId(id));
+
+export const getTasksByProjectNameAndStatus = (
+  userId,
+  projectName,
+  status,
+  page,
+  pageSize,
+  designation_value
+) =>
+  apiClient.get(
+    taskEndpoints.getTasksByProjectNameAndStatus(
+      userId,
+      projectName,
+      status,
+      page,
+      pageSize,
+      designation_value
+    )
+  );
