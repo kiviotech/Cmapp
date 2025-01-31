@@ -43,7 +43,9 @@ export const getTasksBySubmissionId = (id) =>
 export const getTasksByProjectNameAndStatus = (
   userId,
   projectName,
+  projectData,
   status,
+  statusData,
   page,
   pageSize,
   designation_value
@@ -52,7 +54,9 @@ export const getTasksByProjectNameAndStatus = (
     taskEndpoints.getTasksByProjectNameAndStatus(
       userId,
       projectName,
+      projectData,
       status,
+      statusData,
       page,
       pageSize,
       designation_value

@@ -32,7 +32,10 @@ import apiClient, {
   MEDIA_BASE_URL,
   URL,
 } from "../../../src/api/apiClient";
-import { fetchTasks } from "../../../src/services/taskService";
+import {
+  fetchTasks,
+  fetchTasksByProjectNameAndStatus,
+} from "../../../src/services/taskService";
 import { icons } from "../../../constants";
 
 // const data = [
@@ -145,17 +148,32 @@ const ProjectTeam = () => {
     fetchContractors();
   }, [designation, user?.id]);
 
-  // Update the fetch function to use the pageSize
+  // Update the fetch function to use the new filtering API
   const fetchTasksWithPagination = async (userId, page) => {
     setIsLoading(true);
     try {
-      // Pass pageSize parameter to API call
-      const response = await fetchTasks(userId, page, pageSize);
+      // Prepare filter parameters
+      const projectName = selectedProject
+        ? projects.find((p) => p.id === selectedProject)?.attributes?.name
+        : "";
+      // const projectData = "contains";
+      const status = selectedStatus || "";
+      // const statusData = selectedStatus ? "contains" : "";
+
+      const response = await fetchTasksByProjectNameAndStatus(
+        userId,
+        projectName,
+        "contains",
+        status,
+        "contains",
+        page,
+        pageSize
+      );
+
       const data = response.data;
       const meta = response.meta?.pagination;
 
       if (data) {
-        // Ensure we only show pageSize number of tasks
         setTasks(data.slice(0, pageSize));
         if (meta) {
           setTotalPages(Math.ceil(meta.total / pageSize));
@@ -169,12 +187,12 @@ const ProjectTeam = () => {
     }
   };
 
-  // Update useEffect to respond to currentPage changes
+  // Update useEffect to trigger fetch when filters change
   useEffect(() => {
     if (user?.id) {
       fetchTasksWithPagination(user.id, currentPage);
     }
-  }, [user, currentPage]); // Add currentPage as dependency
+  }, [user, currentPage, selectedProject, selectedStatus]); // Add filter dependencies
 
   // Update page change handler
   const handlePageChange = (newPage) => {
@@ -307,6 +325,7 @@ const ProjectTeam = () => {
     }, [])
   );
 
+  // Remove the filteredTasks function since filtering is now handled by the API
   const filteredTasks = (tasks) => {
     return tasks
       .filter((taskDetail) => {
@@ -314,13 +333,7 @@ const ProjectTeam = () => {
           taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
             searchQuery.toLowerCase()
           );
-        const matchesStatus =
-          selectedStatus === "" ||
-          taskDetail?.attributes?.task_status === selectedStatus;
-        const matchesProject =
-          selectedProject === "" ||
-          taskDetail?.attributes?.project?.data?.id === selectedProject;
-        return matchesSearch && matchesStatus && matchesProject;
+        return matchesSearch;
       })
       .slice(0, pageSize);
   };

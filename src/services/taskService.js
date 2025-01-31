@@ -139,7 +139,9 @@ export const fetchTasksBySubmissionId = async (id) => {
 export const fetchTasksByProjectNameAndStatus = async (
   userId,
   projectName,
+  projectData,
   status,
+  statusData,
   page,
   pageSize,
   designation_value
@@ -148,7 +150,9 @@ export const fetchTasksByProjectNameAndStatus = async (
     const response = await getTasksByProjectNameAndStatus(
       userId,
       projectName,
+      projectData,
       status,
+      statusData,
       page,
       pageSize,
       designation_value
