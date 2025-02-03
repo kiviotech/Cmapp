@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
+  Modal,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -27,9 +28,7 @@ import { NativeWindStyleSheet } from "nativewind";
 import { icons } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 import colors from "../../constants/colors";
-import fonts from "../../constants/fonts";
 import { login } from "../../src/utils/auth";
-import { Modal } from "react-native";
 import useAuthStore from "../../useAuthStore";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -46,26 +45,6 @@ const Login = () => {
     WorkSans_600SemiBold,
     WorkSans_700Bold,
   });
-
-  React.useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  const token = useAuthStore((state) => state.token);
-  const router = useRouter();
-
-  React.useEffect(() => {
-    if (token) {
-      router.replace("/dashboard");
-    }
-  }, [token, router]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
-
   const [usePassword, setUsePassword] = useState(true);
   const [form, setForm] = useState({
     mobile: "",
@@ -81,6 +60,27 @@ const Login = () => {
   const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
 
   const navigation = useNavigation();
+  useEffect(() => {
+    const hideSplash = async () => {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync();
+      }
+    };
+    hideSplash();
+  }, [fontsLoaded]);
+
+  const token = useAuthStore((state) => state.token);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (token) {
+      router.replace("/dashboard");
+    }
+  }, [token, router]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   const validateField = (name, value) => {
     let error = "";

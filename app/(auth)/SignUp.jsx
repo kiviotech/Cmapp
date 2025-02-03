@@ -191,7 +191,6 @@ const SignUp = () => {
     const logUsers = async () => {
       try {
         const users = await fetchUsers();
-        console.log("Fetched users:", users);
       } catch (error) {
         console.error("Error fetching users:", error);
       }

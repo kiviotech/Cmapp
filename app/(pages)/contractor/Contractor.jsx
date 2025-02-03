@@ -23,6 +23,7 @@ import { fetchContractorsByUserId } from "../../../src/services/contractorServic
 import { fetchContractorsIdByUserId } from "../../../src/services/contractorService";
 import { fetchContractorsWithSubContractor } from "../../../src/services/contractorService";
 import { URL } from "../../../src/api/apiClient";
+import { fetchTasksByProjectNameAndStatus } from "../../../src/services/taskService";
 
 const validateImageURL = (url) => {
   return url && (url.startsWith("http://") || url.startsWith("https://"));
@@ -45,6 +46,7 @@ const Contractor = () => {
   const [isStatusDropdownVisible, setStatusDropdownVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState("");
   const [isProjectDropdownVisible, setProjectDropdownVisible] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
 
   // Add this constant for status options
   const statusOptions = [
@@ -93,13 +95,25 @@ const Contractor = () => {
 
   // Fetch tasks only after contractorId is updated
   const fetchTasksWithPagination = async () => {
-    if (!user?.id) return; // Early return if no user ID
+    if (!user?.id) return;
 
     const idToUse = contractorId !== 0 ? contractorId : user.id;
     try {
       setIsLoading(true);
-      const response = await fetchTasks(
+      // Prepare filter parameters
+      const projectName = selectedProject
+        ? projects.find((p) => p.id === selectedProject)?.attributes?.name
+        : "";
+      const status = selectedStatus || "";
+
+      const response = await fetchTasksByProjectNameAndStatus(
         idToUse,
+        searchQuery, // Pass searchQuery for standard_task filtering
+        "contains",
+        projectName,
+        "contains",
+        status,
+        "contains",
         currentPage,
         pageSize,
         designation.charAt(0).toLowerCase() + designation.slice(1)
@@ -107,14 +121,6 @@ const Contractor = () => {
 
       const data = response.data;
       if (data && data.length > 0) {
-        // const projectsData = data
-        //   .map((taskData) => taskData?.attributes?.project?.data)
-        //   .filter(
-        //     (project, index, self) =>
-        //       project && self.findIndex((p) => p?.id === project.id) === index
-        //   );
-
-        // setProjects(projectsData);
         setTasks(data);
         setTotalPages(Math.ceil(response.meta.pagination.total / pageSize));
       }
@@ -131,7 +137,7 @@ const Contractor = () => {
     if (user?.id && (contractorId !== 0 || designation !== "Contractor")) {
       fetchTasksWithPagination();
     }
-  }, [contractorId, user?.id]); // Simplified dependencies
+  }, [contractorId, user?.id, selectedProject, selectedStatus, searchQuery]); // Add filter dependencies
 
   // Fetch tasks for the selected page
   const handlePageChange = (page) => {
@@ -249,7 +255,7 @@ const Contractor = () => {
   // Update the navigation handler
   const handleTaskPress = (task) => {
     navigation.navigate("(pages)/taskDetails", {
-      taskData: task,
+      taskId: task?.id,
       refresh: true, // Always set refresh to true when navigating from Contractor
     });
   };
@@ -277,6 +283,11 @@ const Contractor = () => {
       task?.attributes?.project?.data?.id === selectedProject;
     return matchesSearch && matchesStatus && matchesProject;
   });
+
+  // Add handleSearch function
+  const handleSearch = () => {
+    setSearchQuery(searchInput); // This will trigger the API call via useEffect
+  };
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -332,18 +343,15 @@ const Contractor = () => {
 
         {/* Add Search Bar */}
         <View style={styles.searchContainer}>
-          <Icon
-            name="search"
-            size={20}
-            color="#666"
-            style={styles.searchIcon}
-          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search tasks by name..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={searchInput}
+            onChangeText={setSearchInput}
           />
+          <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+            <Icon name="search" size={20} color="#fff" />
+          </TouchableOpacity>
         </View>
 
         {/* Add these JSX right after the search container and before the FlatList */}
@@ -734,23 +742,27 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: 20,
     paddingHorizontal: 0,
-  },
-  searchIcon: {
-    position: "absolute",
-    left: 15,
-    top: 12,
-    zIndex: 1,
+    flexDirection: "row",
+    gap: 10,
   },
   searchInput: {
+    flex: 1,
     backgroundColor: "#fff",
     borderRadius: 10,
-    paddingLeft: 45,
-    paddingRight: 15,
+    paddingHorizontal: 15,
     height: 45,
     borderWidth: 1,
     borderColor: "#e0e0e0",
     fontSize: 14,
     color: "#333",
+  },
+  searchButton: {
+    backgroundColor: "#1e90ff",
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
   sectionHeader: {
     fontSize: 18,

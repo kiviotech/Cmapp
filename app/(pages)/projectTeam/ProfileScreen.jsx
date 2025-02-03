@@ -17,6 +17,7 @@ import { logout } from "../../../src/utils/auth";
 import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../../../useAuthStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,6 +30,16 @@ const ProfileScreen = () => {
   const [infoModalTitle, setInfoModalTitle] = useState("");
   const navigation = useNavigation();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const router = useRouter();
+
+  const { user } = useAuthStore();
+
+  // Redirect to login if token is missing
+  useEffect(() => {
+    if (!user?.token) {
+      router.replace("(auth)/login");
+    }
+  }, [user?.token, router]);
 
   useEffect(() => {
     // Load the saved notification state when component mounts
@@ -59,10 +70,10 @@ const ProfileScreen = () => {
   };
 
   const handleLogout = () => {
-    logout();
     clearAuth();
-    navigation.navigate("(auth)/login");
     setIsModalVisible(false);
+    logout();
+    router.replace({ pathname: "(auth)/login", params: {} });
     Alert.alert("Logged Out", "You have been logged out successfully.");
   };
 

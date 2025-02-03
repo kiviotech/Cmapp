@@ -77,8 +77,8 @@ const GoogleDrivePreview = ({ url }) => {
 const TaskDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { taskData: initialTaskData, refresh } = route.params || {};
-  const [taskData, setTaskData] = useState(initialTaskData);
+  const { taskId, refresh } = route.params || {};
+  const [taskData, setTaskData] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [standardTaskDetails, setStandardTaskDetails] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -87,46 +87,30 @@ const TaskDetails = () => {
   const [linkModalVisible, setLinkModalVisible] = useState(false);
   const [taskStatus, setTaskStatus] = useState("");
 
-  useEffect(() => {
-    const loadTaskData = async () => {
-      if (!taskData?.attributes || refresh) {
-        try {
-          const response = await fetchTaskById(taskData.id);
-          if (response?.data) {
-            setTaskData(response.data);
-          }
-        } catch (error) {
-          console.error("Error fetching task data:", error);
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const loadTaskData = async () => {
+  //     if (!taskData?.attributes || refresh) {
+  //       try {
+  //         const response = await fetchTaskById(taskData.id);
+  //         if (response?.data) {
+  //           setTaskData(response.data);
+  //         }
+  //       } catch (error) {
+  //         console.error("Error fetching task data:", error);
+  //       }
+  //     }
+  //   };
 
-    loadTaskData();
-  }, [taskData?.id, refresh]);
-
-  useEffect(() => {
-    const fetchStandardTaskDetails = async () => {
-      if (taskData.id) {
-        try {
-          const submissionData = taskData?.attributes?.submissions?.data;
-          const standardTaskId = taskData?.attributes?.standard_task?.data?.id;
-          const response = await fetchStandardTaskById(standardTaskId);
-          setStandardTaskDetails(response.data);
-          setSubmissions(submissionData);
-        } catch (error) {
-          console.error("Error fetching contractor data:", error);
-        }
-      }
-    };
-    fetchStandardTaskDetails();
-  }, []);
+  //   loadTaskData();
+  // }, [taskData?.id, refresh]);
 
   useEffect(() => {
     const fetchTaskDetails = async () => {
       try {
-        if (taskData?.id) {
-          const updatedTaskData = await fetchTaskById(taskData.id);
+        if (taskId || refresh) {
+          const updatedTaskData = await fetchTaskById(taskId);
           if (updatedTaskData?.data) {
+            setTaskData(updatedTaskData.data);
             route.params = {
               ...route.params,
               taskData: updatedTaskData.data,
@@ -145,7 +129,7 @@ const TaskDetails = () => {
               );
               const responses = await Promise.all(submissionPromises);
               const submissionData = responses.map((response) => response.data);
-              setSubmissions(submissionData);
+              setSubmissions(submissionData.reverse());
             }
           }
         }
@@ -155,7 +139,24 @@ const TaskDetails = () => {
     };
 
     fetchTaskDetails();
-  }, [taskData?.id, refresh]);
+  }, [taskId, refresh]);
+
+  useEffect(() => {
+    const fetchStandardTaskDetails = async () => {
+      if (taskData.id) {
+        try {
+          // const submissionData = taskData?.attributes?.submissions?.data;
+          const standardTaskId = taskData?.attributes?.standard_task?.data?.id;
+          const response = await fetchStandardTaskById(standardTaskId);
+          setStandardTaskDetails(response.data);
+          // setSubmissions(submissionData);
+        } catch (error) {
+          console.error("Error fetching contractor data:", error);
+        }
+      }
+    };
+    fetchStandardTaskDetails();
+  }, [taskData]);
 
   if (!taskData?.attributes) {
     return (
@@ -215,7 +216,7 @@ const TaskDetails = () => {
           <Text style={styles.detailsText}>Details</Text>
         </View>
 
-        <View style={styles.deadlineContainer}>
+        {/* <View style={styles.deadlineContainer}>
           <Image source={icons.calendar} />
           <Text style={styles.deadlineText}>
             Deadline:{" "}
@@ -229,7 +230,7 @@ const TaskDetails = () => {
                   .replace(/\//g, "-")
               : "N/A"}
           </Text>
-        </View>
+        </View> */}
       </View>
 
       {/* Scrollable Content */}
@@ -374,7 +375,7 @@ const TaskDetails = () => {
                 style={[styles.showAttachments, styles.uploadProof]}
                 onPress={() =>
                   navigation.navigate("(pages)/uploadProof", {
-                    id: taskData.id,
+                    id: taskId,
                   })
                 }
               >
@@ -390,16 +391,15 @@ const TaskDetails = () => {
 
           {/* Add this before the Modal section */}
           <View style={styles.approvalSection}>
-            {/* <Text style={styles.sectionTitle}>Supervisor's Approval</Text>
+            <Text style={styles.sectionTitle}>Supervisor's Approval</Text>
             <View
               style={[
                 styles.notificationApproval,
                 {
                   backgroundColor:
-                    taskData?.attributes?.submission?.data?.attributes
-                      ?.status === "approved"
+                    submissions[0]?.attributes?.status === "approved"
                       ? "#D4EDDA"
-                      : taskData?.attributes?.submission?.data?.attributes
+                      : taskData?.attributes?.submissions?.data?.attributes
                           ?.status === "declined"
                       ? "#ffebee"
                       : "rgba(251, 188, 85, 0.3)",
@@ -408,10 +408,9 @@ const TaskDetails = () => {
             >
               <Image
                 source={
-                  taskData?.attributes?.submission?.data?.attributes?.status ===
-                  "approved"
+                  submissions[0]?.attributes?.status === "approved"
                     ? icons.approved
-                    : taskData?.attributes?.submission?.data?.attributes
+                    : taskData?.attributes?.submissions?.data?.attributes
                         ?.status === "declined"
                     ? icons.reject
                     : icons.uploadApproval
@@ -420,26 +419,43 @@ const TaskDetails = () => {
               <Text
                 style={{
                   color:
-                    taskData?.attributes?.submission?.data?.attributes
-                      ?.status === "approved"
+                    submissions[0]?.attributes?.status === "approved"
                       ? "#28A745"
-                      : taskData?.attributes?.submission?.data?.attributes
+                      : taskData?.attributes?.submissions?.data?.attributes
                           ?.status === "declined"
                       ? "#DC3545"
                       : "#FBBC55",
                 }}
               >
-                {taskData?.attributes?.submission?.data?.attributes?.status ||
+                {submissions[0]?.attributes?.status.charAt(0).toUpperCase() +
+                  submissions[0]?.attributes?.status.slice(1) ||
                   "Yet to Approve"}
               </Text>
-            </View> */}
-
+            </View>
             <Text style={styles.sectionTitle}>Previous Submissions</Text>
             {submissions?.length > 0 ? (
               submissions.map((submission, index) => (
                 <View key={index} style={styles.submissionItem}>
                   <Text style={styles.submissionStatus}>
-                    Status: {submission.attributes.status}
+                    Status:{" "}
+                    <Text
+                      style={{
+                        color:
+                          submission.attributes.status === "pending"
+                            ? "#ED8936"
+                            : submission.attributes.status === "ongoing"
+                            ? "#66B8FC"
+                            : submission.attributes.status === "completed" ||
+                              submission.attributes.status === "approved"
+                            ? "#38A169"
+                            : submission.attributes.status === "rejected"
+                            ? "#E53E3E"
+                            : "#000000",
+                      }}
+                    >
+                      {submission.attributes.status.charAt(0).toUpperCase() +
+                        submission.attributes.status.slice(1)}
+                    </Text>
                   </Text>
                   <Text style={styles.submissionComment}>
                     Comment: {submission.attributes.comment || "No comment"}

@@ -33,7 +33,6 @@ const RequestsScreen = () => {
 
           const registrations = registrationsResponse?.data || [];
           const submissions = submissionsResponse?.data || [];
-          console.log("submissions", submissions);
           setRequests([...registrations, ...submissions]);
         } catch (error) {
           console.error("Error fetching data:", error);

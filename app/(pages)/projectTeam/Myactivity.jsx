@@ -182,9 +182,6 @@ const Myactivity = () => {
                         "(pages)/projectTeam/ProjectDetails",
                         {
                           projectId: project.id,
-                          projectData: project,
-                          userId: user.id,
-                          tasksData: allTasks,
                         }
                       )
                     }
@@ -220,9 +217,18 @@ const Myactivity = () => {
                               style={[
                                 styles.statusDot,
                                 {
-                                  backgroundColor: isDelayed
-                                    ? "#ff5252"
-                                    : "#4caf50",
+                                  backgroundColor:
+                                    projectStatus.text === "Pending"
+                                      ? "#ED8936"
+                                      : projectStatus.text === "Ongoing"
+                                      ? "#66B8FC"
+                                      : projectStatus.text === "Completed" ||
+                                        projectStatus.text === "Approved"
+                                      ? "#38A169"
+                                      : projectStatus.text === "Rejected" ||
+                                        projectStatus.text === "Delayed"
+                                      ? "#E53E3E"
+                                      : "#000000",
                                 },
                               ]}
                             />
@@ -231,7 +237,7 @@ const Myactivity = () => {
                             </Text>
                           </View>
                         </View>
-                        <View style={styles.statusIndicator}>
+                        {/* <View style={styles.statusIndicator}>
                           <Icon
                             name={isDelayed ? "error" : "check-circle"}
                             size={16}
@@ -245,7 +251,7 @@ const Myactivity = () => {
                           >
                             {isDelayed ? "Delayed" : "On Schedule"}
                           </Text>
-                        </View>
+                        </View> */}
                       </View>
 
                       <View style={styles.dateContainer}>

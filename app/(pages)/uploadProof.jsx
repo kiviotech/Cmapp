@@ -258,7 +258,7 @@ const UploadProof = ({}) => {
       // Navigate after delay with refresh flag
       setTimeout(() => {
         navigation.navigate("(pages)/taskDetails", {
-          taskData: { id },
+          taskId: id,
           refresh: true,
         });
       }, 3000);

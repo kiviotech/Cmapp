@@ -70,7 +70,27 @@ const SelectYourProject = ({ isLoading, projects }) => {
                       "pending" && styles.pendingStatusBadge,
                   ]}
                 >
-                  <View style={styles.statusDot} />
+                  <View
+                    style={[
+                      styles.statusDot,
+                      {
+                        backgroundColor:
+                          project.attributes.project_status === "pending"
+                            ? "#ED8936"
+                            : project.attributes.project_status === "ongoing"
+                            ? "#66B8FC"
+                            : project.attributes.project_status ===
+                                "completed" ||
+                              project.attributes.project_status === "approved"
+                            ? "#38A169"
+                            : project.attributes.project_status ===
+                                "rejected" ||
+                              project.attributes.project_status === "delayed"
+                            ? "#E53E3E"
+                            : "#000000",
+                      },
+                    ]}
+                  />
                   <Text style={styles.statusText}>
                     {project.attributes.project_status.charAt(0).toUpperCase() +
                       project.attributes.project_status.slice(1)}

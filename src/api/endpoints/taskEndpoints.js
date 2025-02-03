@@ -33,6 +33,8 @@ const taskEndpoints = {
     `/tasks?populate=*&filters[submissions][id][$eq]=${id}`,
   getTasksByProjectNameAndStatus: (
     userId,
+    standard_task,
+    standard_task_data,
     projectName = "true",
     projectData,
     status = "true",
@@ -41,7 +43,7 @@ const taskEndpoints = {
     pageSize,
     designation_value = "project_team_member"
   ) =>
-    `/tasks?filters[${designation_value}][id][$eq]=${userId}&populate[standard_task][populate]=image&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}&filters[task_status][$${statusData}]=${status}&filters[project][name][$${projectData}]=${projectName}`,
+    `/tasks?filters[standard_task][Name][$${standard_task_data}]=${standard_task}&filters[${designation_value}][id][$eq]=${userId}&populate[standard_task][populate]=image&populate[project]=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}&filters[task_status][$${statusData}]=${status}&filters[project][name][$${projectData}]=${projectName}`,
 };
 
 export default taskEndpoints;

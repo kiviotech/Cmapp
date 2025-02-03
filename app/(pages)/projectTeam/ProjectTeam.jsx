@@ -20,11 +20,6 @@ import { getProjects } from "../../../src/api/repositories/projectRepository";
 import SelectYourProjectCard from "../../../components/SelectYourProjectCard";
 import BottomNavigation from "./BottomNavigation";
 import { fetchSubmissions } from "../../../src/services/submissionService";
-import {
-  Ionicons,
-  MaterialCommunityIcons,
-  FontAwesome,
-} from "@expo/vector-icons";
 import { fetchProjectTeamIdByUserId } from "../../../src/services/projectTeamService";
 import { fetchProjectDetailsByApproverId } from "../../../src/services/projectService";
 import apiClient, {
@@ -38,71 +33,9 @@ import {
 } from "../../../src/services/taskService";
 import { icons } from "../../../constants";
 
-// const data = [
-//   {
-//     id: "1",
-//     title: "Inspection",
-//     projectName: "Project Name",
-//     date: "Mon, 10 July 2022",
-//     time: "9 AM - 10:30 AM",
-//   },
-//   {
-//     id: "2",
-//     title: "Inspection",
-//     projectName: "Project Name",
-//     date: "Mon, 10 July 2022",
-//     time: "9 AM - 10:30 AM",
-//   },
-//   {
-//     id: "3",
-//     title: "Inspection",
-//     projectName: "Project Name",
-//     date: "Mon, 10 July 2022",
-//     time: "9 AM - 10:30 AM",
-//   },
-// ];
-
-// const renderCard = ({ item }) => (
-//   <View style={styles.card}>
-//     <View style={styles.cardHeader}>
-//       <Text style={styles.title}>{item.title}</Text>
-//       <MaterialCommunityIcons name="bell-outline" size={20} color="green" />
-//     </View>
-//     <Text style={styles.projectName}>{item.projectName}</Text>
-//     <View style={styles.divider} />
-//     <View style={styles.infoRow}>
-//       <MaterialCommunityIcons name="calendar" size={20} color="black" />
-//       <Text style={styles.infoText}>{item.date}</Text>
-//     </View>
-//     <View style={styles.infoRow}>
-//       <MaterialCommunityIcons name="clock-outline" size={20} color="black" />
-//       <Text style={styles.infoText}>{item.time}</Text>
-//     </View>
-//   </View>
-// );
-
-// const getProjectStatus = (project) => {
-//   const status = project?.attributes?.project_status;
-//   switch (status) {
-//     case "completed":
-//       return { text: "Completed", color: "#4CAF50" };
-//     case "ongoing":
-//       return { text: "Ongoing", color: "#2196F3" };
-//     case "pending":
-//       return { text: "Pending", color: "#FFA000" };
-//     default:
-//       return { text: "Unknown", color: "#757575" };
-//   }
-// };
-
 const ProjectTeam = () => {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const navigation = useNavigation();
-  // const [projectsDetail, setProjectsDetail] = useState([]);
-  // const [tasksDetail, setTasksDetail] = useState([]);
-  // const [selectedProjectId, setSelectedProjectId] = useState(null);
-  // const [jobProfile, setJobProfile] = useState("");
-  // const [subcategories, setSubcategories] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [requests, setRequests] = useState([]);
   // const [projectTeamId, setProjectTeamId] = useState(null);
@@ -121,6 +54,7 @@ const ProjectTeam = () => {
   const [isStatusDropdownVisible, setStatusDropdownVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState("");
   const [isProjectDropdownVisible, setProjectDropdownVisible] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
 
   const statusOptions = [
     { label: "All", value: "" },
@@ -156,12 +90,13 @@ const ProjectTeam = () => {
       const projectName = selectedProject
         ? projects.find((p) => p.id === selectedProject)?.attributes?.name
         : "";
-      // const projectData = "contains";
       const status = selectedStatus || "";
-      // const statusData = selectedStatus ? "contains" : "";
 
+      // Add searchQuery to the API call
       const response = await fetchTasksByProjectNameAndStatus(
         userId,
+        searchQuery, // Pass searchQuery as standard_task parameter
+        "contains",
         projectName,
         "contains",
         status,
@@ -192,7 +127,7 @@ const ProjectTeam = () => {
     if (user?.id) {
       fetchTasksWithPagination(user.id, currentPage);
     }
-  }, [user, currentPage, selectedProject, selectedStatus]); // Add filter dependencies
+  }, [user, currentPage, selectedProject, selectedStatus, searchQuery]); // Add filter dependencies
 
   // Update page change handler
   const handlePageChange = (newPage) => {
@@ -325,19 +260,6 @@ const ProjectTeam = () => {
     }, [])
   );
 
-  // Remove the filteredTasks function since filtering is now handled by the API
-  const filteredTasks = (tasks) => {
-    return tasks
-      .filter((taskDetail) => {
-        const matchesSearch =
-          taskDetail?.attributes?.standard_task?.data?.attributes?.Name?.toLowerCase().includes(
-            searchQuery.toLowerCase()
-          );
-        return matchesSearch;
-      })
-      .slice(0, pageSize);
-  };
-
   // Modify the handleOutsideClick function
   const handleOutsideClick = () => {
     if (isProjectDropdownVisible) {
@@ -346,6 +268,10 @@ const ProjectTeam = () => {
     if (isStatusDropdownVisible) {
       setStatusDropdownVisible(false);
     }
+  };
+
+  const handleSearch = () => {
+    setSearchQuery(searchInput); // This will trigger the API call via useEffect
   };
 
   return (
@@ -478,9 +404,19 @@ const ProjectTeam = () => {
                                   style={[
                                     styles.statusDot,
                                     {
-                                      backgroundColor: isDelayed
-                                        ? "#ff5252"
-                                        : "#4caf50",
+                                      backgroundColor:
+                                        projectStatus.text === "Pending"
+                                          ? "#ED8936"
+                                          : projectStatus.text === "Ongoing"
+                                          ? "#66B8FC"
+                                          : projectStatus.text ===
+                                              "Completed" ||
+                                            projectStatus.text === "Approved"
+                                          ? "#38A169"
+                                          : projectStatus.text === "Rejected" ||
+                                            projectStatus.text === "Delayed"
+                                          ? "#E53E3E"
+                                          : "#000000",
                                     },
                                   ]}
                                 />
@@ -673,18 +609,18 @@ const ProjectTeam = () => {
             </View>
 
             <View style={styles.searchContainer}>
-              <Icon
-                name="search"
-                size={20}
-                color="#666"
-                style={styles.searchIcon}
-              />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search tasks by name..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
+                value={searchInput}
+                onChangeText={setSearchInput}
               />
+              <TouchableOpacity
+                style={styles.searchButton}
+                onPress={handleSearch}
+              >
+                <Icon name="search" size={20} color="#fff" />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.filterContainer}>
@@ -815,7 +751,7 @@ const ProjectTeam = () => {
             </View>
 
             <FlatList
-              data={filteredTasks(tasks)}
+              data={tasks}
               numColumns={1}
               key={isListView ? "list" : "grid"}
               renderItem={({ item: task }) => {
@@ -828,7 +764,8 @@ const ProjectTeam = () => {
                     <TouchableOpacity
                       onPress={() =>
                         navigation.navigate("(pages)/taskDetails", {
-                          taskData: task,
+                          taskId: task?.id,
+                          refresh: true,
                         })
                       }
                       style={styles.listItemContainer}
@@ -870,7 +807,7 @@ const ProjectTeam = () => {
                   : "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
 
                 return (
-                  <View
+                  <TouchableOpacity
                     key={task.id}
                     style={[
                       styles.milestoneCard,
@@ -885,6 +822,12 @@ const ProjectTeam = () => {
                             : "#fff",
                       },
                     ]}
+                    onPress={() =>
+                      navigation.navigate("(pages)/taskDetails", {
+                        taskId: task?.id,
+                        refresh: true,
+                      })
+                    }
                   >
                     <Image
                       source={{ uri: taskImageUrl }}
@@ -917,7 +860,7 @@ const ProjectTeam = () => {
                       <View style={styles.divider} />
                       <View style={styles.status_container}>
                         <Text style={styles.deadlineText}>
-                          <Icon
+                          {/* <Icon
                             name="event"
                             size={16}
                             color="#333"
@@ -925,7 +868,7 @@ const ProjectTeam = () => {
                           />{" "}
                           Deadline:{" "}
                           {task?.attributes?.due_date ||
-                            "No deadline specified"}
+                            "No deadline specified"} */}
                         </Text>
                         <View
                           style={[
@@ -959,7 +902,12 @@ const ProjectTeam = () => {
                               },
                             ]}
                           >
-                            {task?.attributes?.task_status || "pending"}
+                            {(task?.attributes?.task_status || "pending")
+                              .charAt(0)
+                              .toUpperCase() +
+                              (
+                                task?.attributes?.task_status || "pending"
+                              ).slice(1)}
                           </Text>
                         </View>
                       </View>
@@ -967,7 +915,8 @@ const ProjectTeam = () => {
                         style={styles.uploadButton}
                         onPress={() =>
                           navigation.navigate("(pages)/taskDetails", {
-                            taskData: task,
+                            taskId: task?.id,
+                            refresh: true,
                           })
                         }
                       >
@@ -977,7 +926,7 @@ const ProjectTeam = () => {
                         </Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               }}
               keyExtractor={(item) => item.id.toString()}
@@ -1032,23 +981,27 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: 20,
     paddingHorizontal: 0,
-  },
-  searchIcon: {
-    position: "absolute",
-    left: 15,
-    top: 12,
-    zIndex: 1,
+    flexDirection: "row",
+    gap: 10,
   },
   searchInput: {
+    flex: 1,
     backgroundColor: "#fff",
     borderRadius: 10,
-    paddingLeft: 45,
-    paddingRight: 15,
+    paddingHorizontal: 15,
     height: 45,
     borderWidth: 1,
     borderColor: "#e0e0e0",
     fontSize: 14,
     color: "#333",
+  },
+  searchButton: {
+    backgroundColor: "#1e90ff",
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
   AreaContainer: {
     flex: 1,
@@ -1157,6 +1110,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 15,
     elevation: 2,
+    paddingBottom: 0,
   },
   projectCardContent: {
     gap: 8,

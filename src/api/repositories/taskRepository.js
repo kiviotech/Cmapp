@@ -42,6 +42,8 @@ export const getTasksBySubmissionId = (id) =>
 
 export const getTasksByProjectNameAndStatus = (
   userId,
+  standard_task,
+  standard_task_data,
   projectName,
   projectData,
   status,
@@ -53,6 +55,8 @@ export const getTasksByProjectNameAndStatus = (
   apiClient.get(
     taskEndpoints.getTasksByProjectNameAndStatus(
       userId,
+      standard_task,
+      standard_task_data,
       projectName,
       projectData,
       status,

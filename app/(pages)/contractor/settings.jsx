@@ -8,6 +8,7 @@ import {
   Switch,
   Dimensions,
   Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -22,10 +23,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width, height } = Dimensions.get("window");
 
 const Settings = () => {
+  const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState("");
+
+  const { user } = useAuthStore();
+
+  // Redirect to login if token is missing
+  useEffect(() => {
+    if (!user?.token) {
+      router.replace("(auth)/login");
+    }
+  }, [user?.token, router]);
 
   useEffect(() => {
     // Load the saved notification state when component mounts
@@ -51,15 +62,15 @@ const Settings = () => {
     }
   };
 
-  const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const navigation = useNavigation();
 
   const handleLogout = () => {
     clearAuth();
-    router.replace("(auth)/login");
     setIsModalVisible(false);
     logout();
+    router.replace({ pathname: "(auth)/login", params: {} });
+    Alert.alert("Logged Out", "You have been logged out successfully.");
   };
 
   const showLogoutPopup = () => {

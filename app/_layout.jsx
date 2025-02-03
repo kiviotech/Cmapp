@@ -61,11 +61,11 @@ const Layout = ({ user, designation }) => {
     }
   }, [fontsLoaded]);
 
-  useEffect(() => {
-    if (isMounted && (!user?.token || designation !== "Contractor")) {
-      router.replace("(auth)/login");
-    }
-  }, [user, designation, router, isMounted]);
+  // useEffect(() => {
+  //   if (isMounted && (!user?.token || designation !== "Contractor")) {
+  //     router.replace("(auth)/login");
+  //   }
+  // }, [user, designation, router, isMounted]);
 
   if (!fontsLoaded || !isMounted || initialLoading) {
     return <Loader />;

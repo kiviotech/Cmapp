@@ -14,80 +14,63 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import BottomNavigation from "./BottomNavigation";
 import useProjectStore from "../../../projectStore";
 import { fetchProjectTeamById } from "../../../src/services/projectTeamService";
-import { fetchTaskById } from "../../../src/services/taskService";
+import { fetchTasksByUserAndProject } from "../../../src/services/taskService";
 import InspectionFormModal from "../InspectionFormModal";
 import { fetchProjectById } from "../../../src/services/projectService";
+import useAuthStore from "../../../useAuthStore";
 
 const { width, height } = Dimensions.get("window");
 
 const ProjectDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const {
-    projectId,
-    projectData: routeProjectData,
-    userId,
-    tasksData,
-  } = route.params || {};
+  const { projectId } = route.params || {};
   const { projectData, setProjectData } = useProjectStore();
   const [managerNames, setManagerNames] = useState([]);
+  const [tasksData, setTasksData] = useState([]);
   const [jobRole, setJobRole] = useState("");
+  const { user } = useAuthStore();
+  const userId = user?.id;
   const [isInspectionModalVisible, setIsInspectionModalVisible] =
     useState(false);
 
   useEffect(() => {
-    // if (routeProjectData) {
-    //   // setProjectData(routeProjectData);
-    // }
     const fetchManagerDetails = async () => {
       const projectDetails = await fetchProjectById(projectId);
-      setProjectData(projectDetails?.data)
+      setProjectData(projectDetails?.data);
       const approver = projectDetails?.data?.attributes?.approvers?.data.find(
         (item) => item?.attributes?.job_role === "Project Manager"
       );
       const approverId = approver?.id;
 
       if (approverId) {
-      try {
-        const response = await fetchProjectTeamById(approverId);
-        const names = response?.data?.attributes?.users?.data.map(
-          (item) => item?.attributes?.username
-        );
-        setManagerNames(names[0]); // Store manager names in state
-        setJobRole(response?.data?.attributes?.job_role);
-      } catch (error) {
-        console.error("Error fetching manager details:", error);
+        try {
+          const response = await fetchProjectTeamById(approverId);
+          const names = response?.data?.attributes?.users?.data.map(
+            (item) => item?.attributes?.username
+          );
+          setManagerNames(names[0]);
+          setJobRole(response?.data?.attributes?.job_role);
+        } catch (error) {
+          console.error("Error fetching manager details:", error);
+        }
       }
-      }
+      const tasks = await fetchTasksByUserAndProject(userId, projectId);
+      setTasksData(tasks?.data);
     };
     fetchManagerDetails();
-    // }, [routeProjectData, setProjectData]);
   }, []);
 
-  // const fetchProjectTasks = async () => {
-  //   try {
-  //     const taskIds =
-  //       routeProjectData?.attributes?.tasks?.data?.map((task) => task.id) || [];
-  //     const taskPromises = taskIds.map(async (taskId) => {
-  //       const response = await fetchTaskById(taskId);
-  //       return response;
-  //     });
-
-  //     const taskResults = await Promise.all(taskPromises);
-  //     setTasks(taskResults);
-  //   } catch (error) {
-  //     console.error("Error fetching tasks:", error);
-  //   }
-  // };
-
   const project = projectData?.attributes || {};
-
-  // Calculate the progress based on task statuses
-  const totalTasks = tasksData?.length || 0;
-  const completedTasks =
-    tasksData?.filter((task) => task?.attributes?.task_status === "completed")
-      .length || 0;
-  const progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
+  let progress = 0;
+  if (tasksData?.length > 0) {
+    // Calculate the progress based on task statuses
+    const totalTasks = tasksData.length;
+    const completedTasks = tasksData.filter(
+      (task) => task?.attributes?.task_status === "completed"
+    ).length;
+    progress = totalTasks > 0 ? completedTasks / totalTasks : 0;
+  }
 
   return (
     <SafeAreaView style={styles.AreaContainer}>
@@ -191,15 +174,15 @@ const ProjectDetails = () => {
                         status === "completed"
                           ? styles.completedStatus
                           : status === "ongoing"
-                            ? styles.ongoingStatus
-                            : styles.pendingStatus,
+                          ? styles.ongoingStatus
+                          : styles.pendingStatus,
                       ]}
                     >
                       {status === "completed"
                         ? "Completed"
                         : status === "ongoing"
-                          ? "Ongoing"
-                          : "Pending"}
+                        ? "Ongoing"
+                        : "Pending"}
                     </Text>
                   </View>
                   <Text style={styles.taskDescription} numberOfLines={2}>
