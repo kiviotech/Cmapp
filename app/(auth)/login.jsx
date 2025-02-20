@@ -247,9 +247,9 @@ const Login = () => {
             <Text style={styles.signUpText}>
               Don’t have an account?
               <TouchableOpacity
-                onPress={() => navigation.navigate("(auth)/SignUp")}
+                onPress={() => navigation.navigate("(auth)/SignUpAs")}
               >
-                <Text style={styles.signUpLink}> Sign Up</Text>
+                <Text style={styles.signUpLink}> Sign Up As</Text>
               </TouchableOpacity>
             </Text>
           </View>

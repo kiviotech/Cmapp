@@ -39,6 +39,8 @@ import project_diagram from "../assets/icons/png/project-diagram.png"
 import loginLogo from "../assets/images/login.png";
 import loginHouse from "../assets/images/House.png";
 import title from "../assets/images/title.png";
+import Ellipse from "../assets/images/Ellipse.png";
+import Group1 from "../assets/images/Group1.png";
 
 export default {
   date,
@@ -79,5 +81,7 @@ export default {
   title,
   loginlogo,
   check_list,
-  project_diagram
+  project_diagram,
+  Ellipse,
+  Group1
 };

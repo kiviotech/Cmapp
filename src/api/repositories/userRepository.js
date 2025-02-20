@@ -41,3 +41,9 @@ export const updateUserRole = (id, data) =>
 
 export const getRegistrationByEmail = (email) =>
   apiClient.get(userEndpoints.getRegistrationByEmail(email));
+
+export const getProjectByUserId = (id) =>
+  apiClient.get(userEndpoints.getProjectByUserId(id));
+
+export const getTaskByUserId = (id) =>
+  apiClient.get(userEndpoints.getTaskByUserId(id));

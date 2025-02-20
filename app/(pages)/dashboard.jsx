@@ -5,6 +5,7 @@ import useAuthStore from "../../useAuthStore";
 import Contractor from "./contractor/Contractor";
 import ProjectTeam from "./projectTeam/ProjectTeam";
 import colors from "../../constants/colors";
+import HomwBuyer from "./HomeBuyer/HomwBuyer";
 
 const useRoleComponent = (designation) => {
   switch (designation) {
@@ -15,7 +16,7 @@ const useRoleComponent = (designation) => {
     case "Site Supervisor":
       return <ProjectTeam />;
     default:
-      return null;
+      return <HomwBuyer/>;
   }
 };
 
