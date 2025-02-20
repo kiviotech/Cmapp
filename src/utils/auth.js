@@ -96,7 +96,7 @@ export const signup = async (
   password,
   socialSecurity,
   documents,
-  projectId,
+  project,
   subContractorId
 ) => {
   try {
@@ -106,7 +106,7 @@ export const signup = async (
         email: email,
         password: password,
         socialSecurityNumber: socialSecurity,
-        project: { id: projectId },
+        project: { id: project },
         approver: null,
         documents: documents.map((docId) => ({ id: docId })),
         status: "pending",

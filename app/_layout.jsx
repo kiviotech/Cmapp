@@ -76,6 +76,8 @@ const Layout = ({ user, designation }) => {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)/login" />
         <Stack.Screen name="(auth)/SignUp" />
+        <Stack.Screen name="(auth)/SignUpAs" />
+        <Stack.Screen name="(auth)/HomeBuyerSignUp/HomeBuyerSignUp" />
         <Stack.Screen name="(auth)/Wait" />
         <Stack.Screen name="(auth)/ForgotPassword" />
         <Stack.Screen name="(auth)/ResetPassword" />
@@ -86,6 +88,7 @@ const Layout = ({ user, designation }) => {
         {user && user.token && designation === "Project Manager" && (
           <ProjectTeamScreens />
         )}
+         {(!user || !user.token || !designation) && <HomeBuyerScreens />}
         <Stack.Screen name="index" />
         {/* <Stack.Screen name="notification" options={{ headerShown: false }} />
         <Stack.Screen
@@ -109,6 +112,7 @@ const ContractorScreens = () => (
     <Stack.Screen name="(pages)/submissionDetails" />
     <Stack.Screen name="(pages)/contractor/ProjectDetails" />
     <Stack.Screen name="(pages)/contractor/PersonalDetailsScreen" />
+    
   </>
 );
 
@@ -129,6 +133,14 @@ const ProjectTeamScreens = () => (
     <Stack.Screen name="(pages)/projectTeam/ProjectList" />
     <Stack.Screen name="(pages)/InspectionForm" />
   </>
+
+
 );
+
+const HomeBuyerScreens = () => {
+  <>
+  <Stack.Screen name="(pages)/HomwBuyer/HomwBuyer"/>
+  </>
+}
 
 export default Layout;

@@ -6,6 +6,8 @@ import {
   deleteUser,
   getAuthenticatedUserWithPopulate,
   getRegistrationByEmail,
+  getProjectByUserId,
+  getTaskByUserId
 } from "../api/repositories/userRepository";
 
 // Fetch all users
@@ -84,6 +86,27 @@ export const fetchRegistrationByEmail = async (email) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching registration for email ${email}:`, error);
+    throw error;
+  }
+};
+
+export const fetchProjectByUserId = async (id) => {
+  try {
+    const response = await getProjectByUserId(id);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching projects for user ID ${id}:`, error);
+    throw error;
+  }
+};
+
+
+export const fetchTasksByUserId = async (id) => {
+  try {
+    const response = await getTaskByUserId(id);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching tasks for user ID ${id}:`, error);
     throw error;
   }
 };
