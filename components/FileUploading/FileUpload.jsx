@@ -27,6 +27,7 @@ const FileUpload = forwardRef(
     const [stream, setStream] = useState(null);
     const uploadIntervals = useRef({});
     const callbackRef = useRef(onFileUploadSuccess);
+    const [cameraType, setCameraType] = useState(ImagePicker.CameraType.back);
 
     // Update callback ref when prop changes
     useEffect(() => {
@@ -102,8 +103,7 @@ const FileUpload = forwardRef(
           // Use original filename if available, otherwise generate one
           const fileName =
             file.fileName ||
-            `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${
-              file.type?.split("/")[1] || "png"
+            `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${file.type?.split("/")[1] || "png"
             }`;
 
           formData.append("file", blob, fileName);
@@ -237,9 +237,10 @@ const FileUpload = forwardRef(
     };
 
     const handleFileUpload = async () => {
+      // mediaTypes: ImagePicker.MediaTypeOptions.Images,
       try {
         const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ImagePicker.MediaTypeOptions.Images, 
           allowsEditing: false,
           allowsMultipleSelection: true,
           quality: 1,
@@ -254,6 +255,15 @@ const FileUpload = forwardRef(
         console.error("Error in handleFileUpload:", error);
         alert("Failed to select files. Please try again.");
       }
+    };
+
+
+    const toggleCameraType = () => {
+      setCameraType((prevType) =>
+        prevType === ImagePicker.CameraType.back
+          ? ImagePicker.CameraType.front
+          : ImagePicker.CameraType.back
+      );
     };
 
     const handleCameraUpload = async () => {
@@ -273,28 +283,21 @@ const FileUpload = forwardRef(
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
+            cameraType: cameraType, // Use the dynamic cameraType
           });
 
           if (!result.canceled && result.assets?.length > 0) {
             const asset = result.assets[0];
             const fileName = `camera-${Date.now()}.jpg`;
 
-            // Add file to state to show progress
             setUploadedFiles((prev) => [
               ...prev,
-              {
-                name: fileName,
-                progress: 0,
-                status: "uploading",
-              },
+              { name: fileName, progress: 0, status: "uploading" },
             ]);
 
-            // Create FormData with the correct file structure
             const formData = new FormData();
 
-            // Handle different platform file structures
             if (Platform.OS === "web") {
-              // For web, fetch the blob first
               const response = await fetch(asset.uri);
               const blob = await response.blob();
               formData.append(
@@ -302,7 +305,6 @@ const FileUpload = forwardRef(
                 new File([blob], fileName, { type: "image/jpeg" })
               );
             } else {
-              // For native platforms
               formData.append("files", {
                 uri: asset.uri,
                 type: asset.mimeType || "image/jpeg",
@@ -316,11 +318,6 @@ const FileUpload = forwardRef(
                   "Content-Type": "multipart/form-data",
                   Accept: "application/json",
                 },
-                transformRequest: [
-                  function (data) {
-                    return data;
-                  },
-                ],
                 onUploadProgress: (progressEvent) => {
                   const percentCompleted = Math.round(
                     (progressEvent.loaded * 100) / progressEvent.total
@@ -343,7 +340,6 @@ const FileUpload = forwardRef(
               }
             } catch (error) {
               console.error("Upload failed:", error);
-              console.error("Error response:", error.response?.data);
               updateFileStatus(fileName, "error");
               alert("Failed to upload image. Please try again.");
             }
@@ -365,7 +361,7 @@ const FileUpload = forwardRef(
     const openWebCamera = async () => {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+          video: { facingMode: cameraType === ImagePicker.CameraType.back ? "environment" : "user" },
           audio: false,
         });
         setStream(mediaStream);
@@ -374,12 +370,11 @@ const FileUpload = forwardRef(
         }
       } catch (error) {
         console.error("Error accessing the camera: ", error);
-        alert(
-          "Failed to access camera. Please make sure camera permissions are granted."
-        );
+        alert("Failed to access camera. Please make sure camera permissions are granted.");
         setIsCameraActive(false);
       }
     };
+
 
     const captureImage = () => {
       if (Platform.OS === "web" && videoRef.current) {
@@ -391,22 +386,14 @@ const FileUpload = forwardRef(
 
         const fileName = `camera-${Date.now()}.jpg`;
 
-        // Add file to uploadedFiles first to show progress
         setUploadedFiles((prev) => [
           ...prev,
-          {
-            name: fileName,
-            progress: 0,
-            status: "uploading",
-          },
+          { name: fileName, progress: 0, status: "uploading" },
         ]);
 
         canvas.toBlob(async (blob) => {
           const formData = new FormData();
-          formData.append(
-            "files",
-            new File([blob], fileName, { type: "image/jpeg" })
-          );
+          formData.append("files", new File([blob], fileName, { type: "image/jpeg" }));
 
           try {
             const uploadResponse = await apiClient.post("/upload", formData, {
@@ -534,6 +521,14 @@ const FileUpload = forwardRef(
               >
                 <Text style={styles.buttonText}>Capture</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.captureButton}
+                onPress={toggleCameraType} // Call toggle function here
+              >
+                <Text style={styles.buttonText}>Switch Camera</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={closeCamera}
@@ -547,7 +542,11 @@ const FileUpload = forwardRef(
               onPress={handleCameraUpload}
             >
               <Text style={styles.buttonText}>Use Camera</Text>
+
+
             </TouchableOpacity>
+
+
           )}
 
           {uploadedFiles.map((file, index) => (
@@ -584,8 +583,8 @@ const FileUpload = forwardRef(
                           file.status === "success"
                             ? "#A3D65C"
                             : file.status === "error"
-                            ? "#FC5275"
-                            : "#FFD439",
+                              ? "#FC5275"
+                              : "#FFD439",
                       },
                     ]}
                   />
@@ -616,6 +615,15 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: "100%",
   },
+
+  toggleCameraButton: {
+    backgroundColor: "#FFD439",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  
   uploadContainer: {
     borderStyle: "dashed",
     borderWidth: 2,
