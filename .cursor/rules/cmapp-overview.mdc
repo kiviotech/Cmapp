@@ -1,0 +1,29 @@
+---
+description: Cmapp product overview, repos, roles, and how frontend talks to Strapi
+alwaysApply: true
+---
+
+# Cmapp
+
+Construction project-management app (Kivio). Contractors upload proof of work; project team creates projects, assigns contractors, and approves registrations/submissions.
+
+- **Frontend:** Expo 52 / React Native 0.74 / Expo Router (`/Users/prithvirajpillai/Documents/work/Cmapp`). Branch: `asha`.
+- **Backend:** Strapi 4.25.9 (`/Users/prithvirajpillai/Documents/work/cmapp-backend2`). Branch: `latestwithcustom`.
+- **Not a React web SPA.** Entry is `expo-router/entry`. Screens live in `app/`.
+
+## Roles
+
+- **Contractor** — projects, tasks, upload proof, submission history
+- **Project Manager / Supervisor** — projects, assign contractors/team, approve requests
+
+## API
+
+- Local (default): `http://localhost:1339/api` via `EXPO_PUBLIC_API_URL` (Android emulator: `http://10.0.2.2:1339`)
+- Production host `cmappapi.kivio.in` was down at restart (Aug 2026)
+- Auth: `POST /api/auth/local`; JWT on requests. Role comes from `user.user_group.designation.Name`
+
+## Run
+
+- Backend: `npm run develop` in `cmapp-backend2` (Node 18–20)
+- Frontend: `yarn start` or `yarn web` (web is port **8085**)
+- Package manager: Yarn (`yarn.lock`)

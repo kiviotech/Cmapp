@@ -1,29 +1,20 @@
 import axios from "axios";
 import { getToken } from "../utils/storage";
 import { Platform } from "react-native";
-import useAuthStore from "../../useAuthStore";
 
-// Configure base URLs based on platform
-
-const BASE_URL = Platform.select({
-  // web: "http://localhost:1337/api",
-  web: "https://cmappapi.kivio.in/api",
-  android: "https://cmappapi.kivio.in/api",
-  // ios: "http://localhost:1337/api", // For iOS simulator
+// Local Strapi is port 1339. Production (cmappapi.kivio.in) is currently unreachable.
+// Override with EXPO_PUBLIC_API_URL / EXPO_PUBLIC_MEDIA_URL in `.env`.
+const DEFAULT_ORIGIN = Platform.select({
+  web: "http://localhost:1339",
+  ios: "http://localhost:1339",
+  android: "http://10.0.2.2:1339",
+  default: "http://localhost:1339",
 });
 
-const URL = Platform.select({
-  // web: "http://localhost:1337",
-  web: "https://cmappapi.kivio.in",
-  android: "https://cmappapi.kivio.in",
-});
-
-const MEDIA_BASE_URL = Platform.select({
-  // web: "http://localhost:1337/api",
-  web: "https://cmappapi.kivio.in/api",
-  android: "https://cmappapi.kivio.in/api",
-  // ios: "http://localhost:1337",
-});
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL || `${DEFAULT_ORIGIN}/api`;
+const URL = process.env.EXPO_PUBLIC_MEDIA_URL || DEFAULT_ORIGIN;
+const MEDIA_BASE_URL = URL;
 
 // Create Axios instance
 const apiClient = axios.create({

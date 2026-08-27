@@ -1,0 +1,23 @@
+---
+description: Frontend architecture, API layer, auth storage, and routing conventions
+globs: app/**/*.jsx,src/**/*.js,useAuthStore.js,projectStore.js
+alwaysApply: false
+---
+
+# Frontend architecture
+
+Layering: **screen → `src/services/` → `src/api/repositories/` → `src/api/endpoints/` → `apiClient.js`**. Do not call Axios from screens when a service already exists.
+
+## Auth
+
+- Zustand `useAuthStore.js` persists to `localStorage` (web-only; breaks on native).
+- AsyncStorage in `src/utils/storage.js` uses mismatched keys: `saveToken` writes `userToken`, `getToken` reads `token`. Login currently does **not** call `saveToken`.
+- `app/_layout.jsx` exports `Layout` with unused `{ user, designation }` props. `LayoutWrapper.jsx` exists but is not the default export. Redirect treats non-Contractor as logged out.
+
+## Routing
+
+File-based Expo Router under `app/`. Auth: `app/(auth)/`. App: `app/(pages)/` with `contractor/` and `projectTeam/`. Register new screens in `_layout.jsx` Stack.
+
+## API client
+
+`src/api/apiClient.js` — Authorization must be `` `Bearer ${token}` ``. Use `EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_MEDIA_URL`; web defaults to `http://localhost:1339`.

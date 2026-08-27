@@ -20,6 +20,7 @@ import Swiper from "react-native-swiper";
 import { getSubmissionById } from "../../src/api/repositories/submissionRepository";
 import { useRoute } from "@react-navigation/native";
 import submissionEndpoints from "../../src/api/endpoints/submissionEndpoints";
+import { URL as MEDIA_ORIGIN } from "../../src/api/apiClient";
 
 const SubmissionDetails = () => {
   const [isPopupVisible, setPopupVisible] = useState(false);
@@ -32,7 +33,7 @@ const SubmissionDetails = () => {
   const route = useRoute();
   const id = route.params.submissionId || 0;
   const navigation = useNavigation();
-  const baseURL = "https://cmappapi.kivio.in"; // Base URL for localhost
+  const baseURL = MEDIA_ORIGIN;
 
   const proofs = [
     {
